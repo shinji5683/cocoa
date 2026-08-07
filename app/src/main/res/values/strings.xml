@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">cocoa</string>
+    <string name="accessibility_service_name">cocoa スクリーンリーダー</string>
+    <string name="accessibility_service_description">画面上の文字やボタン、電話・LINE・各種メッセージアプリの着信相手、通話時間（○時間○分○秒）を自動音声で読み上げ、視覚障害者や操作の補助をサポートする高機能スクリーンリーダーサービスです。</string>
+    
+    <string name="status_label">サービス動作状況</string>
+    <string name="status_disabled">無効 (設定から有効にしてください)</string>
+    <string name="status_enabled">有効 (稼働中)</string>
+    
+    <string name="btn_open_accessibility">アクセシビリティ設定を開く</string>
+    <string name="btn_test_speech">音声読み上げテスト</string>
+
+    <string name="title_tts_settings">読み上げ設定</string>
+    <string name="label_speech_rate">読み上げ速度</string>
+    <string name="label_pitch">音声の高さ (ピッチ)</string>
+
+    <string name="title_test_bench">インタラクティブ体験テスト領域</string>
+    <string name="test_button_1">テスト用ボタン A</string>
+    <string name="test_button_2">テスト用ボタン B</string>
+    <string name="test_edit_hint">ここにテキストを入力して読み上げを確認</string>
+    <string name="test_switch_label">読み上げ詳細モード</string>
+
+    <string name="title_features">cocoa の主な機能</string>
+    <string name="feature_1">・UIツリー全要素の高精度テキスト解析 &amp; 役割アナウンス (ボタン, テキスト入力, 画像等)</string>
+    <string name="feature_2">・スマート音声キュー &amp; 即時割り込み読み上げ制御</string>
+    <string name="feature_3">・電話 &amp; メッセージアプリ (LINE/WhatsApp/Skype/Teams/Zoom等) の着信者アナウンス</string>
+    <string name="feature_4">・通話終了時の「通話時間 (○時間○分○秒)」自動読み上げ機能</string>
+    <string name="feature_5">・各メッセージアプリの通知・着信メッセージ自動アナウンス</string>
+</resources>
