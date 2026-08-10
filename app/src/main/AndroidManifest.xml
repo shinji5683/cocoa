@@ -4,9 +4,15 @@
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -15,6 +21,16 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Cocoa">
+
+        <meta-data
+            android:name="developer_name"
+            android:value="@string/developer_name" />
+        <meta-data
+            android:name="app_provider"
+            android:value="@string/provider_name" />
+        <meta-data
+            android:name="copyright"
+            android:value="@string/copyright_label" />
 
         <receiver
             android:name=".BootReceiver"
@@ -38,6 +54,7 @@
         <service
             android:name=".CocoaScreenReaderService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:foregroundServiceType="specialUse"
             android:exported="true"
             android:label="@string/accessibility_service_name"
             android:description="@string/accessibility_service_description">

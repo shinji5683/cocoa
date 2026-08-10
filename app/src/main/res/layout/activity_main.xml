@@ -84,6 +84,156 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- OS Environment & Security Health Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/cocoa_card_bg">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_security_health"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/cocoa_primary"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:id="@+id/tvSecurityStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="診断中..."
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/cocoa_text_dark"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/tvSecurityDetail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="環境を診断しています"
+                    android:textColor="@color/cocoa_text_muted"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/btnRecheckSecurity"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="@string/btn_recheck_security"
+                    android:backgroundTint="@color/cocoa_secondary"
+                    app:cornerRadius="10dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Permissions Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/cocoa_card_bg">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_permissions"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/cocoa_text_dark"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Overlay Permission -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="他のアプリの上に重ねて表示"
+                        android:textColor="@color/cocoa_text_dark"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvOverlayStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/status_perm_denied"
+                        android:textColor="@color/status_red"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnRequestOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="@string/btn_request_overlay"
+                    android:textSize="14sp"
+                    android:backgroundTint="@color/cocoa_secondary"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="14dp"
+                    app:cornerRadius="10dp" />
+
+                <!-- Notification Permission -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="通知の受信・アナウンス許可"
+                        android:textColor="@color/cocoa_text_dark"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvNotificationStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/status_perm_denied"
+                        android:textColor="@color/status_red"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnRequestNotification"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="@string/btn_request_notification"
+                    android:textSize="14sp"
+                    android:backgroundTint="@color/cocoa_secondary"
+                    android:layout_marginTop="6dp"
+                    app:cornerRadius="10dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- TTS Settings Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -148,6 +298,15 @@
                     android:text="@string/btn_test_speech"
                     android:backgroundTint="@color/cocoa_secondary"
                     android:layout_marginTop="12dp"
+                    app:cornerRadius="12dp" />
+
+                <Button
+                    android:id="@+id/btnOpenTtsSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/btn_open_tts_settings"
+                    android:backgroundTint="@color/cocoa_primary"
+                    android:layout_marginTop="8dp"
                     app:cornerRadius="12dp" />
 
             </LinearLayout>
@@ -282,6 +441,194 @@
                     android:layout_height="wrap_content"
                     android:text="@string/feature_4"
                     android:textColor="@color/cocoa_text_muted" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Hourly Chime Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/cocoa_card_bg">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_hourly_chime"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/cocoa_primary"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/desc_hourly_chime"
+                    android:textColor="@color/cocoa_text_muted"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="10dp" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchHourlyChime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_hourly_chime_switch"
+                    android:textColor="@color/cocoa_text_dark"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/btnTestHourlyChime"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="@string/btn_test_hourly_chime"
+                    android:backgroundTint="@color/cocoa_secondary"
+                    app:cornerRadius="10dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Alpha Telemetry & Privacy Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/cocoa_card_bg">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_telemetry"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/cocoa_primary"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/desc_telemetry"
+                    android:textColor="@color/cocoa_text_muted"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="10dp" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchTelemetryOptIn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_telemetry_optin"
+                    android:textColor="@color/cocoa_text_dark"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/btnSendTelemetry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/btn_send_telemetry"
+                    android:backgroundTint="@color/cocoa_primary"
+                    android:layout_marginBottom="8dp"
+                    app:cornerRadius="12dp" />
+
+                <Button
+                    android:id="@+id/btnCopyTelemetry"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="@string/btn_copy_telemetry"
+                    android:backgroundTint="@color/cocoa_secondary"
+                    app:cornerRadius="10dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Developer & Signature Info Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/cocoa_card_bg">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_developer_info"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/cocoa_primary"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/provider_name_label"
+                    android:textColor="@color/cocoa_text_dark"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/developer_name_label"
+                    android:textColor="@color/cocoa_text_dark"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/tvDeveloperPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/developer_phone_label"
+                    android:textColor="@color/cocoa_primary"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/btnCallDeveloper"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/btn_call_developer"
+                    android:backgroundTint="@color/cocoa_primary"
+                    android:layout_marginBottom="12dp"
+                    app:cornerRadius="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/signature_label"
+                    android:textColor="@color/status_green"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/copyright_label"
+                    android:textColor="@color/cocoa_text_muted"
+                    android:textSize="12sp" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

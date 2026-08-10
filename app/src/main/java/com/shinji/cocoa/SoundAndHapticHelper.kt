@@ -20,7 +20,7 @@ class SoundAndHapticHelper(private val context: Context) {
 
     init {
         try {
-            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
+            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
         } catch (e: Exception) {
             Log.e(TAG, "ToneGenerator init failed: ${e.message}")
         }
@@ -35,13 +35,24 @@ class SoundAndHapticHelper(private val context: Context) {
     }
 
     fun playFocusMove() {
-        toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 30)
-        vibrate(20)
+        toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 25)
+        vibrate(15)
+    }
+
+    fun playFocusMovePanned(normalizedX: Float) {
+        val clampedX = normalizedX.coerceIn(0.0f, 1.0f)
+        val toneType = when {
+            clampedX < 0.35f -> ToneGenerator.TONE_DTMF_1
+            clampedX > 0.65f -> ToneGenerator.TONE_DTMF_3
+            else -> ToneGenerator.TONE_PROP_BEEP2
+        }
+        toneGenerator?.startTone(toneType, 25)
+        vibrate(15)
     }
 
     fun playClick() {
-        toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 40)
-        vibrate(35)
+        toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 45)
+        vibrate(30)
     }
 
     fun playMenuOpen() {
@@ -54,27 +65,48 @@ class SoundAndHapticHelper(private val context: Context) {
         vibratePattern(longArrayOf(0, 25, 30, 25))
     }
 
+    fun playProgressBeep(percent: Int) {
+        val clamped = percent.coerceIn(0, 100)
+        val toneType = when {
+            clamped < 20 -> ToneGenerator.TONE_DTMF_1
+            clamped < 40 -> ToneGenerator.TONE_DTMF_3
+            clamped < 60 -> ToneGenerator.TONE_DTMF_5
+            clamped < 80 -> ToneGenerator.TONE_DTMF_7
+            else -> ToneGenerator.TONE_DTMF_9
+        }
+        toneGenerator?.startTone(toneType, 40)
+        vibrate(15)
+    }
+
     private fun vibrate(milliseconds: Long) {
-        vibrator?.let {
-            if (!it.hasVibrator()) return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                it.vibrate(VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE))
-            } else {
-                @Suppress("DEPRECATION")
-                it.vibrate(milliseconds)
+        try {
+            vibrator?.let {
+                if (!it.hasVibrator()) return
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    it.vibrate(VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    it.vibrate(milliseconds)
+                }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "vibrate error: ${e.message}")
         }
     }
 
     private fun vibratePattern(pattern: LongArray) {
-        vibrator?.let {
-            if (!it.hasVibrator()) return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                it.vibrate(VibrationEffect.createWaveform(pattern, -1))
-            } else {
-                @Suppress("DEPRECATION")
-                it.vibrate(pattern, -1)
+        try {
+            vibrator?.let {
+                if (!it.hasVibrator()) return
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    it.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                } else {
+                    @Suppress("DEPRECATION")
+                    it.vibrate(pattern, -1)
+                }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "vibratePattern error: ${e.message}")
         }
     }
 

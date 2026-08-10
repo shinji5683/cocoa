@@ -15,3 +15,7 @@
 .cxx
 local.properties
 build_output.txt
+*.apk
+*.bin
+*.jks
+vt_response.html
