@@ -594,6 +594,9 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
             CocoaMenuItem("📦", "カメラ・物体と周囲の認識 (Gemma 4 On-Device AI)") {
                 launchCameraObjectAnalysis()
             },
+            CocoaMenuItem("🌐", "Google ChromeでWeb認証を開く") {
+                launchChromeAuthPage("https://accounts.google.com")
+            },
             CocoaMenuItem("⚡", "読み上げ速度の変更 (トグル切り替え)") {
                 toggleSpeechRateQuick()
             },
@@ -710,6 +713,12 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
             speak("カメラアプリを起動します。Gemma 4 AIエンジンで周囲の物体や景観を完全ローカル解析します。", TextToSpeech.QUEUE_FLUSH)
         }
         objectHelper?.launchCameraForObjectRecognition()
+    }
+
+    private fun launchChromeAuthPage(url: String) {
+        soundHelper?.playClick()
+        speak("Google Chrome を強制起動して認証ページを開きます", TextToSpeech.QUEUE_FLUSH)
+        ChromeAuthHelper.openChromeAuth(this, url)
     }
 
     private fun sendTelemetryLog() {
