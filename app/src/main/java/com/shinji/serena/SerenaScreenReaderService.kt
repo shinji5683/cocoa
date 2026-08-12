@@ -240,61 +240,57 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 showActionsMenu(getAccessibilityFocusedNode())
                 return true
             }
-            // 2本指シングルタップ (25): 読み上げの一時停止・再開トグル
+            // 2本指シングルタップ (25): 読み上げの一時停止・再開トグル [TalkBack標準ガイドライン]
             25 -> {
                 toggleSpeechPauseResume()
                 return true
             }
-            // 2本指ダブルタップ / マジックタップ (26, 29): 電話応答・切断 / メディア再生・一時停止
+            // 2本指ダブルタップ / マジックタップ (26, 29): 電話応答・切断 / メディア再生・一時停止 [TalkBack標準ガイドライン]
             26, 29 -> {
                 soundHelper?.playActionDone()
                 handleMagicTapAction()
                 return true
             }
-            // 2本指トリプルタップ (27): ステータスチェック
+            // 2本指トリプルタップ (27): 読み上げ消音トグル [TalkBack標準ガイドライン]
             27 -> {
-                announceFullStatus()
+                soundHelper?.playActionDone()
+                toggleSpeechMute()
                 return true
             }
-            // 2本指クアッドタップ (4回タップ 28): 音声アシスタント起動
-            28 -> {
-                launchAiAssistant()
-                return true
-            }
-            // 3本指シングルタップ (31): serena メニュー起動
+            // 3本指シングルタップ (31): メニュー起動 (TalkBack標準ガイドライン)
             31 -> {
                 soundHelper?.playMenuOpen()
                 triggerSerenaMenu()
                 return true
             }
-            // 3本指ダブルタップ (32): 読み上げ速度切り替え
+            // 3本指ダブルタップ (32): クリップボード読み上げ・履歴 [TalkBack標準ガイドライン]
             32 -> {
-                toggleSpeechRateQuick()
-                return true
-            }
-            // 3本指トリプルタップ (33): クリップボード履歴ダイアログ表示
-            33 -> {
                 showClipboardHistoryDialog(getAccessibilityFocusedNode())
                 return true
             }
-            // 3本指クアッドタップ (4回タップ 34, 35, 36): 通知フィルター切り替え
-            34, 35, 36 -> {
-                cycleNotificationFilterMode()
-                return true
-            }
-            // 4本指シングルタップ (37): 画面の一番上から読む
-            37 -> {
-                readFromTop()
-                return true
-            }
-            // 4本指ダブルタップ (38): スクリーンカーテン (画面非表示) トグル
-            38 -> {
+            // 3本指トリプルタップ (33, 34): スクリーンカーテン (画面非表示) トグル [TalkBack標準ガイドライン]
+            33, 34 -> {
                 toggleScreenCurtain()
                 return true
             }
-            // 4本指トリプル/クアッドタップ (39, 40): ヘルプ案内
+            // 3本指クアッドタップ (35, 36): 読み上げスピード・粒度切り替え
+            35, 36 -> {
+                toggleSpeechRateQuick()
+                return true
+            }
+            // 4本指シングルタップ (37): 画面の一番最初の要素へ移動 [TalkBack標準ガイドライン]
+            37 -> {
+                focusFirstElement()
+                return true
+            }
+            // 4本指ダブルタップ (38): 画面の一番最後の要素へ移動 [TalkBack標準ガイドライン]
+            38 -> {
+                focusLastElement()
+                return true
+            }
+            // 4本指トリプル/クアッドタップ (39, 40): バッテリー・時刻・ステータスアナウンス [TalkBack標準ガイドライン]
             39, 40 -> {
-                showHelp()
+                announceFullStatus()
                 return true
             }
             // 下→左スワイプ: 戻るボタン
@@ -1426,8 +1422,42 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var isSpeechPaused = false
     private var currentSpeakingUtterance: String? = null
 
+    private var isMuted = false
+
+    fun toggleSpeechMute() {
+        isMuted = !isMuted
+        if (isMuted) {
+            stopSpeech()
+            Toast.makeText(this, "消音モード", Toast.LENGTH_SHORT).show()
+        } else {
+            speak("消音を解除しました", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    private fun focusFirstElement() {
+        val root = rootInActiveWindow ?: return
+        val nodes = collectAccessibleNodes(root)
+        if (nodes.isNotEmpty()) {
+            val firstNode = nodes.first()
+            firstNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+            soundHelper?.playFirstItemEdgeSound()
+            announceNode(firstNode)
+        }
+    }
+
+    private fun focusLastElement() {
+        val root = rootInActiveWindow ?: return
+        val nodes = collectAccessibleNodes(root)
+        if (nodes.isNotEmpty()) {
+            val lastNode = nodes.last()
+            lastNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+            soundHelper?.playLastItemEdgeSound()
+            announceNode(lastNode)
+        }
+    }
+
     fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_ADD) {
-        if (!isTtsReady || text.isBlank()) return
+        if (!isTtsReady || text.isBlank() || isMuted) return
         val processedText = emojiHelper?.translateEmojiAndKaomoji(text) ?: text
         lastSpokenText = processedText
         currentSpeakingUtterance = processedText
