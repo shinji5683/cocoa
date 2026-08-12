@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.app.Activity
 import android.app.Dialog
@@ -40,7 +40,7 @@ class CocoaMenuDialog(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
-        setContentView(R.layout.dialog_cocoa_menu)
+        setContentView(R.layout.dialog_serena_menu)
 
         window?.apply {
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
@@ -51,9 +51,9 @@ class CocoaMenuDialog(
         val btnClose = findViewById<Button>(R.id.btnClose)
 
         val titleText = if (isEditTextFocus) {
-            "✏️ cocoa 編集アシスト"
+            "✏️ serena 編集アシスト"
         } else {
-            "☕ cocoa メニュー"
+            "🌸 serena メニュー"
         }
         tvTitle.text = titleText
         tvTitle.contentDescription = titleText
@@ -62,7 +62,7 @@ class CocoaMenuDialog(
         container.removeAllViews()
 
         for (item in items) {
-            val itemView = inflater.inflate(R.layout.item_cocoa_menu, container, false)
+            val itemView = inflater.inflate(R.layout.item_serena_menu, container, false)
             val tvIcon = itemView.findViewById<TextView>(R.id.tvItemIcon)
             val tvItemTitle = itemView.findViewById<TextView>(R.id.tvItemTitle)
 

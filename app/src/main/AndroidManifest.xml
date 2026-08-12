@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -56,7 +56,7 @@
         </activity>
 
         <service
-            android:name=".CocoaScreenReaderService"
+            android:name=".SerenaScreenReaderService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:foregroundServiceType="specialUse"
             android:exported="true"
@@ -75,3 +75,4 @@
     </application>
 
 </manifest>
+
