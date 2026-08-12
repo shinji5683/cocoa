@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        prefs = getSharedPreferences(serenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs = getSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
 
         initLocalTts()
         setupStatusSection()
@@ -142,7 +142,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateServiceStatusDisplay() {
-        val isEnabled = isAccessibilityServiceEnabled(this, serenaScreenReaderService::class.java)
+        val isEnabled = isAccessibilityServiceEnabled(this, SerenaScreenReaderService::class.java)
         if (isEnabled) {
             binding.tvStatus.text = getString(R.string.status_enabled)
             binding.tvStatus.setTextColor(getColor(R.color.status_green))
@@ -202,8 +202,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupTtsControls() {
-        val currentRate = prefs.getFloat(serenaScreenReaderService.KEY_SPEECH_RATE, 1.0f)
-        val currentPitch = prefs.getFloat(serenaScreenReaderService.KEY_SPEECH_PITCH, 1.0f)
+        val currentRate = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, 1.0f)
+        val currentPitch = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, 1.0f)
 
         binding.sliderSpeed.value = currentRate
         binding.sliderPitch.value = currentPitch
@@ -212,22 +212,22 @@ class MainActivity : AppCompatActivity() {
 
         binding.sliderSpeed.addOnChangeListener { _, value, _ ->
             binding.tvSpeedLabel.text = "読み上げ速度: ${String.format("%.1f", value)}x"
-            prefs.edit().putFloat(serenaScreenReaderService.KEY_SPEECH_RATE, value).apply()
-            serenaScreenReaderService.instance?.updateTtsSettings()
+            prefs.edit().putFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, value).apply()
+            SerenaScreenReaderService.instance?.updateTtsSettings()
             localTts?.setSpeechRate(value)
         }
 
         binding.sliderPitch.addOnChangeListener { _, value, _ ->
             binding.tvPitchLabel.text = "音声ピッチ: ${String.format("%.1f", value)}x"
-            prefs.edit().putFloat(serenaScreenReaderService.KEY_SPEECH_PITCH, value).apply()
-            serenaScreenReaderService.instance?.updateTtsSettings()
+            prefs.edit().putFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, value).apply()
+            SerenaScreenReaderService.instance?.updateTtsSettings()
             localTts?.setPitch(value)
         }
 
         binding.btnTestSpeech.setOnClickListener {
             val sampleText = "serena スクリーンリーダーの音声テストです。速度 ${String.format("%.1f", binding.sliderSpeed.value)} 倍速で再生中。"
-            if (serenaScreenReaderService.isServiceRunning()) {
-                serenaScreenReaderService.instance?.speak(sampleText, TextToSpeech.QUEUE_FLUSH)
+            if (SerenaScreenReaderService.isServiceRunning()) {
+                SerenaScreenReaderService.instance?.speak(sampleText, TextToSpeech.QUEUE_FLUSH)
             } else {
                 localTts?.speak(sampleText, TextToSpeech.QUEUE_FLUSH, null, "testUtterance")
             }
@@ -246,11 +246,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupHourlyChimeSection() {
-        val isEnabled = prefs.getBoolean(serenaScreenReaderService.KEY_HOURLY_CHIME_ENABLED, true)
+        val isEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_HOURLY_CHIME_ENABLED, true)
         binding.switchHourlyChime.isChecked = isEnabled
 
         binding.switchHourlyChime.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean(serenaScreenReaderService.KEY_HOURLY_CHIME_ENABLED, isChecked).apply()
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_HOURLY_CHIME_ENABLED, isChecked).apply()
             val statusStr = if (isChecked) "時報機能を有効にしました" else "時報機能を無効にしました"
             Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
         }
@@ -258,8 +258,8 @@ class MainActivity : AppCompatActivity() {
         binding.btnTestHourlyChime.setOnClickListener {
             val calendar = Calendar.getInstance()
             val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
-            if (serenaScreenReaderService.isServiceRunning()) {
-                serenaScreenReaderService.instance?.triggerHourlyAnnouncement(currentHour)
+            if (SerenaScreenReaderService.isServiceRunning()) {
+                SerenaScreenReaderService.instance?.triggerHourlyAnnouncement(currentHour)
             } else {
                 val isAm = currentHour < 12
                 val displayHour = when {
@@ -303,8 +303,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnTriggerMenu.setOnClickListener {
-            if (serenaScreenReaderService.isServiceRunning()) {
-                serenaScreenReaderService.instance?.triggerserenaMenu()
+            if (SerenaScreenReaderService.isServiceRunning()) {
+                SerenaScreenReaderService.instance?.triggerSerenaMenu()
             } else {
                 Toast.makeText(this, "先にサービスを有効化してください", Toast.LENGTH_SHORT).show()
             }

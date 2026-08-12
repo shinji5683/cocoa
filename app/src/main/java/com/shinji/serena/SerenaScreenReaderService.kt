@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.accessibilityservice.AccessibilityGestureEvent
 import android.accessibilityservice.AccessibilityService
@@ -33,10 +33,10 @@ enum class GranularityMode(val displayName: String) {
     CHARACTERS("文字")
 }
 
-class serenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitListener {
+class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitListener {
 
     companion object {
-        private const val TAG = "serenaScreenReader"
+        private const val TAG = "SerenaScreenReader"
         const val PREFS_NAME = "serena_prefs"
         const val KEY_SPEECH_RATE = "speech_rate"
         const val KEY_SPEECH_PITCH = "speech_pitch"
@@ -47,7 +47,7 @@ class serenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         const val CHIME_STYLE_CUTE = "cute_beep"
         const val CHIME_STYLE_BELL = "japanese_bell"
 
-        var instance: serenaScreenReaderService? = null
+        var instance: SerenaScreenReaderService? = null
             private set
 
         fun isServiceRunning(): Boolean = instance != null
@@ -71,7 +71,7 @@ class serenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var faceHelper: FaceDetectionHelper? = null
     private var objectHelper: ObjectRecognitionHelper? = null
     private var gemmaDownloadHelper: GemmaModelDownloadHelper? = null
-    private var assistantHelper: serenaAiAssistantHelper? = null
+    private var assistantHelper: SerenaAiAssistantHelper? = null
     private var shakeDetectorHelper: ShakeDetectorHelper? = null
     private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
     private var isLiveEnvironmentModeActive = false
@@ -102,7 +102,7 @@ class serenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         faceHelper = FaceDetectionHelper(this)
         objectHelper = ObjectRecognitionHelper(this)
         gemmaDownloadHelper = GemmaModelDownloadHelper(this)
-        assistantHelper = serenaAiAssistantHelper(this)
+        assistantHelper = SerenaAiAssistantHelper(this)
 
         shakeDetectorHelper = ShakeDetectorHelper(this) {
             announceFullStatus()
@@ -241,7 +241,7 @@ class serenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             // 3本指タップ (31, 33) または L字スワイプ (上→右, 下→右): serena メニュー (TalkBack標準互換)
             31, 33, GESTURE_SWIPE_UP_AND_RIGHT, GESTURE_SWIPE_DOWN_AND_RIGHT -> {
                 soundHelper?.playMenuOpen()
-                triggerserenaMenu()
+                triggerSerenaMenu()
                 return true
             }
             // 下→左スワイプ: 戻るボタン
@@ -566,18 +566,17 @@ class serenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }, null)
     }
 
-    fun triggerserenaMenu() {
-        val focusNode = findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-        val isEditable = focusNode != null && (focusNode.isEditable || focusNode.className?.contains("EditText", ignoreCase = true) == true)
-
-        if (isEditable && focusNode != null) {
-            showEditTextAssistMenu(focusNode)
+    fun triggerSerenaMenu() {
+        val node = getAccessibilityFocusedNode()
+        val isEditable = node != null && (node.isEditable || node.className?.contains("EditText", ignoreCase = true) == true)
+        if (isEditable && node != null) {
+            showEditTextAssistMenu(node)
         } else {
-            showNormalserenaMenu()
+            showNormalSerenaMenu()
         }
     }
 
-    private fun showNormalserenaMenu() {
+    private fun showNormalSerenaMenu() {
         soundHelper?.playMenuOpen()
         speak("serena メニューを開きました", TextToSpeech.QUEUE_FLUSH)
         val curtainLabel = if (screenCurtainHelper?.isCurtainEnabled == true) "🌑 スクリーンカーテンを解除" else "🌑 スクリーンカーテン (画面非表示・節電)"
@@ -913,7 +912,7 @@ class serenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             },
             serenaMenuItem("☕", "通常メニューを開く") {
-                showNormalserenaMenu()
+                showNormalSerenaMenu()
             }
         )
         try {

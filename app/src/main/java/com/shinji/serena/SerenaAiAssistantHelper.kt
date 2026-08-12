@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.Context
 import android.speech.RecognizerIntent
@@ -10,7 +10,7 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Toast
 
-class serenaAiAssistantHelper(private val service: serenaScreenReaderService) {
+class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
     companion object {
         private const val TAG = "serenaAiAssistant"
@@ -112,7 +112,7 @@ class serenaAiAssistantHelper(private val service: serenaScreenReaderService) {
                 service.toggleScreenCurtain()
             }
             query.contains("メニュー") || query.contains("設定") -> {
-                service.triggerserenaMenu()
+                service.triggerSerenaMenu()
             }
             else -> {
                 service.speak("音声コマンド「$inputQuery」を受け付けました。環境実況、ステータス、文字読み取り、通知フィルター、クリップボードに対応しています。", TextToSpeech.QUEUE_FLUSH)
