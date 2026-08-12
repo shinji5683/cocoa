@@ -65,9 +65,11 @@ class SoundAndHapticHelper(private val context: Context) {
         vibratePattern(longArrayOf(0, 25, 30, 25))
     }
 
+    private val chimeExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+
     fun playNhkRadioChime() {
         // NHKラジオ風時報: ポッ(57秒)、ポッ(58秒)、ポッ(59秒)、ポーン(00秒)！
-        Thread {
+        chimeExecutor.execute {
             try {
                 for (i in 1..3) {
                     toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 80)
@@ -79,7 +81,7 @@ class SoundAndHapticHelper(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "NhkChime error: ${e.message}")
             }
-        }.start()
+        }
     }
 
     fun playCuteBeepChime() {
@@ -140,5 +142,10 @@ class SoundAndHapticHelper(private val context: Context) {
     fun release() {
         toneGenerator?.release()
         toneGenerator = null
+        try {
+            chimeExecutor.shutdownNow()
+        } catch (e: Exception) {
+            Log.e(TAG, "chimeExecutor shutdown error: ${e.message}")
+        }
     }
 }

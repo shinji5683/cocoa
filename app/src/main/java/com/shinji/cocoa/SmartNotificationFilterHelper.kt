@@ -20,9 +20,9 @@ class SmartNotificationFilterHelper(context: Context) {
 
     var currentMode: NotificationFilterMode
         get() {
-            val name = prefs.getString(KEY_FILTER_MODE, NotificationFilterMode.IMPORTANT_ONLY.name)
+            val name = prefs.getString(KEY_FILTER_MODE, null) ?: return NotificationFilterMode.IMPORTANT_ONLY
             return try {
-                NotificationFilterMode.valueOf(name!!)
+                NotificationFilterMode.valueOf(name)
             } catch (e: Exception) {
                 NotificationFilterMode.IMPORTANT_ONLY
             }
