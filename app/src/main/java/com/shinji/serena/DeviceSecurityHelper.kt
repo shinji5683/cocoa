@@ -20,12 +20,13 @@ class DeviceSecurityHelper(private val context: Context) {
 
     fun isCanaryOrPreviewBuild(): Boolean {
         val codename = Build.VERSION.CODENAME
-        return codename != "REL" && (
+        val isCurDevelopmentApi = Build.VERSION.SDK_INT >= 10000 || Build.VERSION.SDK_INT == Build.VERSION_CODES.CUR_DEVELOPMENT
+        return isCurDevelopmentApi || (codename != "REL" && (
             codename.equals("Baklava", ignoreCase = true) ||
             codename.startsWith("C", ignoreCase = true) ||
             codename.contains("Canary", ignoreCase = true) ||
             codename.contains("Preview", ignoreCase = true)
-        )
+        ))
     }
 
     fun checkDeviceSecurity(): SecurityCheckResult {
