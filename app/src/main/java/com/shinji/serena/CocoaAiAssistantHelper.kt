@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.speech.RecognizerIntent
@@ -120,3 +120,4 @@ class CocoaAiAssistantHelper(private val service: CocoaScreenReaderService) {
         }
     }
 }
+

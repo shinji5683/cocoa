@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.content.Intent
@@ -35,3 +35,4 @@ object ChromeAuthHelper {
         }
     }
 }
+

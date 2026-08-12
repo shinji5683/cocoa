@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -43,3 +43,4 @@ class ClipboardHistoryHelper(context: Context) {
         prefs.edit().putString(KEY_HISTORY, joined).apply()
     }
 }
+

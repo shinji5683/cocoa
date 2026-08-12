@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
@@ -135,3 +135,4 @@ class StatusAnnouncementHelper(private val context: Context) {
         }
     }
 }
+

@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">cocoa</string>
-    <string name="accessibility_service_name">cocoa スクリーンリーダー</string>
+    <string name="app_name">serena Screen Reader</string>
+    <string name="accessibility_service_name">serena Screen Reader</string>
     <string name="accessibility_service_description">画面上の文字やボタン、電話・LINE・各種メッセージアプリの着信相手、通話時間（○時間○分○秒）を自動音声で読み上げ、視覚障害者や操作の補助をサポートする高機能スクリーンリーダーサービスです。</string>
     
     <string name="status_label">サービス動作状況</string>

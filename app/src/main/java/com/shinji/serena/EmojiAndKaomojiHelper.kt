@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 class EmojiAndKaomojiHelper {
 
@@ -79,3 +79,4 @@ class EmojiAndKaomojiHelper {
         return result.replace(Regex("\\s+"), " ").trim()
     }
 }
+

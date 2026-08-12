@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.Manifest
 import android.content.Context
@@ -16,7 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.shinji.cocoa.databinding.ActivityMainBinding
+import com.shinji.serena.databinding.ActivityMainBinding
 import java.util.Calendar
 import java.util.Locale
 
@@ -367,3 +367,4 @@ class MainActivity : AppCompatActivity() {
         localTts = null
     }
 }
+

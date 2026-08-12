@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -137,3 +137,4 @@ class AlphaTelemetryHelper(private val context: Context) {
         Toast.makeText(context, "診断レポートをクリップボードにコピーしました", Toast.LENGTH_SHORT).show()
     }
 }
+

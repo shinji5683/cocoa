@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 class AppProfileHelper {
 
@@ -29,3 +29,4 @@ class AppProfileHelper {
         }
     }
 }
+

@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.accessibilityservice.AccessibilityGestureEvent
 import android.accessibilityservice.AccessibilityService
@@ -1480,3 +1480,4 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         speak("最新のクリップボード履歴: $lastText", TextToSpeech.QUEUE_FLUSH)
     }
 }
+

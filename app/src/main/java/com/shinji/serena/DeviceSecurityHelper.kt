@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.os.Build
@@ -65,3 +65,4 @@ class DeviceSecurityHelper(private val context: Context) {
         }
     }
 }
+

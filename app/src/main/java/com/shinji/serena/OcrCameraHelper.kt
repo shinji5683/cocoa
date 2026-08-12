@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.content.Intent
@@ -27,3 +27,4 @@ class OcrCameraHelper(private val context: Context) {
         onResult("前方クリア、テキスト未検知")
     }
 }
+

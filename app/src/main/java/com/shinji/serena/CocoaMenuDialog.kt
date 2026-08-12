@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.app.Activity
 import android.app.Dialog
@@ -85,3 +85,4 @@ class CocoaMenuDialog(
         tvTitle.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
     }
 }
+

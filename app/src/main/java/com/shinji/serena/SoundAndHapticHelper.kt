@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.media.AudioManager
@@ -168,3 +168,4 @@ class SoundAndHapticHelper(private val context: Context) {
         }
     }
 }
+

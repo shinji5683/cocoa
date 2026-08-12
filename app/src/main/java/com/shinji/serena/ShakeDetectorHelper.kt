@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.hardware.Sensor
@@ -56,3 +56,4 @@ class ShakeDetectorHelper(
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 }
+

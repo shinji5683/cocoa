@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -82,3 +82,4 @@ class SmartNotificationFilterHelper(context: Context) {
         return isMessagingOrCallApp || isImportantKeyword
     }
 }
+

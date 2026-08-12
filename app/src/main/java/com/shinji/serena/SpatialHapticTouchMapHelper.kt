@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.graphics.Rect
 
@@ -35,3 +35,4 @@ class SpatialHapticTouchMapHelper(private val soundAndHapticHelper: SoundAndHapt
         lastAnnouncedYCategory = -1
     }
 }
+

@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.content.Intent
@@ -57,3 +57,4 @@ class ObjectRecognitionHelper(private val context: Context) {
         }
     }
 }
+

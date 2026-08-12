@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.app.DownloadManager
 import android.content.Context
@@ -66,3 +66,4 @@ class GemmaModelDownloadHelper(private val context: Context) {
         return "Google公式 Gemma 4 AIモデル（無料・約1.5GB）をダウンロードします。空き容量: ${freeMb}MB、$wifiStatus。よろしいですか？"
     }
 }
+

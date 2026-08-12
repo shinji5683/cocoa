@@ -1,4 +1,4 @@
-package com.shinji.cocoa
+﻿package com.shinji.serena
 
 import android.content.Context
 import android.content.Intent
@@ -69,3 +69,4 @@ class FaceDetectionHelper(private val context: Context) {
         return parts.joinToString("、")
     }
 }
+
