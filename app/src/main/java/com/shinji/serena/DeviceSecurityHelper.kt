@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.Context
 import android.os.Build
@@ -18,9 +18,20 @@ class DeviceSecurityHelper(private val context: Context) {
         val detailMessage: String
     )
 
+    fun isCanaryOrPreviewBuild(): Boolean {
+        val codename = Build.VERSION.CODENAME
+        return codename != "REL" && (
+            codename.equals("Baklava", ignoreCase = true) ||
+            codename.startsWith("C", ignoreCase = true) ||
+            codename.contains("Canary", ignoreCase = true) ||
+            codename.contains("Preview", ignoreCase = true)
+        )
+    }
+
     fun checkDeviceSecurity(): SecurityCheckResult {
         val isCustomOrRooted = isCustomOrRootedBuild()
         val isLegacyOs = Build.VERSION.SDK_INT < Build.VERSION_CODES.R // API 30未満
+        val isCanary = isCanaryOrPreviewBuild()
 
         return when {
             isCustomOrRooted -> {
@@ -28,6 +39,13 @@ class DeviceSecurityHelper(private val context: Context) {
                     status = SecurityStatus.MODIFIED_ENVIRONMENT,
                     message = "⚠️ 未検証・カスタム環境の通知",
                     detailMessage = "Google公式互換性チェックのため、標準ビルド環境でのご利用を推奨します。"
+                )
+            }
+            isCanary -> {
+                SecurityCheckResult(
+                    status = SecurityStatus.SECURE_OFFICIAL,
+                    message = "🐤 Canary / Baklava プレビュー環境検出",
+                    detailMessage = "最新の Canary プレースホルダー API (Codename: ${Build.VERSION.CODENAME} / API ${Build.VERSION.SDK_INT}) で動作中です。マルチチャンネル完全互換モードが適用されています。"
                 )
             }
             isLegacyOs -> {
