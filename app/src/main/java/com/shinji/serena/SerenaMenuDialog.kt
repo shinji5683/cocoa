@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.app.Activity
 import android.app.Dialog
@@ -58,21 +58,43 @@ class serenaMenuDialog(
         tvTitle.text = titleText
         tvTitle.contentDescription = titleText
 
+        var firstItemView: View? = null
         val inflater = LayoutInflater.from(context)
         container.removeAllViews()
 
-        for (item in items) {
+        val service = SerenaScreenReaderService.instance
+        val totalCount = items.size
+
+        items.forEachIndexed { index, item ->
             val itemView = inflater.inflate(R.layout.item_serena_menu, container, false)
             val tvIcon = itemView.findViewById<TextView>(R.id.tvItemIcon)
             val tvItemTitle = itemView.findViewById<TextView>(R.id.tvItemTitle)
 
             tvIcon.text = item.icon
             tvItemTitle.text = item.title
-            itemView.contentDescription = item.title
+            val accessibleText = "${item.title}"
+            itemView.contentDescription = accessibleText
+            itemView.isFocusable = true
+
+            itemView.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    if (index == 0) {
+                        service?.soundHelper?.playFirstItemEdgeSound()
+                    } else if (index == totalCount - 1) {
+                        service?.soundHelper?.playLastItemEdgeSound()
+                    } else {
+                        service?.soundHelper?.playFocusMove()
+                    }
+                }
+            }
 
             itemView.setOnClickListener {
                 dismiss()
                 item.action.invoke()
+            }
+
+            if (index == 0) {
+                firstItemView = itemView
             }
 
             container.addView(itemView)
@@ -82,7 +104,10 @@ class serenaMenuDialog(
             dismiss()
         }
 
-        tvTitle.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
+        firstItemView?.post {
+            firstItemView?.requestFocus()
+            firstItemView?.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
+        }
     }
 }
 

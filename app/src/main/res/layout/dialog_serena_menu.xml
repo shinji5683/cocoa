@@ -20,7 +20,7 @@
             android:layout_height="32dp"
             android:src="@drawable/ic_launcher_foreground"
             app:tint="#5C3A21"
-            android:contentDescription="cocoa logo" />
+            android:contentDescription="serena シンボルアイコン (🌸 桜・🦯 白杖・🪷 ユリ)" />
 
         <TextView
             android:id="@+id/tvMenuTitle"
@@ -28,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="10dp"
-            android:text="cocoa メニュー"
+            android:text="🌸 🦯 🪷 serena メニュー"
             android:textColor="#2B1B12"
             android:textSize="20sp"
             android:textStyle="bold" />

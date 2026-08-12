@@ -58,7 +58,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var lastSpokenText: String? = null
     private var lastSpokenTime: Long = 0L
     private lateinit var prefs: SharedPreferences
-    private var soundHelper: SoundAndHapticHelper? = null
+    var soundHelper: SoundAndHapticHelper? = null
     private var timeTickReceiver: BroadcastReceiver? = null
     private var currentGranularity: GranularityMode = GranularityMode.DEFAULT
     private var screenCurtainHelper: ScreenCurtainHelper? = null
@@ -118,6 +118,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun initTts() {
         tts = TextToSpeech(applicationContext, this)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val audioAttributes = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build()
+            tts?.setAudioAttributes(audioAttributes)
+        }
     }
 
     override fun onInit(status: Int) {
@@ -225,6 +232,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             GESTURE_DOUBLE_TAP -> {
                 soundHelper?.playClick()
                 performClickOnFocusedNode()
+                return true
+            }
+            // 1本指ダブルタップ＆ホールド (長押し / TalkBack互換 18): アクション・ショートカットメニュー表示
+            18, 17 -> {
+                soundHelper?.playActionDone()
+                showActionsMenu(getAccessibilityFocusedNode())
                 return true
             }
             // 2本指タップ / マジックタップ (25, 26, 29): 着信応答・通話切断・メディア再生/一時停止
@@ -400,6 +413,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         currentFocus?.performAction(AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS)
         val success = targetNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
         if (success) {
+            if (targetIndex == 0) {
+                soundHelper?.playFirstItemEdgeSound()
+            } else if (targetIndex == nodes.size - 1) {
+                soundHelper?.playLastItemEdgeSound()
+            } else {
+                soundHelper?.playFocusMove()
+            }
             announceNode(targetNode)
         }
     }
@@ -651,6 +671,50 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show dialog: ${e.message}")
             Toast.makeText(this, "serenaメニュー: 読み上げコントロール / クリップボード / 設定", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun showActionsMenu(targetNode: AccessibilityNodeInfo?) {
+        val node = targetNode ?: getAccessibilityFocusedNode()
+        val items = mutableListOf<serenaMenuItem>()
+
+        items.add(serenaMenuItem("👆", "要素を長押し (ロングタップ)") {
+            node?.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
+        })
+
+        if (node != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val customActions = node.actionList
+            for (action in customActions) {
+                val label = action.label?.toString()
+                if (!label.isNullOrBlank()) {
+                    items.add(serenaMenuItem("⚡", label) {
+                        node.performAction(action.id)
+                    })
+                }
+            }
+        }
+
+        val pkgName = node?.packageName?.toString()
+        if (!pkgName.isNullOrEmpty() && pkgName != packageName) {
+            items.add(serenaMenuItem("ℹ️", "アプリ情報を開く ($pkgName)") {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    intent.data = Uri.parse("package:$pkgName")
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to open app info: ${e.message}")
+                }
+            })
+        }
+
+        soundHelper?.playMenuOpen()
+        speak("アクションメニューを開きました", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val dialog = serenaMenuDialog(this, false, items)
+            dialog.show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to show actions menu: ${e.message}")
         }
     }
 
@@ -1325,7 +1389,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val targetLocale = detectLanguage(processedText)
         tts?.language = targetLocale
         AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
-        tts?.speak(processedText, queueMode, null, "serenaUtterance_${System.currentTimeMillis()}")
+        
+        val params = Bundle().apply {
+            putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
+        }
+        tts?.speak(processedText, queueMode, params, "serenaUtterance_${System.currentTimeMillis()}")
     }
 
     fun stopSpeech() {

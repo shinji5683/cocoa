@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.Context
 import android.media.AudioManager
@@ -77,6 +77,18 @@ class SoundAndHapticHelper(private val context: Context) {
     fun playMenuOpen() {
         toneGenerator?.startTone(ToneGenerator.TONE_DTMF_A, 80)
         vibratePattern(longArrayOf(0, 30, 40, 50))
+    }
+
+    fun playFirstItemEdgeSound() {
+        // 1番目（最初）の項目：高音チャイム + 軽快なダブル振動
+        toneGenerator?.startTone(ToneGenerator.TONE_DTMF_A, 60)
+        vibratePattern(longArrayOf(0, 20, 20, 20))
+    }
+
+    fun playLastItemEdgeSound() {
+        // 一番下（最後）の項目：低音境界チャイム + 重厚なダブル振動
+        toneGenerator?.startTone(ToneGenerator.TONE_DTMF_D, 90)
+        vibratePattern(longArrayOf(0, 35, 30, 35))
     }
 
     fun playActionDone() {
