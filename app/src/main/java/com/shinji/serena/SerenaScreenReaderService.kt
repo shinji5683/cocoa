@@ -240,10 +240,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 showActionsMenu(getAccessibilityFocusedNode())
                 return true
             }
-            // 2本指タップ / マジックタップ (25, 26, 29): 着信応答・通話切断・メディア再生/一時停止
-            25, 26, 29 -> {
-                soundHelper?.playActionDone()
-                handleMagicTapAction()
+            // 2本指シングルタップ (25, 26, 29): 読み上げの一時停止・再開トグル
+            25, 26 -> {
+                toggleSpeechPauseResume()
                 return true
             }
             // 2本指トリプルタップ (30) または 3本指ダブルタップ (32): 耳元ささやきステータスチェック
@@ -251,7 +250,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 announceFullStatus()
                 return true
             }
-            // 3本指タップ (31, 33) または L字スワイプ (上→右, 下→右): serena メニュー (TalkBack標準互換)
+            // 3本指シングルタップ (31, 33) または L字スワイプ: serena メニュー起動
             31, 33, GESTURE_SWIPE_UP_AND_RIGHT, GESTURE_SWIPE_DOWN_AND_RIGHT -> {
                 soundHelper?.playMenuOpen()
                 triggerSerenaMenu()
@@ -1383,9 +1382,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return Locale.ENGLISH
     }
 
+    private var isSpeechPaused = false
+    private var currentSpeakingUtterance: String? = null
+
     fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_ADD) {
         if (!isTtsReady || text.isBlank()) return
         val processedText = emojiHelper?.translateEmojiAndKaomoji(text) ?: text
+        lastSpokenText = processedText
+        currentSpeakingUtterance = processedText
+        isSpeechPaused = false
+
         val targetLocale = detectLanguage(processedText)
         tts?.language = targetLocale
         AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
@@ -1394,6 +1400,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
         }
         tts?.speak(processedText, queueMode, params, "serenaUtterance_${System.currentTimeMillis()}")
+    }
+
+    fun toggleSpeechPauseResume() {
+        if (tts?.isSpeaking == true) {
+            isSpeechPaused = true
+            soundHelper?.playActionDone()
+            tts?.stop()
+        } else if (isSpeechPaused && !currentSpeakingUtterance.isNullOrBlank()) {
+            isSpeechPaused = false
+            soundHelper?.playActionDone()
+            speak(currentSpeakingUtterance!!, TextToSpeech.QUEUE_FLUSH)
+        } else {
+            val focusNode = getAccessibilityFocusedNode()
+            if (focusNode != null) {
+                soundHelper?.playActionDone()
+                announceNode(focusNode)
+            }
+        }
     }
 
     fun stopSpeech() {
