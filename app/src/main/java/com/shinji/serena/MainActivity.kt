@@ -183,7 +183,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isAccessibilityServiceEnabled(context: Context, service: Class<*>): Boolean {
-        val expectedComponentName = "${context.packageName}/${service.name}"
+        if (SerenaScreenReaderService.isServiceRunning()) return true
+
+        val expectedFull = "${context.packageName}/${service.name}"
+        val expectedShort = "${context.packageName}/.${service.simpleName}"
         val enabledServices = Settings.Secure.getString(
             context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
@@ -194,7 +197,9 @@ class MainActivity : AppCompatActivity() {
 
         while (colonSplitter.hasNext()) {
             val componentName = colonSplitter.next()
-            if (componentName.equals(expectedComponentName, ignoreCase = true)) {
+            if (componentName.equals(expectedFull, ignoreCase = true) ||
+                componentName.equals(expectedShort, ignoreCase = true) ||
+                componentName.contains(service.simpleName, ignoreCase = true)) {
                 return true
             }
         }

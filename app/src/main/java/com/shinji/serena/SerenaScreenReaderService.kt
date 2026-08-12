@@ -240,12 +240,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 showActionsMenu(getAccessibilityFocusedNode())
                 return true
             }
-            // 2本指シングルタップ (25, 26, 29): 読み上げの一時停止・再開トグル
-            25, 26 -> {
+            // 2本指シングルタップ (25): 読み上げの一時停止・再開トグル
+            25 -> {
                 toggleSpeechPauseResume()
                 return true
             }
-            // 2本指トリプルタップ (30) または 3本指ダブルタップ (32): 耳元ささやきステータスチェック
+            // 2本指ダブルタップ / マジックタップ (26, 29): 電話応答・切断 / メディア再生・一時停止
+            26, 29 -> {
+                soundHelper?.playActionDone()
+                handleMagicTapAction()
+                return true
+            }
+            // 2本指トリプルタップ (30) または 3本指ダブルタップ (32): ステータスチェック
             30, 32 -> {
                 announceFullStatus()
                 return true
