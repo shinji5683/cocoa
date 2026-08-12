@@ -41,6 +41,11 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         const val KEY_SPEECH_RATE = "speech_rate"
         const val KEY_SPEECH_PITCH = "speech_pitch"
         const val KEY_HOURLY_CHIME_ENABLED = "hourly_chime_enabled"
+        const val KEY_TALKBACK_MODE = "key_talkback_mode"
+        const val KEY_CHIME_STYLE = "key_chime_style"
+        const val CHIME_STYLE_NHK = "nhk_radio"
+        const val CHIME_STYLE_CUTE = "cute_beep"
+        const val CHIME_STYLE_BELL = "japanese_bell"
 
         var instance: CocoaScreenReaderService? = null
             private set
@@ -66,6 +71,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
     private var faceHelper: FaceDetectionHelper? = null
     private var objectHelper: ObjectRecognitionHelper? = null
     private var gemmaDownloadHelper: GemmaModelDownloadHelper? = null
+    private var assistantHelper: CocoaAiAssistantHelper? = null
 
     // 通話時間計測用
     private var isCallActive = false
@@ -75,7 +81,12 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
     override fun onCreate() {
         super.onCreate()
         instance = this
-        prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val safeContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            createDeviceProtectedStorageContext()
+        } else {
+            this
+        }
+        prefs = safeContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         soundHelper = SoundAndHapticHelper(this)
         screenCurtainHelper = ScreenCurtainHelper(this)
         statusHelper = StatusAnnouncementHelper(this)
@@ -86,6 +97,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         faceHelper = FaceDetectionHelper(this)
         objectHelper = ObjectRecognitionHelper(this)
         gemmaDownloadHelper = GemmaModelDownloadHelper(this)
+        assistantHelper = CocoaAiAssistantHelper(this)
         initTts()
         registerTimeTickReceiver()
         Log.i(TAG, "cocoa ScreenReaderService created.")
@@ -103,7 +115,9 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
             }
             updateTtsSettings()
             isTtsReady = true
-            speak("ほっと一息、cocoa スクリーンリーダーが起動しました。", TextToSpeech.QUEUE_FLUSH)
+            val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
+            val welcomeMsg = if (isTalkBackMode) "TalkBack互換モードで cocoa が起動しました。" else "ほっと一息、cocoa スクリーンリーダーが起動しました。"
+            speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
             soundHelper?.playMenuOpen()
             Log.i(TAG, "TTS initialized successfully.")
         } else {
@@ -162,41 +176,35 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         AlphaTelemetryHelper.getInstance(this).incrementGestureCount()
 
         when (gestureId) {
-            // 3本指シングルタップ (API 30 = 31) または L字スワイプ: cocoaメニュー
-            31 -> {
-                soundHelper?.playMenuOpen()
-                triggerCocoaMenu()
-                return true
-            }
-            // 右スワイプ: 次の項目/粒度移動
+            // 右スワイプ / 右フリック: 次の項目/粒度移動
             GESTURE_SWIPE_RIGHT -> {
                 soundHelper?.playFocusMove()
                 focusNext()
                 return true
             }
-            // 左スワイプ: 前の項目/粒度移動
+            // 左スワイプ / 左フリック: 前の項目/粒度移動
             GESTURE_SWIPE_LEFT -> {
                 soundHelper?.playFocusMove()
                 focusPrevious()
                 return true
             }
-            // 上スワイプ: 読み上げコントロール（粒度）切り替え（前へ）
+            // 上スワイプ / 上フリック: 読み上げコントロール（粒度）切り替え（前へ）
             GESTURE_SWIPE_UP -> {
                 cycleGranularity(forward = false)
                 return true
             }
-            // 下スワイプ: 読み上げコントロール（粒度）切り替え（次へ）
+            // 下スワイプ / 下フリック: 読み上げコントロール（粒度）切り替え（次へ）
             GESTURE_SWIPE_DOWN -> {
                 cycleGranularity(forward = true)
                 return true
             }
-            // 2本指上スワイプ (27): 下へスクロール (次ページ)
-            27 -> {
+            // 2本指上スワイプ (19, 27): 下へスクロール (次ページ)
+            19, 27 -> {
                 scrollPageForward()
                 return true
             }
-            // 2本指下スワイプ (28): 上へスクロール (前ページ)
-            28 -> {
+            // 2本指下スワイプ (20, 28): 上へスクロール (前ページ)
+            20, 28 -> {
                 scrollPageBackward()
                 return true
             }
@@ -206,8 +214,8 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
                 performClickOnFocusedNode()
                 return true
             }
-            // 2本指ダブルタップ / マジックタップ (API 30 = 26): 着信応答・通話切断・メディア再生/一時停止
-            26, GESTURE_2_FINGER_SINGLE_TAP -> {
+            // 2本指タップ / マジックタップ (25, 26, 29): 着信応答・通話切断・メディア再生/一時停止
+            25, 26, 29 -> {
                 soundHelper?.playActionDone()
                 handleMagicTapAction()
                 return true
@@ -215,6 +223,12 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
             // 2本指トリプルタップ (30) または 3本指ダブルタップ (32): 耳元ささやきステータスチェック
             30, 32 -> {
                 announceFullStatus()
+                return true
+            }
+            // 3本指タップ (31, 33) または L字スワイプ (上→右, 下→右): cocoa メニュー (TalkBack標準互換)
+            31, 33, GESTURE_SWIPE_UP_AND_RIGHT, GESTURE_SWIPE_DOWN_AND_RIGHT -> {
+                soundHelper?.playMenuOpen()
+                triggerCocoaMenu()
                 return true
             }
             // 下→左スワイプ: 戻るボタン
@@ -229,20 +243,6 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
                 soundHelper?.playClick()
                 speak("ホーム画面", TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_HOME)
-                return true
-            }
-            // 下→右スワイプ: 通知センター
-            GESTURE_SWIPE_DOWN_AND_RIGHT -> {
-                soundHelper?.playClick()
-                speak("通知センター", TextToSpeech.QUEUE_FLUSH)
-                performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
-                return true
-            }
-            // 上→右スワイプ: 最近のアプリ
-            GESTURE_SWIPE_UP_AND_RIGHT -> {
-                soundHelper?.playClick()
-                speak("最近使ったアプリ", TextToSpeech.QUEUE_FLUSH)
-                performGlobalAction(GLOBAL_ACTION_RECENTS)
                 return true
             }
             // ダブルタップ長押し: 読み上げ停止
@@ -568,8 +568,16 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         soundHelper?.playMenuOpen()
         speak("cocoa メニューを開きました", TextToSpeech.QUEUE_FLUSH)
         val curtainLabel = if (screenCurtainHelper?.isCurtainEnabled == true) "🌑 スクリーンカーテンを解除" else "🌑 スクリーンカーテン (画面非表示・節電)"
+        val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
+        val modeLabel = if (isTalkBackMode) "🔄 モード切替 (現在: TalkBack互換モード)" else "🔄 モード切替 (現在: cocoaオリジナルモード)"
         val filterName = notificationFilterHelper?.currentMode?.displayName ?: "自動"
         val items = listOf(
+            CocoaMenuItem("🎙️", "cocoa AI Voice Assistant (音声対話アシスタント)") {
+                launchAiAssistant()
+            },
+            CocoaMenuItem("🔄", modeLabel) {
+                toggleTalkBackMode()
+            },
             CocoaMenuItem("📊", "スマホ状態 (バッテリー/電波/Wi-Fi/時刻)") {
                 announceFullStatus()
             },
@@ -582,6 +590,9 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
             CocoaMenuItem("💌", "通知フィルター (現在: $filterName)") {
                 cycleNotificationFilterMode()
             },
+            CocoaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
+                cycleChimeStyle()
+            },
             CocoaMenuItem(if (screenCurtainHelper?.isCurtainEnabled == true) "☀️" else "🌑", curtainLabel) {
                 toggleScreenCurtain()
             },
@@ -593,9 +604,6 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
             },
             CocoaMenuItem("📦", "カメラ・物体と周囲の認識 (Gemma 4 On-Device AI)") {
                 launchCameraObjectAnalysis()
-            },
-            CocoaMenuItem("🌐", "Google ChromeでWeb認証を開く") {
-                launchChromeAuthPage("https://accounts.google.com")
             },
             CocoaMenuItem("⚡", "読み上げ速度の変更 (トグル切り替え)") {
                 toggleSpeechRateQuick()
@@ -632,6 +640,16 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
             Log.e(TAG, "Failed to show dialog: ${e.message}")
             Toast.makeText(this, "cocoaメニュー: 読み上げコントロール / クリップボード / 設定", Toast.LENGTH_LONG).show()
         }
+    }
+
+    fun toggleTalkBackMode(): Boolean {
+        val current = prefs.getBoolean(KEY_TALKBACK_MODE, false)
+        val next = !current
+        prefs.edit().putBoolean(KEY_TALKBACK_MODE, next).apply()
+        soundHelper?.playActionDone()
+        val modeName = if (next) "TalkBack互換モード" else "cocoaオリジナルモード"
+        speak("操作モードを $modeName に変更しました", TextToSpeech.QUEUE_FLUSH)
+        return next
     }
 
     private fun showClipboardHistoryDialog(targetNode: AccessibilityNodeInfo?) {
@@ -692,27 +710,57 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         }
     }
 
+    fun launchAiAssistant() {
+        soundHelper?.playMenuOpen()
+        assistantHelper?.startListening()
+    }
+
     fun launchCameraOcr() {
         soundHelper?.playClick()
-        speak("カメラアプリを起動します。撮影した写真から文字を読み取ります。", TextToSpeech.QUEUE_FLUSH)
+        speak("文字読み取りカメラを起動します。撮影した画像から文字を即座に読み取ります。", TextToSpeech.QUEUE_FLUSH)
         ocrHelper?.launchCameraForTextRecognition()
     }
 
     fun launchCameraFaceAnalysis() {
         soundHelper?.playClick()
-        speak("カメラアプリを起動します。撮影した人物の表情や位置を解析します。", TextToSpeech.QUEUE_FLUSH)
+        speak("表情・人物判定カメラを起動します。撮影した人物の表情や位置を即座に解析します。", TextToSpeech.QUEUE_FLUSH)
         faceHelper?.launchCameraForFaceAnalysis()
     }
 
     fun launchCameraObjectAnalysis() {
         soundHelper?.playClick()
-        val downloadPrompt = gemmaDownloadHelper?.buildDownloadConfirmationPrompt() ?: ""
-        if (downloadPrompt.isNotEmpty()) {
-            speak(downloadPrompt, TextToSpeech.QUEUE_FLUSH)
-        } else {
-            speak("カメラアプリを起動します。Gemma 4 AIエンジンで周囲の物体や景観を完全ローカル解析します。", TextToSpeech.QUEUE_FLUSH)
+        showGemmaDownloadDialog()
+    }
+
+    private fun showGemmaDownloadDialog() {
+        val helper = gemmaDownloadHelper
+        val prompt = helper?.buildDownloadConfirmationPrompt() ?: "Gemma 4 AIエンジンで周囲の物体や景観を完全ローカル解析します。"
+        val items = listOf(
+            CocoaMenuItem("🚀", "軽量ローカルAIで即座に物体を撮影・認識") {
+                soundHelper?.playClick()
+                speak("軽量ローカルAIエンジンで物体認識カメラを起動します。", TextToSpeech.QUEUE_FLUSH)
+                objectHelper?.launchCameraForObjectRecognition()
+            },
+            CocoaMenuItem("⬇️", "Gemma 4 AIモデル(1.5GB)の公式無料ダウンロード") {
+                soundHelper?.playClick()
+                val success = gemmaDownloadHelper?.startGemmaDownload() ?: false
+                if (success) {
+                    speak("Google公式サーバーから Gemma 4 AIモデルのバックグラウンドダウンロードを開始しました。通知領域で進行状況を確認できます。", TextToSpeech.QUEUE_FLUSH)
+                    Toast.makeText(this, "Gemma 4 ダウンロード開始", Toast.LENGTH_LONG).show()
+                } else {
+                    speak("ダウンロードの開始に失敗しました。容量または接続を確認してください。", TextToSpeech.QUEUE_FLUSH)
+                }
+                objectHelper?.launchCameraForObjectRecognition()
+            }
+        )
+        try {
+            speak("カメラ解析モードの選択ダイアログを開きました。軽量ローカル認識、または Gemma 4 AI ダウンロードを選択できます。", TextToSpeech.QUEUE_FLUSH)
+            val dialog = CocoaMenuDialog(this, false, items)
+            dialog.show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to show Gemma dialog: ${e.message}")
+            objectHelper?.launchCameraForObjectRecognition()
         }
-        objectHelper?.launchCameraForObjectRecognition()
     }
 
     private fun launchChromeAuthPage(url: String) {
@@ -727,7 +775,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         AlphaTelemetryHelper.getInstance(this).sendReportViaEmail(this)
     }
 
-    private fun toggleSpeechRateQuick() {
+    fun toggleSpeechRateQuick() {
         val currentRate = prefs.getFloat(KEY_SPEECH_RATE, 1.0f)
         val newRate = when {
             currentRate < 1.25f -> 1.5f
@@ -952,8 +1000,8 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
 
             AccessibilityEvent.TYPE_VIEW_FOCUSED,
             AccessibilityEvent.TYPE_VIEW_HOVER_ENTER,
+            AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
             AccessibilityEvent.TYPE_VIEW_SELECTED -> {
-                soundHelper?.playFocusMove()
                 val node = event.source ?: return
                 announceNode(node)
             }
@@ -1320,7 +1368,13 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
     }
 
     fun triggerHourlyAnnouncement(hour24: Int) {
-        soundHelper?.playActionDone()
+        val style = prefs.getString(KEY_CHIME_STYLE, CHIME_STYLE_NHK) ?: CHIME_STYLE_NHK
+        when (style) {
+            CHIME_STYLE_NHK -> soundHelper?.playNhkRadioChime()
+            CHIME_STYLE_CUTE -> soundHelper?.playCuteBeepChime()
+            CHIME_STYLE_BELL -> soundHelper?.playJapaneseBellChime()
+            else -> soundHelper?.playNhkRadioChime()
+        }
 
         val isAm = hour24 < 12
         val displayHour = when {
@@ -1332,6 +1386,31 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
 
         val announcement = "${periodStr}${displayHour}時をお知らせします。"
         speak(announcement, TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun cycleChimeStyle() {
+        val currentStyle = prefs.getString(KEY_CHIME_STYLE, CHIME_STYLE_NHK)
+        val nextStyle = when (currentStyle) {
+            CHIME_STYLE_NHK -> CHIME_STYLE_CUTE
+            CHIME_STYLE_CUTE -> CHIME_STYLE_BELL
+            else -> CHIME_STYLE_NHK
+        }
+        prefs.edit().putString(KEY_CHIME_STYLE, nextStyle).apply()
+        val name = when (nextStyle) {
+            CHIME_STYLE_NHK -> {
+                soundHelper?.playNhkRadioChime()
+                "NHKラジオ風時報 (ポッ、ポッ、ポッ、ポーン！)"
+            }
+            CHIME_STYLE_CUTE -> {
+                soundHelper?.playCuteBeepChime()
+                "ポップ・ビープ音"
+            }
+            else -> {
+                soundHelper?.playJapaneseBellChime()
+                "和風・お寺の鐘風"
+            }
+        }
+        speak("時報チャイム音を $name に変更しました", TextToSpeech.QUEUE_FLUSH)
     }
 
     override fun onDestroy() {

@@ -12,8 +12,12 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == "android.intent.action.QUICKBOOT_POWERON") {
-            Log.i(TAG, "Device boot completed. cocoa accessibility service is ready.")
+        val action = intent.action ?: return
+        if (action == Intent.ACTION_BOOT_COMPLETED ||
+            action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
+            action == "android.intent.action.QUICKBOOT_POWERON" ||
+            action == "com.htc.intent.action.QUICKBOOT_POWERON") {
+            Log.i(TAG, "Device boot completed ($action). cocoa DirectBoot & Accessibility service ready.")
         }
     }
 }

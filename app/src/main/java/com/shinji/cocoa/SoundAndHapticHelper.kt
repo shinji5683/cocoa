@@ -65,6 +65,33 @@ class SoundAndHapticHelper(private val context: Context) {
         vibratePattern(longArrayOf(0, 25, 30, 25))
     }
 
+    fun playNhkRadioChime() {
+        // NHKラジオ風時報: ポッ(57秒)、ポッ(58秒)、ポッ(59秒)、ポーン(00秒)！
+        Thread {
+            try {
+                for (i in 1..3) {
+                    toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 80)
+                    vibrate(20)
+                    Thread.sleep(400)
+                }
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
+                vibratePattern(longArrayOf(0, 50, 50, 100))
+            } catch (e: Exception) {
+                Log.e(TAG, "NhkChime error: ${e.message}")
+            }
+        }.start()
+    }
+
+    fun playCuteBeepChime() {
+        toneGenerator?.startTone(ToneGenerator.TONE_DTMF_A, 120)
+        vibratePattern(longArrayOf(0, 30, 30, 50))
+    }
+
+    fun playJapaneseBellChime() {
+        toneGenerator?.startTone(ToneGenerator.TONE_PROP_PROMPT, 400)
+        vibratePattern(longArrayOf(0, 60, 40, 80))
+    }
+
     fun playProgressBeep(percent: Int) {
         val clamped = percent.coerceIn(0, 100)
         val toneType = when {
