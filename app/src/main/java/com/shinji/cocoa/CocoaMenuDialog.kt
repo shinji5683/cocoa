@@ -1,12 +1,15 @@
 package com.shinji.cocoa
 
+import android.app.Activity
 import android.app.Dialog
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
+import android.view.accessibility.AccessibilityEvent
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -23,6 +26,17 @@ class CocoaMenuDialog(
     private val items: List<CocoaMenuItem>
 ) : Dialog(context, android.R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar) {
 
+    init {
+        if (context !is Activity) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                window?.setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
+            } else {
+                @Suppress("DEPRECATION")
+                window?.setType(WindowManager.LayoutParams.TYPE_PHONE)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -30,18 +44,19 @@ class CocoaMenuDialog(
 
         window?.apply {
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
-            setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
         }
 
         val tvTitle = findViewById<TextView>(R.id.tvMenuTitle)
         val container = findViewById<LinearLayout>(R.id.containerMenuItems)
         val btnClose = findViewById<Button>(R.id.btnClose)
 
-        if (isEditTextFocus) {
-            tvTitle.text = "✏️ cocoa 編集アシスト"
+        val titleText = if (isEditTextFocus) {
+            "✏️ cocoa 編集アシスト"
         } else {
-            tvTitle.text = "☕ cocoa メニュー"
+            "☕ cocoa メニュー"
         }
+        tvTitle.text = titleText
+        tvTitle.contentDescription = titleText
 
         val inflater = LayoutInflater.from(context)
         container.removeAllViews()
@@ -53,6 +68,7 @@ class CocoaMenuDialog(
 
             tvIcon.text = item.icon
             tvItemTitle.text = item.title
+            itemView.contentDescription = item.title
 
             itemView.setOnClickListener {
                 dismiss()
@@ -65,5 +81,7 @@ class CocoaMenuDialog(
         btnClose.setOnClickListener {
             dismiss()
         }
+
+        tvTitle.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
     }
 }
