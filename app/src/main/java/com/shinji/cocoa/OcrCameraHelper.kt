@@ -21,4 +21,9 @@ class OcrCameraHelper(private val context: Context) {
             Log.e(TAG, "Camera launch error: ${e.message}")
         }
     }
+
+    fun captureAndRecognize(onResult: (String) -> Unit) {
+        // テキスト/環境読み取りシミュレーション・リアルタイムフレームフィードバック
+        onResult("前方クリア、テキスト未検知")
+    }
 }

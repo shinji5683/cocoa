@@ -50,6 +50,25 @@ class SoundAndHapticHelper(private val context: Context) {
         vibrate(15)
     }
 
+    fun playSpatialTouchFeedback(normX: Float, normY: Float, isButton: Boolean) {
+        val toneType = when {
+            normX < 0.25f -> ToneGenerator.TONE_DTMF_1
+            normX < 0.50f -> ToneGenerator.TONE_DTMF_2
+            normX < 0.75f -> ToneGenerator.TONE_DTMF_3
+            else -> ToneGenerator.TONE_DTMF_4
+        }
+        val duration = if (isButton) 40 else 20
+        toneGenerator?.startTone(toneType, duration)
+
+        val vibeTime = when {
+            isButton -> 35L
+            normY < 0.33f -> 10L
+            normY < 0.66f -> 18L
+            else -> 25L
+        }
+        vibrate(vibeTime)
+    }
+
     fun playClick() {
         toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 45)
         vibrate(30)

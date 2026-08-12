@@ -96,6 +96,18 @@ class CocoaAiAssistantHelper(private val service: CocoaScreenReaderService) {
             query.contains("速度") || query.contains("はやさ") || query.contains("速さ") -> {
                 service.toggleSpeechRateQuick()
             }
+            query.contains("実況") || query.contains("ライブ") || query.contains("環境") -> {
+                service.toggleLiveEnvironmentDescription()
+            }
+            query.contains("クリップボード") || query.contains("コピー") || query.contains("履歴") -> {
+                service.showClipboardHistoryQuickly()
+            }
+            query.contains("通知") || query.contains("フィルター") -> {
+                service.cycleNotificationFilterMode()
+            }
+            query.contains("シェイク") || query.contains("振り振り") -> {
+                service.announceFullStatus()
+            }
             query.contains("カーテン") || query.contains("画面消す") || query.contains("節電") -> {
                 service.toggleScreenCurtain()
             }
@@ -103,7 +115,7 @@ class CocoaAiAssistantHelper(private val service: CocoaScreenReaderService) {
                 service.triggerCocoaMenu()
             }
             else -> {
-                service.speak("音声コマンド「$inputQuery」を受け付けました。基本コマンド（バッテリー、文字読み取り、表情認識、モード切替）に対応しています。", TextToSpeech.QUEUE_FLUSH)
+                service.speak("音声コマンド「$inputQuery」を受け付けました。環境実況、ステータス、文字読み取り、通知フィルター、クリップボードに対応しています。", TextToSpeech.QUEUE_FLUSH)
             }
         }
     }

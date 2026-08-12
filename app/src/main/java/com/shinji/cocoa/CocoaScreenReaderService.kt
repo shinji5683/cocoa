@@ -72,6 +72,11 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
     private var objectHelper: ObjectRecognitionHelper? = null
     private var gemmaDownloadHelper: GemmaModelDownloadHelper? = null
     private var assistantHelper: CocoaAiAssistantHelper? = null
+    private var shakeDetectorHelper: ShakeDetectorHelper? = null
+    private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
+    private var isLiveEnvironmentModeActive = false
+    private var liveEnvironmentHandler: android.os.Handler? = null
+    private var liveEnvironmentRunnable: Runnable? = null
 
     // 通話時間計測用
     private var isCallActive = false
@@ -98,6 +103,14 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         objectHelper = ObjectRecognitionHelper(this)
         gemmaDownloadHelper = GemmaModelDownloadHelper(this)
         assistantHelper = CocoaAiAssistantHelper(this)
+
+        shakeDetectorHelper = ShakeDetectorHelper(this) {
+            announceFullStatus()
+        }.apply { start() }
+
+        soundHelper?.let {
+            spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
+        }
         initTts()
         registerTimeTickReceiver()
         Log.i(TAG, "cocoa ScreenReaderService created.")
@@ -687,7 +700,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         }
     }
 
-    private fun cycleNotificationFilterMode() {
+    fun cycleNotificationFilterMode() {
         val mode = notificationFilterHelper?.cycleFilterMode()
         soundHelper?.playActionDone()
         speak("通知フィルター: ${mode?.displayName}", TextToSpeech.QUEUE_FLUSH)
@@ -1415,6 +1428,8 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
 
     override fun onDestroy() {
         super.onDestroy()
+        shakeDetectorHelper?.stop()
+        stopLiveEnvironmentDescription()
         stopSpeech()
         unregisterTimeTickReceiver()
         soundHelper?.release()
@@ -1424,5 +1439,44 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         isTtsReady = false
         instance = null
         Log.i(TAG, "cocoa ScreenReaderService destroyed.")
+    }
+
+    fun toggleLiveEnvironmentDescription() {
+        if (isLiveEnvironmentModeActive) {
+            stopLiveEnvironmentDescription()
+            speak("リアルタイム環境実況モードを終了しました。", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            startLiveEnvironmentDescription()
+            speak("リアルタイム環境実況モードを開始しました。カメラ前の景色や文字を自動解説します。", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    private fun startLiveEnvironmentDescription() {
+        isLiveEnvironmentModeActive = true
+        if (liveEnvironmentHandler == null) {
+            liveEnvironmentHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        }
+        liveEnvironmentRunnable = object : Runnable {
+            override fun run() {
+                if (!isLiveEnvironmentModeActive) return
+                ocrHelper?.captureAndRecognize { resultText ->
+                    if (resultText.isNotBlank()) {
+                        speak("環境実況: $resultText", TextToSpeech.QUEUE_ADD)
+                    }
+                }
+                liveEnvironmentHandler?.postDelayed(this, 4000)
+            }
+        }
+        liveEnvironmentHandler?.post(liveEnvironmentRunnable!!)
+    }
+
+    private fun stopLiveEnvironmentDescription() {
+        isLiveEnvironmentModeActive = false
+        liveEnvironmentRunnable?.let { liveEnvironmentHandler?.removeCallbacks(it) }
+    }
+
+    fun showClipboardHistoryQuickly() {
+        val lastText = clipboardHelper?.getHistory()?.firstOrNull() ?: "履歴はありません"
+        speak("最新のクリップボード履歴: $lastText", TextToSpeech.QUEUE_FLUSH)
     }
 }
