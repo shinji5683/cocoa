@@ -157,7 +157,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val info = serviceInfo ?: AccessibilityServiceInfo()
         info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN
-        info.notificationTimeout = 100
+        info.notificationTimeout = 0
         var flags = info.flags or
                 AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                 AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
@@ -165,7 +165,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
+            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES or AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
         }
         info.flags = flags
         serviceInfo = info
@@ -218,13 +218,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 cycleGranularity(forward = true)
                 return true
             }
-            // 2本指上スワイプ (19, 27): 下へスクロール (次ページ)
-            19, 27 -> {
+            // 2本指上スワイプ (19): 下へスクロール (次ページ)
+            19 -> {
                 scrollPageForward()
                 return true
             }
-            // 2本指下スワイプ (20, 28): 上へスクロール (前ページ)
-            20, 28 -> {
+            // 2本指下スワイプ (20): 上へスクロール (前ページ)
+            20 -> {
                 scrollPageBackward()
                 return true
             }
@@ -251,15 +251,50 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 handleMagicTapAction()
                 return true
             }
-            // 2本指トリプルタップ (30) または 3本指ダブルタップ (32): ステータスチェック
-            30, 32 -> {
+            // 2本指トリプルタップ (27): ステータスチェック
+            27 -> {
                 announceFullStatus()
                 return true
             }
-            // 3本指シングルタップ (31, 33) または L字スワイプ: serena メニュー起動
-            31, 33, GESTURE_SWIPE_UP_AND_RIGHT, GESTURE_SWIPE_DOWN_AND_RIGHT -> {
+            // 2本指クアッドタップ (4回タップ 28): 音声アシスタント起動
+            28 -> {
+                launchAiAssistant()
+                return true
+            }
+            // 3本指シングルタップ (31): serena メニュー起動
+            31 -> {
                 soundHelper?.playMenuOpen()
                 triggerSerenaMenu()
+                return true
+            }
+            // 3本指ダブルタップ (32): 読み上げ速度切り替え
+            32 -> {
+                toggleSpeechRateQuick()
+                return true
+            }
+            // 3本指トリプルタップ (33): クリップボード履歴ダイアログ表示
+            33 -> {
+                showClipboardHistoryDialog(getAccessibilityFocusedNode())
+                return true
+            }
+            // 3本指クアッドタップ (4回タップ 34, 35, 36): 通知フィルター切り替え
+            34, 35, 36 -> {
+                cycleNotificationFilterMode()
+                return true
+            }
+            // 4本指シングルタップ (37): 画面の一番上から読む
+            37 -> {
+                readFromTop()
+                return true
+            }
+            // 4本指ダブルタップ (38): スクリーンカーテン (画面非表示) トグル
+            38 -> {
+                toggleScreenCurtain()
+                return true
+            }
+            // 4本指トリプル/クアッドタップ (39, 40): ヘルプ案内
+            39, 40 -> {
+                showHelp()
                 return true
             }
             // 下→左スワイプ: 戻るボタン
