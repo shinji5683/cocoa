@@ -26,7 +26,7 @@
     <string name="btn_request_overlay">重ねて表示（オーバーレイ）の許可設定</string>
     <string name="btn_request_notification">通知の受信許可を設定</string>
 
-    <string name="title_features">cocoa の主な機能と操作方法</string>
+    <string name="title_features">serena Screen Reader の主な機能と操作方法</string>
     <string name="feature_1">・【フォーカス移動】1本指で左右スワイプ（前後の要素に移動）</string>
     <string name="feature_2">・【タップ実行】1本指で画面をダブルタップ（選択項目をクリック）</string>
     <string name="feature_3">・【ジェスチャーナビ】下→左で戻る、上→左でホーム、下→右で通知センター</string>
@@ -41,8 +41,8 @@
     <string name="btn_copy_telemetry">診断レポートをクリップボードにコピー</string>
     <string name="label_telemetry_optin">動作改善・レポート送信に協力する</string>
 
-    <string name="dialog_telemetry_title">☕ cocoa アルファ版 動作改善ご協力のお願い</string>
-    <string name="dialog_telemetry_message">cocoa アルファ版をご利用いただきありがとうございます。\n\nアプリの品質向上および Canary / QPR Beta / Stable 各OSチャンネルでの動作安定化のため、端末の動作統計データを Shinji (shinjisakiyama@gmail.com) へ送信する機能を提供しています。\n\n【送信される情報】\n・OSバージョン、APIレベル、端末モデル名\n・ジェスチャー操作回数、TTS使用言語数、通話アナウンス件数\n\n⚠️ 電話番号、連絡先名、メッセージ本文、発声音声などの個人情報は一切収集・送信されません。\n\n動作改善にご協力いただけますでしょうか？（後から設定でいつでも変更可能です）</string>
+    <string name="dialog_telemetry_title">🌸 serena Screen Reader アルファ版 動作改善ご協力のお願い</string>
+    <string name="dialog_telemetry_message">serena Screen Reader アルファ版をご利用いただきありがとうございます。\n\nアプリの品質向上および Canary / QPR Beta / Stable 各OSチャンネルでの動作安定化のため、端末の動作統計データを Shinji (shinjisakiyama@gmail.com) へ送信する機能を提供しています。\n\n【送信される情報】\n・OSバージョン、APIレベル、端末モデル名\n・ジェスチャー操作回数、TTS使用言語数、通話アナウンス件数\n\n⚠️ 電話番号、連絡先名、メッセージ本文、発声音声などの個人情報は一切収集・送信されません。\n\n動作改善にご協力いただけますでしょうか？（後から設定でいつでも変更可能です）</string>
     <string name="dialog_telemetry_agree">同意して協力する</string>
     <string name="dialog_telemetry_refuse">今回は見送る</string>
 

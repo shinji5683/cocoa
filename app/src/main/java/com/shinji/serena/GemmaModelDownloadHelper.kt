@@ -44,7 +44,7 @@ class GemmaModelDownloadHelper(private val context: Context) {
         return try {
             val request = DownloadManager.Request(Uri.parse(OFFICIAL_GEMMA_DOWNLOAD_URL)).apply {
                 setTitle("Gemma 4 On-Device AI Engine")
-                setDescription("cocoa の完全ローカルAIモデル(約1.5GB)をダウンロード中...")
+                setDescription("serena の完全ローカルAIモデル(約1.5GB)をダウンロード中...")
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, "gemma_4_vision.bin")
                 setAllowedOverMetered(true)
@@ -66,4 +66,5 @@ class GemmaModelDownloadHelper(private val context: Context) {
         return "Google公式 Gemma 4 AIモデル（無料・約1.5GB）をダウンロードします。空き容量: ${freeMb}MB、$wifiStatus。よろしいですか？"
     }
 }
+
 

@@ -13,7 +13,7 @@ import java.util.Locale
 class AlphaTelemetryHelper(private val context: Context) {
 
     companion object {
-        const val PREFS_NAME = "cocoa_telemetry_prefs"
+        const val PREFS_NAME = "serena_telemetry_prefs"
         const val KEY_CONSENT_GRANTED = "telemetry_consent_granted"
         const val KEY_CONSENT_ASKED = "telemetry_consent_asked"
 
@@ -88,9 +88,9 @@ class AlphaTelemetryHelper(private val context: Context) {
         val channelTag = "Canary/QPR-Beta/Stable Multi-Channel"
 
         return """
-            === cocoa アルファ版 動作診断・利用統計レポート ===
+            === serena アルファ版 動作診断・利用統計レポート ===
             [基本情報]
-            ・アプリ名: cocoa (スクリーンリーダー)
+            ・アプリ名: serena (スクリーンリーダー)
             ・バージョン: 1.0.0-alpha01
             ・OSバージョン: Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
             ・テストチャンネル: $channelTag
@@ -112,7 +112,7 @@ class AlphaTelemetryHelper(private val context: Context) {
 
     fun sendReportViaEmail(context: Context) {
         val reportText = generateReportText()
-        val subject = "[cocoa Alpha] 動作診断・利用統計レポート (v1.0.0-alpha01)"
+        val subject = "[serena Alpha] 動作診断・利用統計レポート (v1.0.0-alpha01)"
 
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse("mailto:")
@@ -132,9 +132,10 @@ class AlphaTelemetryHelper(private val context: Context) {
 
     fun copyReportToClipboard(context: Context) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("cocoa Telemetry Report", generateReportText())
+        val clip = ClipData.newPlainText("serena Telemetry Report", generateReportText())
         clipboard.setPrimaryClip(clip)
         Toast.makeText(context, "診断レポートをクリップボードにコピーしました", Toast.LENGTH_SHORT).show()
     }
 }
+
 

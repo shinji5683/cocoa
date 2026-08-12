@@ -57,3 +57,4 @@ class ShakeDetectorHelper(
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 }
 
+

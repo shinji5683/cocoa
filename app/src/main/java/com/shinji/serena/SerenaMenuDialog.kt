@@ -1,4 +1,4 @@
-package com.shinji.serena
+﻿package com.shinji.serena
 
 import android.app.Activity
 import android.app.Dialog
@@ -14,16 +14,16 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 
-data class CocoaMenuItem(
+data class serenaMenuItem(
     val icon: String,
     val title: String,
     val action: () -> Unit
 )
 
-class CocoaMenuDialog(
+class serenaMenuDialog(
     context: Context,
     private val isEditTextFocus: Boolean,
-    private val items: List<CocoaMenuItem>
+    private val items: List<serenaMenuItem>
 ) : Dialog(context, android.R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar) {
 
     init {
@@ -85,4 +85,5 @@ class CocoaMenuDialog(
         tvTitle.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
     }
 }
+
 

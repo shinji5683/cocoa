@@ -36,3 +36,4 @@ class SpatialHapticTouchMapHelper(private val soundAndHapticHelper: SoundAndHapt
     }
 }
 
+

@@ -28,3 +28,4 @@ class OcrCameraHelper(private val context: Context) {
     }
 }
 
+

@@ -33,11 +33,11 @@ enum class GranularityMode(val displayName: String) {
     CHARACTERS("文字")
 }
 
-class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitListener {
+class serenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitListener {
 
     companion object {
-        private const val TAG = "CocoaScreenReader"
-        const val PREFS_NAME = "cocoa_prefs"
+        private const val TAG = "serenaScreenReader"
+        const val PREFS_NAME = "serena_prefs"
         const val KEY_SPEECH_RATE = "speech_rate"
         const val KEY_SPEECH_PITCH = "speech_pitch"
         const val KEY_HOURLY_CHIME_ENABLED = "hourly_chime_enabled"
@@ -47,7 +47,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         const val CHIME_STYLE_CUTE = "cute_beep"
         const val CHIME_STYLE_BELL = "japanese_bell"
 
-        var instance: CocoaScreenReaderService? = null
+        var instance: serenaScreenReaderService? = null
             private set
 
         fun isServiceRunning(): Boolean = instance != null
@@ -71,7 +71,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
     private var faceHelper: FaceDetectionHelper? = null
     private var objectHelper: ObjectRecognitionHelper? = null
     private var gemmaDownloadHelper: GemmaModelDownloadHelper? = null
-    private var assistantHelper: CocoaAiAssistantHelper? = null
+    private var assistantHelper: serenaAiAssistantHelper? = null
     private var shakeDetectorHelper: ShakeDetectorHelper? = null
     private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
     private var isLiveEnvironmentModeActive = false
@@ -102,7 +102,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         faceHelper = FaceDetectionHelper(this)
         objectHelper = ObjectRecognitionHelper(this)
         gemmaDownloadHelper = GemmaModelDownloadHelper(this)
-        assistantHelper = CocoaAiAssistantHelper(this)
+        assistantHelper = serenaAiAssistantHelper(this)
 
         shakeDetectorHelper = ShakeDetectorHelper(this) {
             announceFullStatus()
@@ -113,7 +113,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         }
         initTts()
         registerTimeTickReceiver()
-        Log.i(TAG, "cocoa ScreenReaderService created.")
+        Log.i(TAG, "serena ScreenReaderService created.")
     }
 
     private fun initTts() {
@@ -129,7 +129,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
             updateTtsSettings()
             isTtsReady = true
             val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
-            val welcomeMsg = if (isTalkBackMode) "TalkBack互換モードで cocoa が起動しました。" else "ほっと一息、cocoa スクリーンリーダーが起動しました。"
+            val welcomeMsg = if (isTalkBackMode) "TalkBack互換モードで serena が起動しました。" else "ほっと一息、serena スクリーンリーダーが起動しました。"
             speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
             soundHelper?.playMenuOpen()
             Log.i(TAG, "TTS initialized successfully.")
@@ -162,7 +162,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         }
         info.flags = flags
         serviceInfo = info
-        Log.i(TAG, "cocoa AccessibilityService connected.")
+        Log.i(TAG, "serena AccessibilityService connected.")
     }
 
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
@@ -238,10 +238,10 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
                 announceFullStatus()
                 return true
             }
-            // 3本指タップ (31, 33) または L字スワイプ (上→右, 下→右): cocoa メニュー (TalkBack標準互換)
+            // 3本指タップ (31, 33) または L字スワイプ (上→右, 下→右): serena メニュー (TalkBack標準互換)
             31, 33, GESTURE_SWIPE_UP_AND_RIGHT, GESTURE_SWIPE_DOWN_AND_RIGHT -> {
                 soundHelper?.playMenuOpen()
-                triggerCocoaMenu()
+                triggerserenaMenu()
                 return true
             }
             // 下→左スワイプ: 戻るボタン
@@ -566,92 +566,92 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         }, null)
     }
 
-    fun triggerCocoaMenu() {
+    fun triggerserenaMenu() {
         val focusNode = findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
         val isEditable = focusNode != null && (focusNode.isEditable || focusNode.className?.contains("EditText", ignoreCase = true) == true)
 
         if (isEditable && focusNode != null) {
             showEditTextAssistMenu(focusNode)
         } else {
-            showNormalCocoaMenu()
+            showNormalserenaMenu()
         }
     }
 
-    private fun showNormalCocoaMenu() {
+    private fun showNormalserenaMenu() {
         soundHelper?.playMenuOpen()
-        speak("cocoa メニューを開きました", TextToSpeech.QUEUE_FLUSH)
+        speak("serena メニューを開きました", TextToSpeech.QUEUE_FLUSH)
         val curtainLabel = if (screenCurtainHelper?.isCurtainEnabled == true) "🌑 スクリーンカーテンを解除" else "🌑 スクリーンカーテン (画面非表示・節電)"
         val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
-        val modeLabel = if (isTalkBackMode) "🔄 モード切替 (現在: TalkBack互換モード)" else "🔄 モード切替 (現在: cocoaオリジナルモード)"
+        val modeLabel = if (isTalkBackMode) "🔄 モード切替 (現在: TalkBack互換モード)" else "🔄 モード切替 (現在: serenaオリジナルモード)"
         val filterName = notificationFilterHelper?.currentMode?.displayName ?: "自動"
         val items = listOf(
-            CocoaMenuItem("🎙️", "cocoa AI Voice Assistant (音声対話アシスタント)") {
+            serenaMenuItem("🎙️", "serena AI Voice Assistant (音声対話アシスタント)") {
                 launchAiAssistant()
             },
-            CocoaMenuItem("🔄", modeLabel) {
+            serenaMenuItem("🔄", modeLabel) {
                 toggleTalkBackMode()
             },
-            CocoaMenuItem("📊", "スマホ状態 (バッテリー/電波/Wi-Fi/時刻)") {
+            serenaMenuItem("📊", "スマホ状態 (バッテリー/電波/Wi-Fi/時刻)") {
                 announceFullStatus()
             },
-            CocoaMenuItem("🎛️", "読み上げコントロール (現在: ${currentGranularity.displayName})") {
+            serenaMenuItem("🎛️", "読み上げコントロール (現在: ${currentGranularity.displayName})") {
                 cycleGranularity(forward = true)
             },
-            CocoaMenuItem("📋", "クリップボード履歴 (過去のコピー)") {
+            serenaMenuItem("📋", "クリップボード履歴 (過去のコピー)") {
                 showClipboardHistoryDialog(null)
             },
-            CocoaMenuItem("💌", "通知フィルター (現在: $filterName)") {
+            serenaMenuItem("💌", "通知フィルター (現在: $filterName)") {
                 cycleNotificationFilterMode()
             },
-            CocoaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
+            serenaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
                 cycleChimeStyle()
             },
-            CocoaMenuItem(if (screenCurtainHelper?.isCurtainEnabled == true) "☀️" else "🌑", curtainLabel) {
+            serenaMenuItem(if (screenCurtainHelper?.isCurtainEnabled == true) "☀️" else "🌑", curtainLabel) {
                 toggleScreenCurtain()
             },
-            CocoaMenuItem("📷", "カメラ・文字読み取り (On-Device OCR)") {
+            serenaMenuItem("📷", "カメラ・文字読み取り (On-Device OCR)") {
                 launchCameraOcr()
             },
-            CocoaMenuItem("👤", "カメラ・表情と人物判定 (On-Device Face AI)") {
+            serenaMenuItem("👤", "カメラ・表情と人物判定 (On-Device Face AI)") {
                 launchCameraFaceAnalysis()
             },
-            CocoaMenuItem("📦", "カメラ・物体と周囲の認識 (Gemma 4 On-Device AI)") {
+            serenaMenuItem("📦", "カメラ・物体と周囲の認識 (Gemma 4 On-Device AI)") {
                 launchCameraObjectAnalysis()
             },
-            CocoaMenuItem("⚡", "読み上げ速度の変更 (トグル切り替え)") {
+            serenaMenuItem("⚡", "読み上げ速度の変更 (トグル切り替え)") {
                 toggleSpeechRateQuick()
             },
-            CocoaMenuItem("📄", "次のページへ移動") {
+            serenaMenuItem("📄", "次のページへ移動") {
                 scrollPageForward()
             },
-            CocoaMenuItem("📄", "前のページへ移動") {
+            serenaMenuItem("📄", "前のページへ移動") {
                 scrollPageBackward()
             },
-            CocoaMenuItem("📖", "画面の一番上から読む") {
+            serenaMenuItem("📖", "画面の一番上から読む") {
                 readFromTop()
             },
-            CocoaMenuItem("📞", "開発者(${BuildConfig.DEVELOPER_NAME})へ電話をかける") {
+            serenaMenuItem("📞", "開発者(${BuildConfig.DEVELOPER_NAME})へ電話をかける") {
                 callDeveloper()
             },
-            CocoaMenuItem("✉️", "開発者(${BuildConfig.DEVELOPER_NAME})へメールを送る") {
+            serenaMenuItem("✉️", "開発者(${BuildConfig.DEVELOPER_NAME})へメールを送る") {
                 emailDeveloper()
             },
-            CocoaMenuItem("🐛", "開発者(${BuildConfig.DEVELOPER_NAME})へ動作診断・ログ送信") {
+            serenaMenuItem("🐛", "開発者(${BuildConfig.DEVELOPER_NAME})へ動作診断・ログ送信") {
                 sendTelemetryLog()
             },
-            CocoaMenuItem("⚙️", "cocoaの設定") {
-                openCocoaSettings()
+            serenaMenuItem("⚙️", "serenaの設定") {
+                openserenaSettings()
             },
-            CocoaMenuItem("❓", "cocoaのHelp") {
+            serenaMenuItem("❓", "serenaのHelp") {
                 showHelp()
             }
         )
         try {
-            val dialog = CocoaMenuDialog(this, false, items)
+            val dialog = serenaMenuDialog(this, false, items)
             dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show dialog: ${e.message}")
-            Toast.makeText(this, "cocoaメニュー: 読み上げコントロール / クリップボード / 設定", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "serenaメニュー: 読み上げコントロール / クリップボード / 設定", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -660,7 +660,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         val next = !current
         prefs.edit().putBoolean(KEY_TALKBACK_MODE, next).apply()
         soundHelper?.playActionDone()
-        val modeName = if (next) "TalkBack互換モード" else "cocoaオリジナルモード"
+        val modeName = if (next) "TalkBack互換モード" else "serenaオリジナルモード"
         speak("操作モードを $modeName に変更しました", TextToSpeech.QUEUE_FLUSH)
         return next
     }
@@ -677,7 +677,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         speak("クリップボード履歴を開きました", TextToSpeech.QUEUE_FLUSH)
         val items = history.mapIndexed { index, text ->
             val preview = if (text.length > 20) text.take(20) + "..." else text
-            CocoaMenuItem("📋", "${index + 1}. $preview") {
+            serenaMenuItem("📋", "${index + 1}. $preview") {
                 soundHelper?.playActionDone()
                 if (targetNode != null) {
                     val arguments = Bundle()
@@ -686,14 +686,14 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
                     speak("「$preview」を貼り付けました", TextToSpeech.QUEUE_FLUSH)
                 } else {
                     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-                    val clip = android.content.ClipData.newPlainText("cocoaClip", text)
+                    val clip = android.content.ClipData.newPlainText("serenaClip", text)
                     clipboard?.setPrimaryClip(clip)
                     speak("「$preview」をコピーしました", TextToSpeech.QUEUE_FLUSH)
                 }
             }
         }
         try {
-            val dialog = CocoaMenuDialog(this, false, items)
+            val dialog = serenaMenuDialog(this, false, items)
             dialog.show()
         } catch (e: Exception) {
             speak("履歴: " + history.take(3).joinToString(", "), TextToSpeech.QUEUE_FLUSH)
@@ -749,12 +749,12 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         val helper = gemmaDownloadHelper
         val prompt = helper?.buildDownloadConfirmationPrompt() ?: "Gemma 4 AIエンジンで周囲の物体や景観を完全ローカル解析します。"
         val items = listOf(
-            CocoaMenuItem("🚀", "軽量ローカルAIで即座に物体を撮影・認識") {
+            serenaMenuItem("🚀", "軽量ローカルAIで即座に物体を撮影・認識") {
                 soundHelper?.playClick()
                 speak("軽量ローカルAIエンジンで物体認識カメラを起動します。", TextToSpeech.QUEUE_FLUSH)
                 objectHelper?.launchCameraForObjectRecognition()
             },
-            CocoaMenuItem("⬇️", "Gemma 4 AIモデル(1.5GB)の公式無料ダウンロード") {
+            serenaMenuItem("⬇️", "Gemma 4 AIモデル(1.5GB)の公式無料ダウンロード") {
                 soundHelper?.playClick()
                 val success = gemmaDownloadHelper?.startGemmaDownload() ?: false
                 if (success) {
@@ -768,7 +768,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         )
         try {
             speak("カメラ解析モードの選択ダイアログを開きました。軽量ローカル認識、または Gemma 4 AI ダウンロードを選択できます。", TextToSpeech.QUEUE_FLUSH)
-            val dialog = CocoaMenuDialog(this, false, items)
+            val dialog = serenaMenuDialog(this, false, items)
             dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show Gemma dialog: ${e.message}")
@@ -822,7 +822,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         try {
             val intent = Intent(Intent.ACTION_SENDTO).apply {
                 data = Uri.parse("mailto:${BuildConfig.DEVELOPER_EMAIL}")
-                putExtra(Intent.EXTRA_SUBJECT, "cocoa スクリーンリーダーに関するお問い合わせ・ご要望")
+                putExtra(Intent.EXTRA_SUBJECT, "serena スクリーンリーダーに関するお問い合わせ・ご要望")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             startActivity(intent)
@@ -834,28 +834,28 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
 
     private fun showHelp() {
         soundHelper?.playMenuOpen()
-        speak("cocoa ヘルプと開発者直通サポートメニューを開きました", TextToSpeech.QUEUE_FLUSH)
+        speak("serena ヘルプと開発者直通サポートメニューを開きました", TextToSpeech.QUEUE_FLUSH)
         val items = listOf(
-            CocoaMenuItem("📞", "開発者(${BuildConfig.DEVELOPER_NAME})へ電話で直通相談 (${BuildConfig.DEVELOPER_PHONE_DISPLAY})") {
+            serenaMenuItem("📞", "開発者(${BuildConfig.DEVELOPER_NAME})へ電話で直通相談 (${BuildConfig.DEVELOPER_PHONE_DISPLAY})") {
                 callDeveloper()
             },
-            CocoaMenuItem("🐛", "動作診断・ログ添付でメール送信") {
+            serenaMenuItem("🐛", "動作診断・ログ添付でメール送信") {
                 sendTelemetryLog()
             },
-            CocoaMenuItem("✉️", "開発者へメールでお問い合わせ") {
+            serenaMenuItem("✉️", "開発者へメールでお問い合わせ") {
                 emailDeveloper()
             },
-            CocoaMenuItem("📖", "cocoa の使い方音声ガイド") {
+            serenaMenuItem("📖", "serena の使い方音声ガイド") {
                 soundHelper?.playActionDone()
-                speak("使い方の基本: 上下スワイプで読み上げ単位の変更、左右スワイプで項目の移動、2本指3回タップでスマホ状態の確認、2本指ダブルタップでcocoaメニューを開きます。", TextToSpeech.QUEUE_FLUSH)
+                speak("使い方の基本: 上下スワイプで読み上げ単位の変更、左右スワイプで項目の移動、2本指3回タップでスマホ状態の確認、2本指ダブルタップでserenaメニューを開きます。", TextToSpeech.QUEUE_FLUSH)
             },
-            CocoaMenuItem("ℹ️", "アプリ情報 (v1.0.0-alpha01)") {
+            serenaMenuItem("ℹ️", "アプリ情報 (v1.0.0-alpha01)") {
                 soundHelper?.playActionDone()
-                speak("cocoa スクリーンリーダー バージョン 1.0.0-alpha01、開発者 ${BuildConfig.DEVELOPER_NAME}、お問い合わせ ${BuildConfig.DEVELOPER_EMAIL}", TextToSpeech.QUEUE_FLUSH)
+                speak("serena スクリーンリーダー バージョン 1.0.0-alpha01、開発者 ${BuildConfig.DEVELOPER_NAME}、お問い合わせ ${BuildConfig.DEVELOPER_EMAIL}", TextToSpeech.QUEUE_FLUSH)
             }
         )
         try {
-            val dialog = CocoaMenuDialog(this, false, items)
+            val dialog = serenaMenuDialog(this, false, items)
             dialog.show()
         } catch (e: Exception) {
             speak("ヘルプ: 電話 ${BuildConfig.DEVELOPER_PHONE_DISPLAY}、メール ${BuildConfig.DEVELOPER_EMAIL}", TextToSpeech.QUEUE_FLUSH)
@@ -866,19 +866,19 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         soundHelper?.playMenuOpen()
         speak("編集アシストメニューを開きました", TextToSpeech.QUEUE_FLUSH)
         val items = listOf(
-            CocoaMenuItem("💬", "定型文:「今移動中です」") {
+            serenaMenuItem("💬", "定型文:「今移動中です」") {
                 insertPhrase(node, "今移動中です。")
             },
-            CocoaMenuItem("💬", "定型文:「後でかけ直します」") {
+            serenaMenuItem("💬", "定型文:「後でかけ直します」") {
                 insertPhrase(node, "後でかけ直します。")
             },
-            CocoaMenuItem("💬", "定型文:「了解しました」") {
+            serenaMenuItem("💬", "定型文:「了解しました」") {
                 insertPhrase(node, "了解しました。")
             },
-            CocoaMenuItem("📋", "過去のコピー履歴から選択して貼り付け") {
+            serenaMenuItem("📋", "過去のコピー履歴から選択して貼り付け") {
                 showClipboardHistoryDialog(node)
             },
-            CocoaMenuItem("✂️", "全選択してコピー") {
+            serenaMenuItem("✂️", "全選択してコピー") {
                 soundHelper?.playActionDone()
                 val currentText = getNodeText(node)
                 if (currentText.isNotEmpty()) {
@@ -891,19 +891,19 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
                 node.performAction(AccessibilityNodeInfo.ACTION_COPY)
                 speak("全選択してコピーしました", TextToSpeech.QUEUE_FLUSH)
             },
-            CocoaMenuItem("📋", "貼り付け") {
+            serenaMenuItem("📋", "貼り付け") {
                 soundHelper?.playActionDone()
                 node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
                 speak("貼り付けました", TextToSpeech.QUEUE_FLUSH)
             },
-            CocoaMenuItem("🧹", "テキスト全消去") {
+            serenaMenuItem("🧹", "テキスト全消去") {
                 soundHelper?.playActionDone()
                 val arguments = Bundle()
                 arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "")
                 node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
                 speak("テキストを全消去しました", TextToSpeech.QUEUE_FLUSH)
             },
-            CocoaMenuItem("🔊", "入力中テキストの読み上げ") {
+            serenaMenuItem("🔊", "入力中テキストの読み上げ") {
                 soundHelper?.playClick()
                 val currentText = getNodeText(node)
                 if (currentText.isNotEmpty()) {
@@ -912,12 +912,12 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
                     speak("入力欄は空です", TextToSpeech.QUEUE_FLUSH)
                 }
             },
-            CocoaMenuItem("☕", "通常メニューを開く") {
-                showNormalCocoaMenu()
+            serenaMenuItem("☕", "通常メニューを開く") {
+                showNormalserenaMenu()
             }
         )
         try {
-            val dialog = CocoaMenuDialog(this, true, items)
+            val dialog = serenaMenuDialog(this, true, items)
             dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show edit dialog: ${e.message}")
@@ -953,9 +953,9 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         }
     }
 
-    private fun openCocoaSettings() {
+    private fun openserenaSettings() {
         soundHelper?.playClick()
-        speak("cocoa の設定画面を開きます", TextToSpeech.QUEUE_FLUSH)
+        speak("serena の設定画面を開きます", TextToSpeech.QUEUE_FLUSH)
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -1326,7 +1326,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         val targetLocale = detectLanguage(processedText)
         tts?.language = targetLocale
         AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
-        tts?.speak(processedText, queueMode, null, "cocoaUtterance_${System.currentTimeMillis()}")
+        tts?.speak(processedText, queueMode, null, "serenaUtterance_${System.currentTimeMillis()}")
     }
 
     fun stopSpeech() {
@@ -1438,7 +1438,7 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         tts = null
         isTtsReady = false
         instance = null
-        Log.i(TAG, "cocoa ScreenReaderService destroyed.")
+        Log.i(TAG, "serena ScreenReaderService destroyed.")
     }
 
     fun toggleLiveEnvironmentDescription() {
@@ -1480,4 +1480,5 @@ class CocoaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitList
         speak("最新のクリップボード履歴: $lastText", TextToSpeech.QUEUE_FLUSH)
     }
 }
+
 

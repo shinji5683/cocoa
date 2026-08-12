@@ -10,10 +10,10 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Toast
 
-class CocoaAiAssistantHelper(private val service: CocoaScreenReaderService) {
+class serenaAiAssistantHelper(private val service: serenaScreenReaderService) {
 
     companion object {
-        private const val TAG = "CocoaAiAssistant"
+        private const val TAG = "serenaAiAssistant"
     }
 
     private var speechRecognizer: SpeechRecognizer? = null
@@ -112,7 +112,7 @@ class CocoaAiAssistantHelper(private val service: CocoaScreenReaderService) {
                 service.toggleScreenCurtain()
             }
             query.contains("メニュー") || query.contains("設定") -> {
-                service.triggerCocoaMenu()
+                service.triggerserenaMenu()
             }
             else -> {
                 service.speak("音声コマンド「$inputQuery」を受け付けました。環境実況、ステータス、文字読み取り、通知フィルター、クリップボードに対応しています。", TextToSpeech.QUEUE_FLUSH)
@@ -120,4 +120,5 @@ class CocoaAiAssistantHelper(private val service: CocoaScreenReaderService) {
         }
     }
 }
+
 

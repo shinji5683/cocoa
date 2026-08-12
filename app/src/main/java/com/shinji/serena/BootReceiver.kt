@@ -8,7 +8,7 @@ import android.util.Log
 class BootReceiver : BroadcastReceiver() {
 
     companion object {
-        private const val TAG = "CocoaBootReceiver"
+        private const val TAG = "serenaBootReceiver"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -17,8 +17,9 @@ class BootReceiver : BroadcastReceiver() {
             action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
             action == "android.intent.action.QUICKBOOT_POWERON" ||
             action == "com.htc.intent.action.QUICKBOOT_POWERON") {
-            Log.i(TAG, "Device boot completed ($action). cocoa DirectBoot & Accessibility service ready.")
+            Log.i(TAG, "Device boot completed ($action). serena DirectBoot & Accessibility service ready.")
         }
     }
 }
+
 

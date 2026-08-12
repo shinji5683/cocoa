@@ -12,7 +12,7 @@ enum class NotificationFilterMode(val displayName: String) {
 class SmartNotificationFilterHelper(context: Context) {
 
     companion object {
-        private const val PREFS_NAME = "cocoa_notification_filter_prefs"
+        private const val PREFS_NAME = "serena_notification_filter_prefs"
         private const val KEY_FILTER_MODE = "notification_filter_mode"
     }
 
@@ -82,4 +82,5 @@ class SmartNotificationFilterHelper(context: Context) {
         return isMessagingOrCallApp || isImportantKeyword
     }
 }
+
 

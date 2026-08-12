@@ -6,7 +6,7 @@ import android.content.SharedPreferences
 class ClipboardHistoryHelper(context: Context) {
 
     companion object {
-        private const val PREFS_NAME = "cocoa_clipboard_prefs"
+        private const val PREFS_NAME = "serena_clipboard_prefs"
         private const val KEY_HISTORY = "clipboard_history_list"
         private const val MAX_HISTORY_SIZE = 10
     }
@@ -43,4 +43,5 @@ class ClipboardHistoryHelper(context: Context) {
         prefs.edit().putString(KEY_HISTORY, joined).apply()
     }
 }
+
 
