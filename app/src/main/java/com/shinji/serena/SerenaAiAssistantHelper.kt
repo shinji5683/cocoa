@@ -1,14 +1,14 @@
 package com.shinji.serena
 
 import android.content.Context
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
-import android.speech.RecognitionListener
 import android.content.Intent
 import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
-import android.widget.Toast
+import java.util.Calendar
 
 class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
@@ -20,7 +20,8 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
     fun startListening() {
         if (!SpeechRecognizer.isRecognitionAvailable(service)) {
-            service.speak("お使いの端末は音声認識に対応していません。", TextToSpeech.QUEUE_FLUSH)
+            service.speak("serenaアシスタントです。お使いの端末は音声入力未対応のためダイアログを起動します。", TextToSpeech.QUEUE_FLUSH)
+            service.showSerenaAssistantDialog()
             return
         }
 
@@ -29,7 +30,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(service).apply {
                 setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {
-                        service.speak("音声アシスタントです。お話しください。", TextToSpeech.QUEUE_FLUSH)
+                        service.speak("serenaアシスタントです。画面の要約や操作コマンドをお話しください。", TextToSpeech.QUEUE_FLUSH)
                     }
 
                     override fun onBeginningOfSpeech() {}
@@ -39,7 +40,8 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
                     override fun onError(error: Int) {
                         Log.e(TAG, "Speech recognition error code: $error")
-                        service.speak("音声を聞き取れませんでした。もう一度お試しください。", TextToSpeech.QUEUE_FLUSH)
+                        service.speak("音声を聞き取れませんでした。serenaアシスタントメニューを開きます。", TextToSpeech.QUEUE_FLUSH)
+                        service.showSerenaAssistantDialog()
                     }
 
                     override fun onResults(results: Bundle?) {
@@ -66,7 +68,8 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start speech recognizer: ${e.message}")
-            service.speak("音声アシスタントの起動に失敗しました。", TextToSpeech.QUEUE_FLUSH)
+            service.speak("serenaアシスタントダイアログを開きます。", TextToSpeech.QUEUE_FLUSH)
+            service.showSerenaAssistantDialog()
         }
     }
 
@@ -75,6 +78,14 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
         Log.i(TAG, "Processing assistant query: $query")
 
         when {
+            query.contains("要約") || query.contains("画面") || query.contains("全体のまとめ") || query.contains("概要") -> {
+                service.summarizeCurrentScreen()
+            }
+            query.contains("おはよう") || query.contains("お疲れ") || query.contains("ありがとう") ||
+            query.contains("励まし") || query.contains("好き") || query.contains("愛") ||
+            query.contains("asawa") || query.contains("mahal") || query.contains("salamat") -> {
+                speakWarmHeartGreeting()
+            }
             query.contains("バッテリー") || query.contains("電池") || query.contains("ステータス") || query.contains("状態") -> {
                 service.announceFullStatus()
             }
@@ -105,9 +116,6 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
             query.contains("通知") || query.contains("フィルター") -> {
                 service.cycleNotificationFilterMode()
             }
-            query.contains("シェイク") || query.contains("振り振り") -> {
-                service.announceFullStatus()
-            }
             query.contains("カーテン") || query.contains("画面消す") || query.contains("節電") -> {
                 service.toggleScreenCurtain()
             }
@@ -115,9 +123,19 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 service.triggerSerenaMenu()
             }
             else -> {
-                service.speak("音声コマンド「$inputQuery」を受け付けました。環境実況、ステータス、文字読み取り、通知フィルター、クリップボードに対応しています。", TextToSpeech.QUEUE_FLUSH)
+                service.speak("serenaアシスタントです。画面要約、環境実況、ステータス、文字読み取りが利用可能です。", TextToSpeech.QUEUE_FLUSH)
             }
         }
+    }
+
+    fun speakWarmHeartGreeting() {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        val greeting = when {
+            hour in 5..10 -> "Magandang umaga po! おはようございます！今日も素敵な一日にしましょうね✨"
+            hour in 11..17 -> "Magandang araw po! こんにちは！いつも本当にお疲れ様です🌸"
+            else -> "Magandang gabi po! こんばんは！今日も一日よく頑張りましたね。ゆっくり休んでくださいね✨"
+        }
+        service.speak("serenaアシスタントより。$greeting Salamat po!", TextToSpeech.QUEUE_FLUSH)
     }
 }
 

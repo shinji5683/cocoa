@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.app.DownloadManager
 import android.content.Context
@@ -20,10 +20,7 @@ class GemmaModelDownloadHelper(private val context: Context) {
     }
 
     fun isWifiConnected(): Boolean {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
-        val network = cm.activeNetwork ?: return false
-        val caps = cm.getNetworkCapabilities(network) ?: return false
-        return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+        return WifiConnectivityHelper.isWifiConnected(context)
     }
 
     fun getAvailableStorageBytes(): Long {

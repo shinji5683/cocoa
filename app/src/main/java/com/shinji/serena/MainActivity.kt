@@ -26,6 +26,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private var localTts: TextToSpeech? = null
 
+    private val requestMultiplePermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val grantedCount = permissions.values.count { it }
+        Toast.makeText(this, "権限の設定を完了しました (${grantedCount}/${permissions.size})", Toast.LENGTH_SHORT).show()
+        updateServiceStatusDisplay()
+    }
+
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -56,6 +64,24 @@ class MainActivity : AppCompatActivity() {
 
         checkPermissionsOnStart()
         checkTelemetryConsentOnStart()
+        handleGemmaDownloadIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        handleGemmaDownloadIntent(intent)
+    }
+
+    private fun handleGemmaDownloadIntent(intent: Intent?) {
+        if (intent != null && (intent.action == "com.shinji.serena.ACTION_DOWNLOAD_GEMMA" || intent.getBooleanExtra("DOWNLOAD_GEMMA", false))) {
+            val helper = GemmaModelDownloadHelper(this)
+            val success = helper.startGemmaDownload()
+            if (success) {
+                Toast.makeText(this, "Google Gemma 4 AIモデル(1.5GB)のバックグラウンドダウンロードを開始しました！", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Gemma 4 のダウンロード開始に失敗しました。容量または接続を確認してください。", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun initLocalTts() {
@@ -179,6 +205,37 @@ class MainActivity : AppCompatActivity() {
         } else {
             binding.tvNotificationStatus.text = getString(R.string.status_perm_denied)
             binding.tvNotificationStatus.setTextColor(getColor(R.color.status_red))
+        }
+
+        requestAllPermissionsAtOnce()
+    }
+
+    private fun requestAllPermissionsAtOnce() {
+        val permissionsToRequest = mutableListOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.CALL_PHONE
+        )
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+            permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES)
+            permissionsToRequest.add(Manifest.permission.READ_MEDIA_AUDIO)
+        }
+
+        val ungranted = permissionsToRequest.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (ungranted.isNotEmpty()) {
+            requestMultiplePermissionsLauncher.launch(ungranted.toTypedArray())
         }
     }
 

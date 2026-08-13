@@ -196,36 +196,46 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         AlphaTelemetryHelper.getInstance(this).incrementGestureCount()
 
         when (gestureId) {
-            // 右スワイプ / 右フリック: 次の項目/粒度移動
+            // 右スワイプ / 右フリック: 次の項目へフォーカス移動
             GESTURE_SWIPE_RIGHT -> {
                 soundHelper?.playFocusMove()
                 focusNext()
                 return true
             }
-            // 左スワイプ / 左フリック: 前の項目/粒度移動
+            // 左スワイプ / 左フリック: 前の項目へフォーカス移動
             GESTURE_SWIPE_LEFT -> {
                 soundHelper?.playFocusMove()
                 focusPrevious()
                 return true
             }
-            // 上スワイプ / 上フリック: 読み上げコントロール（粒度）切り替え（前へ）
+            // 上スワイプ / 上フリック: 読み上げ粒度切り替え（前へ）
             GESTURE_SWIPE_UP -> {
                 cycleGranularity(forward = false)
                 return true
             }
-            // 下スワイプ / 下フリック: 読み上げコントロール（粒度）切り替え（次へ）
+            // 下スワイプ / 下フリック: 読み上げ粒度切り替え（次へ）
             GESTURE_SWIPE_DOWN -> {
                 cycleGranularity(forward = true)
                 return true
             }
-            // 2本指上スワイプ (19): 下へスクロール (次ページ)
-            19 -> {
-                scrollPageForward()
+            // 2本指左スワイプ (21): 本めくり / 横スクロール (次ページへ移動)
+            21 -> {
+                scrollHorizontalForward()
                 return true
             }
-            // 2本指下スワイプ (20): 上へスクロール (前ページ)
+            // 2本指右スワイプ (22): 本めくり / 横スクロール (前ページへ移動)
+            22 -> {
+                scrollHorizontalBackward()
+                return true
+            }
+            // 2本指上スワイプ (19): 下へ縦スクロール (画面を上に引っ張る)
+            19 -> {
+                scrollVerticalForward()
+                return true
+            }
+            // 2本指下スワイプ (20): 上へ縦スクロール (画面を下に引っ張る)
             20 -> {
-                scrollPageBackward()
+                scrollVerticalBackward()
                 return true
             }
             // 1本指ダブルタップ: フォーカス中要素のクリック実行
@@ -234,66 +244,98 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 performClickOnFocusedNode()
                 return true
             }
-            // 1本指ダブルタップ＆ホールド (長押し / TalkBack互換 18): アクション・ショートカットメニュー表示
+            // 1本指ダブルタップ＆ホールド (長押し / TalkBack互換 18, 17): アクションメニュー
             18, 17 -> {
                 soundHelper?.playActionDone()
                 showActionsMenu(getAccessibilityFocusedNode())
                 return true
             }
-            // 2本指シングルタップ (25): 読み上げの一時停止・再開トグル [TalkBack標準ガイドライン]
+            // 2本指シングルタップ (25): 読み上げの一時停止・再開トグル [TalkBack標準]
             25 -> {
                 toggleSpeechPauseResume()
                 return true
             }
-            // 2本指ダブルタップ / マジックタップ (26, 29): 電話応答・切断 / メディア再生・一時停止 [TalkBack標準ガイドライン]
+            // 2本指ダブルタップ / マジックタップ (26, 29): 電話応答・切断 / メディア再生・停止 [TalkBack標準]
             26, 29 -> {
                 soundHelper?.playActionDone()
                 handleMagicTapAction()
                 return true
             }
-            // 2本指トリプルタップ (27): 読み上げ消音トグル [TalkBack標準ガイドライン]
+            // 2本指トリプルタップ (27): 読み上げ消音トグル
             27 -> {
                 soundHelper?.playActionDone()
                 toggleSpeechMute()
                 return true
             }
-            // 3本指シングルタップ (31): メニュー起動 (TalkBack標準ガイドライン)
+            // 3本指上下スワイプ (23, 24): オンデバイスAI 画面スマート要約
+            23, 24 -> {
+                summarizeCurrentScreen()
+                return true
+            }
+            // 3本指シングルタップ (31): serena メニュー起動
             31 -> {
                 soundHelper?.playMenuOpen()
                 triggerSerenaMenu()
                 return true
             }
-            // 3本指ダブルタップ (32): クリップボード読み上げ・履歴 [TalkBack標準ガイドライン]
+            // 3本指ダブルタップ (32): クリップボード履歴
             32 -> {
                 showClipboardHistoryDialog(getAccessibilityFocusedNode())
                 return true
             }
-            // 3本指トリプルタップ (33, 34): スクリーンカーテン (画面非表示) トグル [TalkBack標準ガイドライン]
+            // 3本指トリプルタップ (33, 34): スクリーンカーテン
             33, 34 -> {
                 toggleScreenCurtain()
                 return true
             }
-            // 3本指クアッドタップ (35, 36): 読み上げスピード・粒度切り替え
+            // 3本指クアッドタップ (35, 36): 読み上げスピードクイック切り替え
             35, 36 -> {
                 toggleSpeechRateQuick()
                 return true
             }
-            // 4本指シングルタップ (37): 画面の一番最初の要素へ移動 [TalkBack標準ガイドライン]
+            // 4本指シングルタップ (37): 先頭要素へ移動
             37 -> {
                 focusFirstElement()
                 return true
             }
-            // 4本指ダブルタップ (38): 画面の一番最後の要素へ移動 [TalkBack標準ガイドライン]
+            // 4本指ダブルタップ (38): 末尾要素へ移動
             38 -> {
                 focusLastElement()
                 return true
             }
-            // 4本指トリプル/クアッドタップ (39, 40): バッテリー・時刻・ステータスアナウンス [TalkBack標準ガイドライン]
+            // 4本指トリプル/クアッドタップ (39, 40): フルステータスアナウンス
             39, 40 -> {
                 announceFullStatus()
                 return true
             }
-            // 下→左スワイプ: 戻るボタン
+            // 上→右スワイプ (6, 41): serena アシスタント (AI画面要約・対話) 起動 [TalkBack 17]
+            GESTURE_SWIPE_UP_AND_RIGHT, 41 -> {
+                soundHelper?.playMenuOpen()
+                showSerenaAssistantDialog()
+                return true
+            }
+            // 下→右スワイプ (5, 42): 通知シェード表示 [TalkBack 17]
+            GESTURE_SWIPE_DOWN_AND_RIGHT, 42 -> {
+                soundHelper?.playClick()
+                speak("通知パネルを開きます", TextToSpeech.QUEUE_FLUSH)
+                performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+                return true
+            }
+            // 左→上スワイプ (7, 43): 最近のアプリ (タスク切替) 表示 [TalkBack 17]
+            GESTURE_SWIPE_LEFT_AND_UP, 43 -> {
+                soundHelper?.playClick()
+                speak("最近使ったアプリ", TextToSpeech.QUEUE_FLUSH)
+                performGlobalAction(GLOBAL_ACTION_RECENTS)
+                return true
+            }
+            // 右→下スワイプ (8, 44): クイック設定表示 [TalkBack 17]
+            GESTURE_SWIPE_RIGHT_AND_DOWN, 44 -> {
+                soundHelper?.playClick()
+                speak("クイック設定パネルを開きます", TextToSpeech.QUEUE_FLUSH)
+                performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
+                return true
+            }
+            // 下→左スワイプ: 戻る
             GESTURE_SWIPE_DOWN_AND_LEFT -> {
                 soundHelper?.playClick()
                 speak("戻る", TextToSpeech.QUEUE_FLUSH)
@@ -337,36 +379,79 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             ?: findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
     }
 
-    fun scrollPageForward() {
-        val focusNode = getAccessibilityFocusedNode() ?: rootInActiveWindow
-        var scrollableNode: AccessibilityNodeInfo? = focusNode
-        while (scrollableNode != null && !scrollableNode.isScrollable) {
-            scrollableNode = scrollableNode.parent
-        }
-
-        if (scrollableNode != null && scrollableNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)) {
+    /**
+     * 2本指左スワイプ: 本めくり・横スクロール (次のページへ)
+     */
+    fun scrollHorizontalForward() {
+        val node = findScrollableNode()
+        if (node != null && (node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) ||
+                    (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id)))) {
             soundHelper?.playFocusMove()
-            speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            speak("次のページへめくりました", TextToSpeech.QUEUE_FLUSH)
             return
         }
-
-        performSwipeGesture(swipeUp = true)
+        speak("これ以上次のページはありません", TextToSpeech.QUEUE_FLUSH)
     }
 
-    fun scrollPageBackward() {
-        val focusNode = getAccessibilityFocusedNode() ?: rootInActiveWindow
-        var scrollableNode: AccessibilityNodeInfo? = focusNode
-        while (scrollableNode != null && !scrollableNode.isScrollable) {
-            scrollableNode = scrollableNode.parent
-        }
-
-        if (scrollableNode != null && scrollableNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)) {
+    /**
+     * 2本指右スワイプ: 本めくり・横スクロール (前のページへ)
+     */
+    fun scrollHorizontalBackward() {
+        val node = findScrollableNode()
+        if (node != null && (node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) ||
+                    (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id)))) {
             soundHelper?.playFocusMove()
-            speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            speak("前のページへめくりました", TextToSpeech.QUEUE_FLUSH)
             return
         }
+        speak("これ以上前のページはありません", TextToSpeech.QUEUE_FLUSH)
+    }
 
-        performSwipeGesture(swipeUp = false)
+    /**
+     * 2本指上スワイプ: 縦下スクロール
+     */
+    fun scrollVerticalForward() {
+        val node = findScrollableNode()
+        if (node != null && node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)) {
+            soundHelper?.playFocusMove()
+            speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+            return
+        }
+        speak("これ以上下へスクロールできません", TextToSpeech.QUEUE_FLUSH)
+    }
+
+    /**
+     * 2本指下スワイプ: 縦上スクロール
+     */
+    fun scrollVerticalBackward() {
+        val node = findScrollableNode()
+        if (node != null && node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)) {
+            soundHelper?.playFocusMove()
+            speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+            return
+        }
+        speak("これ以上上へスクロールできません", TextToSpeech.QUEUE_FLUSH)
+    }
+
+    private fun findScrollableNode(): AccessibilityNodeInfo? {
+        val focusNode = getAccessibilityFocusedNode() ?: rootInActiveWindow ?: return null
+        var curr: AccessibilityNodeInfo? = focusNode
+        while (curr != null) {
+            if (curr.isScrollable) return curr
+            curr = curr.parent
+        }
+        val root = rootInActiveWindow ?: return null
+        return searchScrollableChild(root)
+    }
+
+    private fun searchScrollableChild(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        if (node.isScrollable) return node
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            val found = searchScrollableChild(child)
+            if (found != null) return found
+        }
+        return null
     }
 
     private fun performSwipeGesture(swipeUp: Boolean) {
@@ -398,7 +483,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun focusNext() {
         when (currentGranularity) {
             GranularityMode.DEFAULT -> navigateLinearFocus(forward = true)
-            GranularityMode.HEADINGS -> navigateFilteredFocus(forward = true) { it.isHeading || getNodeRole(it) == "見出し" }
+            GranularityMode.HEADINGS -> navigateFilteredFocus(forward = true) { it.safeIsHeading || getNodeRole(it) == "見出し" }
             GranularityMode.CONTROLS -> navigateFilteredFocus(forward = true) { it.isClickable || it.isCheckable || it.isFocusable }
             GranularityMode.LINKS -> navigateFilteredFocus(forward = true) { isLinkNode(it) }
             GranularityMode.LINES -> moveByGranularity(AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE, forward = true)
@@ -411,7 +496,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun focusPrevious() {
         when (currentGranularity) {
             GranularityMode.DEFAULT -> navigateLinearFocus(forward = false)
-            GranularityMode.HEADINGS -> navigateFilteredFocus(forward = false) { it.isHeading || getNodeRole(it) == "見出し" }
+            GranularityMode.HEADINGS -> navigateFilteredFocus(forward = false) { it.safeIsHeading || getNodeRole(it) == "見出し" }
             GranularityMode.CONTROLS -> navigateFilteredFocus(forward = false) { it.isClickable || it.isCheckable || it.isFocusable }
             GranularityMode.LINKS -> navigateFilteredFocus(forward = false) { isLinkNode(it) }
             GranularityMode.LINES -> moveByGranularity(AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE, forward = false)
@@ -542,7 +627,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return false
         }
         val text = getNodeText(node)
-        val isActionable = node.isClickable || node.isCheckable || node.isFocusable || node.isLongClickable || node.isHeading
+        val isActionable = node.isClickable || node.isCheckable || node.isFocusable || node.isLongClickable || node.safeIsHeading
         return isActionable || text.isNotEmpty()
     }
 
@@ -676,11 +761,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("⚡", "読み上げ速度の変更 (トグル切り替え)") {
                 toggleSpeechRateQuick()
             },
-            serenaMenuItem("📄", "次のページへ移動") {
-                scrollPageForward()
+            serenaMenuItem("📄", "次のページへ移動 (本めくり)") {
+                scrollHorizontalForward()
             },
-            serenaMenuItem("📄", "前のページへ移動") {
-                scrollPageBackward()
+            serenaMenuItem("📄", "前のページへ移動 (本めくり)") {
+                scrollHorizontalBackward()
             },
             serenaMenuItem("📖", "画面の一番上から読む") {
                 readFromTop()
@@ -823,8 +908,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun launchAiAssistant() {
-        soundHelper?.playMenuOpen()
-        assistantHelper?.startListening()
+        showSerenaAssistantDialog()
     }
 
     fun launchCameraOcr() {
@@ -866,7 +950,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         )
         try {
-            speak("カメラ解析モードの選択ダイアログを開きました。軽量ローカル認識、または Gemma 4 AI ダウンロードを選択できます。", TextToSpeech.QUEUE_FLUSH)
+            speak("$prompt カメラ解析モードの選択ダイアログを開きました。軽量ローカル認識、または Gemma 4 AI ダウンロードを選択できます。", TextToSpeech.QUEUE_FLUSH)
             val dialog = serenaMenuDialog(this, false, items)
             dialog.show()
         } catch (e: Exception) {
@@ -1081,39 +1165,33 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 checkCallState(pkgName)
 
-                if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-                    val windowTitle = event.contentDescription?.toString()
-                        ?: event.text.joinToString(" ").trim()
+                val windowTitle = event.contentDescription?.toString()
+                    ?: event.text.joinToString(" ").trim()
 
-                    val suggestedGranularity = appProfileHelper?.getSuggestedGranularity(pkgName)
-                    if (suggestedGranularity != null && suggestedGranularity != currentGranularity) {
-                        currentGranularity = suggestedGranularity
-                        speak("アプリ切替: ${suggestedGranularity.displayName}モード", TextToSpeech.QUEUE_FLUSH)
-                    }
+                val suggestedGranularity = appProfileHelper?.getSuggestedGranularity(pkgName)
+                if (suggestedGranularity != null && suggestedGranularity != currentGranularity) {
+                    currentGranularity = suggestedGranularity
+                    speak("アプリ切替: ${suggestedGranularity.displayName}モード", TextToSpeech.QUEUE_FLUSH)
+                }
 
-                    if (isCallRelatedPackage(pkgName)) {
-                        val callerInfo = parseCallerFromRootNode()
-                        if (callerInfo.isNotEmpty() && !isCallActive) {
-                            val appName = getMessagingAppName(pkgName)
-                            speak("${appName}着信中: $callerInfo", TextToSpeech.QUEUE_FLUSH)
-                            return
-                        }
+                if (isCallRelatedPackage(pkgName)) {
+                    val callerInfo = parseCallerFromRootNode()
+                    if (callerInfo.isNotEmpty() && !isCallActive) {
+                        val appName = getMessagingAppName(pkgName)
+                        speak("${appName}着信中: $callerInfo", TextToSpeech.QUEUE_FLUSH)
+                        return
                     }
+                }
 
-                    if (windowTitle.isNotEmpty() && !isCallActive) {
-                        speak("画面: $windowTitle", TextToSpeech.QUEUE_FLUSH)
-                    }
+                if (windowTitle.isNotEmpty() && !isCallActive) {
+                    speak("画面: $windowTitle", TextToSpeech.QUEUE_FLUSH)
                 }
             }
 
-            AccessibilityEvent.TYPE_VIEW_FOCUSED,
-            AccessibilityEvent.TYPE_VIEW_HOVER_ENTER,
-            AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
-            AccessibilityEvent.TYPE_VIEW_SELECTED -> {
+            AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED -> {
                 val node = event.source ?: return
                 announceNode(node)
             }
@@ -1171,12 +1249,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    private var lastCallCheckTimeMs = 0L
+
     private fun checkCallState(pkgName: String) {
+        val now = System.currentTimeMillis()
+        if (now - lastCallCheckTimeMs < 1500) return
+        lastCallCheckTimeMs = now
+
         val isCallPkg = isCallRelatedPackage(pkgName)
+        if (!isCallPkg) return
+
         val root = rootInActiveWindow
         val windowText = if (root != null) parseCallerFromRootNode() else ""
 
-        val isCurrentlyInCall = isCallPkg && (
+        val isCurrentlyInCall = (
                 windowText.contains("通話中") ||
                 windowText.contains("通話時間") ||
                 windowText.contains("保留") ||
@@ -1243,7 +1329,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val normalizedX = if (displayWidth > 0) rect.centerX().toFloat() / displayWidth else 0.5f
 
         val currentTime = System.currentTimeMillis()
-        if (announcement == lastSpokenText && (currentTime - lastSpokenTime) < 500) {
+        if (announcement == lastSpokenText && (currentTime - lastSpokenTime) < 1500) {
             return
         }
 
@@ -1349,6 +1435,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun getNodeState(node: AccessibilityNodeInfo): String {
         val states = mutableListOf<String>()
         if (node.isCheckable) {
@@ -1408,7 +1495,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val isTagalog = tagalogKeywords.any { lower.contains(it) }
 
         if (isTagalog) {
-            val tagalogLocale = Locale("fil", "PH")
+            val tagalogLocale = Locale.Builder().setLanguage("fil").setRegion("PH").build()
             val availability = tts?.isLanguageAvailable(tagalogLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
             if (availability >= TextToSpeech.LANG_AVAILABLE) {
                 return tagalogLocale
@@ -1641,6 +1728,82 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val lastText = clipboardHelper?.getHistory()?.firstOrNull() ?: "履歴はありません"
         speak("最新のクリップボード履歴: $lastText", TextToSpeech.QUEUE_FLUSH)
     }
+
+    fun showSerenaAssistantDialog() {
+        soundHelper?.playMenuOpen()
+        speak("serena アシスタントメニューを開きました", TextToSpeech.QUEUE_FLUSH)
+        val items = listOf(
+            serenaMenuItem("🧠", "画面のスマートAI要約 (オンデバイス解析)") {
+                summarizeCurrentScreen()
+            },
+            serenaMenuItem("🌸", "あたたかいハートフルメッセージ ＆ 挨拶") {
+                assistantHelper?.speakWarmHeartGreeting()
+            },
+            serenaMenuItem("🎙️", "音声コマンド入力") {
+                assistantHelper?.startListening()
+            },
+            serenaMenuItem("📷", "カメラ文字読み取り (OCR)") {
+                launchCameraOcr()
+            },
+            serenaMenuItem("🖼️", "AIカメラ物体・あたたか情景認識") {
+                launchCameraObjectAnalysis()
+            },
+            serenaMenuItem("🔋", "端末ステータス・電池アナウンス") {
+                announceFullStatus()
+            }
+        )
+        try {
+            val dialog = serenaMenuDialog(this, false, items)
+            dialog.show()
+        } catch (e: Exception) {
+            Log.e(TAG, "showSerenaAssistantDialog error: ${e.message}")
+        }
+    }
+
+    private var isSummarizing = false
+
+    @Suppress("DEPRECATION")
+    fun summarizeCurrentScreen() {
+        if (isSummarizing) return
+        isSummarizing = true
+        try {
+            val root = rootInActiveWindow
+            if (root == null) {
+                speak("画面情報を取得できませんでした。", TextToSpeech.QUEUE_FLUSH)
+                return
+            }
+            val collectedText = mutableListOf<String>()
+            collectScreenTexts(root, collectedText)
+
+            if (collectedText.isEmpty()) {
+                speak("画面上に読み取れるテキストが見つかりませんでした。", TextToSpeech.QUEUE_FLUSH)
+                return
+            }
+
+            val topTexts = collectedText.take(6).joinToString("、")
+            val summary = "画面の要点要約です。現在表示されている主な要素は、${topTexts} など合計 ${collectedText.size} 件の項目があります。"
+            speak(summary, TextToSpeech.QUEUE_FLUSH)
+        } finally {
+            isSummarizing = false
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun collectScreenTexts(node: AccessibilityNodeInfo, list: MutableList<String>) {
+        val text = getNodeText(node).trim()
+        if (text.isNotEmpty() && text.length > 1 && !list.contains(text)) {
+            list.add(text)
+        }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            collectScreenTexts(child, list)
+            child.recycle()
+        }
+    }
 }
+
+private val AccessibilityNodeInfo.safeIsHeading: Boolean
+    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) isHeading else false
+
 
 
