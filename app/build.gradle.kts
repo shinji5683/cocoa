@@ -25,10 +25,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("cocoa-release-key.jks")
-            storePassword = "cocoa2026"
-            keyAlias = "cocoa_key"
-            keyPassword = "cocoa2026"
+            storeFile = file("serena-release-key.jks")
+            storePassword = "serena2026"
+            keyAlias = "serena_key"
+            keyPassword = "serena2026"
         }
     }
 
