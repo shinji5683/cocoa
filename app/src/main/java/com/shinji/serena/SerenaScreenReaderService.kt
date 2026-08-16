@@ -625,6 +625,43 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    fun scrollPageForward(): Boolean = scrollHorizontalForward()
+    fun scrollPageBackward(): Boolean = scrollHorizontalBackward()
+
+    fun scrollHorizontalForward(): Boolean {
+        val root = rootInActiveWindow ?: return false
+        val focused = getAccessibilityFocusedNode() ?: root
+        val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
+        } else {
+            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+        }
+        val success = focused.performAction(actionId) || focused.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+        if (success) {
+            soundHelper?.playActionDone()
+        } else {
+            soundHelper?.playEdgeReached()
+        }
+        return success
+    }
+
+    fun scrollHorizontalBackward(): Boolean {
+        val root = rootInActiveWindow ?: return false
+        val focused = getAccessibilityFocusedNode() ?: root
+        val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id
+        } else {
+            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        }
+        val success = focused.performAction(actionId) || focused.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+        if (success) {
+            soundHelper?.playActionDone()
+        } else {
+            soundHelper?.playEdgeReached()
+        }
+        return success
+    }
+
     private fun navigateCustomActions(forward: Boolean) {
         val node = getAccessibilityFocusedNode()
         if (node == null) {
@@ -1464,10 +1501,68 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
+            AccessibilityEvent.TYPE_ANNOUNCEMENT -> {
+                val text = event.text.joinToString(" ").trim()
+                if (text.isNotEmpty() && isTtsReady) {
+                    speak(text, TextToSpeech.QUEUE_FLUSH)
+                }
+            }
+
+            AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY -> {
+                val text = event.text.joinToString(" ").trim()
+                val fromIndex = event.fromIndex
+                val toIndex = event.toIndex
+                if (text.isNotEmpty() && fromIndex >= 0 && fromIndex < text.length && isTtsReady) {
+                    val end = if (toIndex in (fromIndex + 1)..text.length) toIndex else fromIndex + 1
+                    val traversed = text.substring(fromIndex, end)
+                    val detail = com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.getKanjiDetail(traversed)
+                    if (detail.isNotEmpty() && detail != traversed) {
+                        speak("$traversed ($detail)", TextToSpeech.QUEUE_FLUSH)
+                    } else {
+                        speak(traversed, TextToSpeech.QUEUE_FLUSH)
+                    }
+                }
+            }
+
             AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
                 val text = event.text.joinToString(" ").trim()
-                if (text.isNotEmpty()) {
-                    speak(text, TextToSpeech.QUEUE_FLUSH)
+                val addedCount = event.addedCount
+                val removedCount = event.removedCount
+                val beforeText = event.beforeText?.toString() ?: ""
+
+                if (isTtsReady) {
+                    if (addedCount > 0 && text.isNotEmpty()) {
+                        val fromIndex = event.fromIndex
+                        val addedText = if (fromIndex >= 0 && fromIndex + addedCount <= text.length) {
+                            text.substring(fromIndex, fromIndex + addedCount)
+                        } else {
+                            text
+                        }
+                        if (addedText.length == 1) {
+                            val detail = com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.getKanjiDetail(addedText)
+                            if (detail.isNotEmpty() && detail != addedText) {
+                                speak("$addedText ($detail)", TextToSpeech.QUEUE_FLUSH)
+                            } else {
+                                speak(addedText, TextToSpeech.QUEUE_FLUSH)
+                            }
+                        } else {
+                            speak(addedText, TextToSpeech.QUEUE_FLUSH)
+                        }
+                    } else if (removedCount > 0) {
+                        val fromIndex = event.fromIndex
+                        val deletedText = if (beforeText.isNotEmpty() && fromIndex >= 0 && fromIndex + removedCount <= beforeText.length) {
+                            beforeText.substring(fromIndex, fromIndex + removedCount)
+                        } else {
+                            ""
+                        }
+                        if (deletedText.isNotEmpty()) {
+                            speak("$deletedText を削除", TextToSpeech.QUEUE_FLUSH)
+                        } else {
+                            speak("削除", TextToSpeech.QUEUE_FLUSH)
+                        }
+                    } else if (text.isNotEmpty()) {
+                        speak(text, TextToSpeech.QUEUE_FLUSH)
+                    }
                 }
             }
         }
@@ -1602,9 +1697,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun buildNodeAnnouncement(node: AccessibilityNodeInfo): String {
-        val text = getNodeText(node)
+        var text = getNodeText(node)
         val role = getNodeRole(node)
         val state = getNodeState(node)
+        val pkg = node.packageName?.toString() ?: ""
+
+        // あやめキーボード (jp.yama3nomori.ayame) または IME候補バーの漢字詳細読み上げ拡張
+        if (pkg.contains("ayame", ignoreCase = true) || pkg.contains("markdownhelperkeyboard", ignoreCase = true)) {
+            if (text.isNotEmpty() && text.length in 1..4) {
+                val detail = com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.getKanjiDetail(text)
+                if (detail.isNotEmpty() && detail != text && !text.contains("(")) {
+                    text = "$text ($detail)"
+                }
+            }
+        }
 
         val parts = mutableListOf<String>()
         if (text.isNotEmpty()) parts.add(text)

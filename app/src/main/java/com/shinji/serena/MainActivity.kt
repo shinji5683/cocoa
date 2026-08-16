@@ -63,12 +63,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleGemmaDownloadIntent(intent: Intent?) {
         if (intent != null && (intent.action == "com.shinji.serena.ACTION_DOWNLOAD_GEMMA" || intent.getBooleanExtra("DOWNLOAD_GEMMA", false))) {
-            val helper = GemmaModelDownloadHelper(this)
-            val success = helper.startGemmaDownload()
+            val success = com.shinji.serena.ai.GeminiNanoEngine.isAvailable(this)
             if (success) {
-                Toast.makeText(this, "Google Gemma 4 AIモデル(1.5GB)のバックグラウンドダウンロードを開始しました！", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Gemini Nano on-device AIが利用可能です！", Toast.LENGTH_LONG).show()
             } else {
-                Toast.makeText(this, "Gemma 4 のダウンロード開始に失敗しました。容量または接続を確認してください。", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Gemini Nano AIの準備中または非対応端末です。", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -237,7 +236,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (ungranted.isNotEmpty()) {
-            requestMultiplePermissionsLauncher.launch(ungranted.toTypedArray())
+            requestAllPermissionsLauncher.launch(ungranted.toTypedArray())
         }
     }
 

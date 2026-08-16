@@ -103,6 +103,11 @@ class SoundAndHapticHelper(private val context: Context) {
         vibratePattern(longArrayOf(0, 35, 30, 35))
     }
 
+    fun playEdgeReached() {
+        toneGenerator?.startTone(ToneGenerator.TONE_DTMF_D, 90)
+        vibratePattern(longArrayOf(0, 35, 30, 35))
+    }
+
     fun playActionDone() {
         toneGenerator?.startTone(ToneGenerator.TONE_PROP_PROMPT, 60)
         vibratePattern(longArrayOf(0, 25, 30, 25))

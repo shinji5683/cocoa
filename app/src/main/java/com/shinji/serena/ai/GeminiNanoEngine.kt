@@ -13,6 +13,10 @@ class GeminiNanoEngine(private val context: Context) {
 
     companion object {
         private const val TAG = "GeminiNanoEngine"
+
+        fun isAvailable(context: Context): Boolean {
+            return GeminiNanoEngine(context).isNanoAvailable()
+        }
     }
 
     /**

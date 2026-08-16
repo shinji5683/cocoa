@@ -20,6 +20,52 @@ class WifiConnectivityHelper(
 
     companion object {
         private const val TAG = "WifiConnectivityHelper"
+
+        fun getWifiStatusText(context: Context): String {
+            return try {
+                val cm = context.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                val wm = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+
+                var isConnected = false
+                val activeNet = cm?.activeNetwork
+                if (activeNet != null) {
+                    val caps = cm.getNetworkCapabilities(activeNet)
+                    if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        isConnected = true
+                    }
+                }
+
+                if (!isConnected && cm != null) {
+                    for (net in cm.allNetworks) {
+                        val caps = cm.getNetworkCapabilities(net)
+                        if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                            isConnected = true
+                            break
+                        }
+                    }
+                }
+
+                val info = wm?.connectionInfo
+                if (!isConnected && info != null) {
+                    if (info.networkId != -1 && info.supplicantState == android.net.wifi.SupplicantState.COMPLETED) {
+                        isConnected = true
+                    }
+                }
+
+                if (isConnected) {
+                    val rawSsid = info?.ssid?.replace("\"", "")?.trim()
+                    if (!rawSsid.isNullOrEmpty() && rawSsid != "<unknown ssid>" && rawSsid != "0x") {
+                        "Wi-Fi接続中 SS ID ${rawSsid}"
+                    } else {
+                        "Wi-Fi接続中"
+                    }
+                } else {
+                    "Wi-Fi未接続"
+                }
+            } catch (e: Exception) {
+                "Wi-Fi未接続"
+            }
+        }
     }
 
     private val connectivityManager = service.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager

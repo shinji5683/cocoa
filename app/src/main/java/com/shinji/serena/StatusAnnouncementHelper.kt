@@ -94,75 +94,7 @@ class StatusAnnouncementHelper(private val context: Context) {
     }
 
     private fun getWifiText(): String {
-        return try {
-            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-            val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
-
-            var isWifiConnected = false
-            var wifiCapabilities: NetworkCapabilities? = null
-
-            // 1. activeNetwork の判定
-            val activeNet = cm?.activeNetwork
-            if (activeNet != null) {
-                val caps = cm.getNetworkCapabilities(activeNet)
-                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                    isWifiConnected = true
-                    wifiCapabilities = caps
-                }
-            }
-
-            // 2. allNetworks を走査して Wi-Fi ネットワークを探索
-            if (!isWifiConnected && cm != null) {
-                for (net in cm.allNetworks) {
-                    val caps = cm.getNetworkCapabilities(net)
-                    if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                        isWifiConnected = true
-                        wifiCapabilities = caps
-                        break
-                    }
-                }
-            }
-
-            // 3. WifiManager の connectionInfo をチェック (フォールバック)
-            val info = wifiManager?.connectionInfo
-            if (!isWifiConnected && info != null) {
-                if (info.networkId != -1 && info.supplicantState == android.net.wifi.SupplicantState.COMPLETED) {
-                    isWifiConnected = true
-                }
-            }
-
-            if (isWifiConnected) {
-                val ssid = info?.ssid?.replace("\"", "")?.trim()
-
-                // 信号レベル (0〜4本)
-                val rssi = info?.rssi ?: -100
-                val level = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && wifiManager != null) {
-                    wifiManager.calculateSignalLevel(rssi)
-                } else {
-                    @Suppress("DEPRECATION")
-                    WifiManager.calculateSignalLevel(rssi, 5)
-                }
-
-                val levelDesc = when (level) {
-                    4 -> "電波最強、アンテナ4本"
-                    3 -> "電波良好、アンテナ3本"
-                    2 -> "電波普通、アンテナ2本"
-                    1 -> "電波やや弱い、アンテナ1本"
-                    else -> "電波微弱"
-                }
-
-                if (!ssid.isNullOrEmpty() && ssid != "<unknown ssid>" && ssid != "0x") {
-                    "Wi-Fi接続中、ネットワーク名: ${ssid}、${levelDesc}"
-                } else {
-                    "Wi-Fi接続中、${levelDesc}"
-                }
-            } else {
-                "Wi-Fi未接続"
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Wifi info error: ${e.message}")
-            "Wi-Fi未接続"
-        }
+        return WifiConnectivityHelper.getWifiStatusText(context)
     }
 
     @SuppressLint("MissingPermission")
