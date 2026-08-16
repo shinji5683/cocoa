@@ -9,3 +9,12 @@
 - Environment & App Phase:
   - App Status: Alpha Version (アルファ版). Maintain debug builds while supporting small-scale Alpha test releases.
   - Test OS Channels: User tests across Android OS release channels (Canary Channel, QPR Beta Channel, Stable Channel). Always enforce multi-channel compatibility (API 30+ to API 35/36+), defensive API fallbacks, resilient accessibility node handling, and strict Canary/QPR permission compliance.
+- Automated Build, Deploy & Accessibility Auto-Activation Workflow:
+  - Whenever completing a build or code modification, automatically proceed to deploy/install the generated APK onto connected Android devices (`adb install -r ...`).
+  - Immediately auto-enable the `serena` Accessibility Service on the target device via ADB so Shinjiさん does not need to manually open settings and toggle it:
+    - `adb shell settings put secure enabled_accessibility_services com.shinji.serena/.SerenaScreenReaderService`
+    - `adb shell settings put secure accessibility_enabled 1`
+  - Permissions Policy (ユーザー主導の権限許可):
+    - Do NOT force-grant permissions via ADB (`pm grant`).
+    - Enforce User-Driven permission control where Shinjiさん directly interacts with the standard Android permission dialog upon app launch.
+  - Automatically launch `com.shinji.serena/.MainActivity` to show the standard permission dialog for user consent.

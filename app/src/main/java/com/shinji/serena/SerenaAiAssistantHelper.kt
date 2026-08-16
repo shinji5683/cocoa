@@ -238,4 +238,14 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
             }
         }
     }
+
+    fun speakWarmHeartGreeting() {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        val greeting = when {
+            hour in 5..10 -> "Magandang umaga po! おはようございます！今日も素敵な一日にしましょうね✨"
+            hour in 11..17 -> "Magandang araw po! こんにちは！いつも本当にお疲れ様です🌸"
+            else -> "Magandang gabi po! こんばんは！今日も一日よく頑張りましたね。ゆっくり休んでくださいね✨"
+        }
+        service.speak("serenaアシスタントより。$greeting Salamat po!", TextToSpeech.QUEUE_FLUSH)
+    }
 }

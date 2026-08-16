@@ -1,13 +1,11 @@
 package com.shinji.serena
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.Build
 import android.telephony.TelephonyManager
@@ -167,6 +165,7 @@ class StatusAnnouncementHelper(private val context: Context) {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun getBluetoothText(): String {
         return try {
             val isEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -184,6 +183,7 @@ class StatusAnnouncementHelper(private val context: Context) {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun getCarrierText(): String {
         return try {
             val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
