@@ -34,6 +34,18 @@ class SoundAndHapticHelper(private val context: Context) {
         }
     }
 
+    fun announceTts(text: String) {
+        SerenaScreenReaderService.instance?.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun performHoverHaptic() {
+        vibrate(10)
+    }
+
+    fun performKeyClickHaptic() {
+        playClick()
+    }
+
     fun playFocusMove() {
         toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 25)
         vibrate(15)

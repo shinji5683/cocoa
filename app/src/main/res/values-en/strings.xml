@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">serena Screen Reader</string>
+    <string name="accessibility_service_name">serena Screen Reader</string>
+    <string name="accessibility_service_description">High-performance accessible screen reader providing live voice navigation, caller identification, call duration tracking, camera AI, and Gemini Nano on-device AI support for blind users.</string>
+    
+    <string name="status_label">Service Status</string>
+    <string name="status_disabled">Disabled (Please enable in Settings)</string>
+    <string name="status_enabled">Enabled (Running)</string>
+    
+    <string name="btn_open_accessibility">Open Accessibility Settings</string>
+    <string name="btn_test_speech">Test Speech Output</string>
+
+    <string name="title_tts_settings">Speech Settings</string>
+    <string name="label_speech_rate">Speech Rate</string>
+    <string name="label_pitch">Voice Pitch</string>
+
+    <string name="title_test_bench">Interactive Experience Playground</string>
+    <string name="test_button_1">Test Button A</string>
+    <string name="test_button_2">Test Button B</string>
+    <string name="test_edit_hint">Type text here to verify speech output</string>
+    <string name="test_switch_label">Detailed Speech Mode</string>
+
+    <string name="title_permissions">App Permissions</string>
+    <string name="status_perm_granted">Granted (Normal)</string>
+    <string name="status_perm_denied">Denied (Tap to grant)</string>
+    <string name="btn_request_overlay">Grant Display Over Other Apps Permission</string>
+    <string name="btn_request_notification">Grant Notification Permission</string>
+
+    <string name="title_features">Key Features &amp; Gestures</string>
+    <string name="feature_1">・[Focus Navigation] Swipe 1-finger left/right to move focus</string>
+    <string name="feature_2">・[Click] Double-tap 1-finger to activate focused item</string>
+    <string name="feature_3">・[Gesture Nav] Down-Left for Back, Up-Left for Home, Down-Right for Notifications</string>
+    <string name="feature_4">・[Calls &amp; Messaging] Caller ID announcement &amp; call duration tracking</string>
+    <string name="title_multilingual_tts">Multilingual TTS &amp; Tagalog Support</string>
+    <string name="label_multilingual_status">Auto Language Detection: Japanese / English / Tagalog</string>
+    <string name="btn_open_tts_settings">Open TTS Engine Settings</string>
+
+    <string name="title_telemetry">Alpha Telemetry &amp; Diagnostics</string>
+    <string name="desc_telemetry">Collects completely anonymized usage metrics for bug fixes and stability improvements.</string>
+    <string name="btn_send_telemetry">Send Report to Developer (shinjisakiyama@gmail.com)</string>
+    <string name="btn_copy_telemetry">Copy Report to Clipboard</string>
+    <string name="label_telemetry_optin">Participate in diagnostics &amp; improvements</string>
+
+    <string name="dialog_telemetry_title">🌸 serena Screen Reader Alpha Participation</string>
+    <string name="dialog_telemetry_message">Thank you for using serena Screen Reader Alpha.\n\nTo improve app quality across Canary, QPR Beta, and Stable OS channels, we collect anonymous usage statistics sent to Shinji (shinjisakiyama@gmail.com).\n\n[Collected Information]\n・OS version, API level, Device model\n・Gesture count, TTS language count, Call announcement count\n\n⚠️ No personal information (phone numbers, contacts, messages, recorded speech) is collected.\n\nWould you like to help improve serena?</string>
+    <string name="dialog_telemetry_agree">Agree &amp; Help</string>
+    <string name="dialog_telemetry_refuse">Skip for now</string>
+
+    <string name="title_hourly_chime">Hourly Time Announcement</string>
+    <string name="desc_hourly_chime">Automatically announces current time with a pleasant chime on every hour.</string>
+    <string name="label_hourly_chime_switch">Enable Hourly Chime</string>
+    <string name="btn_test_hourly_chime">Test Chime &amp; Voice</string>
+
+    <string name="title_security_health">Security &amp; OS Health Diagnostics</string>
+    <string name="btn_recheck_security">Re-diagnose Device Security</string>
+
+    <string name="title_developer_info">App Provider &amp; Credits</string>
+    <string name="developer_name">Shinji</string>
+    <string name="provider_name">Shinji</string>
+    <string name="developer_email">shinjisakiyama@gmail.com</string>
+</resources>

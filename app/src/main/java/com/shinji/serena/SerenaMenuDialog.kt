@@ -21,19 +21,26 @@ data class serenaMenuItem(
 )
 
 class serenaMenuDialog(
-    context: Context,
+    private val serviceContext: Context,
     private val isEditTextFocus: Boolean,
     private val items: List<serenaMenuItem>
-) : Dialog(context, android.R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar) {
+) : Dialog(
+    android.view.ContextThemeWrapper(serviceContext, android.R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar),
+    android.R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar
+) {
 
     init {
-        if (context !is Activity) {
+        window?.let { win ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                window?.setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
+                win.setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
             } else {
                 @Suppress("DEPRECATION")
-                window?.setType(WindowManager.LayoutParams.TYPE_PHONE)
+                win.setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT)
             }
+            win.addFlags(
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+            )
         }
     }
 
@@ -62,6 +69,7 @@ class serenaMenuDialog(
         val inflater = LayoutInflater.from(context)
         container.removeAllViews()
 
+        val scrollMenuItems = findViewById<android.widget.ScrollView>(R.id.scrollMenuItems)
         val service = SerenaScreenReaderService.instance
         val totalCount = items.size
 
@@ -76,8 +84,24 @@ class serenaMenuDialog(
             itemView.contentDescription = accessibleText
             itemView.isFocusable = true
 
+            itemView.accessibilityDelegate = object : View.AccessibilityDelegate() {
+                override fun sendAccessibilityEvent(host: View, eventType: Int) {
+                    super.sendAccessibilityEvent(host, eventType)
+                    if (eventType == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
+                        scrollMenuItems?.post {
+                            val targetY = (itemView.top - 120).coerceAtLeast(0)
+                            scrollMenuItems.smoothScrollTo(0, targetY)
+                        }
+                    }
+                }
+            }
+
             itemView.setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
+                    scrollMenuItems?.post {
+                        val targetY = (itemView.top - 120).coerceAtLeast(0)
+                        scrollMenuItems.smoothScrollTo(0, targetY)
+                    }
                     if (index == 0) {
                         service?.soundHelper?.playFirstItemEdgeSound()
                     } else if (index == totalCount - 1) {

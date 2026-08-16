@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -11,7 +11,7 @@ class ClipboardHistoryHelper(context: Context) {
         private const val MAX_HISTORY_SIZE = 10
     }
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun addClip(text: String) {
         val trimmed = text.trim()

@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.Context
 import android.content.Intent
@@ -9,16 +9,16 @@ class ObjectRecognitionHelper(private val context: Context) {
 
     companion object {
         private const val TAG = "ObjectRecognitionHelper"
-        const val GEMMA_MODEL_VERSION = "Gemma 4 On-Device Vision Engine v4.0 (User-First Edition)"
+        const val GEMINI_NANO_MODEL_VERSION = "Gemini Nano On-Device AI Core (Edge Vision Engine)"
     }
 
     fun getModelInfo(): String {
-        return GEMMA_MODEL_VERSION
+        return GEMINI_NANO_MODEL_VERSION
     }
 
     fun launchCameraForObjectRecognition() {
         try {
-            Log.i(TAG, "Launching camera with $GEMMA_MODEL_VERSION")
+            Log.i(TAG, "Launching camera with $GEMINI_NANO_MODEL_VERSION")
             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
@@ -30,10 +30,10 @@ class ObjectRecognitionHelper(private val context: Context) {
 
     fun buildObjectSummary(labels: List<String>): String {
         if (labels.isEmpty()) {
-            return "Gemma 4 AI: 特定の物体は検出されませんでした。"
+            return "Gemini Nano AI: 特定の物体は検出されませんでした。"
         }
         val translated = labels.map { translateLabel(it) }.distinct()
-        return "Gemma 4 AI解析: 画面内に ${translated.joinToString("、")} を検出しました。"
+        return "Gemini Nano AI解析: 画面内に ${translated.joinToString("、")} を検出しました。"
     }
 
     private fun translateLabel(englishLabel: String): String {
@@ -57,5 +57,3 @@ class ObjectRecognitionHelper(private val context: Context) {
         }
     }
 }
-
-

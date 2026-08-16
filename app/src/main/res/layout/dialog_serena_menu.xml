@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="#FDF8F5"
-    android:padding="20dp">
+    android:padding="16dp">
 
     <!-- Header Title -->
     <LinearLayout
@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="12dp">
 
         <ImageView
             android:layout_width="32dp"
@@ -30,7 +30,7 @@
             android:layout_marginStart="10dp"
             android:text="🌸 🦯 🪷 serena メニュー"
             android:textColor="#2B1B12"
-            android:textSize="20sp"
+            android:textSize="19sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -38,23 +38,32 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#E5D3C5"
-        android:layout_marginBottom="12dp" />
+        android:layout_marginBottom="8dp" />
 
-    <!-- Container for Menu Options -->
-    <LinearLayout
-        android:id="@+id/containerMenuItems"
+    <!-- Scrollable Container for Menu Options (Constrained Height for Auto-Scroll) -->
+    <ScrollView
+        android:id="@+id/scrollMenuItems"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <!-- Dynamic items will be added here or controlled via Kotlin -->
-    </LinearLayout>
+        android:layout_height="380dp"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/containerMenuItems"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <!-- Dynamic items will be added here -->
+        </LinearLayout>
+    </ScrollView>
 
     <!-- Close Button -->
     <Button
         android:id="@+id/btnClose"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:text="閉じる"
         android:textColor="#FFFFFF"
         android:backgroundTint="#5C3A21" />

@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -16,7 +16,7 @@ class SmartNotificationFilterHelper(context: Context) {
         private const val KEY_FILTER_MODE = "notification_filter_mode"
     }
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     var currentMode: NotificationFilterMode
         get() {
@@ -80,6 +80,47 @@ class SmartNotificationFilterHelper(context: Context) {
         if (isAdOrGameNoise && !isImportantKeyword) return false
 
         return isMessagingOrCallApp || isImportantKeyword
+    }
+
+    /**
+     * 長文通知・メッセージを要約して自然な日本語でアナウンス
+     */
+    fun formatSmartNotificationSummary(packageName: String, title: String, text: String): String {
+        val cleanTitle = title.trim()
+        val cleanText = text.trim()
+        val pkgLower = packageName.lowercase()
+
+        val appName = when {
+            pkgLower.contains("line") -> "LINE"
+            pkgLower.contains("whatsapp") -> "WhatsApp"
+            pkgLower.contains("gmail") || pkgLower.contains("mail") -> "メール"
+            pkgLower.contains("sms") || pkgLower.contains("message") -> "SMSメッセージ"
+            pkgLower.contains("discord") -> "Discord"
+            pkgLower.contains("twitter") || pkgLower.contains("x.android") -> "X"
+            pkgLower.contains("teams") -> "Teams"
+            pkgLower.contains("slack") -> "Slack"
+            pkgLower.contains("dialer") || pkgLower.contains("phone") -> "お電話"
+            else -> "通知"
+        }
+
+        if (cleanTitle.isEmpty() && cleanText.isEmpty()) {
+            return "${appName}の新しい通知があります。"
+        }
+
+        // 短いメッセージならそのまま、長いメッセージは先頭要約
+        val bodySummary = if (cleanText.length > 50) {
+            cleanText.substring(0, 48) + "、以下省略"
+        } else {
+            cleanText
+        }
+
+        return if (cleanTitle.isNotEmpty() && bodySummary.isNotEmpty()) {
+            "${cleanTitle}さんから${appName}：「${bodySummary}」"
+        } else if (cleanTitle.isNotEmpty()) {
+            "${appName}：${cleanTitle}"
+        } else {
+            "${appName}：${bodySummary}"
+        }
     }
 }
 

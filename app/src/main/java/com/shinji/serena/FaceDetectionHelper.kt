@@ -1,9 +1,10 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.Context
 import android.content.Intent
 import android.provider.MediaStore
 import android.util.Log
+import com.shinji.serena.ai.GeminiNanoEngine
 
 class FaceDetectionHelper(private val context: Context) {
 
@@ -11,10 +12,13 @@ class FaceDetectionHelper(private val context: Context) {
         private const val TAG = "FaceDetectionHelper"
     }
 
+    private val nanoEngine = GeminiNanoEngine(context)
+
     fun launchCameraForFaceAnalysis() {
         try {
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            val intent = Intent(context, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "FACE")
             }
             context.startActivity(intent)
         } catch (e: Exception) {
@@ -30,44 +34,36 @@ class FaceDetectionHelper(private val context: Context) {
         centerXRatio: Float
     ): String {
         if (faceCount <= 0) {
-            return "人物は検出されませんでした。"
+            return "人物は見当たりません。"
         }
 
-        val parts = mutableListOf<String>()
+        val smilingCount = if ((smileProbability ?: 0f) > 0.4f) 1 else 0
+        val isLooking = (leftEyeOpenProb ?: 0f) > 0.5f && (rightEyeOpenProb ?: 0f) > 0.5f
 
-        // 1. 人数
-        parts.add("${faceCount}人の人物を検出しました")
-
-        // 2. 画面上の位置
         val positionStr = when {
-            centerXRatio < 0.35f -> "画面の左側"
-            centerXRatio > 0.65f -> "画面の右側"
-            else -> "画面の中央正面"
-        }
-        parts.add(positionStr)
-
-        // 3. 表情（笑顔度）
-        if (smileProbability != null) {
-            val expression = when {
-                smileProbability > 0.7f -> "満面の笑顔です"
-                smileProbability > 0.3f -> "優しく微笑んでいます"
-                else -> "穏やかで真剣な表情です"
-            }
-            parts.add(expression)
+            centerXRatio < 0.35f -> "左側"
+            centerXRatio > 0.65f -> "右側"
+            else -> "正面"
         }
 
-        // 4. 目の状態
-        if (leftEyeOpenProb != null && rightEyeOpenProb != null) {
-            val eyeState = when {
-                leftEyeOpenProb > 0.5f && rightEyeOpenProb > 0.5f -> "両目をしっかり開けています"
-                leftEyeOpenProb <= 0.3f && rightEyeOpenProb <= 0.3f -> "目を閉じています"
-                else -> "ウインクしています"
-            }
-            parts.add(eyeState)
+        val expressionStr = when {
+            (smileProbability ?: 0f) > 0.7f -> "にっこり満面の笑顔"
+            (smileProbability ?: 0f) > 0.35f -> "優しく微笑んでいる表情"
+            else -> "穏やかな表情"
         }
 
-        return parts.joinToString("、")
+        val eyesStr = when {
+            isLooking -> "こちらを見ています"
+            (leftEyeOpenProb ?: 1f) < 0.2f && (rightEyeOpenProb ?: 1f) < 0.2f -> "目を閉じています"
+            else -> ""
+        }
+
+        val details = listOf(
+            "${positionStr}に人が${faceCount}人います",
+            expressionStr,
+            eyesStr
+        ).filter { it.isNotEmpty() }
+
+        return details.joinToString("。") + "。"
     }
 }
-
-

@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -36,7 +36,7 @@ class AlphaTelemetryHelper(private val context: Context) {
         }
     }
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun isConsentAsked(): Boolean = prefs.getBoolean(KEY_CONSENT_ASKED, false)
 

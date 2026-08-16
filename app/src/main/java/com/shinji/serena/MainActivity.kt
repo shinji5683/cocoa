@@ -26,14 +26,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private var localTts: TextToSpeech? = null
 
-    private val requestNotificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            Toast.makeText(this, "通知の受信許可を受け取りました", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "通知の受信が許可されませんでした。着信・メッセージ通知が制限されます", Toast.LENGTH_LONG).show()
-        }
+    private val requestAllPermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val grantedCount = permissions.values.count { it }
+        Toast.makeText(this, "権限を更新しました (${grantedCount}/${permissions.size})", Toast.LENGTH_SHORT).show()
         updateServiceStatusDisplay()
     }
 
@@ -42,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        prefs = getSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs = getSafeSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
 
         initLocalTts()
         setupStatusSection()
@@ -126,19 +123,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissionsOnStart() {
+        val permissionsToRequest = mutableListOf(
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.CALL_PHONE,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            permissionsToRequest.add(Manifest.permission.ANSWER_PHONE_CALLS)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+            permissionsToRequest.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        }
+
+        val ungranted = permissionsToRequest.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (ungranted.isNotEmpty()) {
+            requestAllPermissionsLauncher.launch(ungranted.toTypedArray())
         }
     }
 
     private fun requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            Toast.makeText(this, "このOSバージョンでは通知許可は有効です", Toast.LENGTH_SHORT).show()
-        }
+        checkPermissionsOnStart()
     }
 
     private fun updateServiceStatusDisplay() {
