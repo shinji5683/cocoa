@@ -123,4 +123,57 @@ class GeminiNanoEngine(private val context: Context) {
 
         return sb.toString().trim()
     }
+
+    /**
+     * Serena IME 向け AI 予測変換・文脈補完
+     */
+    fun predictNextCandidates(language: String, input: String, contextBefore: String): List<Pair<String, String>> {
+        val predictions = mutableListOf<Pair<String, String>>()
+        val cleanInput = input.trim()
+
+        when (language.lowercase()) {
+            "japanese", "ja" -> {
+                if (cleanInput.isEmpty()) {
+                    if (contextBefore.endsWith("今日") || contextBefore.endsWith("きょう")) {
+                        predictions.add(Pair("は", "助詞：は"))
+                        predictions.add(Pair("の予定", "名詞：今日の予定"))
+                    } else if (contextBefore.endsWith("お疲れ") || contextBefore.endsWith("おつかれ")) {
+                        predictions.add(Pair("様です", "挨拶：お疲れ様です"))
+                        predictions.add(Pair("さまでした", "挨拶：お疲れさまでした"))
+                    } else if (contextBefore.endsWith("よろしく") || contextBefore.endsWith("よろしくお")) {
+                        predictions.add(Pair("願いします", "挨拶：よろしくお願いします"))
+                    } else if (contextBefore.endsWith("あり")) {
+                        predictions.add(Pair("がとうございます", "感謝：ありがとうございます"))
+                    }
+                }
+            }
+            "english", "en" -> {
+                if (cleanInput.isEmpty()) {
+                    if (contextBefore.endsWith("How are", ignoreCase = true)) {
+                        predictions.add(Pair("you?", "Phrase: How are you?"))
+                    } else if (contextBefore.endsWith("Thank", ignoreCase = true)) {
+                        predictions.add(Pair("you very much!", "Phrase: Thank you very much!"))
+                    } else if (contextBefore.endsWith("Good", ignoreCase = true)) {
+                        predictions.add(Pair("morning", "Greeting: Good morning"))
+                        predictions.add(Pair("evening", "Greeting: Good evening"))
+                    }
+                }
+            }
+            "tagalog", "tl" -> {
+                if (cleanInput.isEmpty()) {
+                    if (contextBefore.endsWith("Maraming", ignoreCase = true)) {
+                        predictions.add(Pair("salamat po!", "Greeting: Maraming salamat po! (どうもありがとうございます)"))
+                    } else if (contextBefore.endsWith("Magandang", ignoreCase = true)) {
+                        predictions.add(Pair("umaga po!", "Greeting: Magandang umaga po! (おはようございます)"))
+                        predictions.add(Pair("araw po!", "Greeting: Magandang araw po! (こんにちは)"))
+                        predictions.add(Pair("gabi po!", "Greeting: Magandang gabi po! (こんばんは)"))
+                    } else if (contextBefore.endsWith("Kamusta", ignoreCase = true)) {
+                        predictions.add(Pair("ka po?", "Question: Kamusta ka po? (お元気ですか？)"))
+                    }
+                }
+            }
+        }
+        return predictions
+    }
 }
+
