@@ -65,6 +65,6 @@
     <string name="provider_name_label">提供元: Shinji</string>
     <string name="btn_call_developer">開発者 (Shinji) へ電話をかける (080-9495-9134)</string>
     <string name="developer_phone_label">電話サポート: 080-9495-9134 (国際: +81 80-9495-9134)</string>
-    <string name="signature_label">デジタル署名: 認証済み (cocoa-release-key)</string>
+    <string name="signature_label">デジタル署名: 認証済み (serena-release-key / Shinji)</string>
     <string name="copyright_label">Copyright © 2026 Shinji. All Rights Reserved.</string>
 </resources>
