@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="cocoa_primary">#5C3A21</color>
-    <color name="cocoa_primary_variant">#3D2314</color>
-    <color name="cocoa_secondary">#D27D2D</color>
-    <color name="cocoa_accent">#FF9F45</color>
-    <color name="cocoa_background">#FDF8F5</color>
-    <color name="cocoa_card_bg">#FFFFFF</color>
-    <color name="cocoa_text_dark">#2B1B12</color>
-    <color name="cocoa_text_muted">#7A675C</color>
+    <color name="serena_primary">#5C3A21</color>
+    <color name="serena_primary_variant">#3D2314</color>
+    <color name="serena_secondary">#D27D2D</color>
+    <color name="serena_accent">#FF9F45</color>
+    <color name="serena_background">#FDF8F5</color>
+    <color name="serena_card_bg">#FFFFFF</color>
+    <color name="serena_text_dark">#2B1B12</color>
+    <color name="serena_text_muted">#7A675C</color>
     
     <color name="status_green">#2E7D32</color>
     <color name="status_red">#C62828</color>

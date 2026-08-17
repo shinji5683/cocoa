@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                 binding.tvSecurityStatus.setTextColor(getColor(R.color.status_green))
             }
             DeviceSecurityHelper.SecurityStatus.UPDATE_RECOMMENDED -> {
-                binding.tvSecurityStatus.setTextColor(getColor(R.color.cocoa_secondary))
+                binding.tvSecurityStatus.setTextColor(getColor(R.color.serena_secondary))
             }
             DeviceSecurityHelper.SecurityStatus.MODIFIED_ENVIRONMENT -> {
                 binding.tvSecurityStatus.setTextColor(getColor(R.color.status_red))

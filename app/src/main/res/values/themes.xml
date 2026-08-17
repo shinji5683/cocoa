@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Cocoa" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/cocoa_primary</item>
-        <item name="colorSecondary">@color/cocoa_secondary</item>
-        <item name="android:colorBackground">@color/cocoa_background</item>
-        <item name="android:statusBarColor">@color/cocoa_primary_variant</item>
+    <style name="Theme.Serena" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/serena_primary</item>
+        <item name="colorSecondary">@color/serena_secondary</item>
+        <item name="android:colorBackground">@color/serena_background</item>
+        <item name="android:statusBarColor">@color/serena_primary_variant</item>
     </style>
 </resources>

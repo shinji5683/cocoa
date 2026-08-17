@@ -10,7 +10,7 @@
         android:strokeWidth="3"
         android:strokeLineCap="round"
         android:pathData="M 46,36 Q 44,30 48,24 M 54,34 Q 52,28 56,22 M 62,36 Q 60,30 64,24" />
-    <!-- Cocoa Mug Body -->
+    <!-- Serena Mug Body -->
     <path
         android:fillColor="#FDF8F5"
         android:pathData="M 38,42 C 38,42 38,72 54,72 C 70,72 70,42 70,42 Z" />
@@ -20,7 +20,7 @@
         android:strokeColor="#FDF8F5"
         android:strokeWidth="4"
         android:pathData="M 70,48 C 77,48 77,62 70,64" />
-    <!-- Cocoa Liquid Surface -->
+    <!-- Serena Liquid Surface -->
     <path
         android:fillColor="#D27D2D"
         android:pathData="M 39,44 C 44,46 64,46 69,44 C 69,47 67,52 54,52 C 41,52 39,47 39,44 Z" />

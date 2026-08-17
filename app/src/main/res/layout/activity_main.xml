@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/cocoa_background"
+    android:background="@color/serena_background"
     android:fillViewport="true">
 
     <LinearLayout
@@ -28,13 +28,13 @@
                 android:text="@string/app_name"
                 android:textSize="28sp"
                 android:textStyle="bold"
-                android:textColor="@color/cocoa_primary" />
+                android:textColor="@color/serena_primary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="v1.0"
-                android:textColor="@color/cocoa_secondary"
+                android:textColor="@color/serena_secondary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -46,7 +46,7 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -59,7 +59,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/status_label"
                     android:textSize="14sp"
-                    android:textColor="@color/cocoa_text_muted" />
+                    android:textColor="@color/serena_text_muted" />
 
                 <TextView
                     android:id="@+id/tvStatus"
@@ -78,7 +78,7 @@
                     android:layout_height="52dp"
                     android:text="@string/btn_open_accessibility"
                     android:textSize="16sp"
-                    android:backgroundTint="@color/cocoa_primary"
+                    android:backgroundTint="@color/serena_primary"
                     app:cornerRadius="12dp" />
 
             </LinearLayout>
@@ -91,7 +91,7 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -105,7 +105,7 @@
                     android:text="@string/title_security_health"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_primary"
+                    android:textColor="@color/serena_primary"
                     android:layout_marginBottom="6dp" />
 
                 <TextView
@@ -115,7 +115,7 @@
                     android:text="診断中..."
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:layout_marginBottom="4dp" />
 
                 <TextView
@@ -123,7 +123,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="環境を診断しています"
-                    android:textColor="@color/cocoa_text_muted"
+                    android:textColor="@color/serena_text_muted"
                     android:textSize="13sp"
                     android:layout_marginBottom="10dp" />
 
@@ -132,7 +132,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
                     android:text="@string/btn_recheck_security"
-                    android:backgroundTint="@color/cocoa_secondary"
+                    android:backgroundTint="@color/serena_secondary"
                     app:cornerRadius="10dp" />
 
             </LinearLayout>
@@ -145,7 +145,7 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -159,7 +159,7 @@
                     android:text="@string/title_permissions"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:layout_marginBottom="12dp" />
 
                 <!-- Overlay Permission -->
@@ -174,7 +174,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="他のアプリの上に重ねて表示"
-                        android:textColor="@color/cocoa_text_dark"
+                        android:textColor="@color/serena_text_dark"
                         android:textStyle="bold" />
 
                     <TextView
@@ -192,7 +192,7 @@
                     android:layout_height="44dp"
                     android:text="@string/btn_request_overlay"
                     android:textSize="14sp"
-                    android:backgroundTint="@color/cocoa_secondary"
+                    android:backgroundTint="@color/serena_secondary"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="14dp"
                     app:cornerRadius="10dp" />
@@ -209,7 +209,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="通知の受信・アナウンス許可"
-                        android:textColor="@color/cocoa_text_dark"
+                        android:textColor="@color/serena_text_dark"
                         android:textStyle="bold" />
 
                     <TextView
@@ -227,7 +227,7 @@
                     android:layout_height="44dp"
                     android:text="@string/btn_request_notification"
                     android:textSize="14sp"
-                    android:backgroundTint="@color/cocoa_secondary"
+                    android:backgroundTint="@color/serena_secondary"
                     android:layout_marginTop="6dp"
                     app:cornerRadius="10dp" />
 
@@ -241,7 +241,7 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -255,7 +255,7 @@
                     android:text="@string/title_tts_settings"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:layout_marginBottom="16dp" />
 
                 <TextView
@@ -263,7 +263,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="読み上げ速度: 1.0x"
-                    android:textColor="@color/cocoa_text_dark" />
+                    android:textColor="@color/serena_text_dark" />
 
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderSpeed"
@@ -279,7 +279,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="音声ピッチ: 1.0x"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:layout_marginTop="8dp" />
 
                 <com.google.android.material.slider.Slider
@@ -296,7 +296,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="@string/btn_test_speech"
-                    android:backgroundTint="@color/cocoa_secondary"
+                    android:backgroundTint="@color/serena_secondary"
                     android:layout_marginTop="12dp"
                     app:cornerRadius="12dp" />
 
@@ -305,7 +305,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="@string/btn_open_tts_settings"
-                    android:backgroundTint="@color/cocoa_primary"
+                    android:backgroundTint="@color/serena_primary"
                     android:layout_marginTop="8dp"
                     app:cornerRadius="12dp" />
 
@@ -319,7 +319,7 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -333,7 +333,7 @@
                     android:text="@string/title_test_bench"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:layout_marginBottom="12dp" />
 
                 <EditText
@@ -385,8 +385,8 @@
                     android:id="@+id/btnTriggerMenu"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:text="☕ cocoa メニューをテスト開く"
-                    android:backgroundTint="@color/cocoa_primary"
+                    android:text="☕ serena メニューをテスト開く"
+                    android:backgroundTint="@color/serena_primary"
                     app:cornerRadius="10dp" />
 
             </LinearLayout>
@@ -398,7 +398,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -412,35 +412,35 @@
                     android:text="@string/title_features"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_primary"
+                    android:textColor="@color/serena_primary"
                     android:layout_marginBottom="8dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/feature_1"
-                    android:textColor="@color/cocoa_text_muted"
+                    android:textColor="@color/serena_text_muted"
                     android:layout_marginBottom="4dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/feature_2"
-                    android:textColor="@color/cocoa_text_muted"
+                    android:textColor="@color/serena_text_muted"
                     android:layout_marginBottom="4dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/feature_3"
-                    android:textColor="@color/cocoa_text_muted"
+                    android:textColor="@color/serena_text_muted"
                     android:layout_marginBottom="4dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/feature_4"
-                    android:textColor="@color/cocoa_text_muted" />
+                    android:textColor="@color/serena_text_muted" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -452,7 +452,7 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -466,14 +466,14 @@
                     android:text="@string/title_hourly_chime"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_primary"
+                    android:textColor="@color/serena_primary"
                     android:layout_marginBottom="6dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/desc_hourly_chime"
-                    android:textColor="@color/cocoa_text_muted"
+                    android:textColor="@color/serena_text_muted"
                     android:textSize="13sp"
                     android:layout_marginBottom="10dp" />
 
@@ -482,7 +482,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/label_hourly_chime_switch"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:textStyle="bold"
                     android:layout_marginBottom="10dp" />
 
@@ -491,7 +491,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
                     android:text="@string/btn_test_hourly_chime"
-                    android:backgroundTint="@color/cocoa_secondary"
+                    android:backgroundTint="@color/serena_secondary"
                     app:cornerRadius="10dp" />
 
             </LinearLayout>
@@ -504,7 +504,7 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -518,14 +518,14 @@
                     android:text="@string/title_telemetry"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_primary"
+                    android:textColor="@color/serena_primary"
                     android:layout_marginBottom="6dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/desc_telemetry"
-                    android:textColor="@color/cocoa_text_muted"
+                    android:textColor="@color/serena_text_muted"
                     android:textSize="13sp"
                     android:layout_marginBottom="10dp" />
 
@@ -534,7 +534,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/label_telemetry_optin"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:textStyle="bold"
                     android:layout_marginBottom="10dp" />
 
@@ -543,7 +543,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="@string/btn_send_telemetry"
-                    android:backgroundTint="@color/cocoa_primary"
+                    android:backgroundTint="@color/serena_primary"
                     android:layout_marginBottom="8dp"
                     app:cornerRadius="12dp" />
 
@@ -552,7 +552,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
                     android:text="@string/btn_copy_telemetry"
-                    android:backgroundTint="@color/cocoa_secondary"
+                    android:backgroundTint="@color/serena_secondary"
                     app:cornerRadius="10dp" />
 
             </LinearLayout>
@@ -565,7 +565,7 @@
             android:layout_marginTop="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/cocoa_card_bg">
+            app:cardBackgroundColor="@color/serena_card_bg">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -579,14 +579,14 @@
                     android:text="@string/title_developer_info"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/cocoa_primary"
+                    android:textColor="@color/serena_primary"
                     android:layout_marginBottom="8dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/provider_name_label"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:textStyle="bold"
                     android:layout_marginBottom="4dp" />
 
@@ -594,7 +594,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/developer_name_label"
-                    android:textColor="@color/cocoa_text_dark"
+                    android:textColor="@color/serena_text_dark"
                     android:layout_marginBottom="4dp" />
 
                 <TextView
@@ -602,7 +602,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/developer_phone_label"
-                    android:textColor="@color/cocoa_primary"
+                    android:textColor="@color/serena_primary"
                     android:textStyle="bold"
                     android:layout_marginBottom="10dp" />
 
@@ -611,7 +611,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="@string/btn_call_developer"
-                    android:backgroundTint="@color/cocoa_primary"
+                    android:backgroundTint="@color/serena_primary"
                     android:layout_marginBottom="12dp"
                     app:cornerRadius="12dp" />
 
@@ -627,7 +627,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/copyright_label"
-                    android:textColor="@color/cocoa_text_muted"
+                    android:textColor="@color/serena_text_muted"
                     android:textSize="12sp" />
 
             </LinearLayout>
