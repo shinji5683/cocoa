@@ -174,18 +174,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN
         info.notificationTimeout = 0
-        var flags = info.flags or
+        info.flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
                 AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                 AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
-                AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
-                AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
-        }
-        info.flags = flags
+                AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
         serviceInfo = info
-        Log.i(TAG, "serena AccessibilityService connected.")
+        Log.i(TAG, "serena AccessibilityService connected with Touch Exploration mode enabled.")
     }
 
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
