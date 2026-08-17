@@ -77,7 +77,7 @@
 
         <activity
             android:name=".LiveVisionActivity"
-            android:exported="false"
+            android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Serena" />
 

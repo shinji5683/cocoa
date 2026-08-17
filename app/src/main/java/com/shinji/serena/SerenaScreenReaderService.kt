@@ -97,34 +97,39 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         super.onCreate()
         instance = this
         val safeContext = getSafeContext()
-        prefs = safeContext.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        soundHelper = SoundAndHapticHelper(safeContext)
-        screenCurtainHelper = ScreenCurtainHelper(safeContext)
-        statusHelper = StatusAnnouncementHelper(safeContext)
-        ocrHelper = OcrCameraHelper(safeContext)
-        clipboardHelper = ClipboardHistoryHelper(safeContext)
-        notificationFilterHelper = SmartNotificationFilterHelper(safeContext)
-        appProfileHelper = AppProfileHelper()
-        faceHelper = FaceDetectionHelper(safeContext)
-        objectHelper = ObjectRecognitionHelper(safeContext)
-        assistantHelper = SerenaAiAssistantHelper(this)
-        colorAndLightHelper = ColorAndLightHelper(safeContext)
-        compassHelper = SpatialCompassHelper(safeContext).apply { startListening() }
-        walkingNavigator = com.shinji.serena.navigation.SerenaWalkingNavigator(this, compassHelper).apply { startTracking() }
-        wifiConnectivityHelper = WifiConnectivityHelper(this).apply { startMonitoring() }
-        batteryHelper = BatteryStateHelper(this).apply { start() }
+        try {
+            prefs = safeContext.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            soundHelper = SoundAndHapticHelper(safeContext)
+            screenCurtainHelper = ScreenCurtainHelper(safeContext)
+            statusHelper = StatusAnnouncementHelper(safeContext)
+            ocrHelper = OcrCameraHelper(this)
+            clipboardHelper = ClipboardHistoryHelper(safeContext)
+            notificationFilterHelper = SmartNotificationFilterHelper(safeContext)
+            appProfileHelper = AppProfileHelper()
+            faceHelper = FaceDetectionHelper(this)
+            objectHelper = ObjectRecognitionHelper(this)
+            assistantHelper = SerenaAiAssistantHelper(this)
+            colorAndLightHelper = ColorAndLightHelper(safeContext)
+            compassHelper = SpatialCompassHelper(safeContext).apply { try { startListening() } catch (_: Exception) {} }
+            walkingNavigator = com.shinji.serena.navigation.SerenaWalkingNavigator(this, compassHelper).apply { try { startTracking() } catch (_: Exception) {} }
+            wifiConnectivityHelper = WifiConnectivityHelper(this).apply { try { startMonitoring() } catch (_: Exception) {} }
+            batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} }
 
-        shakeDetectorHelper = ShakeDetectorHelper(safeContext) {
-            announceFullStatus()
-        }.apply { start() }
+            shakeDetectorHelper = ShakeDetectorHelper(safeContext) {
+                announceFullStatus()
+            }.apply { try { start() } catch (_: Exception) {} }
 
-        soundHelper?.let {
-            spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
+            soundHelper?.let {
+                spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
+            }
+            com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing non-core helpers: ${e.message}")
         }
-        com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
-        initTts(safeContext)
+
+        initTts(this)
         registerTimeTickReceiver()
-        Log.i(TAG, "serena ScreenReaderService created with DeviceProtectedStorage safeContext.")
+        Log.i(TAG, "serena ScreenReaderService created with fail-safe direct boot resilience.")
     }
 
     private val pendingSpeechQueue = mutableListOf<Pair<String, Int>>()
@@ -1224,20 +1229,44 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun launchCameraOcr() {
         soundHelper?.playClick()
-        speak("文字読み取りカメラを起動します。撮影した画像から文字を即座に読み取ります。", TextToSpeech.QUEUE_FLUSH)
-        ocrHelper?.launchCameraForTextRecognition()
+        speak("文字読み取りカメラを起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "OCR")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch OCR: ${e.message}")
+        }
     }
 
     fun launchCameraFaceAnalysis() {
         soundHelper?.playClick()
-        speak("表情・人物判定カメラを起動します。撮影した人物の表情や位置を即座に解析します。", TextToSpeech.QUEUE_FLUSH)
-        faceHelper?.launchCameraForFaceAnalysis()
+        speak("表情・人物判定カメラを起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "FACE")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch Face: ${e.message}")
+        }
     }
 
     fun launchCameraObjectAnalysis() {
         soundHelper?.playClick()
-        speak("Gemini Nano AIカメラを起動します。撮影した周囲の物体や景観を即座に解析します。", TextToSpeech.QUEUE_FLUSH)
-        objectHelper?.launchCameraForObjectRecognition()
+        speak("Gemini Nano AIカメラを起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "OBJECT")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch Object: ${e.message}")
+        }
     }
 
     private fun launchChromeAuthPage(url: String) {
