@@ -63,17 +63,23 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
             soundAndHapticHelper.announceTts("削除")
         } else {
             val connection = currentInputConnection
-            val before = connection?.getTextBeforeCursor(1, 0)?.toString() ?: ""
-            connection?.deleteSurroundingText(1, 0)
-            if (before.isNotEmpty()) {
-                val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(before)
-                if (detail.isNotEmpty() && detail != before) {
-                    soundAndHapticHelper.announceTts("$before ($detail) を削除")
-                } else {
-                    soundAndHapticHelper.announceTts("$before を削除")
-                }
+            val beforeTwo = connection?.getTextBeforeCursor(2, 0)?.toString() ?: ""
+            if (beforeTwo.length >= 2 && Character.isSurrogatePair(beforeTwo[0], beforeTwo[1])) {
+                connection?.deleteSurroundingText(2, 0)
+                soundAndHapticHelper.announceTts("$beforeTwo を削除")
             } else {
-                soundAndHapticHelper.announceTts("一文字削除")
+                val before = connection?.getTextBeforeCursor(1, 0)?.toString() ?: ""
+                connection?.deleteSurroundingText(1, 0)
+                if (before.isNotEmpty()) {
+                    val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(before)
+                    if (detail.isNotEmpty() && detail != before) {
+                        soundAndHapticHelper.announceTts("$before ($detail) を削除")
+                    } else {
+                        soundAndHapticHelper.announceTts("$before を削除")
+                    }
+                } else {
+                    soundAndHapticHelper.announceTts("一文字削除")
+                }
             }
         }
 

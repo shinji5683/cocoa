@@ -179,7 +179,20 @@ object SerenaPhoneticEngine {
             if (char.isDigit()) {
                 val isFullWidth = code in 0xFF10..0xFF19
                 val prefix = if (isFullWidth) "全角数字の " else "数字の "
-                return "$prefix$char"
+                val digitReading = when (char) {
+                    '0', '０' -> "ゼロ"
+                    '1', '１' -> "イチ"
+                    '2', '２' -> "ニ"
+                    '3', '３' -> "サン"
+                    '4', '４' -> "ヨン"
+                    '5', '５' -> "ゴ"
+                    '6', '６' -> "ロク"
+                    '7', '７' -> "ナナ"
+                    '8', '８' -> "ハチ"
+                    '9', '９' -> "キュウ"
+                    else -> char.toString()
+                }
+                return "$prefix$char（$digitReading）"
             }
 
             // 7. 特殊記号・フィリピン文字 (Ñ/ñ)

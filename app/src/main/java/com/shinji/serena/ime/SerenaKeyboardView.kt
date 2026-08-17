@@ -281,18 +281,18 @@ class SerenaKeyboardView @JvmOverloads constructor(
     }
 
     private fun findChildViewAt(parent: View, x: Float, y: Float): View? {
-        if (parent !is LinearLayout) return if (parent.isClickable) parent else null
+        if (parent !is android.view.ViewGroup) return if (parent.isClickable) parent else null
 
         for (i in 0 until parent.childCount) {
             val child = parent.getChildAt(i)
-            if (x >= child.left && x <= child.right && y >= child.top && y <= child.bottom) {
-                return if (child is LinearLayout) {
+            if (child.visibility == View.VISIBLE && x >= child.left && x <= child.right && y >= child.top && y <= child.bottom) {
+                return if (child is android.view.ViewGroup) {
                     findChildViewAt(child, x - child.left, y - child.top)
                 } else {
                     child
                 }
             }
         }
-        return null
+        return if (parent.isClickable) parent else null
     }
 }
