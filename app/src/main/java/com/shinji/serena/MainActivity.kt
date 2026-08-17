@@ -87,10 +87,29 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupStatusSection() {
         binding.btnOpenAccessibility.setOnClickListener {
-            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-            startActivity(intent)
-            Toast.makeText(this, "インストール済みサービスから「serena スクリーンリーダー」を有効化してください", Toast.LENGTH_LONG).show()
+            showAccessibilityDisclosureDialog()
         }
+    }
+
+    private fun showAccessibilityDisclosureDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("🌸 Serena アクセシビリティ機能について")
+            .setMessage(
+                "Serena スクリーンリーダーは、視覚障害者および操作補助を必要とする方のために以下の機能を提供します：\n\n" +
+                "・画面上の文字やボタンのリアルタイム音声読み上げ\n" +
+                "・電話やLINE等の着信相手・通話時間アナウンス\n" +
+                "・クロックポジション徒歩ナビゲーションとカメラ情景認識\n\n" +
+                "【プライバシー保護方針】\n" +
+                "画面の内容や入力データはすべて端末内（オンデバイス）でのみ処理され、外部サーバーへ送信・収集・共有されることは一切ありません。\n\n" +
+                "サービスを有効にするには、次の画面で「Serena」を選択してオンにしてください。"
+            )
+            .setPositiveButton("同意して設定を開く") { _, _ ->
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                startActivity(intent)
+                Toast.makeText(this, "インストール済みアプリから「Serena」をオンにしてください", Toast.LENGTH_LONG).show()
+            }
+            .setNegativeButton("キャンセル", null)
+            .show()
     }
 
     private fun setupSecuritySection() {
