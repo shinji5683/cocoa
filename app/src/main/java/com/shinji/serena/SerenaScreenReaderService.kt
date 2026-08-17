@@ -127,10 +127,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         Log.i(TAG, "serena ScreenReaderService created with DeviceProtectedStorage safeContext.")
     }
 
+    private val pendingSpeechQueue = mutableListOf<Pair<String, Int>>()
+
     private fun initTts(context: Context = this) {
         try {
-            val safeCtx = context.getSafeContext()
-            tts = TextToSpeech(safeCtx, this)
+            tts?.shutdown()
+            tts = TextToSpeech(this, this)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 val audioAttributes = android.media.AudioAttributes.Builder()
                     .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
@@ -139,7 +141,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 tts?.setAudioAttributes(audioAttributes)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "initTts error in Direct Boot mode: ${e.message}")
+            Log.e(TAG, "initTts error: ${e.message}")
         }
     }
 
@@ -154,10 +156,23 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
             val welcomeMsg = if (isTalkBackMode) "TalkBack互換モードで serena が起動しました。" else "ほっと一息、serena スクリーンリーダーが起動しました。"
             speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
-            soundHelper?.playMenuOpen()
+            soundHelper?.playActionDone()
+            flushPendingSpeechQueue()
             Log.i(TAG, "TTS initialized successfully.")
         } else {
-            Log.e(TAG, "TTS Initialization failed.")
+            Log.e(TAG, "TTS Initialization failed with status: $status")
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                if (!isTtsReady) initTts()
+            }, 2000)
+        }
+    }
+
+    private fun flushPendingSpeechQueue() {
+        synchronized(pendingSpeechQueue) {
+            for (item in pendingSpeechQueue) {
+                speak(item.first, item.second)
+            }
+            pendingSpeechQueue.clear()
         }
     }
 
@@ -1994,20 +2009,29 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_ADD) {
-        if (!isTtsReady || text.isBlank() || isMuted) return
+        if (text.isBlank() || isMuted) return
+        if (!isTtsReady || tts == null) {
+            synchronized(pendingSpeechQueue) {
+                if (queueMode == TextToSpeech.QUEUE_FLUSH) {
+                    pendingSpeechQueue.clear()
+                }
+                pendingSpeechQueue.add(Pair(text, queueMode))
+            }
+            return
+        }
+
         val processedText = emojiHelper?.translateEmojiAndKaomoji(text) ?: text
         lastSpokenText = processedText
         currentSpeakingUtterance = processedText
         isSpeechPaused = false
 
-        val targetLocale = detectLanguage(processedText)
-        tts?.language = targetLocale
-        AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
-        
-        val params = Bundle().apply {
-            putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
-        }
-        tts?.speak(processedText, queueMode, params, "serenaUtterance_${System.currentTimeMillis()}")
+        try {
+            val targetLocale = detectLanguage(processedText)
+            tts?.language = targetLocale
+            AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
+        } catch (_: Exception) {}
+
+        tts?.speak(processedText, queueMode, null, "serenaUtterance_${System.currentTimeMillis()}")
     }
 
     fun toggleSpeechPauseResume() {
