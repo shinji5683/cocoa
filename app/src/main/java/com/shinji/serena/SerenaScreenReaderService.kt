@@ -81,6 +81,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var batteryHelper: BatteryStateHelper? = null
     var colorAndLightHelper: ColorAndLightHelper? = null
     var compassHelper: SpatialCompassHelper? = null
+    var walkingNavigator: com.shinji.serena.navigation.SerenaWalkingNavigator? = null
     private var shakeDetectorHelper: ShakeDetectorHelper? = null
     private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
     private var isLiveEnvironmentModeActive = false
@@ -109,6 +110,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         assistantHelper = SerenaAiAssistantHelper(this)
         colorAndLightHelper = ColorAndLightHelper(safeContext)
         compassHelper = SpatialCompassHelper(safeContext).apply { startListening() }
+        walkingNavigator = com.shinji.serena.navigation.SerenaWalkingNavigator(this, compassHelper).apply { startTracking() }
         wifiConnectivityHelper = WifiConnectivityHelper(this).apply { startMonitoring() }
         batteryHelper = BatteryStateHelper(this).apply { start() }
 
@@ -956,6 +958,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🧭", "空間電子コンパス (現在向いている方角と角度)") {
                 announceCompassHeading()
             },
+            serenaMenuItem("🚶‍♂️", "徒歩ナビ・現在地と目的地クロックポジション案内") {
+                announceCurrentLocationAndNav()
+            },
             serenaMenuItem("📷", "カメラ・文字読み取り (On-Device OCR)") {
                 launchCameraOcr()
             },
@@ -1236,6 +1241,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playClick()
         speak("動作診断レポートを作成し、開発者 Shinji への送信画面を開きます", TextToSpeech.QUEUE_FLUSH)
         AlphaTelemetryHelper.getInstance(this).sendReportViaEmail(this)
+    }
+
+    fun announceCurrentLocationAndNav() {
+        soundHelper?.playActionDone()
+        val nav = walkingNavigator
+        if (nav != null) {
+            val text = if (nav.activeDestination != null) {
+                nav.getNavigationGuidance()
+            } else {
+                nav.getCurrentLocationSummary()
+            }
+            speak(text, TextToSpeech.QUEUE_FLUSH)
+        } else {
+            speak("位置情報機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+        }
     }
 
     fun toggleSpeechRateQuick() {
