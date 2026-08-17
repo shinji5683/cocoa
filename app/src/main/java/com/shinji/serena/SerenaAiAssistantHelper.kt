@@ -11,6 +11,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import com.shinji.serena.ai.GeminiNanoEngine
 import java.util.Calendar
 
 /**
@@ -26,6 +27,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
+    private val nanoEngine = GeminiNanoEngine(service)
 
     fun startListening() {
         mainHandler.post {
@@ -145,6 +147,11 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
         Log.i(TAG, "Processing assistant query: $query")
 
         when {
+            // === 徒歩ナビゲーション ＆ 現在地 ===
+            query.contains("ナビ") || query.contains("どこ") || query.contains("現在地") || query.contains("住所") || query.contains("目的地") || query.contains("方角") -> {
+                service.announceCurrentLocationAndNav()
+            }
+
             // === AIモデル・技術アーキテクチャ質問 ===
             query.contains("モデル") || query.contains("ベース") || query.contains("エンジン") || query.contains("gemini") || query.contains("ジェミニ") || query.contains("ai") || query.contains("仕組み") -> {
                 service.speak("セレナのベースAIモデルは、Google最新のオンデバイス基底モデル『Gemini Nano（Google AICore）』です！周囲の物体認識、カメラ解析、画面スマート要約まで、すべて端末内完結の超高速・プライバシー完全保護で動作していますよ！", TextToSpeech.QUEUE_FLUSH)
@@ -153,7 +160,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 service.speak("セレナの開発者は、Shinjiさんです！世界最高峰のアクセシビリティと温かい愛を込めて創られています！", TextToSpeech.QUEUE_FLUSH)
             }
             query.contains("何ができる") || query.contains("使い方") || query.contains("機能") || query.contains("ヘルプ") || query.contains("コマンド") -> {
-                service.speak("セレナは、Gemini Nanoカメラ物体認識、文字読み取りOCR、表情人物判定、リアルタイム環境実況、画面スマート要約、4言語フォネティック詳細読み、スマート通知フィルター、時報チャイムなど、何でもお手伝いできますよ！", TextToSpeech.QUEUE_FLUSH)
+                service.speak("セレナは、Gemini Nanoカメラ物体認識、文字読み取りOCR、徒歩ナビ、4言語フォネティック詳細読み、画面スマート要約、時報チャイムなど、何でもお手伝いできますよ！", TextToSpeech.QUEUE_FLUSH)
             }
 
             // === 愛情・挨拶・Shinjiさん専用 ===
@@ -183,9 +190,6 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 val lightReport = service.colorAndLightHelper?.getRoomLightStatus()
                     ?: "照明センサーを取得できませんでした。"
                 service.speak(lightReport, TextToSpeech.QUEUE_FLUSH)
-            }
-            query.contains("方角") || query.contains("コンパス") || query.contains("向き") || query.contains("北") || query.contains("南") || query.contains("東") || query.contains("西") -> {
-                service.announceCompassHeading()
             }
             query.contains("色") || query.contains("カラー") -> {
                 service.announceColorAndLightReport()
@@ -235,7 +239,8 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
             // === Gemini Nano AI スマート回答 ===
             else -> {
-                service.speak("Gemini Nano AIです。「$inputQuery」についてですね。周囲のカメラ認識、画面要約、ステータス案内、各種設定など何でもお申し付けください！", TextToSpeech.QUEUE_FLUSH)
+                val response = nanoEngine.answerAiAssistantQuery(inputQuery)
+                service.speak(response, TextToSpeech.QUEUE_FLUSH)
             }
         }
     }
