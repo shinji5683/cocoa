@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
+    <string name="ime_name">Serena IME (Multilingual Phonetic Keyboard)</string>
     <string name="accessibility_service_description">High-performance accessible screen reader providing live voice navigation, caller identification, call duration tracking, camera AI, and Gemini Nano on-device AI support for blind users.</string>
     
     <string name="status_label">Service Status</string>

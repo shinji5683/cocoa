@@ -21,8 +21,13 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
 
     override fun onCreate() {
         super.onCreate()
-        languageEngine = SerenaLanguageEngine(this)
-        soundAndHapticHelper = SoundAndHapticHelper(this)
+        val safeCtx = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N && !isDeviceProtectedStorage) {
+            createDeviceProtectedStorageContext()
+        } else {
+            this
+        }
+        languageEngine = SerenaLanguageEngine(safeCtx)
+        soundAndHapticHelper = SoundAndHapticHelper(safeCtx)
     }
 
     override fun onCreateInputView(): View {

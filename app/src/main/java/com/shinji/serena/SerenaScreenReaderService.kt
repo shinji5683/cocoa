@@ -1791,6 +1791,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (viewId.isNullOrEmpty()) return ""
         val name = viewId.substringAfterLast(":id/").lowercase()
         return when {
+            // === 画面ロック・PINコード入力テンキー & 特殊キーボード ===
+            name == "key0" || name.endsWith("_0") || name == "button0" -> "数字の 0（ゼロ）"
+            name == "key1" || name.endsWith("_1") || name == "button1" -> "数字の 1（イチ）"
+            name == "key2" || name.endsWith("_2") || name == "button2" -> "数字の 2（ニ）"
+            name == "key3" || name.endsWith("_3") || name == "button3" -> "数字の 3（サン）"
+            name == "key4" || name.endsWith("_4") || name == "button4" -> "数字の 4（ヨン）"
+            name == "key5" || name.endsWith("_5") || name == "button5" -> "数字の 5（ゴ）"
+            name == "key6" || name.endsWith("_6") || name == "button6" -> "数字の 6（ロク）"
+            name == "key7" || name.endsWith("_7") || name == "button7" -> "数字の 7（ナナ）"
+            name == "key8" || name.endsWith("_8") || name == "button8" -> "数字の 8（ハチ）"
+            name == "key9" || name.endsWith("_9") || name == "button9" -> "数字の 9（キュウ）"
+            name.contains("pin_entry") || name.contains("pinentry") || name.contains("password_entry") || name.contains("pin_code") -> "PINコード入力欄"
+            name.contains("delete_button") || name.contains("backspace") || name.contains("btn_delete") -> "1文字削除"
+            name.contains("emergency") -> "緊急通報"
+            name.contains("cancel_button") || name.contains("btn_cancel") -> "キャンセル"
+            name.contains("enter_button") || name.contains("btn_ok") || name.contains("btn_done") -> "決定"
+            name.contains("dialpad") || name.contains("digits") -> "ダイヤルキー"
+
             name.contains("search") || name.contains("gsearch") -> "Google検索"
             name.contains("home") -> "ホーム"
             name.contains("menu") || name.contains("drawer") -> "メニュー"
@@ -2028,12 +2046,29 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (timeTickReceiver != null) return
         timeTickReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_TIME_TICK) {
-                    checkHourlyChime()
+                when (intent?.action) {
+                    Intent.ACTION_TIME_TICK -> checkHourlyChime()
+                    Intent.ACTION_USER_UNLOCKED -> {
+                        Log.i(TAG, "Device unlocked from Direct Boot. Reloading storage & TTS.")
+                        try {
+                            val safeCtx = getSafeContext()
+                            prefs = safeCtx.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                            updateTtsSettings()
+                            if (tts == null || !isTtsReady) {
+                                initTts(safeCtx)
+                            }
+                            soundHelper?.playActionDone()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error handling USER_UNLOCKED: ${e.message}")
+                        }
+                    }
                 }
             }
         }
-        val filter = IntentFilter(Intent.ACTION_TIME_TICK)
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_USER_UNLOCKED)
+        }
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 registerReceiver(timeTickReceiver, filter, Context.RECEIVER_EXPORTED)

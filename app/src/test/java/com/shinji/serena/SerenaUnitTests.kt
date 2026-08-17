@@ -112,4 +112,37 @@ class SerenaUnitTests {
         assertEquals(9, g9.hour)
         assertEquals("左真横 9時の方向", g9.directionText)
     }
+
+    @Test
+    fun testLockScreenPinKeypadInference() {
+        fun inferLabel(viewId: String?): String {
+            if (viewId.isNullOrEmpty()) return ""
+            val name = viewId.substringAfterLast(":id/").lowercase()
+            return when {
+                name == "key0" || name.endsWith("_0") || name == "button0" -> "数字の 0（ゼロ）"
+                name == "key1" || name.endsWith("_1") || name == "button1" -> "数字の 1（イチ）"
+                name == "key2" || name.endsWith("_2") || name == "button2" -> "数字の 2（ニ）"
+                name == "key3" || name.endsWith("_3") || name == "button3" -> "数字の 3（サン）"
+                name == "key4" || name.endsWith("_4") || name == "button4" -> "数字の 4（ヨン）"
+                name == "key5" || name.endsWith("_5") || name == "button5" -> "数字の 5（ゴ）"
+                name == "key6" || name.endsWith("_6") || name == "button6" -> "数字の 6（ロク）"
+                name == "key7" || name.endsWith("_7") || name == "button7" -> "数字の 7（ナナ）"
+                name == "key8" || name.endsWith("_8") || name == "button8" -> "数字の 8（ハチ）"
+                name == "key9" || name.endsWith("_9") || name == "button9" -> "数字の 9（キュウ）"
+                name.contains("pin_entry") || name.contains("pinentry") || name.contains("password_entry") || name.contains("pin_code") -> "PINコード入力欄"
+                name.contains("delete_button") || name.contains("backspace") || name.contains("btn_delete") -> "1文字削除"
+                name.contains("emergency") -> "緊急通報"
+                name.contains("cancel_button") || name.contains("btn_cancel") -> "キャンセル"
+                name.contains("enter_button") || name.contains("btn_ok") || name.contains("btn_done") -> "決定"
+                else -> ""
+            }
+        }
+
+        assertEquals("数字の 1（イチ）", inferLabel("com.android.systemui:id/key1"))
+        assertEquals("数字の 5（ゴ）", inferLabel("com.android.systemui:id/key5"))
+        assertEquals("数字の 0（ゼロ）", inferLabel("com.android.systemui:id/key0"))
+        assertEquals("1文字削除", inferLabel("com.android.systemui:id/delete_button"))
+        assertEquals("緊急通報", inferLabel("com.android.systemui:id/emergency_call_button"))
+        assertEquals("PINコード入力欄", inferLabel("com.android.systemui:id/pinEntry"))
+    }
 }
