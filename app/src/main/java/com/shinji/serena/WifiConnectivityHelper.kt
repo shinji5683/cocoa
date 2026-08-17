@@ -53,17 +53,36 @@ class WifiConnectivityHelper(
                 }
 
                 if (isConnected) {
-                    val rawSsid = info?.ssid?.replace("\"", "")?.trim()
-                    if (!rawSsid.isNullOrEmpty() && rawSsid != "<unknown ssid>" && rawSsid != "0x") {
-                        "Wi-Fi接続中 SS ID ${rawSsid}"
+                    val rssi = info?.rssi ?: -100
+                    val level = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && wm != null) {
+                        wm.calculateSignalLevel(rssi)
                     } else {
-                        "Wi-Fi接続中"
+                        @Suppress("DEPRECATION")
+                        WifiManager.calculateSignalLevel(rssi, 5)
+                    }
+                    val levelText = getLevelDescription(level)
+                    val rawSsid = info?.ssid?.replace("\"", "")?.trim()
+
+                    if (!rawSsid.isNullOrEmpty() && rawSsid != "<unknown ssid>" && rawSsid != "0x") {
+                        "Wi-Fi接続中（${rawSsid}）、${levelText}"
+                    } else {
+                        "Wi-Fi接続中、${levelText}"
                     }
                 } else {
                     "Wi-Fi未接続"
                 }
             } catch (e: Exception) {
                 "Wi-Fi未接続"
+            }
+        }
+
+        fun getLevelDescription(level: Int): String {
+            return when (level) {
+                4 -> "電波4本最強"
+                3 -> "電波3本良好"
+                2 -> "電波2本普通"
+                1 -> "電波1本やや弱い"
+                else -> "電波微弱"
             }
         }
     }
@@ -195,16 +214,6 @@ class WifiConnectivityHelper(
         } catch (e: Exception) {
             Log.e(TAG, "Error getting realtime wifi status: ${e.message}")
             "Wi-Fi未接続"
-        }
-    }
-
-    private fun getLevelDescription(level: Int): String {
-        return when (level) {
-            4 -> "電波最強、アンテナ4本"
-            3 -> "電波良好、アンテナ3本"
-            2 -> "電波普通、アンテナ2本"
-            1 -> "電波やや弱い、アンテナ1本"
-            else -> "電波微弱"
         }
     }
 }

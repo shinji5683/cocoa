@@ -145,4 +145,13 @@ class SerenaUnitTests {
         assertEquals("緊急通報", inferLabel("com.android.systemui:id/emergency_call_button"))
         assertEquals("PINコード入力欄", inferLabel("com.android.systemui:id/pinEntry"))
     }
+
+    @Test
+    fun testWifiSignalLevelDescriptions() {
+        assertEquals("電波4本最強", WifiConnectivityHelper.getLevelDescription(4))
+        assertEquals("電波3本良好", WifiConnectivityHelper.getLevelDescription(3))
+        assertEquals("電波2本普通", WifiConnectivityHelper.getLevelDescription(2))
+        assertEquals("電波1本やや弱い", WifiConnectivityHelper.getLevelDescription(1))
+        assertEquals("電波微弱", WifiConnectivityHelper.getLevelDescription(0))
+    }
 }

@@ -148,10 +148,10 @@ class StatusAnnouncementHelper(private val context: Context) {
             }
 
             val antennaStr = when (signalLevel) {
-                4 -> "アンテナ4本（電波最強）"
-                3 -> "アンテナ3本（電波良好）"
-                2 -> "アンテナ2本（電波普通）"
-                1 -> "アンテナ1本（電波弱い）"
+                4 -> "電波4本最強"
+                3 -> "電波3本良好"
+                2 -> "電波2本普通"
+                1 -> "電波1本やや弱い"
                 else -> "圏外または微弱"
             }
 
