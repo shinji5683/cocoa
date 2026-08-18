@@ -258,19 +258,38 @@ class SerenaFocusNavigator(
 
     fun findHorizontalScrollableNode(forward: Boolean): AccessibilityNodeInfo? {
         val roots = getAllRoots()
-        for (root in roots) {
-            val directNode = findFirstHorizontalScrollableChild(root, forward)
-            if (directNode != null) return directNode
+        
+        // 1. Pixel Launcher / Launcher3 の Workspace 直接高速探索
+        for (r in roots) {
+            val pkg = r.packageName?.toString() ?: ""
+            val wsById = r.findAccessibilityNodeInfosByViewId("$pkg:id/workspace")
+            if (wsById.isNotEmpty()) return wsById[0]
+            val genericWs = r.findAccessibilityNodeInfosByViewId("com.google.android.apps.nexuslauncher:id/workspace")
+            if (genericWs.isNotEmpty()) return genericWs[0]
+            val launcher3Ws = r.findAccessibilityNodeInfosByViewId("com.android.launcher3:id/workspace")
+            if (launcher3Ws.isNotEmpty()) return launcher3Ws[0]
         }
 
-        val focusNode = service.getAccessibilityFocusedNode() ?: roots.firstOrNull() ?: return null
+        // 2. フォーカスノードの祖先階層探索
+        val focusNode = service.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
+            ?: service.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+            ?: service.getAccessibilityFocusedNode()
         var current: AccessibilityNodeInfo? = focusNode
         while (current != null) {
             if (canScrollHorizontal(current, forward)) return current
             current = current.parent
         }
+
+        // 3. 全ウィンドウツリー探索
         for (root in roots) {
+            val directNode = findFirstHorizontalScrollableChild(root, forward)
+            if (directNode != null) return directNode
             if (canScrollHorizontal(root, forward)) return root
+        }
+
+        val activeRoot = service.rootInActiveWindow
+        if (activeRoot != null) {
+            if (canScrollHorizontal(activeRoot, forward)) return activeRoot
         }
         return null
     }
@@ -301,21 +320,18 @@ class SerenaFocusNavigator(
         } else {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id
         }
-        if (node.actionList.any { it.id == pageAction }) {
-            if (node.performAction(pageAction)) return true
-        }
-
         val scrollAction = if (forward) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id else AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
-        if (node.actionList.any { it.id == scrollAction }) {
-            if (node.performAction(scrollAction)) return true
-        }
-
         val fallback = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+
+        if (node.actionList.any { it.id == pageAction } && node.performAction(pageAction)) return true
+        if (node.actionList.any { it.id == scrollAction } && node.performAction(scrollAction)) return true
         if (node.performAction(fallback)) return true
+        if (node.performAction(pageAction)) return true
+        if (node.performAction(scrollAction)) return true
 
         // 親ノードやルートへのフォールバック
         var parent = node.parent
@@ -324,6 +340,11 @@ class SerenaFocusNavigator(
                 return true
             }
             parent = parent.parent
+        }
+
+        val root = service.rootInActiveWindow
+        if (root != null && (root.performAction(pageAction) || root.performAction(scrollAction) || root.performAction(fallback))) {
+            return true
         }
 
         return false
@@ -356,20 +377,27 @@ class SerenaFocusNavigator(
         } else {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id
         }
-        if (node.actionList.any { it.id == altAction }) {
-            if (node.performAction(altAction)) return true
-        }
         val standardAction = if (forward) {
             AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
         } else {
             AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
+        val pageAction = if (forward) {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_DOWN.id
+        } else {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_UP.id
+        }
+
+        if (node.actionList.any { it.id == altAction } && node.performAction(altAction)) return true
+        if (node.actionList.any { it.id == standardAction } && node.performAction(standardAction)) return true
+        if (node.actionList.any { it.id == pageAction } && node.performAction(pageAction)) return true
         if (node.performAction(standardAction)) return true
+        if (node.performAction(altAction)) return true
 
         // 親ノードへのフォールバック
         var parent = node.parent
         while (parent != null) {
-            if (parent.performAction(altAction) || parent.performAction(standardAction)) {
+            if (parent.performAction(altAction) || parent.performAction(standardAction) || parent.performAction(pageAction)) {
                 return true
             }
             parent = parent.parent
@@ -377,7 +405,7 @@ class SerenaFocusNavigator(
 
         // ルートノードへのフォールバック
         val root = service.rootInActiveWindow
-        if (root != null && (root.performAction(altAction) || root.performAction(standardAction))) {
+        if (root != null && (root.performAction(altAction) || root.performAction(standardAction) || root.performAction(pageAction))) {
             return true
         }
 
