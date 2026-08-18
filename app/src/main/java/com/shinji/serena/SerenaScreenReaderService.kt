@@ -457,29 +457,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX = if (swipeLeft) width * 0.82f else width * 0.18f
-        val endX = if (swipeLeft) width * 0.18f else width * 0.82f
-        val startY1 = height * 0.45f
-        val startY2 = height * 0.55f
+        val startX = if (swipeLeft) width * 0.90f else width * 0.10f
+        val endX = if (swipeLeft) width * 0.10f else width * 0.90f
+        val startY = height * 0.22f
 
-        val path1 = android.graphics.Path().apply {
-            moveTo(startX, startY1)
-            lineTo(endX, startY1)
+        val path = android.graphics.Path().apply {
+            moveTo(startX, startY)
+            lineTo(endX, startY)
         }
-        val path2 = android.graphics.Path().apply {
-            moveTo(startX, startY2)
-            lineTo(endX, startY2)
-        }
-        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 220)
-        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 220)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 180)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(stroke1)
-            .addStroke(stroke2)
+            .addStroke(stroke)
             .build()
 
+        Log.i(TAG, "performHorizontalSwipeGesture: swipeLeft=$swipeLeft from ($startX, $startY) to ($endX, $startY)")
         dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
+                Log.i(TAG, "performHorizontalSwipeGesture: gesture completed successfully.")
                 soundHelper?.playFocusMove()
                 if (onComplete != null) {
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(onComplete, 200)
@@ -487,6 +482,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     val pageStr = if (swipeLeft) "次" else "前"
                     speak("${pageStr}のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
                 }
+            }
+
+            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCancelled(gestureDescription)
+                Log.w(TAG, "performHorizontalSwipeGesture: gesture was CANCELLED by system.")
             }
         }, null)
     }
@@ -673,9 +673,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
+        Log.i(TAG, "scrollHorizontalForward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
 
         if (scrollNode != null) {
             val success = focusNavigator?.performHorizontalScroll(scrollNode, forward = true) == true
+            Log.i(TAG, "scrollHorizontalForward: performHorizontalScroll result=$success")
             if (success) {
                 soundHelper?.playFocusMove()
                 speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
@@ -685,6 +687,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val root = rootInActiveWindow
         val fallbackSuccess = root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
+        Log.i(TAG, "scrollHorizontalForward: root scroll fallback result=$fallbackSuccess")
         if (fallbackSuccess) {
             soundHelper?.playFocusMove()
             speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
@@ -701,9 +704,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
+        Log.i(TAG, "scrollHorizontalBackward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
 
         if (scrollNode != null) {
             val success = focusNavigator?.performHorizontalScroll(scrollNode, forward = false) == true
+            Log.i(TAG, "scrollHorizontalBackward: performHorizontalScroll result=$success")
             if (success) {
                 soundHelper?.playFocusMove()
                 speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
@@ -713,6 +718,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val root = rootInActiveWindow
         val fallbackSuccess = root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
+        Log.i(TAG, "scrollHorizontalBackward: root scroll fallback result=$fallbackSuccess")
         if (fallbackSuccess) {
             soundHelper?.playFocusMove()
             speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
