@@ -309,7 +309,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             // 2本指上フリック (25): ロック画面時はロック解除 / アプリ内は次へ縦スクロール
             25 -> {
                 val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
-                val isKeyguard = km?.isKeyguardLocked == true || rootInActiveWindow?.packageName?.toString()?.contains("systemui") == true
+                val isKeyguard = km?.isKeyguardLocked == true
                 if (isKeyguard) {
                     unlockKeyguardSwipe()
                 } else {
@@ -707,21 +707,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
         Log.i(TAG, "scrollHorizontalForward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
 
-        if (scrollNode != null) {
-            val success = focusNavigator?.performHorizontalScroll(scrollNode, forward = true) == true
-            Log.i(TAG, "scrollHorizontalForward: performHorizontalScroll result=$success")
-            if (success) {
-                soundHelper?.playFocusMove()
-                speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
-                return true
-            }
+        val success = if (scrollNode != null) {
+            focusNavigator?.performHorizontalScroll(scrollNode, forward = true) == true
+        } else {
+            val root = rootInActiveWindow
+            root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
         }
 
-        val root = rootInActiveWindow
-        val fallbackSuccess = root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
-        if (fallbackSuccess) {
+        if (success) {
             soundHelper?.playFocusMove()
             speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                val newNodes = collectAccessibleNodes()
+                if (newNodes.isNotEmpty()) {
+                    val firstNode = newNodes.first()
+                    firstNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    announceNode(firstNode)
+                }
+            }, 300)
             return true
         }
 
@@ -737,21 +740,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
         Log.i(TAG, "scrollHorizontalBackward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
 
-        if (scrollNode != null) {
-            val success = focusNavigator?.performHorizontalScroll(scrollNode, forward = false) == true
-            Log.i(TAG, "scrollHorizontalBackward: performHorizontalScroll result=$success")
-            if (success) {
-                soundHelper?.playFocusMove()
-                speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
-                return true
-            }
+        val success = if (scrollNode != null) {
+            focusNavigator?.performHorizontalScroll(scrollNode, forward = false) == true
+        } else {
+            val root = rootInActiveWindow
+            root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
         }
 
-        val root = rootInActiveWindow
-        val fallbackSuccess = root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
-        if (fallbackSuccess) {
+        if (success) {
             soundHelper?.playFocusMove()
             speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                val newNodes = collectAccessibleNodes()
+                if (newNodes.isNotEmpty()) {
+                    val lastNode = newNodes.last()
+                    lastNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    announceNode(lastNode)
+                }
+            }, 300)
             return true
         }
 
@@ -781,6 +787,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (success) {
             soundHelper?.playFocusMove()
             speak("次へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                val newNodes = collectAccessibleNodes()
+                if (newNodes.isNotEmpty()) {
+                    val firstNode = newNodes.first()
+                    firstNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                }
+            }, 300)
             return true
         } else {
             soundHelper?.playLastItemEdgeSound()
@@ -810,6 +823,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (success) {
             soundHelper?.playFocusMove()
             speak("前へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                val newNodes = collectAccessibleNodes()
+                if (newNodes.isNotEmpty()) {
+                    val lastNode = newNodes.last()
+                    lastNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                }
+            }, 300)
             return true
         } else {
             soundHelper?.playFirstItemEdgeSound()
@@ -1466,19 +1486,82 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
                 performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    isUnlockingKeyguard = false
-                }, 800)
+                schedulePinFieldFocus()
             }
             override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCancelled(gestureDescription)
                 performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
-                performGlobalAction(GLOBAL_ACTION_BACK)
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    isUnlockingKeyguard = false
-                }, 800)
+                schedulePinFieldFocus()
             }
         }, null)
+    }
+
+    private fun schedulePinFieldFocus() {
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        val delays = listOf(250L, 500L, 850L, 1200L)
+        for (delay in delays) {
+            mainHandler.postDelayed({
+                if (focusPinEntryField()) {
+                    isUnlockingKeyguard = false
+                }
+            }, delay)
+        }
+        mainHandler.postDelayed({
+            isUnlockingKeyguard = false
+        }, 1300)
+    }
+
+    private fun focusPinEntryField(): Boolean {
+        val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
+        for (r in roots) {
+            val pinNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/pinEntry")
+            if (pinNodes.isNotEmpty()) {
+                val node = pinNodes[0]
+                node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                soundHelper?.playFocusMove()
+                announceNode(node)
+                return true
+            }
+            val passwordNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/passwordEntry")
+            if (passwordNodes.isNotEmpty()) {
+                val node = passwordNodes[0]
+                node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                soundHelper?.playFocusMove()
+                announceNode(node)
+                return true
+            }
+            val bouncerNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_bouncer")
+            if (bouncerNodes.isNotEmpty()) {
+                val accessibleChildren = collectAccessibleNodes(bouncerNodes[0])
+                if (accessibleChildren.isNotEmpty()) {
+                    val target = accessibleChildren.firstOrNull { it.isEditable || it.className?.contains("EditText") == true } ?: accessibleChildren.first()
+                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    soundHelper?.playFocusMove()
+                    announceNode(target)
+                    return true
+                }
+            }
+            val editTexts = mutableListOf<AccessibilityNodeInfo>()
+            findNodesByClass(r, "EditText", editTexts)
+            if (editTexts.isNotEmpty()) {
+                val node = editTexts[0]
+                node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                soundHelper?.playFocusMove()
+                announceNode(node)
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun findNodesByClass(node: AccessibilityNodeInfo, targetClass: String, outList: MutableList<AccessibilityNodeInfo>) {
+        if (node.className?.contains(targetClass, ignoreCase = true) == true) {
+            outList.add(node)
+        }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            findNodesByClass(child, targetClass, outList)
+        }
     }
 
     fun launchRealtimeLiveSceneCommentary() {
