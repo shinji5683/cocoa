@@ -258,8 +258,18 @@ class SerenaFocusNavigator(
 
     fun findHorizontalScrollableNode(forward: Boolean): AccessibilityNodeInfo? {
         val root = service.rootInActiveWindow ?: return null
-        val focusNode = service.getAccessibilityFocusedNode() ?: root
         
+        // 1. Pixel Launcher / Launcher3 Workspace を優先直接検索
+        val workspaceNodes = root.findAccessibilityNodeInfosByViewId("com.google.android.apps.nexuslauncher:id/workspace")
+        if (workspaceNodes.isNotEmpty()) {
+            return workspaceNodes[0]
+        }
+        val genericWorkspace = root.findAccessibilityNodeInfosByViewId("${root.packageName}:id/workspace")
+        if (genericWorkspace.isNotEmpty()) {
+            return genericWorkspace[0]
+        }
+
+        val focusNode = service.getAccessibilityFocusedNode() ?: root
         var current: AccessibilityNodeInfo? = focusNode
         while (current != null) {
             if (canScrollHorizontal(current, forward)) return current
@@ -270,8 +280,8 @@ class SerenaFocusNavigator(
 
     fun canScrollHorizontal(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
-        val isLauncherWorkspace = viewId.contains("workspace") || viewId.contains("drag_layer")
-        if (isLauncherWorkspace) return true
+        val className = node.className?.toString()?.lowercase() ?: ""
+        if (viewId.endsWith(":id/workspace") || className.contains("workspace") || className.contains("pagedview")) return true
 
         val pageAction = if (forward) {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
@@ -284,7 +294,7 @@ class SerenaFocusNavigator(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
         
-        return node.actionList.any { it.id == pageAction || it.id == scrollAction } || (node.isScrollable && (node.className?.contains("ViewPager") == true || node.className?.contains("Horizontal") == true))
+        return node.actionList.any { it.id == pageAction || it.id == scrollAction } || (node.isScrollable && (className.contains("viewpager") || className.contains("horizontal")))
     }
 
     fun performHorizontalScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
