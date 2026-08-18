@@ -457,15 +457,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX = if (swipeLeft) width * 0.90f else width * 0.10f
-        val endX = if (swipeLeft) width * 0.10f else width * 0.90f
-        val startY = height * 0.22f
+        // 戻るジェスチャー領域(左右12%以内)を完全に避け、20%〜80%の安全画面中央帯をスワイプ
+        val startX = if (swipeLeft) width * 0.80f else width * 0.20f
+        val endX = if (swipeLeft) width * 0.20f else width * 0.80f
+        val startY = height * 0.50f
 
         val path = android.graphics.Path().apply {
             moveTo(startX, startY)
             lineTo(endX, startY)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 180)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 150)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -672,10 +673,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (now - lastScrollTime < 450) return true
         lastScrollTime = now
 
+        val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
-        Log.i(TAG, "scrollHorizontalForward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
+        Log.i(TAG, "scrollHorizontalForward: isLauncher=$isLauncher scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
 
-        if (scrollNode != null) {
+        if (scrollNode != null && !isLauncher) {
             val success = focusNavigator?.performHorizontalScroll(scrollNode, forward = true) == true
             Log.i(TAG, "scrollHorizontalForward: performHorizontalScroll result=$success")
             if (success) {
@@ -683,15 +685,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
                 return true
             }
-        }
-
-        val root = rootInActiveWindow
-        val fallbackSuccess = root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
-        Log.i(TAG, "scrollHorizontalForward: root scroll fallback result=$fallbackSuccess")
-        if (fallbackSuccess) {
-            soundHelper?.playFocusMove()
-            speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
-            return true
         }
 
         performHorizontalSwipeGesture(swipeLeft = true)
@@ -703,10 +696,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (now - lastScrollTime < 450) return true
         lastScrollTime = now
 
+        val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
-        Log.i(TAG, "scrollHorizontalBackward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
+        Log.i(TAG, "scrollHorizontalBackward: isLauncher=$isLauncher scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
 
-        if (scrollNode != null) {
+        if (scrollNode != null && !isLauncher) {
             val success = focusNavigator?.performHorizontalScroll(scrollNode, forward = false) == true
             Log.i(TAG, "scrollHorizontalBackward: performHorizontalScroll result=$success")
             if (success) {
@@ -714,15 +708,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
                 return true
             }
-        }
-
-        val root = rootInActiveWindow
-        val fallbackSuccess = root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
-        Log.i(TAG, "scrollHorizontalBackward: root scroll fallback result=$fallbackSuccess")
-        if (fallbackSuccess) {
-            soundHelper?.playFocusMove()
-            speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
-            return true
         }
 
         performHorizontalSwipeGesture(swipeLeft = false)
