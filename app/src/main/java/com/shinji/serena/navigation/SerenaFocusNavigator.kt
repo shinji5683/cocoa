@@ -339,6 +339,9 @@ class SerenaFocusNavigator(
 
     private fun canScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
         if (node.isScrollable) return true
+        val className = node.className?.toString()?.lowercase() ?: ""
+        if (className.contains("scroll") || className.contains("recycler") || className.contains("list") || className.contains("grid") || className.contains("web")) return true
+
         val actionId = if (forward) {
             AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
         } else {

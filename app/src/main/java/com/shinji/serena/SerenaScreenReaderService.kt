@@ -226,9 +226,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return super.onGesture(gestureId)
     }
 
+    private var lastUnlockTime = 0L
+    private var isUnlockingKeyguard = false
+
     private fun handleGestureId(gestureId: Int): Boolean {
         Log.i(TAG, "handleGestureId detected: $gestureId")
         AlphaTelemetryHelper.getInstance(this).incrementGestureCount()
+
+        if (isUnlockingKeyguard) {
+            if (System.currentTimeMillis() - lastUnlockTime < 1200) {
+                Log.i(TAG, "Ignoring gesture $gestureId during keyguard unlock debounce.")
+                return true
+            } else {
+                isUnlockingKeyguard = false
+            }
+        }
 
         when (gestureId) {
             // 1本指右スワイプ: 次の項目へフォーカス移動 (リニア)
@@ -1422,6 +1434,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun unlockKeyguardSwipe() {
+        val now = System.currentTimeMillis()
+        if (now - lastUnlockTime < 1500) return
+        lastUnlockTime = now
+        isUnlockingKeyguard = true
+
         soundHelper?.playActionDone()
         speak("画面ロックを解除します", TextToSpeech.QUEUE_FLUSH)
         
@@ -1449,11 +1466,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
                 performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    isUnlockingKeyguard = false
+                }, 800)
             }
             override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCancelled(gestureDescription)
                 performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
                 performGlobalAction(GLOBAL_ACTION_BACK)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    isUnlockingKeyguard = false
+                }, 800)
             }
         }, null)
     }
