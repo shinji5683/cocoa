@@ -299,30 +299,30 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 return true
             }
 
-            // 3本指シングルタップ (21): Serena メニューを開く
-            21 -> {
+            // 3本指シングルタップ (21, 22, 31): Serena メニューを開く！
+            21, 22, 31 -> {
                 soundHelper?.playMenuOpen()
                 showNormalSerenaMenu()
                 return true
             }
-            // 3本指ダブルタップ (22): 全ステータスアナウンス
-            22 -> {
+            // 3本指ダブルタップ (23, 32): 全ステータスアナウンス
+            23, 32 -> {
                 announceFullStatus()
                 return true
             }
-            // 3本指トリプルタップ (23): クリップボードにコピー
-            23 -> {
+            // 3本指トリプルタップ (24, 33): クリップボードにコピー
+            24, 33 -> {
                 copyLastSpokenTextToClipboard()
                 return true
             }
-            // 3本指上フリック (29, 31): 読み上げ粒度（コントロール）を前へ
-            29, 31 -> {
+            // 3本指上フリック (29): 読み上げ粒度（コントロール）を前へ
+            29 -> {
                 soundHelper?.playActionDone()
                 cycleGranularity(forward = false)
                 return true
             }
-            // 3本指下フリック (30, 32): 読み上げ粒度（コントロール）を次へ
-            30, 32 -> {
+            // 3本指下フリック (30): 読み上げ粒度（コントロール）を次へ
+            30 -> {
                 soundHelper?.playActionDone()
                 cycleGranularity(forward = true)
                 return true
