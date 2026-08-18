@@ -293,18 +293,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             // 2本指右フリック (28): 前のページへ（横スクロール戻る）
             28 -> {
-                scrollHorizontalBackward()
-                return true
+                return scrollHorizontalBackward()
             }
             // 2本指左フリック (27): 次のページへ（横スクロール進む）
             27 -> {
-                scrollHorizontalForward()
-                return true
+                return scrollHorizontalForward()
             }
             // 2本指下フリック (26): 前へ縦スクロール（上にスクロールして前の内容を表示）
             26 -> {
-                scrollVerticalBackward()
-                return true
+                return scrollVerticalBackward()
             }
             // 2本指上フリック (25): ロック画面時はロック解除 / アプリ内は次へ縦スクロール
             25 -> {
@@ -312,10 +309,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val isKeyguard = km?.isKeyguardLocked == true
                 if (isKeyguard) {
                     unlockKeyguardSwipe()
+                    return true
                 } else {
-                    scrollVerticalForward()
+                    return scrollVerticalForward()
                 }
-                return true
             }
 
             // 3本指シングルタップ (21, 22): Serena メニューを開く！
@@ -728,11 +725,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 物理2本指スワイプフォールバック (TalkBack完全互換: ランチャーやカスタムビューのページめくり)
-        soundHelper?.playFocusMove()
-        speak("次のページ", TextToSpeech.QUEUE_FLUSH)
-        performPhysical2FingerScroll(forward = true, horizontal = true)
-        return true
+        // 仮想アクションがない画面（ランチャー等）は OS（TouchExplorer）のネイティブ物理スクロールへパススルー！
+        return false
     }
 
     fun scrollHorizontalBackward(): Boolean {
@@ -764,11 +758,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 物理2本指スワイプフォールバック (TalkBack完全互換: ランチャーやカスタムビューのページめくり)
-        soundHelper?.playFocusMove()
-        speak("前のページ", TextToSpeech.QUEUE_FLUSH)
-        performPhysical2FingerScroll(forward = false, horizontal = true)
-        return true
+        // 仮想アクションがない画面（ランチャー等）は OS（TouchExplorer）のネイティブ物理スクロールへパススルー！
+        return false
     }
 
     fun scrollVerticalForward(): Boolean {
@@ -803,11 +794,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 物理2本指縦スワイプフォールバック
-        soundHelper?.playFocusMove()
-        speak("次へスクロール", TextToSpeech.QUEUE_FLUSH)
-        performPhysical2FingerScroll(forward = true, horizontal = false)
-        return true
+        // 仮想スクロールが効かない場合は OS ネイティブへパススルー！
+        return false
     }
 
     fun scrollVerticalBackward(): Boolean {
@@ -842,48 +830,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 物理2本指縦スワイプフォールバック
-        soundHelper?.playFocusMove()
-        speak("前へスクロール", TextToSpeech.QUEUE_FLUSH)
-        performPhysical2FingerScroll(forward = false, horizontal = false)
-        return true
-    }
-
-    private fun performPhysical2FingerScroll(forward: Boolean, horizontal: Boolean) {
-        val displayMetrics = resources.displayMetrics
-        val width = displayMetrics.widthPixels.toFloat()
-        val height = displayMetrics.heightPixels.toFloat()
-
-        val startX1: Float; val endX1: Float; val startY1: Float; val endY1: Float
-        val startX2: Float; val endX2: Float; val startY2: Float; val endY2: Float
-
-        if (horizontal) {
-            if (forward) {
-                startX1 = width * 0.85f; endX1 = width * 0.15f; startY1 = height * 0.45f; endY1 = height * 0.45f
-                startX2 = width * 0.85f; endX2 = width * 0.15f; startY2 = height * 0.55f; endY2 = height * 0.55f
-            } else {
-                startX1 = width * 0.15f; endX1 = width * 0.85f; startY1 = height * 0.45f; endY1 = height * 0.45f
-                startX2 = width * 0.15f; endX2 = width * 0.85f; startY2 = height * 0.55f; endY2 = height * 0.55f
-            }
-        } else {
-            if (forward) {
-                startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.75f; endY1 = height * 0.25f
-                startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.75f; endY2 = height * 0.25f
-            } else {
-                startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.25f; endY1 = height * 0.75f
-                startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.25f; endY2 = height * 0.75f
-            }
-        }
-
-        val p1 = android.graphics.Path().apply { moveTo(startX1, startY1); lineTo(endX1, endY1) }
-        val p2 = android.graphics.Path().apply { moveTo(startX2, startY2); lineTo(endX2, endY2) }
-        val s1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 180)
-        val s2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 180)
-        val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(s1)
-            .addStroke(s2)
-            .build()
-        dispatchGesture(gesture, null, null)
+        // 仮想スクロールが効かない場合は OS ネイティブへパススルー！
+        return false
     }
 
     private fun navigateCustomActions(forward: Boolean) {
