@@ -664,7 +664,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    private var lastScrollTime = 0L
+
     fun scrollHorizontalForward(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastScrollTime < 300) return true
+        lastScrollTime = now
+
         val root = rootInActiveWindow
         val focused = getAccessibilityFocusedNode() ?: root
         val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -683,6 +689,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun scrollHorizontalBackward(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastScrollTime < 300) return true
+        lastScrollTime = now
+
         val root = rootInActiveWindow
         val focused = getAccessibilityFocusedNode() ?: root
         val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -701,6 +711,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun scrollVerticalForward(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastScrollTime < 300) return true
+        lastScrollTime = now
+
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
         val success = if (scrollNode != null) {
             focusNavigator?.performScroll(scrollNode, forward = true) == true
@@ -724,6 +738,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun scrollVerticalBackward(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastScrollTime < 300) return true
+        lastScrollTime = now
+
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
         val success = if (scrollNode != null) {
             focusNavigator?.performScroll(scrollNode, forward = false) == true
@@ -874,6 +892,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun traverseTree(node: AccessibilityNodeInfo, list: MutableList<AccessibilityNodeInfo>) {
         if (!node.isVisibleToUser) return
+
+        val text = getNodeText(node)
+        val isClickableRow = (node.isClickable || node.isCheckable) && node.childCount > 0 && text.isNotEmpty()
+        if (isClickableRow) {
+            list.add(node)
+            return // クリック可能な行コンテナ（セレナメニュー項目等）を1つの統合フォーカス項目として扱う
+        }
 
         val hasAccessibleChildren = hasInteractiveOrTextChildren(node)
         if (isFocusableTarget(node, hasAccessibleChildren)) {
