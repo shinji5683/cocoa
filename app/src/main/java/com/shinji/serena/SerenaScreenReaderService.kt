@@ -1274,7 +1274,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun launchAiAssistant() {
-        showSerenaAssistantDialog()
+        soundHelper?.playActionDone()
+        assistantHelper?.startListening()
     }
 
     fun launchCameraOcr() {

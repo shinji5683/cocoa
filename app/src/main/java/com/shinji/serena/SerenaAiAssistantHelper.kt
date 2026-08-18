@@ -32,6 +32,15 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
     fun startListening() {
         mainHandler.post {
             try {
+                if (androidx.core.content.ContextCompat.checkSelfPermission(service, android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    service.speak("マイクの録音権限が必要です。セレナの設定画面を開きますので、許可してください。", TextToSpeech.QUEUE_FLUSH)
+                    val intent = Intent(service, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    }
+                    service.startActivity(intent)
+                    return@post
+                }
+
                 if (!SpeechRecognizer.isRecognitionAvailable(service)) {
                     service.speak("お使いの端末は音声認識に対応していません。", TextToSpeech.QUEUE_FLUSH)
                     return@post
@@ -41,12 +50,13 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 stopListeningInternal()
 
                 // ガイド音声を再生してからマイクを開く
+                service.soundHelper?.playMenuOpen()
                 service.speak("セレナAIです。どうぞ！", TextToSpeech.QUEUE_FLUSH)
 
                 // TTS発話が終わるのを待ってからマイクを開放（マイクとTTSの干渉防止）
                 mainHandler.postDelayed({
                     startRecognizerInternal()
-                }, 1200)
+                }, 1000)
 
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start AI Assistant: ${e.message}")
@@ -57,11 +67,14 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
     private fun startRecognizerInternal() {
         try {
-            // Android 13+ (API 33+) ではOn-Device音声認識を優先
-            speechRecognizer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                SpeechRecognizer.isOnDeviceRecognitionAvailable(service)) {
-                SpeechRecognizer.createOnDeviceSpeechRecognizer(service)
-            } else {
+            speechRecognizer = try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    SpeechRecognizer.isOnDeviceRecognitionAvailable(service)) {
+                    SpeechRecognizer.createOnDeviceSpeechRecognizer(service)
+                } else {
+                    SpeechRecognizer.createSpeechRecognizer(service)
+                }
+            } catch (e: Exception) {
                 SpeechRecognizer.createSpeechRecognizer(service)
             }
 
