@@ -47,8 +47,6 @@ class AccessibilityNodeEvaluator {
     }
 
     fun isFocusableTarget(node: AccessibilityNodeInfo): Boolean {
-        if (!node.isVisibleToUser) return false
-
         val className = node.className?.toString() ?: ""
         val pkgName = node.packageName?.toString() ?: ""
 
@@ -66,7 +64,7 @@ class AccessibilityNodeEvaluator {
 
         val rect = Rect()
         node.getBoundsInScreen(rect)
-        if (rect.width() <= 0 || rect.height() <= 0) return false
+        if (rect.width() <= 0 && rect.height() <= 0 && !node.isClickable && !node.isFocusable) return false
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && node.isScreenReaderFocusable) {
             return true

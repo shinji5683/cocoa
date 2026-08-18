@@ -366,11 +366,27 @@ class SerenaFocusNavigator(
         } else {
             AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
-        return node.performAction(standardAction)
+        if (node.performAction(standardAction)) return true
+
+        // 親ノードへのフォールバック
+        var parent = node.parent
+        while (parent != null) {
+            if (parent.performAction(altAction) || parent.performAction(standardAction)) {
+                return true
+            }
+            parent = parent.parent
+        }
+
+        // ルートノードへのフォールバック
+        val root = service.rootInActiveWindow
+        if (root != null && (root.performAction(altAction) || root.performAction(standardAction))) {
+            return true
+        }
+
+        return false
     }
 
     private fun findFirstScrollableChild(node: AccessibilityNodeInfo, forward: Boolean): AccessibilityNodeInfo? {
-        if (!node.isVisibleToUser) return null
         if (canScroll(node, forward)) return node
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue

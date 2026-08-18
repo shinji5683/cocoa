@@ -967,9 +967,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return b1 == b2 && getNodeText(node1) == getNodeText(node2)
     }
 
-    private fun collectAccessibleNodes(root: AccessibilityNodeInfo): List<AccessibilityNodeInfo> {
+    private fun collectAccessibleNodes(root: AccessibilityNodeInfo? = null): List<AccessibilityNodeInfo> {
+        val navNodes = focusNavigator?.collectAccessibleNodes(root)
+        if (!navNodes.isNullOrEmpty()) return navNodes
         val list = mutableListOf<AccessibilityNodeInfo>()
-        traverseTree(root, list)
+        val targetRoot = root ?: rootInActiveWindow ?: return emptyList()
+        traverseTree(targetRoot, list)
         return list
     }
 
