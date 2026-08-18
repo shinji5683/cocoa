@@ -418,16 +418,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX = width / 2f
-        val startY = if (swipeUp) height * 0.70f else height * 0.30f
-        val endY = if (swipeUp) height * 0.25f else height * 0.75f
+        val startX1 = width * 0.35f
+        val startX2 = width * 0.65f
+        val startY = if (swipeUp) height * 0.75f else height * 0.25f
+        val endY = if (swipeUp) height * 0.20f else height * 0.80f
 
-        val path = android.graphics.Path().apply {
-            moveTo(startX, startY)
-            lineTo(startX, endY)
+        val path1 = android.graphics.Path().apply {
+            moveTo(startX1, startY)
+            lineTo(startX1, endY)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 200)
-        val gesture = android.accessibilityservice.GestureDescription.Builder().addStroke(stroke).build()
+        val path2 = android.graphics.Path().apply {
+            moveTo(startX2, startY)
+            lineTo(startX2, endY)
+        }
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 250)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 250)
+        val gesture = android.accessibilityservice.GestureDescription.Builder()
+            .addStroke(stroke1)
+            .addStroke(stroke2)
+            .build()
 
         dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
@@ -448,16 +457,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX = if (swipeLeft) width * 0.80f else width * 0.20f
-        val endX = if (swipeLeft) width * 0.20f else width * 0.80f
-        val startY = height / 2f
+        val startX = if (swipeLeft) width * 0.85f else width * 0.15f
+        val endX = if (swipeLeft) width * 0.15f else width * 0.85f
+        val startY1 = height * 0.40f
+        val startY2 = height * 0.60f
 
-        val path = android.graphics.Path().apply {
-            moveTo(startX, startY)
-            lineTo(endX, startY)
+        val path1 = android.graphics.Path().apply {
+            moveTo(startX, startY1)
+            lineTo(endX, startY1)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 200)
-        val gesture = android.accessibilityservice.GestureDescription.Builder().addStroke(stroke).build()
+        val path2 = android.graphics.Path().apply {
+            moveTo(startX, startY2)
+            lineTo(endX, startY2)
+        }
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 250)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 250)
+        val gesture = android.accessibilityservice.GestureDescription.Builder()
+            .addStroke(stroke1)
+            .addStroke(stroke2)
+            .build()
 
         dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
@@ -1638,9 +1656,26 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val addedCount = event.addedCount
                 val removedCount = event.removedCount
                 val beforeText = event.beforeText?.toString() ?: ""
+                val sourceNode = try { event.source } catch (_: Exception) { null }
+                val viewId = sourceNode?.viewIdResourceName?.lowercase() ?: ""
+                val isPasswordField = event.isPassword || 
+                        sourceNode?.isPassword == true ||
+                        viewId.contains("pin") ||
+                        viewId.contains("password") ||
+                        viewId.contains("keyguard")
 
                 if (isTtsReady) {
-                    if (addedCount > 0 && text.isNotEmpty()) {
+                    if (isPasswordField) {
+                        if (addedCount > 0) {
+                            soundHelper?.playClick()
+                            val bulletText = if (addedCount == 1) "黒丸" else "黒丸 ${addedCount}文字"
+                            speak(bulletText, TextToSpeech.QUEUE_FLUSH)
+                        } else if (removedCount > 0) {
+                            soundHelper?.playActionDone()
+                            val delText = if (removedCount == 1) "黒丸を1文字削除" else "黒丸を${removedCount}文字削除"
+                            speak(delText, TextToSpeech.QUEUE_FLUSH)
+                        }
+                    } else if (addedCount > 0 && text.isNotEmpty()) {
                         val fromIndex = event.fromIndex
                         val addedText = if (fromIndex >= 0 && fromIndex + addedCount <= text.length) {
                             text.substring(fromIndex, fromIndex + addedCount)

@@ -154,4 +154,21 @@ class SerenaUnitTests {
         assertEquals("電波1本やや弱い", WifiConnectivityHelper.getLevelDescription(1))
         assertEquals("電波微弱", WifiConnectivityHelper.getLevelDescription(0))
     }
+
+    @Test
+    fun testPasswordAndPinBulletFeedback() {
+        fun getPasswordTypeFeedback(isPassword: Boolean, addedCount: Int, removedCount: Int): String {
+            if (!isPassword) return ""
+            return if (addedCount > 0) {
+                if (addedCount == 1) "黒丸" else "黒丸 ${addedCount}文字"
+            } else if (removedCount > 0) {
+                if (removedCount == 1) "黒丸を1文字削除" else "黒丸を${removedCount}文字削除"
+            } else ""
+        }
+
+        assertEquals("黒丸", getPasswordTypeFeedback(true, 1, 0))
+        assertEquals("黒丸 3文字", getPasswordTypeFeedback(true, 3, 0))
+        assertEquals("黒丸を1文字削除", getPasswordTypeFeedback(true, 0, 1))
+        assertEquals("黒丸を2文字削除", getPasswordTypeFeedback(true, 0, 2))
+    }
 }
