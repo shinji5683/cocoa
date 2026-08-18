@@ -665,10 +665,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private var lastScrollTime = 0L
+    private var lastScrollEventTime = 0L
 
     fun scrollHorizontalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 350) return true
+        if (now - lastScrollTime < 500) return true
         lastScrollTime = now
 
         val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
@@ -1666,7 +1667,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
-                soundHelper?.playFocusMove()
+                val now = System.currentTimeMillis()
+                if (now - lastScrollEventTime < 800) return
+                lastScrollEventTime = now
+
                 val itemCount = event.itemCount
                 val fromIndex = event.fromIndex
                 val toIndex = event.toIndex
