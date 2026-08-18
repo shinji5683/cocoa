@@ -897,7 +897,30 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 .addStroke(s2)
                 .build()
 
-            dispatchGesture(gesture, null, mainHandler)
+            dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+                override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                    super.onCompleted(gestureDescription)
+                    mainHandler.postDelayed({
+                        val newNodes = collectAccessibleNodes()
+                        if (newNodes.isNotEmpty()) {
+                            val target = if (forward) newNodes.first() else newNodes.last()
+                            target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                            announceNode(target)
+                        }
+                    }, 250)
+                }
+                override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                    super.onCancelled(gestureDescription)
+                    mainHandler.postDelayed({
+                        val newNodes = collectAccessibleNodes()
+                        if (newNodes.isNotEmpty()) {
+                            val target = if (forward) newNodes.first() else newNodes.last()
+                            target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                            announceNode(target)
+                        }
+                    }, 250)
+                }
+            }, mainHandler)
         }, 40)
     }
 

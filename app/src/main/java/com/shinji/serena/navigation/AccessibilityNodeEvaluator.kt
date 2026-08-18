@@ -86,7 +86,9 @@ class AccessibilityNodeEvaluator {
     fun hasFocusableChildren(node: AccessibilityNodeInfo): Boolean {
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
-            if (!child.isVisibleToUser) continue
+            val rect = Rect()
+            child.getBoundsInScreen(rect)
+            if (!child.isVisibleToUser && (rect.isEmpty || rect.width() <= 0 || rect.height() <= 0)) continue
 
             val childText = getNodeText(child)
             val childActionable = child.isClickable || child.isCheckable || child.isFocusable || child.isLongClickable || child.safeIsHeading
