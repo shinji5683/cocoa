@@ -3,6 +3,7 @@ package com.shinji.serena
 import android.accessibilityservice.AccessibilityGestureEvent
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -293,25 +294,31 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 scrollVerticalBackward()
                 return true
             }
-            // 2本指上フリック (25): 次へ縦スクロール（下にスクロールして次の内容を表示）
+            // 2本指上フリック (25): ロック画面時はロック解除 / アプリ内は次へ縦スクロール
             25 -> {
-                scrollVerticalForward()
+                val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+                val isKeyguard = km?.isKeyguardLocked == true || rootInActiveWindow?.packageName?.toString()?.contains("systemui") == true
+                if (isKeyguard) {
+                    unlockKeyguardSwipe()
+                } else {
+                    scrollVerticalForward()
+                }
                 return true
             }
 
-            // 3本指シングルタップ (21, 22, 31): Serena メニューを開く！
-            21, 22, 31 -> {
+            // 3本指シングルタップ (21, 22): Serena メニューを開く！
+            21, 22 -> {
                 soundHelper?.playMenuOpen()
                 showNormalSerenaMenu()
                 return true
             }
-            // 3本指ダブルタップ (23, 32): 全ステータスアナウンス
-            23, 32 -> {
+            // 3本指ダブルタップ (23): 全ステータスアナウンス
+            23 -> {
                 announceFullStatus()
                 return true
             }
-            // 3本指トリプルタップ (24, 33): クリップボードにコピー
-            24, 33 -> {
+            // 3本指トリプルタップ (24): クリップボードにコピー
+            24 -> {
                 copyLastSpokenTextToClipboard()
                 return true
             }
@@ -325,6 +332,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             30 -> {
                 soundHelper?.playActionDone()
                 cycleGranularity(forward = true)
+                return true
+            }
+            // 3本指左フリック (31): Serena AI Voice アシスタントを即時起動！
+            31 -> {
+                soundHelper?.playActionDone()
+                speak("AIボイスアシスタントを起動します", TextToSpeech.QUEUE_FLUSH)
+                launchAiAssistant()
+                return true
+            }
+            // 3本指右フリック (32): リアルタイムカメラAI実況を即時起動！
+            32 -> {
+                launchRealtimeLiveSceneCommentary()
                 return true
             }
 
@@ -1399,6 +1418,43 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             speak("スクリーンカーテンを有効にしました。画面が非表示になりました。", TextToSpeech.QUEUE_FLUSH)
         } else {
             speak("スクリーンカーテンを解除しました。", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    fun unlockKeyguardSwipe() {
+        soundHelper?.playActionDone()
+        speak("ロック画面を上にスワイプしてロック解除します", TextToSpeech.QUEUE_FLUSH)
+        val displayMetrics = resources.displayMetrics
+        val width = displayMetrics.widthPixels.toFloat()
+        val height = displayMetrics.heightPixels.toFloat()
+
+        val path = android.graphics.Path().apply {
+            moveTo(width * 0.50f, height * 0.85f)
+            lineTo(width * 0.50f, height * 0.15f)
+        }
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 150)
+        val gesture = android.accessibilityservice.GestureDescription.Builder()
+            .addStroke(stroke)
+            .build()
+        dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCompleted(gestureDescription)
+                performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+            }
+        }, null)
+    }
+
+    fun launchRealtimeLiveSceneCommentary() {
+        soundHelper?.playActionDone()
+        speak("リアルタイム実況AIカメラを起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "OBJECT")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch LiveVision: ${e.message}")
         }
     }
 
