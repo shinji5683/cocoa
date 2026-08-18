@@ -257,28 +257,25 @@ class SerenaFocusNavigator(
     }
 
     fun findHorizontalScrollableNode(forward: Boolean): AccessibilityNodeInfo? {
-        val root = service.rootInActiveWindow ?: return null
-        
-        // 1. 全ツリーから workspace / pagedview / viewpager / horizontal scrollable を完全探索
-        val directNode = findFirstHorizontalScrollableChild(root, forward)
-        if (directNode != null) {
-            return directNode
+        val roots = getAllRoots()
+        for (root in roots) {
+            val directNode = findFirstHorizontalScrollableChild(root, forward)
+            if (directNode != null) return directNode
         }
 
-        val focusNode = service.getAccessibilityFocusedNode() ?: root
+        val focusNode = service.getAccessibilityFocusedNode() ?: roots.firstOrNull() ?: return null
         var current: AccessibilityNodeInfo? = focusNode
         while (current != null) {
             if (canScrollHorizontal(current, forward)) return current
             current = current.parent
         }
-        return if (canScrollHorizontal(root, forward)) root else null
+        for (root in roots) {
+            if (canScrollHorizontal(root, forward)) return root
+        }
+        return null
     }
 
     fun canScrollHorizontal(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
-        val viewId = node.viewIdResourceName?.lowercase() ?: ""
-        val className = node.className?.toString()?.lowercase() ?: ""
-        if (viewId.contains("workspace") || className.contains("workspace") || className.contains("pagedview") || className.contains("viewpager")) return true
-
         val pageAction = if (forward) {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
         } else {
@@ -289,8 +286,13 @@ class SerenaFocusNavigator(
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
-        
-        return node.actionList.any { it.id == pageAction || it.id == scrollAction } || (node.isScrollable && (className.contains("viewpager") || className.contains("horizontal") || className.contains("scroll")))
+        if (node.actionList.any { it.id == pageAction || it.id == scrollAction }) return true
+
+        val viewId = node.viewIdResourceName?.lowercase() ?: ""
+        val className = node.className?.toString()?.lowercase() ?: ""
+        if (viewId.contains("workspace") || className.contains("workspace") || className.contains("pagedview") || className.contains("viewpager") || className.contains("horizontal")) return true
+
+        return node.isScrollable
     }
 
     fun performHorizontalScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
@@ -338,21 +340,14 @@ class SerenaFocusNavigator(
     }
 
     private fun canScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
+        val actionId = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        val altActionId = if (forward) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.id else AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id
+        val pageActionId = if (forward) AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_DOWN.id else AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_UP.id
+        if (node.actionList.any { it.id == actionId || it.id == altActionId || it.id == pageActionId }) return true
+
         if (node.isScrollable) return true
         val className = node.className?.toString()?.lowercase() ?: ""
-        if (className.contains("scroll") || className.contains("recycler") || className.contains("list") || className.contains("grid") || className.contains("web")) return true
-
-        val actionId = if (forward) {
-            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
-        } else {
-            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
-        }
-        val altActionId = if (forward) {
-            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.id
-        } else {
-            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id
-        }
-        return node.actionList.any { it.id == actionId || it.id == altActionId }
+        return className.contains("scroll") || className.contains("recycler") || className.contains("list") || className.contains("grid") || className.contains("web")
     }
 
     fun performScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
