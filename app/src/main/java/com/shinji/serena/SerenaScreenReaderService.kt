@@ -2211,7 +2211,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    private fun announceNode(node: AccessibilityNodeInfo) {
+    fun announceNode(node: AccessibilityNodeInfo) {
         val announcement = buildNodeAnnouncement(node)
         if (announcement.isBlank()) return
 

@@ -163,12 +163,12 @@ class SerenaFocusNavigator(
             service.scrollPageForward {
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
-                    val targetIdx = (nodes.size - 1).coerceIn(0, newNodes.size - 1)
-                    val targetNode = newNodes[targetIdx]
-                    lastFocusedNodeIndex = targetIdx
+                    val targetNode = newNodes[0]
+                    lastFocusedNodeIndex = 0
                     setFocusAndShowOnScreen(targetNode)
+                    service.announceNode(targetNode)
                 } else {
-                    service.speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+                    service.soundHelper?.playLastItemEdgeSound()
                 }
             }
             return
@@ -176,11 +176,13 @@ class SerenaFocusNavigator(
             service.scrollPageBackward {
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
-                    val targetNode = newNodes[0]
-                    lastFocusedNodeIndex = 0
+                    val targetIdx = newNodes.size - 1
+                    val targetNode = newNodes[targetIdx]
+                    lastFocusedNodeIndex = targetIdx
                     setFocusAndShowOnScreen(targetNode)
+                    service.announceNode(targetNode)
                 } else {
-                    service.speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+                    service.soundHelper?.playFirstItemEdgeSound()
                 }
             }
             return
