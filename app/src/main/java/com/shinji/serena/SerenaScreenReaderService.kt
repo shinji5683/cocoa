@@ -669,13 +669,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollHorizontalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 500) return true
+        if (now - lastScrollTime < 450) return true
         lastScrollTime = now
 
-        val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
 
-        if (scrollNode != null && !isLauncher) {
+        if (scrollNode != null) {
             val success = focusNavigator?.performHorizontalScroll(scrollNode, forward = true) == true
             if (success) {
                 soundHelper?.playFocusMove()
@@ -684,25 +683,40 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
+        val root = rootInActiveWindow
+        val fallbackSuccess = root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
+        if (fallbackSuccess) {
+            soundHelper?.playFocusMove()
+            speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            return true
+        }
+
         performHorizontalSwipeGesture(swipeLeft = true)
         return true
     }
 
     fun scrollHorizontalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 350) return true
+        if (now - lastScrollTime < 450) return true
         lastScrollTime = now
 
-        val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
 
-        if (scrollNode != null && !isLauncher) {
+        if (scrollNode != null) {
             val success = focusNavigator?.performHorizontalScroll(scrollNode, forward = false) == true
             if (success) {
                 soundHelper?.playFocusMove()
                 speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
                 return true
             }
+        }
+
+        val root = rootInActiveWindow
+        val fallbackSuccess = root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
+        if (fallbackSuccess) {
+            soundHelper?.playFocusMove()
+            speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            return true
         }
 
         performHorizontalSwipeGesture(swipeLeft = false)
