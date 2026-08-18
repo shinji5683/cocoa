@@ -1459,18 +1459,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playActionDone()
         speak("画面ロックを解除します", TextToSpeech.QUEUE_FLUSH)
         
+        performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
         // 2本指による同時上スワイプストローク（Keyguardのタッチ探索ガードを確実に突破）
         val path1 = android.graphics.Path().apply {
-            moveTo(width * 0.35f, height * 0.85f)
-            lineTo(width * 0.35f, height * 0.15f)
+            moveTo(width * 0.35f, height * 0.90f)
+            lineTo(width * 0.35f, height * 0.10f)
         }
         val path2 = android.graphics.Path().apply {
-            moveTo(width * 0.65f, height * 0.85f)
-            lineTo(width * 0.65f, height * 0.15f)
+            moveTo(width * 0.65f, height * 0.90f)
+            lineTo(width * 0.65f, height * 0.10f)
         }
         val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 180)
         val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 180)
@@ -1479,23 +1481,22 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             .addStroke(stroke2)
             .build()
             
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
         dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
-                performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
                 schedulePinFieldFocus()
             }
             override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCancelled(gestureDescription)
-                performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
                 schedulePinFieldFocus()
             }
-        }, null)
+        }, mainHandler)
     }
 
     private fun schedulePinFieldFocus() {
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        val delays = listOf(250L, 500L, 850L, 1200L)
+        val delays = listOf(200L, 450L, 750L, 1100L)
         for (delay in delays) {
             mainHandler.postDelayed({
                 if (focusPinEntryField()) {
@@ -1526,6 +1527,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 soundHelper?.playFocusMove()
                 announceNode(node)
                 return true
+            }
+            for (digit in 0..9) {
+                val keyNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/key$digit")
+                if (keyNodes.isNotEmpty()) {
+                    val keyNode = keyNodes[0]
+                    keyNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    soundHelper?.playFocusMove()
+                    announceNode(keyNode)
+                    return true
+                }
             }
             val bouncerNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_bouncer")
             if (bouncerNodes.isNotEmpty()) {
