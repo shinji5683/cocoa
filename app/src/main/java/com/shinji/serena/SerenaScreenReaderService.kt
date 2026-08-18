@@ -668,51 +668,75 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollHorizontalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 300) return true
+        if (now - lastScrollTime < 350) return true
         lastScrollTime = now
 
-        val root = rootInActiveWindow
-        val focused = getAccessibilityFocusedNode() ?: root
-        val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
+        val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
+        val success = if (scrollNode != null) {
+            focusNavigator?.performHorizontalScroll(scrollNode, forward = true) == true
         } else {
-            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+            val root = rootInActiveWindow
+            val focused = getAccessibilityFocusedNode() ?: root
+            val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
+            } else {
+                AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+            }
+            focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
         }
-        val success = focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
-        if (!success) {
-            performHorizontalSwipeGesture(swipeLeft = true)
-        } else {
+        if (success) {
             soundHelper?.playFocusMove()
             speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
+            if (!isLauncher) {
+                performHorizontalSwipeGesture(swipeLeft = true)
+            } else {
+                rootInActiveWindow?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                soundHelper?.playFocusMove()
+                speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            }
         }
         return true
     }
 
     fun scrollHorizontalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 300) return true
+        if (now - lastScrollTime < 350) return true
         lastScrollTime = now
 
-        val root = rootInActiveWindow
-        val focused = getAccessibilityFocusedNode() ?: root
-        val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id
+        val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
+        val success = if (scrollNode != null) {
+            focusNavigator?.performHorizontalScroll(scrollNode, forward = false) == true
         } else {
-            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+            val root = rootInActiveWindow
+            val focused = getAccessibilityFocusedNode() ?: root
+            val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id
+            } else {
+                AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+            }
+            focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
         }
-        val success = focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
-        if (!success) {
-            performHorizontalSwipeGesture(swipeLeft = false)
-        } else {
+        if (success) {
             soundHelper?.playFocusMove()
             speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
+            if (!isLauncher) {
+                performHorizontalSwipeGesture(swipeLeft = false)
+            } else {
+                rootInActiveWindow?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+                soundHelper?.playFocusMove()
+                speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            }
         }
         return true
     }
 
     fun scrollVerticalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 300) return true
+        if (now - lastScrollTime < 350) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
@@ -728,18 +752,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
         }
-        if (!success) {
-            performSwipeGesture(swipeUp = true)
-        } else {
+        if (success) {
             soundHelper?.playFocusMove()
             speak("次へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
+            if (!isLauncher) {
+                performSwipeGesture(swipeUp = true)
+            } else {
+                rootInActiveWindow?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                soundHelper?.playFocusMove()
+                speak("次へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+            }
         }
         return true
     }
 
     fun scrollVerticalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 300) return true
+        if (now - lastScrollTime < 350) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
@@ -755,11 +786,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
         }
-        if (!success) {
-            performSwipeGesture(swipeUp = false)
-        } else {
+        if (success) {
             soundHelper?.playFocusMove()
             speak("前へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            val isLauncher = rootInActiveWindow?.packageName?.toString()?.lowercase()?.contains("launcher") == true
+            if (!isLauncher) {
+                performSwipeGesture(swipeUp = false)
+            } else {
+                rootInActiveWindow?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+                soundHelper?.playFocusMove()
+                speak("前へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+            }
         }
         return true
     }

@@ -1,6 +1,7 @@
 package com.shinji.serena.navigation
 
 import android.graphics.Rect
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
@@ -250,6 +251,71 @@ class SerenaFocusNavigator(
         val roots = getAllRoots()
         for (r in roots) {
             val res = findFirstScrollableChild(r, forward)
+            if (res != null) return res
+        }
+        return null
+    }
+
+    fun findHorizontalScrollableNode(forward: Boolean): AccessibilityNodeInfo? {
+        val root = service.rootInActiveWindow ?: return null
+        val focusNode = service.getAccessibilityFocusedNode() ?: root
+        
+        var current: AccessibilityNodeInfo? = focusNode
+        while (current != null) {
+            if (canScrollHorizontal(current, forward)) return current
+            current = current.parent
+        }
+        return findFirstHorizontalScrollableChild(root, forward)
+    }
+
+    fun canScrollHorizontal(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
+        val viewId = node.viewIdResourceName?.lowercase() ?: ""
+        val isLauncherWorkspace = viewId.contains("workspace") || viewId.contains("drag_layer")
+        if (isLauncherWorkspace) return true
+
+        val pageAction = if (forward) {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
+        } else {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id
+        }
+        val scrollAction = if (forward) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id else AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        }
+        
+        return node.actionList.any { it.id == pageAction || it.id == scrollAction } || (node.isScrollable && (node.className?.contains("ViewPager") == true || node.className?.contains("Horizontal") == true))
+    }
+
+    fun performHorizontalScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
+        val pageAction = if (forward) {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
+        } else {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id
+        }
+        if (node.actionList.any { it.id == pageAction }) {
+            if (node.performAction(pageAction)) return true
+        }
+
+        val scrollAction = if (forward) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id else AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        }
+        if (node.actionList.any { it.id == scrollAction }) {
+            if (node.performAction(scrollAction)) return true
+        }
+
+        val fallback = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        return node.performAction(fallback)
+    }
+
+    private fun findFirstHorizontalScrollableChild(node: AccessibilityNodeInfo, forward: Boolean): AccessibilityNodeInfo? {
+        if (!node.isVisibleToUser) return null
+        if (canScrollHorizontal(node, forward)) return node
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            val res = findFirstHorizontalScrollableChild(child, forward)
             if (res != null) return res
         }
         return null
