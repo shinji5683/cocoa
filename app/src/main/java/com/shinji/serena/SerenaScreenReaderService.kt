@@ -1423,23 +1423,37 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun unlockKeyguardSwipe() {
         soundHelper?.playActionDone()
-        speak("ロック画面を上にスワイプしてロック解除します", TextToSpeech.QUEUE_FLUSH)
+        speak("画面ロックを解除します", TextToSpeech.QUEUE_FLUSH)
+        
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val path = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.85f)
-            lineTo(width * 0.50f, height * 0.15f)
+        // 2本指による同時上スワイプストローク（Keyguardのタッチ探索ガードを確実に突破）
+        val path1 = android.graphics.Path().apply {
+            moveTo(width * 0.35f, height * 0.85f)
+            lineTo(width * 0.35f, height * 0.15f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 150)
+        val path2 = android.graphics.Path().apply {
+            moveTo(width * 0.65f, height * 0.85f)
+            lineTo(width * 0.65f, height * 0.15f)
+        }
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 180)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 180)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(stroke)
+            .addStroke(stroke1)
+            .addStroke(stroke2)
             .build()
+            
         dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
                 performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+            }
+            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCancelled(gestureDescription)
+                performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+                performGlobalAction(GLOBAL_ACTION_BACK)
             }
         }, null)
     }
