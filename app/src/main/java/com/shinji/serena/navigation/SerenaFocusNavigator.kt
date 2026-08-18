@@ -259,14 +259,10 @@ class SerenaFocusNavigator(
     fun findHorizontalScrollableNode(forward: Boolean): AccessibilityNodeInfo? {
         val root = service.rootInActiveWindow ?: return null
         
-        // 1. Pixel Launcher / Launcher3 Workspace を優先直接検索
-        val workspaceNodes = root.findAccessibilityNodeInfosByViewId("com.google.android.apps.nexuslauncher:id/workspace")
-        if (workspaceNodes.isNotEmpty()) {
-            return workspaceNodes[0]
-        }
-        val genericWorkspace = root.findAccessibilityNodeInfosByViewId("${root.packageName}:id/workspace")
-        if (genericWorkspace.isNotEmpty()) {
-            return genericWorkspace[0]
+        // 1. 全ツリーから workspace / pagedview / viewpager / horizontal scrollable を完全探索
+        val directNode = findFirstHorizontalScrollableChild(root, forward)
+        if (directNode != null) {
+            return directNode
         }
 
         val focusNode = service.getAccessibilityFocusedNode() ?: root
@@ -275,13 +271,13 @@ class SerenaFocusNavigator(
             if (canScrollHorizontal(current, forward)) return current
             current = current.parent
         }
-        return findFirstHorizontalScrollableChild(root, forward)
+        return if (canScrollHorizontal(root, forward)) root else null
     }
 
     fun canScrollHorizontal(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
         val className = node.className?.toString()?.lowercase() ?: ""
-        if (viewId.endsWith(":id/workspace") || className.contains("workspace") || className.contains("pagedview")) return true
+        if (viewId.contains("workspace") || className.contains("workspace") || className.contains("pagedview") || className.contains("viewpager")) return true
 
         val pageAction = if (forward) {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
@@ -294,7 +290,7 @@ class SerenaFocusNavigator(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
         
-        return node.actionList.any { it.id == pageAction || it.id == scrollAction } || (node.isScrollable && (className.contains("viewpager") || className.contains("horizontal")))
+        return node.actionList.any { it.id == pageAction || it.id == scrollAction } || (node.isScrollable && (className.contains("viewpager") || className.contains("horizontal") || className.contains("scroll")))
     }
 
     fun performHorizontalScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
@@ -317,11 +313,21 @@ class SerenaFocusNavigator(
         }
 
         val fallback = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
-        return node.performAction(fallback)
+        if (node.performAction(fallback)) return true
+
+        // 親ノードやルートへのフォールバック
+        var parent = node.parent
+        while (parent != null) {
+            if (parent.performAction(pageAction) || parent.performAction(scrollAction) || parent.performAction(fallback)) {
+                return true
+            }
+            parent = parent.parent
+        }
+
+        return false
     }
 
     private fun findFirstHorizontalScrollableChild(node: AccessibilityNodeInfo, forward: Boolean): AccessibilityNodeInfo? {
-        if (!node.isVisibleToUser) return null
         if (canScrollHorizontal(node, forward)) return node
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
