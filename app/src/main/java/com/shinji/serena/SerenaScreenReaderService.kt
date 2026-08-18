@@ -457,17 +457,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX = if (swipeLeft) width * 0.88f else width * 0.12f
-        val endX = if (swipeLeft) width * 0.12f else width * 0.88f
-        val startY = height * 0.35f
+        val startX = if (swipeLeft) width * 0.82f else width * 0.18f
+        val endX = if (swipeLeft) width * 0.18f else width * 0.82f
+        val startY1 = height * 0.45f
+        val startY2 = height * 0.55f
 
-        val path = android.graphics.Path().apply {
-            moveTo(startX, startY)
-            lineTo(endX, startY)
+        val path1 = android.graphics.Path().apply {
+            moveTo(startX, startY1)
+            lineTo(endX, startY1)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 160)
+        val path2 = android.graphics.Path().apply {
+            moveTo(startX, startY2)
+            lineTo(endX, startY2)
+        }
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 220)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 220)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(stroke)
+            .addStroke(stroke1)
+            .addStroke(stroke2)
             .build()
 
         dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
@@ -1655,6 +1662,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     if (text.isNotEmpty()) {
                         speak("$text をタップ", TextToSpeech.QUEUE_FLUSH)
                     }
+                }
+            }
+
+            AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
+                soundHelper?.playFocusMove()
+                val itemCount = event.itemCount
+                val fromIndex = event.fromIndex
+                val toIndex = event.toIndex
+                val text = event.text.joinToString(" ").trim()
+                val contentDesc = event.contentDescription?.toString()?.trim() ?: ""
+
+                if (contentDesc.isNotEmpty() && (contentDesc.contains("ページ") || contentDesc.contains("page"))) {
+                    speak(contentDesc, TextToSpeech.QUEUE_FLUSH)
+                } else if (text.isNotEmpty() && (text.contains("ページ") || text.contains("page"))) {
+                    speak(text, TextToSpeech.QUEUE_FLUSH)
+                } else if (itemCount > 0 && fromIndex >= 0) {
+                    val pageIndex = if (toIndex > fromIndex) "${fromIndex + 1}〜${toIndex + 1} / $itemCount 項目" else "${fromIndex + 1} / $itemCount 項目"
+                    speak(pageIndex, TextToSpeech.QUEUE_FLUSH)
                 }
             }
 
