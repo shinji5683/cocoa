@@ -841,31 +841,26 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             currentIndex = nodes.indexOfFirst { isSameNode(it, currentFocus) }
         }
 
-        // 次へ進む場合で、現在のページの末尾に達した時 -> 自動ページめくり / 自動縦スクロール
+        // 次へ進む場合で、現在のページの末尾に達した時
         if (forward && (currentIndex >= nodes.size - 1)) {
             val horizontalScrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
             val verticalScrollNode = focusNavigator?.findScrollableNode(forward = true)
             
-            if (horizontalScrollNode != null) {
-                scrollHorizontalForward()
+            var didScroll = false
+            if (horizontalScrollNode != null && focusNavigator?.performHorizontalScroll(horizontalScrollNode, forward = true) == true) {
+                didScroll = true
+                soundHelper?.playFocusMove()
+            } else if (verticalScrollNode != null && focusNavigator?.performScroll(verticalScrollNode, forward = true) == true) {
+                didScroll = true
+                soundHelper?.playFocusMove()
+            }
+
+            if (didScroll) {
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     val newRoot = rootInActiveWindow ?: return@postDelayed
                     val newNodes = collectAccessibleNodes(newRoot)
                     if (newNodes.isNotEmpty()) {
-                        val firstNode = newNodes[0]
-                        firstNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                        soundHelper?.playFocusMove()
-                        announceNode(firstNode)
-                    }
-                }, 350)
-                return
-            } else if (verticalScrollNode != null) {
-                scrollVerticalForward()
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    val newRoot = rootInActiveWindow ?: return@postDelayed
-                    val newNodes = collectAccessibleNodes(newRoot)
-                    if (newNodes.isNotEmpty()) {
-                        val nextNode = newNodes.getOrNull(currentIndex.coerceIn(0, newNodes.size - 1)) ?: newNodes.last()
+                        val nextNode = newNodes.getOrNull(currentIndex.coerceIn(0, newNodes.size - 1)) ?: newNodes.first()
                         nextNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                         soundHelper?.playFocusMove()
                         announceNode(nextNode)
@@ -874,31 +869,27 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 return
             } else {
                 soundHelper?.playLastItemEdgeSound()
+                return
             }
         } else if (!forward && (currentIndex <= 0)) {
             val horizontalScrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
             val verticalScrollNode = focusNavigator?.findScrollableNode(forward = false)
             
-            if (horizontalScrollNode != null) {
-                scrollHorizontalBackward()
+            var didScroll = false
+            if (horizontalScrollNode != null && focusNavigator?.performHorizontalScroll(horizontalScrollNode, forward = false) == true) {
+                didScroll = true
+                soundHelper?.playFocusMove()
+            } else if (verticalScrollNode != null && focusNavigator?.performScroll(verticalScrollNode, forward = false) == true) {
+                didScroll = true
+                soundHelper?.playFocusMove()
+            }
+
+            if (didScroll) {
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     val newRoot = rootInActiveWindow ?: return@postDelayed
                     val newNodes = collectAccessibleNodes(newRoot)
                     if (newNodes.isNotEmpty()) {
-                        val lastNode = newNodes.last()
-                        lastNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                        soundHelper?.playFocusMove()
-                        announceNode(lastNode)
-                    }
-                }, 350)
-                return
-            } else if (verticalScrollNode != null) {
-                scrollVerticalBackward()
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    val newRoot = rootInActiveWindow ?: return@postDelayed
-                    val newNodes = collectAccessibleNodes(newRoot)
-                    if (newNodes.isNotEmpty()) {
-                        val prevNode = newNodes[0]
+                        val prevNode = newNodes.first()
                         prevNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                         soundHelper?.playFocusMove()
                         announceNode(prevNode)
@@ -907,13 +898,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 return
             } else {
                 soundHelper?.playFirstItemEdgeSound()
+                return
             }
         }
 
         val targetIndex = if (forward) {
-            if (currentIndex < 0 || currentIndex >= nodes.size - 1) 0 else currentIndex + 1
+            (currentIndex + 1).coerceIn(0, nodes.size - 1)
         } else {
-            if (currentIndex <= 0) nodes.size - 1 else currentIndex - 1
+            (currentIndex - 1).coerceIn(0, nodes.size - 1)
         }
 
         val targetNode = nodes[targetIndex]
