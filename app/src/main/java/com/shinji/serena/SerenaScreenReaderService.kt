@@ -698,7 +698,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollHorizontalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 450) return true
+        if (now - lastScrollTime < 400) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
@@ -725,13 +725,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 仮想アクションがない画面（ランチャー等）は OS（TouchExplorer）のネイティブ物理スクロールへパススルー！
-        return false
+        // 物理2本指スワイプフォールバック (TalkBack完全互換: 指が離れた直後にメインスレッドで物理ドラッグ実行)
+        soundHelper?.playFocusMove()
+        speak("次のページ", TextToSpeech.QUEUE_FLUSH)
+        performPhysical2FingerScroll(forward = true, horizontal = true)
+        return true
     }
 
     fun scrollHorizontalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 450) return true
+        if (now - lastScrollTime < 400) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
@@ -758,13 +761,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 仮想アクションがない画面（ランチャー等）は OS（TouchExplorer）のネイティブ物理スクロールへパススルー！
-        return false
+        // 物理2本指スワイプフォールバック (TalkBack完全互換)
+        soundHelper?.playFocusMove()
+        speak("前のページ", TextToSpeech.QUEUE_FLUSH)
+        performPhysical2FingerScroll(forward = false, horizontal = true)
+        return true
     }
 
     fun scrollVerticalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 450) return true
+        if (now - lastScrollTime < 400) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
@@ -794,13 +800,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 仮想スクロールが効かない場合は OS ネイティブへパススルー！
-        return false
+        // 物理2本指縦スワイプフォールバック
+        soundHelper?.playFocusMove()
+        speak("次へスクロール", TextToSpeech.QUEUE_FLUSH)
+        performPhysical2FingerScroll(forward = true, horizontal = false)
+        return true
     }
 
     fun scrollVerticalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 450) return true
+        if (now - lastScrollTime < 400) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
@@ -830,8 +839,52 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 仮想スクロールが効かない場合は OS ネイティブへパススルー！
-        return false
+        // 物理2本指縦スワイプフォールバック
+        soundHelper?.playFocusMove()
+        speak("前へスクロール", TextToSpeech.QUEUE_FLUSH)
+        performPhysical2FingerScroll(forward = false, horizontal = false)
+        return true
+    }
+
+    private fun performPhysical2FingerScroll(forward: Boolean, horizontal: Boolean) {
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        mainHandler.postDelayed({
+            val displayMetrics = resources.displayMetrics
+            val width = displayMetrics.widthPixels.toFloat()
+            val height = displayMetrics.heightPixels.toFloat()
+
+            val startX1: Float; val endX1: Float; val startY1: Float; val endY1: Float
+            val startX2: Float; val endX2: Float; val startY2: Float; val endY2: Float
+
+            if (horizontal) {
+                if (forward) {
+                    startX1 = width * 0.85f; endX1 = width * 0.15f; startY1 = height * 0.45f; endY1 = height * 0.45f
+                    startX2 = width * 0.85f; endX2 = width * 0.15f; startY2 = height * 0.55f; endY2 = height * 0.55f
+                } else {
+                    startX1 = width * 0.15f; endX1 = width * 0.85f; startY1 = height * 0.45f; endY1 = height * 0.45f
+                    startX2 = width * 0.15f; endX2 = width * 0.85f; startY2 = height * 0.55f; endY2 = height * 0.55f
+                }
+            } else {
+                if (forward) {
+                    startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.75f; endY1 = height * 0.25f
+                    startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.75f; endY2 = height * 0.25f
+                } else {
+                    startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.25f; endY1 = height * 0.75f
+                    startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.25f; endY2 = height * 0.75f
+                }
+            }
+
+            val p1 = android.graphics.Path().apply { moveTo(startX1, startY1); lineTo(endX1, endY1) }
+            val p2 = android.graphics.Path().apply { moveTo(startX2, startY2); lineTo(endX2, endY2) }
+            val s1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 160)
+            val s2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 160)
+            val gesture = android.accessibilityservice.GestureDescription.Builder()
+                .addStroke(s1)
+                .addStroke(s2)
+                .build()
+
+            dispatchGesture(gesture, null, mainHandler)
+        }, 40)
     }
 
     private fun navigateCustomActions(forward: Boolean) {
@@ -1535,6 +1588,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     keyNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                     soundHelper?.playFocusMove()
                     announceNode(keyNode)
+                    return true
+                }
+                val textNodes = r.findAccessibilityNodeInfosByText("$digit")
+                if (textNodes.isNotEmpty()) {
+                    val candidate = textNodes.firstOrNull { it.isClickable || it.isFocusable } ?: textNodes.first()
+                    candidate.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    soundHelper?.playFocusMove()
+                    announceNode(candidate)
                     return true
                 }
             }
