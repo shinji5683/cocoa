@@ -194,12 +194,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN
         info.notificationTimeout = 0
-        info.flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
+        var flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
                 AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                 AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
                 AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
+        }
+        info.flags = flags
         serviceInfo = info
-        Log.i(TAG, "serena AccessibilityService connected with Touch Exploration mode enabled.")
+        Log.i(TAG, "serena AccessibilityService connected with Multi-Finger & Touch Exploration enabled.")
     }
 
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
@@ -256,121 +260,78 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 performClickOnFocusedNode()
                 return true
             }
-            // 1本指ダブルタップ＆ホールド (長押し / TalkBack互換 18, 17): アクション・ショートカットメニュー表示
-            18, 17 -> {
+            // 1本指ダブルタップ＆ホールド (長押し / TalkBack互換 18): アクション・ショートカットメニュー表示
+            18 -> {
                 soundHelper?.playActionDone()
                 showActionsMenu(getAccessibilityFocusedNode())
                 return true
             }
-            // 2本指シングルタップ (19): 読み上げの一時停止・再開トグル
+
+            // 2本指シングルタップ (19): 読み上げの一時停止と再開
             19 -> {
                 toggleSpeechPauseResume()
                 return true
             }
-            // 2本指ダブルタップ (20): 本格マジックタップ (電話応答・切断 / メディア再生・一時停止)
+            // 2本指ダブルタップ (20): 通話の応答と終了 / メディアの再生と一時停止
             20 -> {
                 soundHelper?.playActionDone()
                 handleMagicTapAction()
                 return true
             }
-            // 2本指左フリック (25): 次のページへスクロール
-            25 -> {
-                soundHelper?.playActionDone()
-                scrollPageForward()
+            // 2本指右フリック (28): 前のページへ（横スクロール戻る）
+            28 -> {
+                scrollHorizontalBackward()
                 return true
             }
-            // 2本指右フリック (26): 前のページへスクロール
+            // 2本指左フリック (27): 次のページへ（横スクロール進む）
+            27 -> {
+                scrollHorizontalForward()
+                return true
+            }
+            // 2本指下フリック (26): 前へ縦スクロール（上にスクロールして前の内容を表示）
             26 -> {
-                soundHelper?.playActionDone()
-                scrollPageBackward()
+                scrollVerticalBackward()
                 return true
             }
-            // 2本指上フリック (21): 上方向へスクロール（前のページ）
+            // 2本指上フリック (25): 次へ縦スクロール（下にスクロールして次の内容を表示）
+            25 -> {
+                scrollVerticalForward()
+                return true
+            }
+
+            // 3本指シングルタップ (21): Serena メニューを開く
             21 -> {
-                soundHelper?.playActionDone()
-                scrollPageBackward()
+                soundHelper?.playMenuOpen()
+                showNormalSerenaMenu()
                 return true
             }
-            // 2本指下フリック (22): 下方向へスクロール（次のページ）
+            // 3本指ダブルタップ (22): 全ステータスアナウンス
             22 -> {
-                soundHelper?.playActionDone()
-                scrollPageForward()
+                announceFullStatus()
                 return true
             }
-            // 2本指トリプルタップ (29): 読み上げ消音トグル
-            29 -> {
-                soundHelper?.playActionDone()
-                toggleSpeechMute()
+            // 3本指トリプルタップ (23): クリップボードにコピー
+            23 -> {
+                copyLastSpokenTextToClipboard()
                 return true
             }
-            // 3本指上フリック (23) / 3本指左フリック (27): 前の読み上げコントロール（詳細度・粒度）へ移動
-            23, 27 -> {
+            // 3本指上フリック (29, 31): 読み上げ粒度（コントロール）を前へ
+            29, 31 -> {
                 soundHelper?.playActionDone()
                 cycleGranularity(forward = false)
                 return true
             }
-            // 3本指下フリック (24) / 3本指右フリック (28): 次の読み上げコントロール（詳細度・粒度）へ移動
-            24, 28 -> {
+            // 3本指下フリック (30, 32): 読み上げ粒度（コントロール）を次へ
+            30, 32 -> {
                 soundHelper?.playActionDone()
                 cycleGranularity(forward = true)
                 return true
             }
-            // 3本指シングルタップ (31), 3本指長押しタップ (43), 3本指ダブルタップ (32), TalkBack伝統メニュー (下→右, 上→右): 一瞬でセレナメニュー起動！
-            31, 43, 32, GESTURE_SWIPE_DOWN_AND_RIGHT, GESTURE_SWIPE_UP_AND_RIGHT -> {
+
+            // TalkBack伝統 L字ジェスチャー: セレナメニュー
+            GESTURE_SWIPE_DOWN_AND_RIGHT, GESTURE_SWIPE_UP_AND_RIGHT -> {
                 soundHelper?.playMenuOpen()
-                triggerSerenaMenu()
-                return true
-            }
-            // 3本指トリプルタップ (33, 34): スクリーンカーテン
-            33, 34 -> {
-                toggleScreenCurtain()
-                return true
-            }
-            // 3本指クアッドタップ (35, 36): 読み上げスピード切り替え
-            35, 36 -> {
-                toggleSpeechRateQuick()
-                return true
-            }
-            // 4本指シングルタップ (37): 先頭要素へ移動
-            37 -> {
-                focusFirstElement()
-                return true
-            }
-            // 4本指ダブルタップ (38): 末尾要素へ移動
-            38 -> {
-                focusLastElement()
-                return true
-            }
-            // 4本指トリプル/クアッドタップ (39, 40): フルステータスアナウンス
-            39, 40 -> {
-                announceFullStatus()
-                return true
-            }
-            // 上→右スワイプ (6, 41): serena アシスタント (AI画面要約・対話) 起動 [TalkBack 17]
-            GESTURE_SWIPE_UP_AND_RIGHT, 41 -> {
-                soundHelper?.playMenuOpen()
-                showSerenaAssistantDialog()
-                return true
-            }
-            // 下→右スワイプ (5, 42): 通知シェード表示 [TalkBack 17]
-            GESTURE_SWIPE_DOWN_AND_RIGHT, 42 -> {
-                soundHelper?.playClick()
-                speak("通知パネルを開きます", TextToSpeech.QUEUE_FLUSH)
-                performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
-                return true
-            }
-            // 左→上スワイプ (7, 43): 最近のアプリ (タスク切替) 表示 [TalkBack 17]
-            GESTURE_SWIPE_LEFT_AND_UP, 43 -> {
-                soundHelper?.playClick()
-                speak("最近使ったアプリ", TextToSpeech.QUEUE_FLUSH)
-                performGlobalAction(GLOBAL_ACTION_RECENTS)
-                return true
-            }
-            // 右→下スワイプ (8, 44): クイック設定表示 [TalkBack 17]
-            GESTURE_SWIPE_RIGHT_AND_DOWN, 44 -> {
-                soundHelper?.playClick()
-                speak("クイック設定パネルを開きます", TextToSpeech.QUEUE_FLUSH)
-                performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
+                showNormalSerenaMenu()
                 return true
             }
             // 下→左スワイプ: 戻る
@@ -385,6 +346,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 soundHelper?.playClick()
                 speak("ホーム画面", TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_HOME)
+                return true
+            }
+            // 左→上スワイプ (43): 最近使ったアプリ
+            GESTURE_SWIPE_LEFT_AND_UP, 43 -> {
+                soundHelper?.playClick()
+                speak("最近使ったアプリ", TextToSpeech.QUEUE_FLUSH)
+                performGlobalAction(GLOBAL_ACTION_RECENTS)
+                return true
+            }
+            // 右→下スワイプ (44): クイック設定
+            GESTURE_SWIPE_RIGHT_AND_DOWN, 44 -> {
+                soundHelper?.playClick()
+                speak("クイック設定パネルを開きます", TextToSpeech.QUEUE_FLUSH)
+                performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
                 return true
             }
             // ダブルタップ長押し: 読み上げ停止
@@ -462,7 +437,37 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(onComplete, 200)
                 } else {
                     val dirStr = if (swipeUp) "次" else "前"
-                    speak("${dirStr}の画面にスクロールしました", TextToSpeech.QUEUE_FLUSH)
+                    speak("${dirStr}へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+                }
+            }
+        }, null)
+    }
+
+    private fun performHorizontalSwipeGesture(swipeLeft: Boolean, onComplete: (() -> Unit)? = null) {
+        val displayMetrics = resources.displayMetrics
+        val width = displayMetrics.widthPixels.toFloat()
+        val height = displayMetrics.heightPixels.toFloat()
+
+        val startX = if (swipeLeft) width * 0.80f else width * 0.20f
+        val endX = if (swipeLeft) width * 0.20f else width * 0.80f
+        val startY = height / 2f
+
+        val path = android.graphics.Path().apply {
+            moveTo(startX, startY)
+            lineTo(endX, startY)
+        }
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 200)
+        val gesture = android.accessibilityservice.GestureDescription.Builder().addStroke(stroke).build()
+
+        dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCompleted(gestureDescription)
+                soundHelper?.playFocusMove()
+                if (onComplete != null) {
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(onComplete, 200)
+                } else {
+                    val pageStr = if (swipeLeft) "次" else "前"
+                    speak("${pageStr}のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
                 }
             }
         }, null)
@@ -641,41 +646,86 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    fun scrollPageForward(): Boolean = scrollHorizontalForward()
-    fun scrollPageBackward(): Boolean = scrollHorizontalBackward()
-
     fun scrollHorizontalForward(): Boolean {
-        val root = rootInActiveWindow ?: return false
+        val root = rootInActiveWindow
         val focused = getAccessibilityFocusedNode() ?: root
         val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
         } else {
             AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
         }
-        val success = focused.performAction(actionId) || focused.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
-        if (success) {
-            soundHelper?.playActionDone()
+        val success = focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
+        if (!success) {
+            performHorizontalSwipeGesture(swipeLeft = true)
         } else {
-            soundHelper?.playEdgeReached()
+            soundHelper?.playFocusMove()
+            speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
         }
-        return success
+        return true
     }
 
     fun scrollHorizontalBackward(): Boolean {
-        val root = rootInActiveWindow ?: return false
+        val root = rootInActiveWindow
         val focused = getAccessibilityFocusedNode() ?: root
         val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id
         } else {
             AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
-        val success = focused.performAction(actionId) || focused.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
-        if (success) {
-            soundHelper?.playActionDone()
+        val success = focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
+        if (!success) {
+            performHorizontalSwipeGesture(swipeLeft = false)
         } else {
-            soundHelper?.playEdgeReached()
+            soundHelper?.playFocusMove()
+            speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
         }
-        return success
+        return true
+    }
+
+    fun scrollVerticalForward(): Boolean {
+        val scrollNode = focusNavigator?.findScrollableNode(forward = true)
+        val success = if (scrollNode != null) {
+            focusNavigator?.performScroll(scrollNode, forward = true) == true
+        } else {
+            val root = rootInActiveWindow
+            val focused = getAccessibilityFocusedNode() ?: root
+            val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.id
+            } else {
+                AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+            }
+            focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
+        }
+        if (!success) {
+            performSwipeGesture(swipeUp = true)
+        } else {
+            soundHelper?.playFocusMove()
+            speak("次へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+        }
+        return true
+    }
+
+    fun scrollVerticalBackward(): Boolean {
+        val scrollNode = focusNavigator?.findScrollableNode(forward = false)
+        val success = if (scrollNode != null) {
+            focusNavigator?.performScroll(scrollNode, forward = false) == true
+        } else {
+            val root = rootInActiveWindow
+            val focused = getAccessibilityFocusedNode() ?: root
+            val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id
+            } else {
+                AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+            }
+            focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
+        }
+        if (!success) {
+            performSwipeGesture(swipeUp = false)
+        } else {
+            soundHelper?.playFocusMove()
+            speak("前へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+        }
+        return true
     }
 
     private fun navigateCustomActions(forward: Boolean) {

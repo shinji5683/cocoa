@@ -136,12 +136,12 @@ class SerenaGestureDispatcher(
 
             // 2本指ジェスチャー
             AccessibilityService.GESTURE_2_FINGER_SINGLE_TAP -> {
-                // 2本指シングルタップ: 読み上げの一時停止・再開トグル！
+                // 2本指シングルタップ: 読み上げの一時停止と再開
                 service.toggleSpeechPauseResume()
                 return true
             }
             AccessibilityService.GESTURE_2_FINGER_DOUBLE_TAP -> {
-                // 2本指ダブルタップ: 通話の応答・切断 / メディアの再生・一時停止！
+                // 2本指ダブルタップ: 通話の応答・切断 / メディアの再生・一時停止
                 if (callMgr?.handleAnswerCallGesture() == true ||
                     callMgr?.handleEndCallGesture() == true) {
                     return true
@@ -149,20 +149,24 @@ class SerenaGestureDispatcher(
                 service.handleMagicTapAction()
                 return true
             }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_UP -> {
-                if (callMgr?.handleAnswerCallGesture() == true) {
-                    return true
-                }
-                service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS)
-                service.speak("クイック設定を開きました", TextToSpeech.QUEUE_FLUSH)
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT -> {
+                // 2本指右フリック: 前のページへ
+                service.scrollHorizontalBackward()
+                return true
+            }
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT -> {
+                // 2本指左フリック: 次のページへ
+                service.scrollHorizontalForward()
                 return true
             }
             AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN -> {
-                if (callMgr?.handleEndCallGesture() == true) {
-                    return true
-                }
-                service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS)
-                service.speak("通知領域を開きました", TextToSpeech.QUEUE_FLUSH)
+                // 2本指下フリック: 前へ縦スクロール
+                service.scrollVerticalBackward()
+                return true
+            }
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_UP -> {
+                // 2本指上フリック: 次へ縦スクロール
+                service.scrollVerticalForward()
                 return true
             }
 
@@ -170,6 +174,16 @@ class SerenaGestureDispatcher(
             AccessibilityService.GESTURE_3_FINGER_SINGLE_TAP -> {
                 // 3本指シングルタップ: Serena メニュー起動！
                 service.showNormalSerenaMenu()
+                return true
+            }
+            AccessibilityService.GESTURE_3_FINGER_DOUBLE_TAP -> {
+                // 3本指ダブルタップ: 現在状態アナウンス
+                service.announceFullStatus()
+                return true
+            }
+            AccessibilityService.GESTURE_3_FINGER_TRIPLE_TAP -> {
+                // 3本指トリプルタップ: クリップボードコピー
+                service.copyLastSpokenTextToClipboard()
                 return true
             }
             AccessibilityService.GESTURE_3_FINGER_SWIPE_UP -> {
@@ -184,18 +198,7 @@ class SerenaGestureDispatcher(
             }
             AccessibilityService.GESTURE_3_FINGER_SWIPE_LEFT,
             AccessibilityService.GESTURE_3_FINGER_SWIPE_RIGHT -> {
-                // 3本指左右フリックでのメニュー開閉は絶対に行わない（誤発動ブロック）
                 return false
-            }
-            AccessibilityService.GESTURE_3_FINGER_DOUBLE_TAP -> {
-                // 3本指ダブルタップ: 現在状態アナウンス
-                service.announceFullStatus()
-                return true
-            }
-            AccessibilityService.GESTURE_3_FINGER_TRIPLE_TAP -> {
-                // 3本指トリプルタップ: クリップボードコピー
-                service.copyLastSpokenTextToClipboard()
-                return true
             }
 
             else -> {
