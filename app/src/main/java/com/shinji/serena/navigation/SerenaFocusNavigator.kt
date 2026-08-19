@@ -305,29 +305,27 @@ class SerenaFocusNavigator(
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id
         }
         val scrollAction = if (forward) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id else AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id else -1
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else -1
         }
-        val fallback = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
 
         if (node.actionList.any { it.id == pageAction } && node.performAction(pageAction)) return true
-        if (node.actionList.any { it.id == scrollAction } && node.performAction(scrollAction)) return true
-        if (node.performAction(fallback)) return true
+        if (scrollAction != -1 && node.actionList.any { it.id == scrollAction } && node.performAction(scrollAction)) return true
         if (node.performAction(pageAction)) return true
-        if (node.performAction(scrollAction)) return true
+        if (scrollAction != -1 && node.performAction(scrollAction)) return true
 
-        // 親ノードやルートへのフォールバック
+        // 親ノードやルートへのフォールバック（水平ページアクションのみ厳密実行）
         var parent = node.parent
         while (parent != null) {
-            if (parent.performAction(pageAction) || parent.performAction(scrollAction) || parent.performAction(fallback)) {
+            if (parent.performAction(pageAction) || (scrollAction != -1 && parent.performAction(scrollAction))) {
                 return true
             }
             parent = parent.parent
         }
 
         val root = service.rootInActiveWindow
-        if (root != null && (root.performAction(pageAction) || root.performAction(scrollAction) || root.performAction(fallback))) {
+        if (root != null && (root.performAction(pageAction) || (scrollAction != -1 && root.performAction(scrollAction)))) {
             return true
         }
 

@@ -914,11 +914,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             if (horizontal) {
                 if (forward) {
-                    startX1 = width * 0.60f; endX1 = width * 0.40f; startY1 = height * 0.48f; endY1 = height * 0.48f
-                    startX2 = width * 0.60f; endX2 = width * 0.40f; startY2 = height * 0.52f; endY2 = height * 0.52f
+                    startX1 = width * 0.80f; endX1 = width * 0.20f; startY1 = height * 0.48f; endY1 = height * 0.48f
+                    startX2 = width * 0.80f; endX2 = width * 0.20f; startY2 = height * 0.52f; endY2 = height * 0.52f
                 } else {
-                    startX1 = width * 0.40f; endX1 = width * 0.60f; startY1 = height * 0.48f; endY1 = height * 0.48f
-                    startX2 = width * 0.40f; endX2 = width * 0.60f; startY2 = height * 0.52f; endY2 = height * 0.52f
+                    startX1 = width * 0.20f; endX1 = width * 0.80f; startY1 = height * 0.48f; endY1 = height * 0.48f
+                    startX2 = width * 0.20f; endX2 = width * 0.80f; startY2 = height * 0.52f; endY2 = height * 0.52f
                 }
             } else {
                 if (forward) {
