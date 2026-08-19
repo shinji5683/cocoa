@@ -85,9 +85,7 @@ class SerenaFocusNavigator(
             if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
                 list.add(node)
             }
-            if (!evaluator.isContainerNode(node)) {
-                return
-            }
+            return
         }
 
         for (i in 0 until node.childCount) {

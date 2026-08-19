@@ -422,6 +422,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollPageForward(onComplete: (() -> Unit)? = null) {
         soundHelper?.playScroll(isForward = true)
+        val activeRoot = rootInActiveWindow
+        val pkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
+        val isLauncher = pkg.contains("launcher")
+
+        if (isLauncher) {
+            val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
+            if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = true) == true) {
+                onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 300) }
+                return
+            }
+            performHorizontalSwipeGesture(swipeLeft = true, onComplete = onComplete)
+            return
+        }
+
         val verticalNode = focusNavigator?.findScrollableNode(forward = true)
         if (verticalNode != null && focusNavigator?.performScroll(verticalNode, forward = true) == true) {
             onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 250) }
@@ -439,6 +453,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollPageBackward(onComplete: (() -> Unit)? = null) {
         soundHelper?.playScroll(isForward = false)
+        val activeRoot = rootInActiveWindow
+        val pkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
+        val isLauncher = pkg.contains("launcher")
+
+        if (isLauncher) {
+            val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
+            if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = false) == true) {
+                onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 300) }
+                return
+            }
+            performHorizontalSwipeGesture(swipeLeft = false, onComplete = onComplete)
+            return
+        }
+
         val verticalNode = focusNavigator?.findScrollableNode(forward = false)
         if (verticalNode != null && focusNavigator?.performScroll(verticalNode, forward = false) == true) {
             onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 250) }

@@ -98,20 +98,34 @@ class AccessibilityNodeEvaluator {
             val hasDirect = hasDirectTextOrLabel(node)
 
             if (isContainerNode(node)) {
+                // クリック可能・フォーカス可能な行コンテナ（セレナメニュー項目や設定行など）
+                if (node.isClickable || node.isCheckable || node.isFocusable) {
+                    if (hasMultipleInteractiveChildren(node)) {
+                        return false
+                    }
+                    return true
+                }
                 val hasChildren = hasFocusableChildren(node)
-                if (!hasChildren && (isActionable || hasDirect)) {
-                    return true
-                }
-                if (node.isClickable && hasDirect && !hasInteractiveSiblingControls(node)) {
-                    return true
-                }
-                return false
+                return !hasChildren && (isActionable || hasDirect)
             }
 
             return isActionable || hasDirect
         } catch (_: Exception) {
             return false
         }
+    }
+
+    private fun hasMultipleInteractiveChildren(node: AccessibilityNodeInfo): Boolean {
+        var count = 0
+        for (i in 0 until node.childCount.coerceAtMost(8)) {
+            val child = node.getChild(i) ?: continue
+            if (!child.isVisibleToUser) continue
+            if (child.isClickable || child.isCheckable || isSwitchOrToggle(child)) {
+                count++
+                if (count > 1) return true
+            }
+        }
+        return false
     }
 
     private fun hasDirectTextOrLabel(node: AccessibilityNodeInfo): Boolean {
