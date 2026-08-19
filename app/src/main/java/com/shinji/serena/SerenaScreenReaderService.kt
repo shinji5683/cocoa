@@ -460,10 +460,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX1 = width * 0.35f
-        val startX2 = width * 0.65f
-        val startY = if (swipeUp) height * 0.75f else height * 0.25f
-        val endY = if (swipeUp) height * 0.20f else height * 0.80f
+        val startX1 = width * 0.40f
+        val startX2 = width * 0.60f
+        val startY = if (swipeUp) height * 0.60f else height * 0.40f
+        val endY = if (swipeUp) height * 0.40f else height * 0.60f
 
         val path1 = android.graphics.Path().apply {
             moveTo(startX1, startY)
@@ -473,8 +473,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             moveTo(startX2, startY)
             lineTo(startX2, endY)
         }
-        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 250)
-        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 250)
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 200)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 200)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke1)
             .addStroke(stroke2)
@@ -499,16 +499,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        // 戻るジェスチャー領域(左右12%以内)を完全に避け、20%〜80%の安全画面中央帯をスワイプ
-        val startX = if (swipeLeft) width * 0.80f else width * 0.20f
-        val endX = if (swipeLeft) width * 0.20f else width * 0.80f
+        val startX = if (swipeLeft) width * 0.65f else width * 0.35f
+        val endX = if (swipeLeft) width * 0.35f else width * 0.65f
         val startY = height * 0.50f
 
         val path = android.graphics.Path().apply {
             moveTo(startX, startY)
             lineTo(endX, startY)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 150)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 180)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
