@@ -46,6 +46,12 @@ class SoundAndHapticHelper(private val context: Context) {
         playClick()
     }
 
+    fun playScroll(isForward: Boolean = true) {
+        val toneType = if (isForward) ToneGenerator.TONE_PROP_BEEP2 else ToneGenerator.TONE_PROP_BEEP
+        toneGenerator?.startTone(toneType, 30)
+        vibrate(12)
+    }
+
     fun playFocusMove() {
         toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 25)
         vibrate(15)

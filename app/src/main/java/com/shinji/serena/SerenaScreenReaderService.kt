@@ -2065,8 +2065,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
                 val now = System.currentTimeMillis()
-                if (now - lastScrollEventTime < 800) return
+                if (now - lastScrollEventTime < 400) return
                 lastScrollEventTime = now
+
+                soundHelper?.playScroll()
 
                 val itemCount = event.itemCount
                 val fromIndex = event.fromIndex
@@ -2074,13 +2076,29 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val text = event.text.joinToString(" ").trim()
                 val contentDesc = event.contentDescription?.toString()?.trim() ?: ""
 
-                if (contentDesc.isNotEmpty() && (contentDesc.contains("ページ") || contentDesc.contains("page"))) {
+                if (contentDesc.isNotEmpty() && (contentDesc.contains("ページ") || contentDesc.contains("page") || contentDesc.contains("行") || contentDesc.contains("項目"))) {
                     speak(contentDesc, TextToSpeech.QUEUE_FLUSH)
-                } else if (text.isNotEmpty() && (text.contains("ページ") || text.contains("page"))) {
+                } else if (text.isNotEmpty() && (text.contains("ページ") || text.contains("page") || text.contains("行") || text.contains("項目"))) {
                     speak(text, TextToSpeech.QUEUE_FLUSH)
                 } else if (itemCount > 0 && fromIndex >= 0) {
-                    val pageIndex = if (toIndex > fromIndex) "${fromIndex + 1}〜${toIndex + 1} / $itemCount 項目" else "${fromIndex + 1} / $itemCount 項目"
+                    val pageIndex = if (toIndex > fromIndex) "${fromIndex + 1}〜${toIndex + 1} / 全${itemCount}項目" else "${fromIndex + 1} / 全${itemCount}項目"
                     speak(pageIndex, TextToSpeech.QUEUE_FLUSH)
+                } else if (event.maxScrollY > 0 && event.scrollY >= 0) {
+                    val pct = ((event.scrollY.toFloat() / event.maxScrollY.toFloat()) * 100).toInt().coerceIn(0, 100)
+                    speak("スクロール $pct%", TextToSpeech.QUEUE_FLUSH)
+                } else if (event.maxScrollX > 0 && event.scrollX >= 0) {
+                    val pct = ((event.scrollX.toFloat() / event.maxScrollX.toFloat()) * 100).toInt().coerceIn(0, 100)
+                    speak("横スクロール $pct%", TextToSpeech.QUEUE_FLUSH)
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && (event.scrollDeltaY != 0 || event.scrollDeltaX != 0)) {
+                    val dirText = when {
+                        event.scrollDeltaY > 0 -> "下へスクロール"
+                        event.scrollDeltaY < 0 -> "上へスクロール"
+                        event.scrollDeltaX > 0 -> "右へスクロール"
+                        else -> "左へスクロール"
+                    }
+                    speak(dirText, TextToSpeech.QUEUE_FLUSH)
+                } else {
+                    speak("スクロールしました", TextToSpeech.QUEUE_FLUSH)
                 }
             }
 
@@ -2320,6 +2338,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return parts.joinToString("、")
     }
 
+    private fun findCheckableOrSwitchNode(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        if (node.isCheckable) return node
+        val className = node.className?.toString() ?: ""
+        if (className.contains("Switch", ignoreCase = true) ||
+            className.contains("CheckBox", ignoreCase = true) ||
+            className.contains("RadioButton", ignoreCase = true) ||
+            className.contains("ToggleButton", ignoreCase = true) ||
+            className.contains("CompoundButton", ignoreCase = true)
+        ) {
+            return node
+        }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            val found = findCheckableOrSwitchNode(child)
+            if (found != null) return found
+        }
+        return null
+    }
+
     private fun getNodeText(node: AccessibilityNodeInfo): String {
         // 1. ノード自体の contentDescription, text, hintText を最優先取得
         var text = node.contentDescription?.toString()?.trim()
@@ -2358,8 +2395,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 4. クリック可能/操作可能要素で無標題の場合のフォールバック
-        if (node.isClickable || node.isCheckable) {
+        // 4. スイッチやチェックボックス単体でラベルがない場合、親や兄弟ノードからラベルを探索
+        val target = findCheckableOrSwitchNode(node)
+        if (target != null || node.isClickable || node.isCheckable) {
+            val parent = node.parent
+            if (parent != null) {
+                val parentText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
+                if (!parentText.isNullOrEmpty()) {
+                    return parentText
+                }
+                for (i in 0 until parent.childCount) {
+                    val sibling = parent.getChild(i) ?: continue
+                    if (sibling == node || isSameNode(sibling, node)) continue
+                    val sibText = sibling.contentDescription?.toString()?.trim() ?: sibling.text?.toString()?.trim()
+                    if (!sibText.isNullOrEmpty()) {
+                        return sibText
+                    }
+                }
+            }
+        }
+
+        // 5. クリック可能/操作可能要素で無標題の場合のフォールバック
+        if (node.isClickable || node.isCheckable || target != null) {
             val role = getNodeRole(node)
             return if (role.isNotEmpty()) "無標題$role" else "ボタン"
         }
@@ -2407,15 +2464,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun getNodeRole(node: AccessibilityNodeInfo): String {
-        val className = node.className?.toString() ?: ""
+        val target = findCheckableOrSwitchNode(node) ?: node
+        val className = target.className?.toString() ?: ""
         return when {
-            className.contains("Button", ignoreCase = true) -> "ボタン"
-            className.contains("EditText", ignoreCase = true) -> "テキスト入力欄"
+            className.contains("Switch", ignoreCase = true) || className.contains("ToggleButton", ignoreCase = true) -> "スイッチ"
             className.contains("CheckBox", ignoreCase = true) -> "チェックボックス"
             className.contains("RadioButton", ignoreCase = true) -> "ラジオボタン"
-            className.contains("Switch", ignoreCase = true) || className.contains("ToggleButton", ignoreCase = true) -> "スイッチ"
+            className.contains("Button", ignoreCase = true) -> "ボタン"
+            className.contains("EditText", ignoreCase = true) -> "テキスト入力欄"
             className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> "画像"
             className.contains("SeekBar", ignoreCase = true) -> "スライダー"
+            target.isCheckable -> "スイッチ"
             className.contains("TextView", ignoreCase = true) -> ""
             else -> ""
         }
@@ -2423,14 +2482,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     @Suppress("DEPRECATION")
     private fun getNodeState(node: AccessibilityNodeInfo): String {
+        val target = findCheckableOrSwitchNode(node) ?: node
         val states = mutableListOf<String>()
-        if (node.isCheckable) {
-            states.add(if (node.isChecked) "オン" else "オフ")
+        val className = target.className?.toString() ?: ""
+        val isSwitch = className.contains("Switch", ignoreCase = true) || className.contains("ToggleButton", ignoreCase = true)
+        val isCheckBox = className.contains("CheckBox", ignoreCase = true)
+        val isRadio = className.contains("RadioButton", ignoreCase = true)
+
+        if (target.isCheckable || isSwitch || isCheckBox || isRadio) {
+            if (isSwitch) {
+                states.add(if (target.isChecked) "オン" else "オフ")
+            } else if (isCheckBox) {
+                states.add(if (target.isChecked) "チェック済み" else "チェックなし")
+            } else if (isRadio) {
+                states.add(if (target.isChecked) "選択中" else "未選択")
+            } else {
+                states.add(if (target.isChecked) "オン" else "オフ")
+            }
         }
-        if (node.isSelected) {
+        if (node.isSelected && !states.contains("選択中")) {
             states.add("選択中")
         }
-        if (!node.isEnabled) {
+        if (!node.isEnabled || !target.isEnabled) {
             states.add("無効")
         }
         return states.joinToString(" ")

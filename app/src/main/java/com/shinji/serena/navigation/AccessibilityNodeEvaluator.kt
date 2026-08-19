@@ -10,6 +10,24 @@ import android.view.accessibility.AccessibilityNodeInfo
  */
 class AccessibilityNodeEvaluator {
 
+    fun isSwitchOrToggle(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+        val className = node.className?.toString() ?: ""
+        return className.contains("Switch", ignoreCase = true) ||
+                className.contains("ToggleButton", ignoreCase = true) ||
+                className.contains("Toggle", ignoreCase = true)
+    }
+
+    fun isCheckableOrCompound(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+        if (node.isCheckable) return true
+        val className = node.className?.toString() ?: ""
+        return className.contains("CheckBox", ignoreCase = true) ||
+                className.contains("RadioButton", ignoreCase = true) ||
+                className.contains("Switch", ignoreCase = true) ||
+                className.contains("CompoundButton", ignoreCase = true)
+    }
+
     fun isContainerNode(node: AccessibilityNodeInfo): Boolean {
         if (node.childCount == 0) return false
 
@@ -36,6 +54,8 @@ class AccessibilityNodeEvaluator {
             className.contains("CheckBox", ignoreCase = true) ||
             className.contains("RadioButton", ignoreCase = true) ||
             className.contains("Switch", ignoreCase = true) ||
+            className.contains("CompoundButton", ignoreCase = true) ||
+            className.contains("ToggleButton", ignoreCase = true) ||
             className.contains("SeekBar", ignoreCase = true) ||
             className.contains("ProgressBar", ignoreCase = true) ||
             className.contains("Spinner", ignoreCase = true)
@@ -64,23 +84,44 @@ class AccessibilityNodeEvaluator {
 
         val rect = Rect()
         node.getBoundsInScreen(rect)
-        if (rect.width() <= 0 && rect.height() <= 0 && !node.isClickable && !node.isFocusable) return false
+        if (rect.width() <= 0 && rect.height() <= 0 && !node.isClickable && !node.isFocusable && !node.isCheckable) return false
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && node.isScreenReaderFocusable) {
             return true
         }
 
+        val isActionable = node.isClickable || node.isCheckable || node.isFocusable || node.isLongClickable ||
+                node.safeIsHeading || isSwitchOrToggle(node) || isCheckableOrCompound(node)
+
         val text = getNodeText(node)
-        val isActionable = node.isClickable || node.isCheckable || node.isFocusable || node.isLongClickable || node.safeIsHeading
 
         if (isContainerNode(node)) {
-            if ((isActionable || text.isNotEmpty()) && !hasFocusableChildren(node)) {
+            // スイッチやチェックボックスを子に持つコンテナの場合、または子要素にフォーカス可能要素がない場合はターゲット
+            val hasChildren = hasFocusableChildren(node)
+            if (!hasChildren && (isActionable || text.isNotEmpty())) {
+                return true
+            }
+            // コンテナ自身がクリック可能で行として機能する場合も対象
+            if (node.isClickable && text.isNotEmpty() && !hasInteractiveSiblingControls(node)) {
                 return true
             }
             return false
         }
 
         return isActionable || text.isNotEmpty()
+    }
+
+    private fun hasInteractiveSiblingControls(node: AccessibilityNodeInfo): Boolean {
+        // コンテナ内に複数の独立したボタンやスイッチがあるか（その場合は子要素を個別にフォーカスさせる）
+        var interactiveCount = 0
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            if (!child.isVisibleToUser) continue
+            if (child.isClickable || child.isCheckable || isSwitchOrToggle(child)) {
+                interactiveCount++
+            }
+        }
+        return interactiveCount > 1
     }
 
     fun hasFocusableChildren(node: AccessibilityNodeInfo): Boolean {
@@ -90,8 +131,9 @@ class AccessibilityNodeEvaluator {
             child.getBoundsInScreen(rect)
             if (!child.isVisibleToUser && (rect.isEmpty || rect.width() <= 0 || rect.height() <= 0)) continue
 
+            val childActionable = child.isClickable || child.isCheckable || child.isFocusable ||
+                    child.isLongClickable || child.safeIsHeading || isSwitchOrToggle(child) || isCheckableOrCompound(child)
             val childText = getNodeText(child)
-            val childActionable = child.isClickable || child.isCheckable || child.isFocusable || child.isLongClickable || child.safeIsHeading
 
             if (childActionable || childText.isNotEmpty()) {
                 return true
@@ -154,6 +196,7 @@ class AccessibilityNodeEvaluator {
         if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             text = node.tooltipText?.toString()?.trim()
         }
+
         val className = node.className?.toString() ?: ""
         val rangeInfo = node.rangeInfo
         val isSeekBar = className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true) || rangeInfo != null
@@ -178,6 +221,16 @@ class AccessibilityNodeEvaluator {
             return inferred
         }
 
+        // labeledBy があればそれを参照
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            val labeledBy = node.labeledBy
+            if (labeledBy != null) {
+                val labelText = getNodeText(labeledBy)
+                if (labelText.isNotEmpty()) return labelText
+            }
+        }
+
+        // 子要素テキストの再帰収集
         if (node.childCount > 0) {
             val childTexts = mutableListOf<String>()
             for (i in 0 until node.childCount) {
@@ -197,7 +250,32 @@ class AccessibilityNodeEvaluator {
             }
         }
 
-        if (node.isClickable || node.isCheckable) {
+        // スイッチやチェックボックス単体でラベルがない場合、親や兄弟ノードからラベルを探索
+        if (isSwitchOrToggle(node) || isCheckableOrCompound(node) || node.isClickable) {
+            val parent = node.parent
+            if (parent != null) {
+                val parentText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
+                if (!parentText.isNullOrEmpty()) {
+                    return parentText
+                }
+                for (i in 0 until parent.childCount) {
+                    val sibling = parent.getChild(i) ?: continue
+                    if (sibling == node || isSameNode(sibling, node)) continue
+                    val sibText = sibling.contentDescription?.toString()?.trim() ?: sibling.text?.toString()?.trim()
+                    if (!sibText.isNullOrEmpty()) {
+                        return sibText
+                    }
+                }
+            }
+        }
+
+        if (isSwitchOrToggle(node)) {
+            return "スイッチ"
+        }
+        if (node.isCheckable) {
+            return "チェックボックス"
+        }
+        if (node.isClickable) {
             return "ボタン"
         }
 
