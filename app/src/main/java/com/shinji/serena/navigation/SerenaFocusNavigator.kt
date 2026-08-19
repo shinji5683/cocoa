@@ -192,7 +192,18 @@ class SerenaFocusNavigator(
         lastFocusedNodeIndex = safeTargetIndex
         Log.i(TAG, "navigateLinearFocus: moving to index $safeTargetIndex / ${nodes.size - 1} (${evaluator.getNodeText(targetNode)})")
 
+        currentFocus?.performAction(AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS)
         setFocusAndShowOnScreen(targetNode)
+
+        if (safeTargetIndex == 0) {
+            service.soundHelper?.playFirstItemEdgeSound()
+        } else if (safeTargetIndex == nodes.size - 1) {
+            service.soundHelper?.playLastItemEdgeSound()
+        } else {
+            service.soundHelper?.playFocusMove()
+        }
+
+        service.announceNode(targetNode)
     }
 
     fun setFocusAndShowOnScreen(targetNode: AccessibilityNodeInfo) {
