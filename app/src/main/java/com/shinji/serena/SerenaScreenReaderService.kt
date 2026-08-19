@@ -711,20 +711,43 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun findBestVisibleNodeAfterScroll(nodes: List<AccessibilityNodeInfo>, forward: Boolean, horizontal: Boolean): AccessibilityNodeInfo? {
         if (nodes.isEmpty()) return null
+        val currentFocus = getAccessibilityFocusedNode()
         val dm = resources.displayMetrics
         val screenW = dm.widthPixels
         val screenH = dm.heightPixels
+
+        if (currentFocus != null) {
+            val focusRect = android.graphics.Rect()
+            currentFocus.getBoundsInScreen(focusRect)
+            // スクロール後も現在フォーカス中の要素が画面中央可視域に残っていれば、フォーカスを動かさない！
+            if (focusRect.top >= (screenH * 0.12f).toInt() && focusRect.bottom <= (screenH * 0.88f).toInt() &&
+                focusRect.left >= 0 && focusRect.right <= screenW &&
+                focusRect.width() > 0 && focusRect.height() > 0) {
+                return null
+            }
+        }
 
         val visibleNodes = nodes.filter { node ->
             val rect = android.graphics.Rect()
             node.getBoundsInScreen(rect)
             rect.width() > 0 && rect.height() > 0 &&
             rect.left >= 0 && rect.right <= screenW &&
-            rect.top >= (screenH * 0.08f).toInt() && rect.bottom <= (screenH * 0.92f).toInt()
+            rect.top >= (screenH * 0.12f).toInt() && rect.bottom <= (screenH * 0.88f).toInt()
         }
 
-        if (visibleNodes.isEmpty()) return nodes.firstOrNull()
-        return if (forward) visibleNodes.first() else visibleNodes.last()
+        if (visibleNodes.isEmpty()) return null
+
+        val centerX = screenW / 2
+        val centerY = screenH / 2
+
+        // 画面中央に最も近い要素を選択（Home/End端点ジャンプを物理的に完全根絶）
+        return visibleNodes.minByOrNull { node ->
+            val r = android.graphics.Rect()
+            node.getBoundsInScreen(r)
+            val dx = (r.centerX() - centerX).toLong()
+            val dy = (r.centerY() - centerY).toLong()
+            dx * dx + dy * dy
+        }
     }
 
     fun scrollHorizontalForward(): Boolean {
@@ -891,26 +914,26 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             if (horizontal) {
                 if (forward) {
-                    startX1 = width * 0.80f; endX1 = width * 0.20f; startY1 = height * 0.45f; endY1 = height * 0.45f
-                    startX2 = width * 0.80f; endX2 = width * 0.20f; startY2 = height * 0.55f; endY2 = height * 0.55f
+                    startX1 = width * 0.60f; endX1 = width * 0.40f; startY1 = height * 0.48f; endY1 = height * 0.48f
+                    startX2 = width * 0.60f; endX2 = width * 0.40f; startY2 = height * 0.52f; endY2 = height * 0.52f
                 } else {
-                    startX1 = width * 0.20f; endX1 = width * 0.80f; startY1 = height * 0.45f; endY1 = height * 0.45f
-                    startX2 = width * 0.20f; endX2 = width * 0.80f; startY2 = height * 0.55f; endY2 = height * 0.55f
+                    startX1 = width * 0.40f; endX1 = width * 0.60f; startY1 = height * 0.48f; endY1 = height * 0.48f
+                    startX2 = width * 0.40f; endX2 = width * 0.60f; startY2 = height * 0.52f; endY2 = height * 0.52f
                 }
             } else {
                 if (forward) {
-                    startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.70f; endY1 = height * 0.30f
-                    startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.70f; endY2 = height * 0.30f
+                    startX1 = width * 0.48f; endX1 = width * 0.48f; startY1 = height * 0.58f; endY1 = height * 0.42f
+                    startX2 = width * 0.52f; endX2 = width * 0.52f; startY2 = height * 0.58f; endY2 = height * 0.42f
                 } else {
-                    startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.30f; endY1 = height * 0.70f
-                    startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.30f; endY2 = height * 0.70f
+                    startX1 = width * 0.48f; endX1 = width * 0.48f; startY1 = height * 0.42f; endY1 = height * 0.58f
+                    startX2 = width * 0.52f; endX2 = width * 0.52f; startY2 = height * 0.42f; endY2 = height * 0.58f
                 }
             }
 
             val p1 = android.graphics.Path().apply { moveTo(startX1, startY1); lineTo(endX1, endY1) }
             val p2 = android.graphics.Path().apply { moveTo(startX2, startY2); lineTo(endX2, endY2) }
-            val s1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 240)
-            val s2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 240)
+            val s1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 200)
+            val s2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 200)
             val gesture = android.accessibilityservice.GestureDescription.Builder()
                 .addStroke(s1)
                 .addStroke(s2)
