@@ -709,6 +709,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var lastScrollTime = 0L
     private var lastScrollEventTime = 0L
 
+    fun findBestVisibleNodeAfterScroll(nodes: List<AccessibilityNodeInfo>, forward: Boolean, horizontal: Boolean): AccessibilityNodeInfo? {
+        if (nodes.isEmpty()) return null
+        val dm = resources.displayMetrics
+        val screenW = dm.widthPixels
+        val screenH = dm.heightPixels
+
+        val visibleNodes = nodes.filter { node ->
+            val rect = android.graphics.Rect()
+            node.getBoundsInScreen(rect)
+            rect.width() > 0 && rect.height() > 0 &&
+            rect.left >= 0 && rect.right <= screenW &&
+            rect.top >= (screenH * 0.08f).toInt() && rect.bottom <= (screenH * 0.92f).toInt()
+        }
+
+        if (visibleNodes.isEmpty()) return nodes.firstOrNull()
+        return if (forward) visibleNodes.first() else visibleNodes.last()
+    }
+
     fun scrollHorizontalForward(): Boolean {
         val now = System.currentTimeMillis()
         if (now - lastScrollTime < 650) return true
@@ -729,10 +747,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
-                if (newNodes.isNotEmpty()) {
-                    val firstNode = newNodes.first()
-                    firstNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                    announceNode(firstNode)
+                val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = true)
+                if (target != null) {
+                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    announceNode(target)
                 }
             }, 300)
             return true
@@ -765,10 +783,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
-                if (newNodes.isNotEmpty()) {
-                    val lastNode = newNodes.last()
-                    lastNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                    announceNode(lastNode)
+                val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = true)
+                if (target != null) {
+                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    announceNode(target)
                 }
             }, 300)
             return true
@@ -805,9 +823,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             speak("次へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
-                if (newNodes.isNotEmpty()) {
-                    val firstNode = newNodes.first()
-                    firstNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
+                if (target != null) {
+                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    announceNode(target)
                 }
             }, 300)
             return true
@@ -844,9 +863,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             speak("前へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
-                if (newNodes.isNotEmpty()) {
-                    val lastNode = newNodes.last()
-                    lastNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
+                if (target != null) {
+                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    announceNode(target)
                 }
             }, 300)
             return true
@@ -901,8 +921,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     super.onCompleted(gestureDescription)
                     mainHandler.postDelayed({
                         val newNodes = collectAccessibleNodes()
-                        if (newNodes.isNotEmpty()) {
-                            val target = if (forward) newNodes.first() else newNodes.last()
+                        val target = findBestVisibleNodeAfterScroll(newNodes, forward = forward, horizontal = horizontal)
+                        if (target != null) {
                             target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                             announceNode(target)
                         }
@@ -912,8 +932,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     super.onCancelled(gestureDescription)
                     mainHandler.postDelayed({
                         val newNodes = collectAccessibleNodes()
-                        if (newNodes.isNotEmpty()) {
-                            val target = if (forward) newNodes.first() else newNodes.last()
+                        val target = findBestVisibleNodeAfterScroll(newNodes, forward = forward, horizontal = horizontal)
+                        if (target != null) {
                             target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                             announceNode(target)
                         }
