@@ -64,6 +64,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var isTtsReady = false
     private var lastSpokenText: String? = null
     private var lastSpokenTime: Long = 0L
+    var lastFocusTimeMs: Long = 0L
     private lateinit var prefs: SharedPreferences
     var soundHelper: SoundAndHapticHelper? = null
     private var timeTickReceiver: BroadcastReceiver? = null
@@ -2032,6 +2033,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             AccessibilityEvent.TYPE_VIEW_HOVER_ENTER -> {
                 val node = event.source ?: return
+                lastFocusTimeMs = System.currentTimeMillis()
                 lastHoveredNode = node
                 soundHelper?.playFocusMove()
                 node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
@@ -2044,6 +2046,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
             AccessibilityEvent.TYPE_VIEW_SELECTED -> {
                 val node = event.source ?: return
+                lastFocusTimeMs = System.currentTimeMillis()
                 lastHoveredNode = node
                 soundHelper?.playFocusMove()
                 if (isTtsReady) {
@@ -2064,8 +2067,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
                 val now = System.currentTimeMillis()
-                if (now - lastScrollEventTime < 400) return
+                if (now - lastScrollEventTime < 500) return
                 lastScrollEventTime = now
+
+                // フォーカス移動直後（800ms以内）のスクロール調整はフォーカスアナウンスを妨げないよう読み上げを抑制
+                if (now - lastFocusTimeMs < 800) {
+                    return
+                }
 
                 soundHelper?.playScroll()
 
@@ -2076,18 +2084,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val contentDesc = event.contentDescription?.toString()?.trim() ?: ""
 
                 if (contentDesc.isNotEmpty() && (contentDesc.contains("ページ") || contentDesc.contains("page") || contentDesc.contains("行") || contentDesc.contains("項目"))) {
-                    speak(contentDesc, TextToSpeech.QUEUE_FLUSH)
+                    speak(contentDesc, TextToSpeech.QUEUE_ADD)
                 } else if (text.isNotEmpty() && (text.contains("ページ") || text.contains("page") || text.contains("行") || text.contains("項目"))) {
-                    speak(text, TextToSpeech.QUEUE_FLUSH)
+                    speak(text, TextToSpeech.QUEUE_ADD)
                 } else if (itemCount > 0 && fromIndex >= 0) {
                     val pageIndex = if (toIndex > fromIndex) "${fromIndex + 1}〜${toIndex + 1} / 全${itemCount}項目" else "${fromIndex + 1} / 全${itemCount}項目"
-                    speak(pageIndex, TextToSpeech.QUEUE_FLUSH)
-                } else if (event.maxScrollY > 0 && event.scrollY >= 0) {
-                    val pct = ((event.scrollY.toFloat() / event.maxScrollY.toFloat()) * 100).toInt().coerceIn(0, 100)
-                    speak("スクロール $pct%", TextToSpeech.QUEUE_FLUSH)
-                } else if (event.maxScrollX > 0 && event.scrollX >= 0) {
-                    val pct = ((event.scrollX.toFloat() / event.maxScrollX.toFloat()) * 100).toInt().coerceIn(0, 100)
-                    speak("横スクロール $pct%", TextToSpeech.QUEUE_FLUSH)
+                    speak(pageIndex, TextToSpeech.QUEUE_ADD)
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && (event.scrollDeltaY != 0 || event.scrollDeltaX != 0)) {
                     val dirText = when {
                         event.scrollDeltaY > 0 -> "下へスクロール"
@@ -2095,9 +2097,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         event.scrollDeltaX > 0 -> "右へスクロール"
                         else -> "左へスクロール"
                     }
-                    speak(dirText, TextToSpeech.QUEUE_FLUSH)
-                } else {
-                    speak("スクロールしました", TextToSpeech.QUEUE_FLUSH)
+                    speak(dirText, TextToSpeech.QUEUE_ADD)
                 }
             }
 

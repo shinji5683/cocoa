@@ -80,28 +80,12 @@ class serenaMenuDialog(
 
             tvIcon.text = item.icon
             tvItemTitle.text = item.title
-            val accessibleText = "${item.title}"
+            val accessibleText = item.title
             itemView.contentDescription = accessibleText
             itemView.isFocusable = true
 
-            itemView.accessibilityDelegate = object : View.AccessibilityDelegate() {
-                override fun sendAccessibilityEvent(host: View, eventType: Int) {
-                    super.sendAccessibilityEvent(host, eventType)
-                    if (eventType == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED) {
-                        scrollMenuItems?.post {
-                            val targetY = (itemView.top - 120).coerceAtLeast(0)
-                            scrollMenuItems.smoothScrollTo(0, targetY)
-                        }
-                    }
-                }
-            }
-
             itemView.setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
-                    scrollMenuItems?.post {
-                        val targetY = (itemView.top - 120).coerceAtLeast(0)
-                        scrollMenuItems.smoothScrollTo(0, targetY)
-                    }
                     if (index == 0) {
                         service?.soundHelper?.playFirstItemEdgeSound()
                     } else if (index == totalCount - 1) {
@@ -130,7 +114,10 @@ class serenaMenuDialog(
 
         firstItemView?.post {
             firstItemView?.requestFocus()
-            firstItemView?.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
+            firstItemView?.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED)
+            val firstTitle = items.firstOrNull()?.title ?: ""
+            val fullMsg = if (firstTitle.isNotEmpty()) "$titleText、$firstTitle" else titleText
+            service?.speak(fullMsg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
         }
     }
 }
