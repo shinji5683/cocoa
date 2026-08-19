@@ -108,6 +108,14 @@ adb shell am start -n com.shinji.serena/.MainActivity
 
 ---
 
+## 🤝 謝辞＆ライセンス帰属 (Acknowledgements & Attributions)
+
+- **あやめキーボード (Ayame Keyboard / IME)**:
+  - 本スクリーンリーダーの漢字詳細読み（フォネティック読み）および IME 連携アーキテクチャは、視覚障害者向け高機能日本語入力アプリ「あやめキーボード」の思想およびオープンソース資産（MIT License）を尊重・準拠して開発されています。
+  - 心より感謝申し上げます！🌸✨
+
+---
+
 ## 📄 ライセンス (License)
 
 本プロジェクトは **Apache License 2.0** および **MIT License** のデュアルライセンス（互換ライセンス）のもとで公開されています。  
