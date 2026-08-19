@@ -1180,57 +1180,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun collectAccessibleNodes(root: AccessibilityNodeInfo? = null): List<AccessibilityNodeInfo> {
         val navNodes = focusNavigator?.collectAccessibleNodes(root)
         if (!navNodes.isNullOrEmpty()) return navNodes
-        val list = mutableListOf<AccessibilityNodeInfo>()
         val targetRoot = root ?: rootInActiveWindow ?: return emptyList()
-        traverseTree(targetRoot, list)
-        return list
-    }
-
-    private fun traverseTree(node: AccessibilityNodeInfo, list: MutableList<AccessibilityNodeInfo>) {
-        if (!node.isVisibleToUser) return
-
-        val text = getNodeText(node)
-        val isClickableRow = (node.isClickable || node.isCheckable) && node.childCount > 0 && text.isNotEmpty()
-        if (isClickableRow) {
-            list.add(node)
-            return // クリック可能な行コンテナ（セレナメニュー項目等）を1つの統合フォーカス項目として扱う
-        }
-
-        val hasAccessibleChildren = hasInteractiveOrTextChildren(node)
-        if (isFocusableTarget(node, hasAccessibleChildren)) {
-            list.add(node)
-        }
-
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i) ?: continue
-            traverseTree(child, list)
-        }
-    }
-
-    private fun isFocusableTarget(node: AccessibilityNodeInfo, hasAccessibleChildren: Boolean): Boolean {
-        if (!node.isVisibleToUser) return false
-        // 親コンテナが配下にフォーカス可能な子要素を持つ場合、親自体はターゲットにせず子要素を順に訪問する
-        if (node.childCount > 0 && hasAccessibleChildren) {
-            return false
-        }
-        val text = getNodeText(node)
-        val isActionable = node.isClickable || node.isCheckable || node.isFocusable || node.isLongClickable || node.safeIsHeading
-        return isActionable || text.isNotEmpty()
-    }
-
-    private fun hasInteractiveOrTextChildren(node: AccessibilityNodeInfo): Boolean {
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i) ?: continue
-            if (!child.isVisibleToUser) continue
-            val childText = getNodeText(child)
-            if (child.isClickable || child.isCheckable || child.isFocusable || childText.isNotEmpty()) {
-                return true
-            }
-            if (hasInteractiveOrTextChildren(child)) {
-                return true
-            }
-        }
-        return false
+        return focusNavigator?.collectAccessibleNodes(targetRoot) ?: emptyList()
     }
 
     private fun performClickOnFocusedNode() {
