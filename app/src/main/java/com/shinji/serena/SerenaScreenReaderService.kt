@@ -428,11 +428,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val isLauncher = pkg.contains("launcher")
 
         if (isLauncher) {
-            val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
-            if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = true) == true) {
-                onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 300) }
-                return
-            }
             performHorizontalSwipeGesture(swipeLeft = true, onComplete = onComplete)
             return
         }
@@ -459,11 +454,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val isLauncher = pkg.contains("launcher")
 
         if (isLauncher) {
-            val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
-            if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = false) == true) {
-                onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 300) }
-                return
-            }
             performHorizontalSwipeGesture(swipeLeft = false, onComplete = onComplete)
             return
         }
@@ -527,15 +517,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX = if (swipeLeft) width * 0.65f else width * 0.35f
-        val endX = if (swipeLeft) width * 0.35f else width * 0.65f
-        val startY = height * 0.50f
+        val startX = if (swipeLeft) width * 0.88f else width * 0.12f
+        val endX = if (swipeLeft) width * 0.12f else width * 0.88f
+        val startY = height * 0.45f
 
         val path = android.graphics.Path().apply {
             moveTo(startX, startY)
             lineTo(endX, startY)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 180)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 250)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -545,9 +535,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
                 Log.i(TAG, "performHorizontalSwipeGesture: gesture completed successfully.")
-                soundHelper?.playFocusMove()
+                soundHelper?.playScroll(isForward = swipeLeft)
                 if (onComplete != null) {
-                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(onComplete, 200)
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(onComplete, 350)
                 } else {
                     val pageStr = if (swipeLeft) "次" else "前"
                     speak("${pageStr}のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
@@ -557,6 +547,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCancelled(gestureDescription)
                 Log.w(TAG, "performHorizontalSwipeGesture: gesture was CANCELLED by system.")
+                onComplete?.invoke()
             }
         }, null)
     }

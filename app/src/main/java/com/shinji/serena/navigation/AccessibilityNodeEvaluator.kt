@@ -98,15 +98,19 @@ class AccessibilityNodeEvaluator {
             val hasDirect = hasDirectTextOrLabel(node)
 
             if (isContainerNode(node)) {
-                // クリック可能・フォーカス可能な行コンテナ（セレナメニュー項目や設定行など）
-                if (node.isClickable || node.isCheckable || node.isFocusable) {
-                    if (hasMultipleInteractiveChildren(node)) {
-                        return false
-                    }
+                // ボタンや入力欄など、配下にインタラクティブな子要素を1つでも含むコンテナ（ダイアログのボタンバー等）は、
+                // コンテナ自体をターゲットにせず、子要素（「完了」「開く」ボタン等）をそれぞれ個別に検出させる
+                if (hasInteractiveChild(node)) {
+                    return false
+                }
+
+                // 子要素にボタン等が存在しないクリック可能行（セレナメニュー項目や設定行など）は行全体を1つのターゲットとする
+                if (isActionable) {
                     return true
                 }
+
                 val hasChildren = hasFocusableChildren(node)
-                return !hasChildren && (isActionable || hasDirect)
+                return !hasChildren && hasDirect
             }
 
             return isActionable || hasDirect
@@ -115,14 +119,19 @@ class AccessibilityNodeEvaluator {
         }
     }
 
-    private fun hasMultipleInteractiveChildren(node: AccessibilityNodeInfo): Boolean {
-        var count = 0
-        for (i in 0 until node.childCount.coerceAtMost(8)) {
+    private fun hasInteractiveChild(node: AccessibilityNodeInfo): Boolean {
+        for (i in 0 until node.childCount.coerceAtMost(16)) {
             val child = node.getChild(i) ?: continue
-            if (!child.isVisibleToUser) continue
-            if (child.isClickable || child.isCheckable || isSwitchOrToggle(child)) {
-                count++
-                if (count > 1) return true
+            val childClass = child.className?.toString() ?: ""
+            if (child.isClickable || child.isCheckable || child.isFocusable || isSwitchOrToggle(child) ||
+                childClass.contains("Button", ignoreCase = true) ||
+                childClass.contains("EditText", ignoreCase = true) ||
+                childClass.contains("SeekBar", ignoreCase = true)
+            ) {
+                return true
+            }
+            if (hasInteractiveChild(child)) {
+                return true
             }
         }
         return false
