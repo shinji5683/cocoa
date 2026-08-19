@@ -2358,87 +2358,98 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun getNodeText(node: AccessibilityNodeInfo): String {
-        // 1. ノード自体の direct text
-        var text = node.contentDescription?.toString()?.trim()
-        if (text.isNullOrEmpty()) {
-            text = node.text?.toString()?.trim()
-        }
-        if (text.isNullOrEmpty()) {
-            text = node.hintText?.toString()?.trim()
-        }
-        if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            text = node.tooltipText?.toString()?.trim()
-        }
-        if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            text = node.paneTitle?.toString()?.trim()
-        }
-        if (!text.isNullOrEmpty()) {
-            return text
-        }
-
-        // 2. labeledBy があればそれを参照
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            val labeledBy = node.labeledBy
-            if (labeledBy != null) {
-                val labelText = getNodeText(labeledBy)
-                if (labelText.isNotEmpty()) return labelText
+        try {
+            // 1. ノード自体の direct text
+            var text = node.contentDescription?.toString()?.trim()
+            if (text.isNullOrEmpty()) {
+                text = node.text?.toString()?.trim()
             }
-        }
-
-        // 3. 子孫要素テキストの再帰収集（深さ制限付きDFS）
-        if (node.childCount > 0) {
-            val childTexts = mutableListOf<String>()
-            collectAllDescendantText(node, childTexts)
-            if (childTexts.isNotEmpty()) {
-                return childTexts.joinToString(" ")
+            if (text.isNullOrEmpty()) {
+                text = node.hintText?.toString()?.trim()
             }
-        }
-
-        // 4. スイッチやチェックボックス単体でラベルがない場合、親や兄弟ノードからラベルを探索
-        val parent = node.parent
-        if (parent != null) {
-            val siblingTexts = mutableListOf<String>()
-            val parentDirectText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
-            if (!parentDirectText.isNullOrEmpty()) {
-                siblingTexts.add(parentDirectText)
+            if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                text = node.tooltipText?.toString()?.trim()
             }
-            for (i in 0 until parent.childCount) {
-                val sibling = parent.getChild(i) ?: continue
-                if (sibling == node || isSameNode(sibling, node)) continue
-                collectAllDescendantText(sibling, siblingTexts)
+            if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                text = node.paneTitle?.toString()?.trim()
             }
-            if (siblingTexts.isNotEmpty()) {
-                return siblingTexts.distinct().joinToString(" ")
+            if (!text.isNullOrEmpty()) {
+                return text
             }
-        }
 
-        // 5. 特定のキー・ボタンIDからの推定
-        val inferred = inferLabelFromViewId(node.viewIdResourceName)
-        if (inferred.isNotEmpty()) {
-            return inferred
-        }
+            // 2. labeledBy があればそれを参照
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                val labeledBy = node.labeledBy
+                if (labeledBy != null) {
+                    val labelText = labeledBy.contentDescription?.toString()?.trim() ?: labeledBy.text?.toString()?.trim() ?: ""
+                    if (labelText.isNotEmpty()) return labelText
+                }
+            }
 
-        val target = findCheckableOrSwitchNode(node)
-        if (node.isClickable || node.isCheckable || target != null) {
-            val role = getNodeRole(node)
-            return if (role.isNotEmpty()) role else "ボタン"
-        }
+            // 3. 子要素テキストの安全な収集（直下および1階層下まで、最大4件）
+            if (node.childCount > 0) {
+                val childTexts = mutableListOf<String>()
+                for (i in 0 until node.childCount.coerceAtMost(8)) {
+                    val child = node.getChild(i) ?: continue
+                    if (!child.isVisibleToUser) continue
+                    val ct = child.contentDescription?.toString()?.trim() ?: child.text?.toString()?.trim()
+                    if (!ct.isNullOrEmpty() && !childTexts.contains(ct)) {
+                        childTexts.add(ct)
+                    } else if (child.childCount > 0) {
+                        for (j in 0 until child.childCount.coerceAtMost(4)) {
+                            val gc = child.getChild(j) ?: continue
+                            if (!gc.isVisibleToUser) continue
+                            val gct = gc.contentDescription?.toString()?.trim() ?: gc.text?.toString()?.trim()
+                            if (!gct.isNullOrEmpty() && !childTexts.contains(gct)) {
+                                childTexts.add(gct)
+                            }
+                        }
+                    }
+                    if (childTexts.size >= 4) break
+                }
+                if (childTexts.isNotEmpty()) {
+                    return childTexts.joinToString(" ")
+                }
+            }
 
-        return ""
-    }
+            // 4. スイッチやチェックボックス単体でラベルがない場合、同一親行内の兄弟ノードからラベルを探索
+            val target = findCheckableOrSwitchNode(node)
+            if (target != null || node.isClickable || node.isCheckable) {
+                val parent = node.parent
+                if (parent != null && parent.childCount in 2..8) {
+                    val siblingTexts = mutableListOf<String>()
+                    val parentDirectText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
+                    if (!parentDirectText.isNullOrEmpty()) {
+                        siblingTexts.add(parentDirectText)
+                    }
+                    for (i in 0 until parent.childCount) {
+                        val sibling = parent.getChild(i) ?: continue
+                        if (sibling == node || isSameNode(sibling, node)) continue
+                        val st = sibling.contentDescription?.toString()?.trim() ?: sibling.text?.toString()?.trim()
+                        if (!st.isNullOrEmpty() && !siblingTexts.contains(st)) {
+                            siblingTexts.add(st)
+                        }
+                    }
+                    if (siblingTexts.isNotEmpty()) {
+                        return siblingTexts.joinToString(" ")
+                    }
+                }
+            }
 
-    private fun collectAllDescendantText(node: AccessibilityNodeInfo, result: MutableList<String>, maxCount: Int = 10) {
-        if (result.size >= maxCount) return
-        val directText = node.contentDescription?.toString()?.trim()
-            ?: node.text?.toString()?.trim()
-            ?: node.hintText?.toString()?.trim()
-        if (!directText.isNullOrEmpty() && !result.contains(directText)) {
-            result.add(directText)
-        }
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i) ?: continue
-            if (!child.isVisibleToUser) continue
-            collectAllDescendantText(child, result, maxCount)
+            // 5. 特定のキー・ボタンIDからの推定
+            val inferred = inferLabelFromViewId(node.viewIdResourceName)
+            if (inferred.isNotEmpty()) {
+                return inferred
+            }
+
+            if (node.isClickable || node.isCheckable || target != null) {
+                val role = getNodeRole(node)
+                return if (role.isNotEmpty()) role else "ボタン"
+            }
+
+            return ""
+        } catch (_: Exception) {
+            return ""
         }
     }
 

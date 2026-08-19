@@ -7,6 +7,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 /**
  * AccessibilityNodeEvaluator
  * Google TalkBack 100% 準拠のアクセシビリティノード解体・評価判定エンジン
+ * 高速・軽量・Binder枯渇防止ガード付き
  */
 class AccessibilityNodeEvaluator {
 
@@ -67,54 +68,65 @@ class AccessibilityNodeEvaluator {
     }
 
     fun isFocusableTarget(node: AccessibilityNodeInfo): Boolean {
-        val className = node.className?.toString() ?: ""
-        val pkgName = node.packageName?.toString() ?: ""
+        try {
+            val className = node.className?.toString() ?: ""
+            val pkgName = node.packageName?.toString() ?: ""
 
-        if (pkgName.contains("launcher", ignoreCase = true)) {
-            if (className.contains("CellLayout", ignoreCase = true) ||
-                className.contains("Workspace", ignoreCase = true) ||
-                className.contains("DragLayer", ignoreCase = true) ||
-                className.contains("PagedView", ignoreCase = true) ||
-                className.contains("DropTarget", ignoreCase = true) ||
-                className.contains("FolderPagedView", ignoreCase = true)
-            ) {
+            if (pkgName.contains("launcher", ignoreCase = true)) {
+                if (className.contains("CellLayout", ignoreCase = true) ||
+                    className.contains("Workspace", ignoreCase = true) ||
+                    className.contains("DragLayer", ignoreCase = true) ||
+                    className.contains("PagedView", ignoreCase = true) ||
+                    className.contains("DropTarget", ignoreCase = true) ||
+                    className.contains("FolderPagedView", ignoreCase = true)
+                ) {
+                    return false
+                }
+            }
+
+            val rect = Rect()
+            node.getBoundsInScreen(rect)
+            if (rect.width() <= 0 && rect.height() <= 0 && !node.isClickable && !node.isFocusable && !node.isCheckable) return false
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && node.isScreenReaderFocusable) {
+                return true
+            }
+
+            val isActionable = node.isClickable || node.isCheckable || node.isFocusable || node.isLongClickable ||
+                    node.safeIsHeading || isSwitchOrToggle(node) || isCheckableOrCompound(node)
+
+            val hasDirect = hasDirectTextOrLabel(node)
+
+            if (isContainerNode(node)) {
+                val hasChildren = hasFocusableChildren(node)
+                if (!hasChildren && (isActionable || hasDirect)) {
+                    return true
+                }
+                if (node.isClickable && hasDirect && !hasInteractiveSiblingControls(node)) {
+                    return true
+                }
                 return false
             }
-        }
 
-        val rect = Rect()
-        node.getBoundsInScreen(rect)
-        if (rect.width() <= 0 && rect.height() <= 0 && !node.isClickable && !node.isFocusable && !node.isCheckable) return false
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && node.isScreenReaderFocusable) {
-            return true
-        }
-
-        val isActionable = node.isClickable || node.isCheckable || node.isFocusable || node.isLongClickable ||
-                node.safeIsHeading || isSwitchOrToggle(node) || isCheckableOrCompound(node)
-
-        val text = getNodeText(node)
-
-        if (isContainerNode(node)) {
-            // スイッチやチェックボックスを子に持つコンテナの場合、または子要素にフォーカス可能要素がない場合はターゲット
-            val hasChildren = hasFocusableChildren(node)
-            if (!hasChildren && (isActionable || text.isNotEmpty())) {
-                return true
-            }
-            // コンテナ自身がクリック可能で行として機能する場合も対象
-            if (node.isClickable && text.isNotEmpty() && !hasInteractiveSiblingControls(node)) {
-                return true
-            }
+            return isActionable || hasDirect
+        } catch (_: Exception) {
             return false
         }
+    }
 
-        return isActionable || text.isNotEmpty()
+    private fun hasDirectTextOrLabel(node: AccessibilityNodeInfo): Boolean {
+        val cd = node.contentDescription
+        if (!cd.isNullOrEmpty() && cd.toString().trim().isNotEmpty()) return true
+        val txt = node.text
+        if (!txt.isNullOrEmpty() && txt.toString().trim().isNotEmpty()) return true
+        val hint = node.hintText
+        if (!hint.isNullOrEmpty() && hint.toString().trim().isNotEmpty()) return true
+        return false
     }
 
     private fun hasInteractiveSiblingControls(node: AccessibilityNodeInfo): Boolean {
-        // コンテナ内に複数の独立したボタンやスイッチがあるか（その場合は子要素を個別にフォーカスさせる）
         var interactiveCount = 0
-        for (i in 0 until node.childCount) {
+        for (i in 0 until node.childCount.coerceAtMost(10)) {
             val child = node.getChild(i) ?: continue
             if (!child.isVisibleToUser) continue
             if (child.isClickable || child.isCheckable || isSwitchOrToggle(child)) {
@@ -125,7 +137,7 @@ class AccessibilityNodeEvaluator {
     }
 
     fun hasFocusableChildren(node: AccessibilityNodeInfo): Boolean {
-        for (i in 0 until node.childCount) {
+        for (i in 0 until node.childCount.coerceAtMost(15)) {
             val child = node.getChild(i) ?: continue
             val rect = Rect()
             child.getBoundsInScreen(rect)
@@ -133,13 +145,9 @@ class AccessibilityNodeEvaluator {
 
             val childActionable = child.isClickable || child.isCheckable || child.isFocusable ||
                     child.isLongClickable || child.safeIsHeading || isSwitchOrToggle(child) || isCheckableOrCompound(child)
-            val childText = getNodeText(child)
+            val childDirectText = hasDirectTextOrLabel(child)
 
-            if (childActionable || childText.isNotEmpty()) {
-                return true
-            }
-
-            if (hasFocusableChildren(child)) {
+            if (childActionable || childDirectText) {
                 return true
             }
         }
@@ -166,10 +174,6 @@ class AccessibilityNodeEvaluator {
         node2.getBoundsInScreen(b2)
         if (b1 != b2) return false
 
-        val t1 = getNodeText(node1)
-        val t2 = getNodeText(node2)
-        if (t1 != t2) return false
-
         val c1 = node1.className?.toString() ?: ""
         val c2 = node2.className?.toString() ?: ""
         if (c1 != c2) return false
@@ -185,108 +189,118 @@ class AccessibilityNodeEvaluator {
 
     fun getNodeText(node: AccessibilityNodeInfo?): String {
         if (node == null) return ""
-
-        // 1. ノード自体の direct text
-        var text = node.contentDescription?.toString()?.trim()
-        if (text.isNullOrEmpty()) {
-            text = node.text?.toString()?.trim()
-        }
-        if (text.isNullOrEmpty()) {
-            text = node.hintText?.toString()?.trim()
-        }
-        if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            text = node.tooltipText?.toString()?.trim()
-        }
-        if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            text = node.paneTitle?.toString()?.trim()
-        }
-
-        val className = node.className?.toString() ?: ""
-        val rangeInfo = node.rangeInfo
-        val isSeekBar = className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true) || rangeInfo != null
-
-        if (isSeekBar) {
-            val title = text ?: ""
-            val cleanTitle = if (title.contains("value", ignoreCase = true) || title.contains("バリュー", ignoreCase = true)) "" else title
-            val pct = if (rangeInfo != null && (rangeInfo.max - rangeInfo.min) > 0) {
-                ((rangeInfo.current - rangeInfo.min) * 100 / (rangeInfo.max - rangeInfo.min)).toInt()
-            } else {
-                50
+        try {
+            // 1. ノード自体の direct text
+            var text = node.contentDescription?.toString()?.trim()
+            if (text.isNullOrEmpty()) {
+                text = node.text?.toString()?.trim()
             }
-            return if (cleanTitle.isNotEmpty()) "$cleanTitle スライダー $pct%" else "スライダー $pct%"
-        }
-
-        if (!text.isNullOrEmpty()) {
-            return text
-        }
-
-        // 2. labeledBy があればそれを参照
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            val labeledBy = node.labeledBy
-            if (labeledBy != null) {
-                val labelText = getNodeText(labeledBy)
-                if (labelText.isNotEmpty()) return labelText
+            if (text.isNullOrEmpty()) {
+                text = node.hintText?.toString()?.trim()
             }
-        }
-
-        // 3. 子孫要素テキストの再帰収集（深さ制限付きDFS）
-        if (node.childCount > 0) {
-            val childTexts = mutableListOf<String>()
-            collectAllDescendantText(node, childTexts)
-            if (childTexts.isNotEmpty()) {
-                return childTexts.joinToString(" ")
+            if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                text = node.tooltipText?.toString()?.trim()
             }
-        }
-
-        // 4. スイッチやチェックボックス単体でラベルがない場合、親や兄弟ノードからラベルを探索
-        val parent = node.parent
-        if (parent != null) {
-            val siblingTexts = mutableListOf<String>()
-            val parentDirectText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
-            if (!parentDirectText.isNullOrEmpty()) {
-                siblingTexts.add(parentDirectText)
+            if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                text = node.paneTitle?.toString()?.trim()
             }
-            for (i in 0 until parent.childCount) {
-                val sibling = parent.getChild(i) ?: continue
-                if (sibling == node || isSameNode(sibling, node)) continue
-                collectAllDescendantText(sibling, siblingTexts)
+
+            val className = node.className?.toString() ?: ""
+            val rangeInfo = node.rangeInfo
+            val isSeekBar = className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true) || rangeInfo != null
+
+            if (isSeekBar) {
+                val title = text ?: ""
+                val cleanTitle = if (title.contains("value", ignoreCase = true) || title.contains("バリュー", ignoreCase = true)) "" else title
+                val pct = if (rangeInfo != null && (rangeInfo.max - rangeInfo.min) > 0) {
+                    ((rangeInfo.current - rangeInfo.min) * 100 / (rangeInfo.max - rangeInfo.min)).toInt()
+                } else {
+                    50
+                }
+                return if (cleanTitle.isNotEmpty()) "$cleanTitle スライダー $pct%" else "スライダー $pct%"
             }
-            if (siblingTexts.isNotEmpty()) {
-                return siblingTexts.distinct().joinToString(" ")
+
+            if (!text.isNullOrEmpty()) {
+                return text
             }
-        }
 
-        // 5. 特定のキー・ボタンIDからの推定
-        val inferred = inferLabelFromViewId(node.viewIdResourceName)
-        if (inferred.isNotEmpty()) {
-            return inferred
-        }
+            // 2. labeledBy
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                val labeledBy = node.labeledBy
+                if (labeledBy != null) {
+                    val labelText = labeledBy.contentDescription?.toString()?.trim() ?: labeledBy.text?.toString()?.trim() ?: ""
+                    if (labelText.isNotEmpty()) return labelText
+                }
+            }
 
-        if (isSwitchOrToggle(node)) {
-            return "スイッチ"
-        }
-        if (node.isCheckable) {
-            return "チェックボックス"
-        }
-        if (node.isClickable) {
-            return "ボタン"
-        }
+            // 3. 子要素テキストの安全な収集（直下および1階層下まで、最大5件）
+            if (node.childCount > 0) {
+                val childTexts = mutableListOf<String>()
+                for (i in 0 until node.childCount.coerceAtMost(8)) {
+                    val child = node.getChild(i) ?: continue
+                    if (!child.isVisibleToUser) continue
+                    val ct = child.contentDescription?.toString()?.trim() ?: child.text?.toString()?.trim()
+                    if (!ct.isNullOrEmpty() && !childTexts.contains(ct)) {
+                        childTexts.add(ct)
+                    } else if (child.childCount > 0) {
+                        for (j in 0 until child.childCount.coerceAtMost(4)) {
+                            val gc = child.getChild(j) ?: continue
+                            if (!gc.isVisibleToUser) continue
+                            val gct = gc.contentDescription?.toString()?.trim() ?: gc.text?.toString()?.trim()
+                            if (!gct.isNullOrEmpty() && !childTexts.contains(gct)) {
+                                childTexts.add(gct)
+                            }
+                        }
+                    }
+                    if (childTexts.size >= 4) break
+                }
+                if (childTexts.isNotEmpty()) {
+                    return childTexts.joinToString(" ")
+                }
+            }
 
-        return ""
-    }
+            // 4. スイッチやチェックボックス単体でラベルがない場合、同一親行内の兄弟ノードからラベルを探索
+            if (isSwitchOrToggle(node) || isCheckableOrCompound(node)) {
+                val parent = node.parent
+                if (parent != null && parent.childCount in 2..8) {
+                    val siblingTexts = mutableListOf<String>()
+                    val parentDirectText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
+                    if (!parentDirectText.isNullOrEmpty()) {
+                        siblingTexts.add(parentDirectText)
+                    }
+                    for (i in 0 until parent.childCount) {
+                        val sibling = parent.getChild(i) ?: continue
+                        if (sibling == node || isSameNode(sibling, node)) continue
+                        val st = sibling.contentDescription?.toString()?.trim() ?: sibling.text?.toString()?.trim()
+                        if (!st.isNullOrEmpty() && !siblingTexts.contains(st)) {
+                            siblingTexts.add(st)
+                        }
+                    }
+                    if (siblingTexts.isNotEmpty()) {
+                        return siblingTexts.joinToString(" ")
+                    }
+                }
+            }
 
-    private fun collectAllDescendantText(node: AccessibilityNodeInfo, result: MutableList<String>, maxCount: Int = 10) {
-        if (result.size >= maxCount) return
-        val directText = node.contentDescription?.toString()?.trim()
-            ?: node.text?.toString()?.trim()
-            ?: node.hintText?.toString()?.trim()
-        if (!directText.isNullOrEmpty() && !result.contains(directText)) {
-            result.add(directText)
-        }
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i) ?: continue
-            if (!child.isVisibleToUser) continue
-            collectAllDescendantText(child, result, maxCount)
+            // 5. 特定のキー・ボタンIDからの推定
+            val inferred = inferLabelFromViewId(node.viewIdResourceName)
+            if (inferred.isNotEmpty()) {
+                return inferred
+            }
+
+            if (isSwitchOrToggle(node)) {
+                return "スイッチ"
+            }
+            if (node.isCheckable) {
+                return "チェックボックス"
+            }
+            if (node.isClickable) {
+                return "ボタン"
+            }
+
+            return ""
+        } catch (_: Exception) {
+            return ""
         }
     }
 
