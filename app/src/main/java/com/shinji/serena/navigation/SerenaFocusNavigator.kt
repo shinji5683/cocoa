@@ -191,26 +191,8 @@ class SerenaFocusNavigator(
         val safeTargetIndex = targetIndex.coerceIn(0, nodes.size - 1)
         val targetNode = nodes[safeTargetIndex]
 
-        val rect = Rect()
-        targetNode.getBoundsInScreen(rect)
-        val dm = service.resources.displayMetrics
-        val isOffScreen = (rect.bottom > dm.heightPixels - 60) || (rect.top < 60) || rect.isEmpty
-
         lastFocusedNodeIndex = safeTargetIndex
-        Log.i(TAG, "navigateLinearFocus: moving to index $safeTargetIndex / ${nodes.size - 1} (${evaluator.getNodeText(targetNode)}) isOffScreen=$isOffScreen")
-
-        if (isOffScreen) {
-            if (forward) {
-                service.scrollPageForward {
-                    setFocusAndShowOnScreen(targetNode)
-                }
-            } else {
-                service.scrollPageBackward {
-                    setFocusAndShowOnScreen(targetNode)
-                }
-            }
-            return
-        }
+        Log.i(TAG, "navigateLinearFocus: moving to index $safeTargetIndex / ${nodes.size - 1} (${evaluator.getNodeText(targetNode)})")
 
         setFocusAndShowOnScreen(targetNode)
     }

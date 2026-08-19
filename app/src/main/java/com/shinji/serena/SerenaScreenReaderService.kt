@@ -712,7 +712,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollHorizontalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 400) return true
+        if (now - lastScrollTime < 650) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
@@ -748,7 +748,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollHorizontalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 400) return true
+        if (now - lastScrollTime < 650) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
@@ -784,7 +784,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollVerticalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 400) return true
+        if (now - lastScrollTime < 650) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
@@ -823,7 +823,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollVerticalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 400) return true
+        if (now - lastScrollTime < 650) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
@@ -872,26 +872,26 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             if (horizontal) {
                 if (forward) {
-                    startX1 = width * 0.85f; endX1 = width * 0.15f; startY1 = height * 0.45f; endY1 = height * 0.45f
-                    startX2 = width * 0.85f; endX2 = width * 0.15f; startY2 = height * 0.55f; endY2 = height * 0.55f
+                    startX1 = width * 0.80f; endX1 = width * 0.20f; startY1 = height * 0.45f; endY1 = height * 0.45f
+                    startX2 = width * 0.80f; endX2 = width * 0.20f; startY2 = height * 0.55f; endY2 = height * 0.55f
                 } else {
-                    startX1 = width * 0.15f; endX1 = width * 0.85f; startY1 = height * 0.45f; endY1 = height * 0.45f
-                    startX2 = width * 0.15f; endX2 = width * 0.85f; startY2 = height * 0.55f; endY2 = height * 0.55f
+                    startX1 = width * 0.20f; endX1 = width * 0.80f; startY1 = height * 0.45f; endY1 = height * 0.45f
+                    startX2 = width * 0.20f; endX2 = width * 0.80f; startY2 = height * 0.55f; endY2 = height * 0.55f
                 }
             } else {
                 if (forward) {
-                    startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.75f; endY1 = height * 0.25f
-                    startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.75f; endY2 = height * 0.25f
+                    startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.70f; endY1 = height * 0.30f
+                    startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.70f; endY2 = height * 0.30f
                 } else {
-                    startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.25f; endY1 = height * 0.75f
-                    startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.25f; endY2 = height * 0.75f
+                    startX1 = width * 0.40f; endX1 = width * 0.40f; startY1 = height * 0.30f; endY1 = height * 0.70f
+                    startX2 = width * 0.60f; endX2 = width * 0.60f; startY2 = height * 0.30f; endY2 = height * 0.70f
                 }
             }
 
             val p1 = android.graphics.Path().apply { moveTo(startX1, startY1); lineTo(endX1, endY1) }
             val p2 = android.graphics.Path().apply { moveTo(startX2, startY2); lineTo(endX2, endY2) }
-            val s1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 160)
-            val s2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 160)
+            val s1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 240)
+            val s2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 240)
             val gesture = android.accessibilityservice.GestureDescription.Builder()
                 .addStroke(s1)
                 .addStroke(s2)
