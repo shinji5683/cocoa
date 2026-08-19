@@ -59,6 +59,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var callManager: com.shinji.serena.telephony.SerenaCallManager? = null
     var lastHoveredNode: AccessibilityNodeInfo? = null
     var gestureDispatcher: com.shinji.serena.gesture.SerenaGestureDispatcher? = null
+    var activeMenuDialog: serenaMenuDialog? = null
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
@@ -1027,6 +1028,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun navigateLinearFocus(forward: Boolean) {
+        val menu = activeMenuDialog
+        if (menu != null && menu.isShowing) {
+            if (forward) {
+                menu.navigateMenuNext()
+            } else {
+                menu.navigateMenuPrev()
+            }
+            return
+        }
+
         if (focusNavigator != null) {
             focusNavigator?.navigateLinearFocus(forward)
             return
@@ -1232,6 +1243,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun performClickOnFocusedNode() {
+        val menu = activeMenuDialog
+        if (menu != null && menu.isShowing) {
+            if (menu.performCurrentItemClick()) return
+        }
+
         val focusedNode = getAccessibilityFocusedNode()
         if (focusedNode == null) {
             Log.w(TAG, "performClickOnFocusedNode: No focused node found.")

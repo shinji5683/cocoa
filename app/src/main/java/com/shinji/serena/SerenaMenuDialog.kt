@@ -44,6 +44,11 @@ class serenaMenuDialog(
         }
     }
 
+    private val itemViews = mutableListOf<View>()
+    private var currentIndex = 0
+    private var scrollMenuItems: android.widget.ScrollView? = null
+    private var btnClose: Button? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -55,7 +60,8 @@ class serenaMenuDialog(
 
         val tvTitle = findViewById<TextView>(R.id.tvMenuTitle)
         val container = findViewById<LinearLayout>(R.id.containerMenuItems)
-        val btnClose = findViewById<Button>(R.id.btnClose)
+        btnClose = findViewById(R.id.btnClose)
+        scrollMenuItems = findViewById(R.id.scrollMenuItems)
 
         val titleText = if (isEditTextFocus) {
             "✏️ serena 編集アシスト"
@@ -65,11 +71,10 @@ class serenaMenuDialog(
         tvTitle.text = titleText
         tvTitle.contentDescription = titleText
 
-        var firstItemView: View? = null
         val inflater = LayoutInflater.from(context)
         container.removeAllViews()
+        itemViews.clear()
 
-        val scrollMenuItems = findViewById<android.widget.ScrollView>(R.id.scrollMenuItems)
         val service = SerenaScreenReaderService.instance
         val totalCount = items.size
 
@@ -84,40 +89,114 @@ class serenaMenuDialog(
             itemView.contentDescription = accessibleText
             itemView.isFocusable = true
 
-            itemView.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    if (index == 0) {
-                        service?.soundHelper?.playFirstItemEdgeSound()
-                    } else if (index == totalCount - 1) {
-                        service?.soundHelper?.playLastItemEdgeSound()
-                    } else {
-                        service?.soundHelper?.playFocusMove()
-                    }
-                }
-            }
-
             itemView.setOnClickListener {
                 dismiss()
                 item.action.invoke()
             }
 
-            if (index == 0) {
-                firstItemView = itemView
-            }
-
+            itemViews.add(itemView)
             container.addView(itemView)
         }
 
-        btnClose.setOnClickListener {
+        btnClose?.setOnClickListener {
             dismiss()
         }
 
-        firstItemView?.post {
-            firstItemView?.requestFocus()
-            firstItemView?.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED)
-            val firstTitle = items.firstOrNull()?.title ?: ""
-            val fullMsg = if (firstTitle.isNotEmpty()) "$titleText、$firstTitle" else titleText
-            service?.speak(fullMsg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        if (btnClose != null) {
+            itemViews.add(btnClose!!)
+        }
+
+        currentIndex = 0
+        focusAndAnnounceIndex(0, initial = true)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        SerenaScreenReaderService.instance?.activeMenuDialog = this
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (SerenaScreenReaderService.instance?.activeMenuDialog == this) {
+            SerenaScreenReaderService.instance?.activeMenuDialog = null
+        }
+    }
+
+    override fun dismiss() {
+        if (SerenaScreenReaderService.instance?.activeMenuDialog == this) {
+            SerenaScreenReaderService.instance?.activeMenuDialog = null
+        }
+        super.dismiss()
+    }
+
+    fun navigateMenuNext(): Boolean {
+        if (itemViews.isEmpty()) return false
+        val service = SerenaScreenReaderService.instance
+        if (currentIndex >= itemViews.size - 1) {
+            service?.soundHelper?.playLastItemEdgeSound()
+            return false
+        }
+        currentIndex++
+        focusAndAnnounceIndex(currentIndex)
+        return true
+    }
+
+    fun navigateMenuPrev(): Boolean {
+        if (itemViews.isEmpty()) return false
+        val service = SerenaScreenReaderService.instance
+        if (currentIndex <= 0) {
+            service?.soundHelper?.playFirstItemEdgeSound()
+            return false
+        }
+        currentIndex--
+        focusAndAnnounceIndex(currentIndex)
+        return true
+    }
+
+    fun performCurrentItemClick(): Boolean {
+        if (currentIndex in itemViews.indices) {
+            itemViews[currentIndex].performClick()
+            return true
+        }
+        return false
+    }
+
+    private fun focusAndAnnounceIndex(index: Int, initial: Boolean = false) {
+        val targetView = itemViews.getOrNull(index) ?: return
+        val service = SerenaScreenReaderService.instance
+
+        targetView.post {
+            targetView.requestFocus()
+            targetView.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED)
+
+            scrollMenuItems?.let { scroll ->
+                val targetY = (targetView.top - 100).coerceAtLeast(0)
+                scroll.smoothScrollTo(0, targetY)
+            }
+
+            if (!initial) {
+                if (index == 0) {
+                    service?.soundHelper?.playFirstItemEdgeSound()
+                } else if (index == itemViews.size - 1) {
+                    service?.soundHelper?.playLastItemEdgeSound()
+                } else {
+                    service?.soundHelper?.playFocusMove()
+                }
+            }
+
+            val textToSpeak = if (index < items.size) {
+                val item = items[index]
+                if (initial) {
+                    val titlePrefix = if (isEditTextFocus) "✏️ serena 編集アシスト" else "🌸 serena メニュー"
+                    "$titlePrefix、${item.title}"
+                } else {
+                    item.title
+                }
+            } else {
+                "閉じる ボタン"
+            }
+
+            service?.speak(textToSpeak, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
         }
     }
 }

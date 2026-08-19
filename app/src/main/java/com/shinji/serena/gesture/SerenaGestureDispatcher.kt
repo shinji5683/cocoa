@@ -62,6 +62,13 @@ class SerenaGestureDispatcher(
 
             // 1本指ダブルタップ & 長押し (クリック決定)
             AccessibilityService.GESTURE_DOUBLE_TAP -> {
+                val menu = service.activeMenuDialog
+                if (menu != null && menu.isShowing) {
+                    if (menu.performCurrentItemClick()) {
+                        service.soundHelper?.playClick()
+                        return true
+                    }
+                }
                 if (service.executeActiveCustomAction()) return true
                 val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
                 if (focusNode != null) {
