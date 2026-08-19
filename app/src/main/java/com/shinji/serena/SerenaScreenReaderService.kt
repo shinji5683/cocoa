@@ -2304,7 +2304,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val normalizedX = if (displayWidth > 0) rect.centerX().toFloat() / displayWidth else 0.5f
 
         val currentTime = System.currentTimeMillis()
-        if (announcement == lastSpokenText && (currentTime - lastSpokenTime) < 1500) {
+        if (announcement == lastSpokenText && (currentTime - lastSpokenTime) < 200) {
             return
         }
 
@@ -2358,7 +2358,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun getNodeText(node: AccessibilityNodeInfo): String {
-        // 1. ノード自体の contentDescription, text, hintText を最優先取得
+        // 1. ノード自体の direct text
         var text = node.contentDescription?.toString()?.trim()
         if (text.isNullOrEmpty()) {
             text = node.text?.toString()?.trim()
@@ -2366,99 +2366,101 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (text.isNullOrEmpty()) {
             text = node.hintText?.toString()?.trim()
         }
+        if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            text = node.tooltipText?.toString()?.trim()
+        }
+        if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            text = node.paneTitle?.toString()?.trim()
+        }
         if (!text.isNullOrEmpty()) {
             return text
         }
 
-        // 2. リソースID名 (viewIdResourceName) からのラベル自動判定（Google検索、ホーム等）
-        val inferred = inferLabelFromViewId(node.viewIdResourceName)
-        if (inferred.isNotEmpty()) {
-            return inferred
+        // 2. labeledBy があればそれを参照
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            val labeledBy = node.labeledBy
+            if (labeledBy != null) {
+                val labelText = getNodeText(labeledBy)
+                if (labelText.isNotEmpty()) return labelText
+            }
         }
 
-        // 3. コンテナノードの場合、直近の子要素テキストを取得
+        // 3. 子孫要素テキストの再帰収集（深さ制限付きDFS）
         if (node.childCount > 0) {
             val childTexts = mutableListOf<String>()
-            for (i in 0 until node.childCount) {
-                val child = node.getChild(i) ?: continue
-                val t = child.contentDescription?.toString()?.trim()
-                    ?: child.text?.toString()?.trim()
-                    ?: child.hintText?.toString()?.trim()
-                    ?: inferLabelFromViewId(child.viewIdResourceName)
-                if (t.isNotEmpty() && !childTexts.contains(t)) {
-                    childTexts.add(t)
-                }
-                if (childTexts.size >= 2) break
-            }
+            collectAllDescendantText(node, childTexts)
             if (childTexts.isNotEmpty()) {
                 return childTexts.joinToString(" ")
             }
         }
 
         // 4. スイッチやチェックボックス単体でラベルがない場合、親や兄弟ノードからラベルを探索
-        val target = findCheckableOrSwitchNode(node)
-        if (target != null || node.isClickable || node.isCheckable) {
-            val parent = node.parent
-            if (parent != null) {
-                val parentText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
-                if (!parentText.isNullOrEmpty()) {
-                    return parentText
-                }
-                for (i in 0 until parent.childCount) {
-                    val sibling = parent.getChild(i) ?: continue
-                    if (sibling == node || isSameNode(sibling, node)) continue
-                    val sibText = sibling.contentDescription?.toString()?.trim() ?: sibling.text?.toString()?.trim()
-                    if (!sibText.isNullOrEmpty()) {
-                        return sibText
-                    }
-                }
+        val parent = node.parent
+        if (parent != null) {
+            val siblingTexts = mutableListOf<String>()
+            val parentDirectText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
+            if (!parentDirectText.isNullOrEmpty()) {
+                siblingTexts.add(parentDirectText)
+            }
+            for (i in 0 until parent.childCount) {
+                val sibling = parent.getChild(i) ?: continue
+                if (sibling == node || isSameNode(sibling, node)) continue
+                collectAllDescendantText(sibling, siblingTexts)
+            }
+            if (siblingTexts.isNotEmpty()) {
+                return siblingTexts.distinct().joinToString(" ")
             }
         }
 
-        // 5. クリック可能/操作可能要素で無標題の場合のフォールバック
+        // 5. 特定のキー・ボタンIDからの推定
+        val inferred = inferLabelFromViewId(node.viewIdResourceName)
+        if (inferred.isNotEmpty()) {
+            return inferred
+        }
+
+        val target = findCheckableOrSwitchNode(node)
         if (node.isClickable || node.isCheckable || target != null) {
             val role = getNodeRole(node)
-            return if (role.isNotEmpty()) "無標題$role" else "ボタン"
+            return if (role.isNotEmpty()) role else "ボタン"
         }
 
         return ""
     }
 
+    private fun collectAllDescendantText(node: AccessibilityNodeInfo, result: MutableList<String>, maxCount: Int = 10) {
+        if (result.size >= maxCount) return
+        val directText = node.contentDescription?.toString()?.trim()
+            ?: node.text?.toString()?.trim()
+            ?: node.hintText?.toString()?.trim()
+        if (!directText.isNullOrEmpty() && !result.contains(directText)) {
+            result.add(directText)
+        }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            if (!child.isVisibleToUser) continue
+            collectAllDescendantText(child, result, maxCount)
+        }
+    }
+
     private fun inferLabelFromViewId(viewId: String?): String {
         if (viewId.isNullOrEmpty()) return ""
         val name = viewId.substringAfterLast(":id/").lowercase()
-        return when {
-            // === 画面ロック・PINコード入力テンキー & 特殊キーボード ===
-            name == "key0" || name.endsWith("_0") || name == "button0" -> "数字の 0（ゼロ）"
-            name == "key1" || name.endsWith("_1") || name == "button1" -> "数字の 1（イチ）"
-            name == "key2" || name.endsWith("_2") || name == "button2" -> "数字の 2（ニ）"
-            name == "key3" || name.endsWith("_3") || name == "button3" -> "数字の 3（サン）"
-            name == "key4" || name.endsWith("_4") || name == "button4" -> "数字の 4（ヨン）"
-            name == "key5" || name.endsWith("_5") || name == "button5" -> "数字の 5（ゴ）"
-            name == "key6" || name.endsWith("_6") || name == "button6" -> "数字の 6（ロク）"
-            name == "key7" || name.endsWith("_7") || name == "button7" -> "数字の 7（ナナ）"
-            name == "key8" || name.endsWith("_8") || name == "button8" -> "数字の 8（ハチ）"
-            name == "key9" || name.endsWith("_9") || name == "button9" -> "数字の 9（キュウ）"
-            name.contains("pin_entry") || name.contains("pinentry") || name.contains("password_entry") || name.contains("pin_code") -> "PINコード入力欄"
-            name.contains("delete_button") || name.contains("backspace") || name.contains("btn_delete") -> "1文字削除"
-            name.contains("emergency") -> "緊急通報"
-            name.contains("cancel_button") || name.contains("btn_cancel") -> "キャンセル"
-            name.contains("enter_button") || name.contains("btn_ok") || name.contains("btn_done") -> "決定"
-            name.contains("dialpad") || name.contains("digits") -> "ダイヤルキー"
-
-            name.contains("search") || name.contains("gsearch") -> "Google検索"
-            name.contains("home") -> "ホーム"
-            name.contains("menu") || name.contains("drawer") -> "メニュー"
-            name.contains("setting") -> "設定"
-            name.contains("back") -> "戻る"
-            name.contains("close") || name.contains("cancel") -> "閉じる"
-            name.contains("mic") || name.contains("voice") -> "音声検索"
-            name.contains("camera") -> "カメラ"
-            name.contains("phone") || name.contains("call") || name.contains("dial") -> "電話"
-            name.contains("message") || name.contains("chat") || name.contains("sms") -> "メッセージ"
-            name.contains("mail") || name.contains("gmail") -> "メール"
-            name.contains("browser") || name.contains("chrome") || name.contains("web") -> "ブラウザ"
-            name.contains("app") || name.contains("icon") -> "アプリ"
+        return when (name) {
+            "key0", "button0" -> "0"
+            "key1", "button1" -> "1"
+            "key2", "button2" -> "2"
+            "key3", "button3" -> "3"
+            "key4", "button4" -> "4"
+            "key5", "button5" -> "5"
+            "key6", "button6" -> "6"
+            "key7", "button7" -> "7"
+            "key8", "button8" -> "8"
+            "key9", "button9" -> "9"
+            "delete_button", "backspace", "btn_delete" -> "1文字削除"
+            "emergency_call_button", "emergency" -> "緊急通報"
+            "cancel_button", "btn_cancel" -> "キャンセル"
+            "enter_button", "btn_ok", "btn_done" -> "決定"
+            "search_button" -> "検索"
             else -> ""
         }
     }

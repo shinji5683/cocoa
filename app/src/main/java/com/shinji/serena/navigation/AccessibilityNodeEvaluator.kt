@@ -186,6 +186,7 @@ class AccessibilityNodeEvaluator {
     fun getNodeText(node: AccessibilityNodeInfo?): String {
         if (node == null) return ""
 
+        // 1. ノード自体の direct text
         var text = node.contentDescription?.toString()?.trim()
         if (text.isNullOrEmpty()) {
             text = node.text?.toString()?.trim()
@@ -196,13 +197,16 @@ class AccessibilityNodeEvaluator {
         if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             text = node.tooltipText?.toString()?.trim()
         }
+        if (text.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            text = node.paneTitle?.toString()?.trim()
+        }
 
         val className = node.className?.toString() ?: ""
         val rangeInfo = node.rangeInfo
         val isSeekBar = className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true) || rangeInfo != null
 
         if (isSeekBar) {
-            val title = text ?: inferLabelFromViewId(node.viewIdResourceName)
+            val title = text ?: ""
             val cleanTitle = if (title.contains("value", ignoreCase = true) || title.contains("バリュー", ignoreCase = true)) "" else title
             val pct = if (rangeInfo != null && (rangeInfo.max - rangeInfo.min) > 0) {
                 ((rangeInfo.current - rangeInfo.min) * 100 / (rangeInfo.max - rangeInfo.min)).toInt()
@@ -216,12 +220,7 @@ class AccessibilityNodeEvaluator {
             return text
         }
 
-        val inferred = inferLabelFromViewId(node.viewIdResourceName)
-        if (inferred.isNotEmpty()) {
-            return inferred
-        }
-
-        // labeledBy があればそれを参照
+        // 2. labeledBy があればそれを参照
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             val labeledBy = node.labeledBy
             if (labeledBy != null) {
@@ -230,43 +229,37 @@ class AccessibilityNodeEvaluator {
             }
         }
 
-        // 子要素テキストの再帰収集
+        // 3. 子孫要素テキストの再帰収集（深さ制限付きDFS）
         if (node.childCount > 0) {
             val childTexts = mutableListOf<String>()
-            for (i in 0 until node.childCount) {
-                val child = node.getChild(i) ?: continue
-                if (!child.isVisibleToUser) continue
-                val t = child.contentDescription?.toString()?.trim()
-                    ?: child.text?.toString()?.trim()
-                    ?: child.hintText?.toString()?.trim()
-                    ?: inferLabelFromViewId(child.viewIdResourceName)
-                if (t.isNotEmpty() && !childTexts.contains(t)) {
-                    childTexts.add(t)
-                }
-                if (childTexts.size >= 3) break
-            }
+            collectAllDescendantText(node, childTexts)
             if (childTexts.isNotEmpty()) {
                 return childTexts.joinToString(" ")
             }
         }
 
-        // スイッチやチェックボックス単体でラベルがない場合、親や兄弟ノードからラベルを探索
-        if (isSwitchOrToggle(node) || isCheckableOrCompound(node) || node.isClickable) {
-            val parent = node.parent
-            if (parent != null) {
-                val parentText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
-                if (!parentText.isNullOrEmpty()) {
-                    return parentText
-                }
-                for (i in 0 until parent.childCount) {
-                    val sibling = parent.getChild(i) ?: continue
-                    if (sibling == node || isSameNode(sibling, node)) continue
-                    val sibText = sibling.contentDescription?.toString()?.trim() ?: sibling.text?.toString()?.trim()
-                    if (!sibText.isNullOrEmpty()) {
-                        return sibText
-                    }
-                }
+        // 4. スイッチやチェックボックス単体でラベルがない場合、親や兄弟ノードからラベルを探索
+        val parent = node.parent
+        if (parent != null) {
+            val siblingTexts = mutableListOf<String>()
+            val parentDirectText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
+            if (!parentDirectText.isNullOrEmpty()) {
+                siblingTexts.add(parentDirectText)
             }
+            for (i in 0 until parent.childCount) {
+                val sibling = parent.getChild(i) ?: continue
+                if (sibling == node || isSameNode(sibling, node)) continue
+                collectAllDescendantText(sibling, siblingTexts)
+            }
+            if (siblingTexts.isNotEmpty()) {
+                return siblingTexts.distinct().joinToString(" ")
+            }
+        }
+
+        // 5. 特定のキー・ボタンIDからの推定
+        val inferred = inferLabelFromViewId(node.viewIdResourceName)
+        if (inferred.isNotEmpty()) {
+            return inferred
         }
 
         if (isSwitchOrToggle(node)) {
@@ -282,23 +275,40 @@ class AccessibilityNodeEvaluator {
         return ""
     }
 
+    private fun collectAllDescendantText(node: AccessibilityNodeInfo, result: MutableList<String>, maxCount: Int = 10) {
+        if (result.size >= maxCount) return
+        val directText = node.contentDescription?.toString()?.trim()
+            ?: node.text?.toString()?.trim()
+            ?: node.hintText?.toString()?.trim()
+        if (!directText.isNullOrEmpty() && !result.contains(directText)) {
+            result.add(directText)
+        }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            if (!child.isVisibleToUser) continue
+            collectAllDescendantText(child, result, maxCount)
+        }
+    }
+
     private fun inferLabelFromViewId(viewId: String?): String {
         if (viewId.isNullOrEmpty()) return ""
         val name = viewId.substringAfterLast(":id/").lowercase()
-        return when {
-            name.contains("search") || name.contains("gsearch") -> "Google検索"
-            name.contains("home") -> "ホーム"
-            name.contains("menu") || name.contains("drawer") -> "メニュー"
-            name.contains("setting") -> "設定"
-            name.contains("back") -> "戻る"
-            name.contains("close") || name.contains("cancel") -> "閉じる"
-            name.contains("mic") || name.contains("voice") -> "音声検索"
-            name.contains("camera") -> "カメラ"
-            name.contains("phone") || name.contains("call") || name.contains("dial") -> "電話"
-            name.contains("message") || name.contains("chat") || name.contains("sms") -> "メッセージ"
-            name.contains("mail") || name.contains("gmail") -> "メール"
-            name.contains("browser") || name.contains("chrome") || name.contains("web") -> "ブラウザ"
-            name.contains("app") || name.contains("icon") -> "アプリ"
+        return when (name) {
+            "key0", "button0" -> "0"
+            "key1", "button1" -> "1"
+            "key2", "button2" -> "2"
+            "key3", "button3" -> "3"
+            "key4", "button4" -> "4"
+            "key5", "button5" -> "5"
+            "key6", "button6" -> "6"
+            "key7", "button7" -> "7"
+            "key8", "button8" -> "8"
+            "key9", "button9" -> "9"
+            "delete_button", "backspace", "btn_delete" -> "1文字削除"
+            "emergency_call_button", "emergency" -> "緊急通報"
+            "cancel_button", "btn_cancel" -> "キャンセル"
+            "enter_button", "btn_ok", "btn_done" -> "決定"
+            "search_button" -> "検索"
             else -> ""
         }
     }
