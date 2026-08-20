@@ -24,15 +24,23 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = file("serena-release-key.jks")
-            storePassword = "serena2026"
-            keyAlias = "serena_key"
-            keyPassword = "serena2026"
-            enableV1Signing = true
-            enableV2Signing = true
-            enableV3Signing = true
-            enableV4Signing = true
+        val keystoreFile = file("serena-release-key.jks")
+        if (keystoreFile.exists()) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = "serena2026"
+                keyAlias = "serena_key"
+                keyPassword = "serena2026"
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = true
+            }
+        } else {
+            create("release") {
+                // Fallback on CI when release key is not present
+                initWith(getByName("debug"))
+            }
         }
     }
 
