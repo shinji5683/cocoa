@@ -207,6 +207,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         info.flags = flags
         serviceInfo = info
         Log.i(TAG, "serena AccessibilityService connected with Multi-Finger & Touch Exploration enabled.")
+
+        // 再起動直後（Direct Boot）やサービス接続時の初期フォーカス自動捕捉
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+            if (km?.isKeyguardLocked == true) {
+                focusPinEntryField()
+            } else {
+                navigateLinearFocus(forward = true)
+            }
+        }, 500)
     }
 
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
@@ -257,8 +267,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 navigateLinearFocus(forward = false)
                 return true
             }
-            // 1本指上スワイプ: 選択中の読み上げコントロール（行/単語/見出し等）に従って前へ移動
+            // 1本指上スワイプ: ロック画面中はロック解除 / 通常時は選択中の読み上げコントロールに従って前へ移動
             GESTURE_SWIPE_UP -> {
+                val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+                if (km?.isKeyguardLocked == true) {
+                    unlockKeyguardSwipe()
+                    return true
+                }
                 soundHelper?.playFocusMove()
                 focusPrevious()
                 return true
@@ -1213,8 +1228,33 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 1. 親階層を探索して Clickable または Checkable な要素をアタック
-        var target: AccessibilityNodeInfo? = focusedNode
+        val isKeyguardElement = focusedNode.packageName?.contains("systemui") == true ||
+                focusedNode.viewIdResourceName?.contains("key", ignoreCase = true) == true ||
+                focusedNode.viewIdResourceName?.contains("pin", ignoreCase = true) == true ||
+                focusedNode.viewIdResourceName?.contains("digit", ignoreCase = true) == true ||
+                focusedNode.viewIdResourceName?.contains("delete", ignoreCase = true) == true ||
+                focusedNode.viewIdResourceName?.contains("enter", ignoreCase = true) == true
+
+        // 1. 直近ノード（特にPINキーやSystemUI要素）へのダイレクトクリック試行
+        if (focusedNode.isClickable || focusedNode.isCheckable || isKeyguardElement) {
+            val text = getNodeText(focusedNode)
+            val logicalSuccess = focusedNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            
+            // PINキーやSystemUI要素、あるいは物理タッチが必要な要素には同時に物理ジェスチャータップを発射
+            if (isKeyguardElement) {
+                clickNodeByGesture(focusedNode)
+                if (text.isNotEmpty()) speak(text, TextToSpeech.QUEUE_FLUSH)
+                return
+            }
+
+            if (logicalSuccess) {
+                if (text.isNotEmpty()) speak("$text を実行", TextToSpeech.QUEUE_FLUSH)
+                return
+            }
+        }
+
+        // 2. 直近ノードでクリック不可の場合のみ、親階層を探索
+        var target: AccessibilityNodeInfo? = focusedNode.parent
         while (target != null) {
             if (target.isClickable || target.isCheckable) {
                 if (target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
@@ -1224,13 +1264,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
             target = target.parent
-        }
-
-        // 2. 直近ノードへの ACTION_CLICK 直撃
-        if (focusedNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
-            val text = getNodeText(focusedNode)
-            if (text.isNotEmpty()) speak("$text を実行", TextToSpeech.QUEUE_FLUSH)
-            return
         }
 
         // 3. ACTION_SELECT の試行
@@ -1570,12 +1603,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun unlockKeyguardSwipe() {
         val now = System.currentTimeMillis()
-        if (now - lastUnlockTime < 1500) return
+        if (now - lastUnlockTime < 1000) return
         lastUnlockTime = now
         isUnlockingKeyguard = true
 
         soundHelper?.playActionDone()
-        speak("画面ロックを解除します", TextToSpeech.QUEUE_FLUSH)
+        speak("ロック解除中", TextToSpeech.QUEUE_FLUSH)
         
         performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
 
@@ -1583,17 +1616,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        // 2本指による同時上スワイプストローク（Keyguardのタッチ探索ガードを確実に突破）
+        // 画面中央下（ナビバーを避けた 0.75f）から画面上部（0.15f）へ滑らかに上スワイプ
         val path1 = android.graphics.Path().apply {
-            moveTo(width * 0.35f, height * 0.90f)
-            lineTo(width * 0.35f, height * 0.10f)
+            moveTo(width * 0.35f, height * 0.75f)
+            lineTo(width * 0.35f, height * 0.15f)
         }
         val path2 = android.graphics.Path().apply {
-            moveTo(width * 0.65f, height * 0.90f)
-            lineTo(width * 0.65f, height * 0.10f)
+            moveTo(width * 0.65f, height * 0.75f)
+            lineTo(width * 0.65f, height * 0.15f)
         }
-        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 180)
-        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 180)
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 260)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 260)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke1)
             .addStroke(stroke2)
@@ -1614,17 +1647,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun schedulePinFieldFocus() {
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        val delays = listOf(200L, 450L, 750L, 1100L)
+        val delays = listOf(150L, 350L, 600L, 900L)
         for (delay in delays) {
             mainHandler.postDelayed({
-                if (focusPinEntryField()) {
-                    isUnlockingKeyguard = false
-                }
+                focusPinEntryField()
             }, delay)
         }
         mainHandler.postDelayed({
             isUnlockingKeyguard = false
-        }, 1300)
+        }, 1000)
     }
 
     private fun focusPinEntryField(): Boolean {
