@@ -1348,8 +1348,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🎨", "カラー・照明・お日様チェッカー (部屋の明るさ・太陽・色の判定)") {
                 announceColorAndLightReport()
             },
-            serenaMenuItem("🧭", "空間電子コンパス (現在向いている方角と角度)") {
-                announceCompassHeading()
+            serenaMenuItem("🧭", "3D空間オーディオ・コンパス案内 (左右立体音響 & 方角アナウンス)") {
+                toggleSpatialCompassAudio()
             },
             serenaMenuItem("🚶‍♂️", "徒歩ナビ・現在地と目的地クロックポジション案内") {
                 announceCurrentLocationAndNav()
@@ -1980,6 +1980,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val report = colorAndLightHelper?.buildFullSensoryReport()
             ?: "センサー情報を取得できませんでした。"
         speak(report, TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun toggleSpatialCompassAudio() {
+        soundHelper?.playActionDone()
+        val helper = compassHelper ?: run {
+            speak("コンパス機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+            return
+        }
+        val isEnabled = helper.toggleSpatialAudio()
+        if (isEnabled) {
+            val heading = helper.getDirectionAnnouncement()
+            speak("${heading}。3D空間オーディオコンパスを開始しました。スマホを真北に向けると両耳の中央で澄んだ音が鳴ります。終了するにはもう一度メニューからタップしてください。", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            speak("3D空間オーディオコンパスを停止しました。", TextToSpeech.QUEUE_FLUSH)
+        }
     }
 
     fun announceCompassHeading() {

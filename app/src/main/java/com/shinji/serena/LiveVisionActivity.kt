@@ -203,20 +203,62 @@ class LiveVisionActivity : AppCompatActivity() {
                     }
             }
             else -> {
-                // LIVE 実況モード (Gemini Nano 統合解析)
+                // LIVE 実況モード (Gemini Nano 統合解析: 照度 + 表情・位置 + OCR)
+                val planes = mediaImage.planes
+                val brightnessLevel = if (planes.isNotEmpty()) {
+                    val buffer = planes[0].buffer
+                    var sum = 0L
+                    val step = (buffer.remaining() / 200).coerceAtLeast(1)
+                    var count = 0
+                    for (i in 0 until buffer.remaining() step step) {
+                        sum += (buffer.get(i).toInt() and 0xFF)
+                        count++
+                    }
+                    val avg = if (count > 0) sum / count else 128
+                    when {
+                        avg >= 150 -> "明るい室内"
+                        avg in 60..149 -> "落ち着いた明るさの場所"
+                        avg in 20..59 -> "薄暗い場所"
+                        else -> "真っ暗な場所"
+                    }
+                } else {
+                    ""
+                }
+
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
                         val faceCount = faces.size
                         val smilingCount = faces.count { (it.smilingProbability ?: 0f) > 0.4f }
                         val isLooking = faces.any { (it.leftEyeOpenProbability ?: 0f) > 0.4f && (it.rightEyeOpenProbability ?: 0f) > 0.4f }
 
+                        val imgWidth = image.width.toFloat().coerceAtLeast(1f)
+                        val personDetails = faces.map { face ->
+                            val box = face.boundingBox
+                            val centerX = box.centerX() / imgWidth
+                            val widthRatio = box.width() / imgWidth
+
+                            val pos = when {
+                                centerX < 0.35f -> "左側"
+                                centerX > 0.65f -> "右側"
+                                else -> "正面"
+                            }
+                            val dist = when {
+                                widthRatio > 0.35f -> "近く"
+                                widthRatio < 0.12f -> "少し奥"
+                                else -> ""
+                            }
+                            "${pos}${dist}"
+                        }
+
                         textRecognizer.process(image)
                             .addOnSuccessListener { visionText ->
                                 val recognizedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
-                                val sceneSummary = geminiNanoEngine.describeScene(
+                                val sceneSummary = geminiNanoEngine.describeSceneEnhanced(
                                     personCount = faceCount,
                                     smilingPersonCount = smilingCount,
                                     lookingAtCamera = isLooking,
+                                    personDetails = personDetails,
+                                    lightingLevel = brightnessLevel,
                                     objects = emptyList(),
                                     texts = recognizedTexts
                                 )

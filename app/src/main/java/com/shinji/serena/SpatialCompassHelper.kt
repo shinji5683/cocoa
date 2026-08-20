@@ -10,10 +10,15 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 
+import android.media.AudioAttributes
+import android.media.AudioFormat
+import android.media.AudioTrack
+import kotlin.math.sin
+
 /**
  * 空間電子コンパス・方角＆クロックポジション案内ヘルパー (Spatial Compass & Orientation Helper)
  * 端末の電子磁気センサーと加速度センサーから、向いている方角と角度、
- * および目的地へのクロックポジション（1時〜12時）と詳細方向（右前・左斜め後ろ等）を音声＆ハプティクス案内。
+ * および目的地へのクロックポジション（1時〜12時）と詳細方向を音声＆ハプティクス＆3Dステレオ音響で案内。
  */
 class SpatialCompassHelper(private val context: Context) : SensorEventListener {
 
@@ -40,9 +45,19 @@ class SpatialCompassHelper(private val context: Context) : SensorEventListener {
     var currentAzimuth = 0f
         private set
 
+    var isSpatialAudioEnabled = false
+        private set
+
     private var isListening = false
     private var lastNorthHapticTime = 0L
     private var lastTargetHapticTime = 0L
+    private var lastAudioPingTime = 0L
+
+    private var targetBearing: Float? = null // null の場合は「真北 (0度)」が目標
+
+    fun setTargetBearing(bearing: Float?) {
+        targetBearing = bearing
+    }
 
     fun startListening() {
         if (isListening) return
@@ -93,6 +108,97 @@ class SpatialCompassHelper(private val context: Context) : SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
+    fun toggleSpatialAudio(): Boolean {
+        isSpatialAudioEnabled = !isSpatialAudioEnabled
+        if (isSpatialAudioEnabled) {
+            startListening()
+        } else if (!isListening) {
+            stopListening()
+        }
+        return isSpatialAudioEnabled
+    }
+
+    private fun checkSpatialAudioPulse(azimuth: Float) {
+        if (!isSpatialAudioEnabled) return
+        val now = System.currentTimeMillis()
+        if (now - lastAudioPingTime < 600) return
+        lastAudioPingTime = now
+
+        val target = targetBearing ?: 0f // デフォルトは北(0度)
+        var diff = (target - azimuth + 360f) % 360f
+        if (diff > 180f) diff -= 360f // -180 (左) 〜 +180 (右)
+
+        val isAligned = kotlin.math.abs(diff) <= 12f
+        val freq = if (isAligned) 880.0 else (440.0 - kotlin.math.abs(diff) * 0.8).coerceAtLeast(280.0)
+
+        // ステレオパンニング音量 (左/右)
+        val leftVol: Float
+        val rightVol: Float
+
+        if (isAligned) {
+            leftVol = 0.9f
+            rightVol = 0.9f
+        } else if (diff > 0) {
+            // 目標が右側にある -> 右耳を強く
+            val norm = (diff / 180f).coerceIn(0f, 1f)
+            leftVol = (1f - norm).coerceAtLeast(0.15f) * 0.7f
+            rightVol = 0.85f
+        } else {
+            // 目標が左側にある -> 左耳を強く
+            val norm = (-diff / 180f).coerceIn(0f, 1f)
+            leftVol = 0.85f
+            rightVol = (1f - norm).coerceAtLeast(0.15f) * 0.7f
+        }
+
+        playStereoTone(freq, 70, leftVol, rightVol)
+    }
+
+    private fun playStereoTone(frequencyHz: Double, durationMs: Int, leftVolume: Float, rightVolume: Float) {
+        Thread {
+            try {
+                val sampleRate = 44100
+                val numSamples = (sampleRate * (durationMs / 1000.0)).toInt()
+                val buffer = ShortArray(numSamples * 2) // ステレオ (L, R, L, R...)
+
+                for (i in 0 until numSamples) {
+                    val angle = 2.0 * Math.PI * i / (sampleRate / frequencyHz)
+                    val rawSample = (sin(angle) * Short.MAX_VALUE).toInt().toShort()
+
+                    // フェードアウトエンベロープ
+                    val envelope = 1.0 - (i.toDouble() / numSamples.toDouble())
+                    val sampleLeft = (rawSample * leftVolume * envelope).toInt().toShort()
+                    val sampleRight = (rawSample * rightVolume * envelope).toInt().toShort()
+
+                    buffer[i * 2] = sampleLeft
+                    buffer[i * 2 + 1] = sampleRight
+                }
+
+                val audioTrack = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(sampleRate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(buffer.size * 2)
+                    .setTransferMode(AudioTrack.MODE_STATIC)
+                    .build()
+
+                audioTrack.write(buffer, 0, buffer.size)
+                audioTrack.play()
+                Thread.sleep(durationMs.toLong() + 20)
+                audioTrack.release()
+            } catch (_: Exception) {}
+        }.start()
+    }
+
     private fun checkNorthHaptic(azimuth: Float) {
         // 北（0度/360度）の前後5度以内の時にカチッと触覚フィードバック
         if (azimuth <= 5f || azimuth >= 355f) {
@@ -102,6 +208,7 @@ class SpatialCompassHelper(private val context: Context) : SensorEventListener {
                 triggerHaptic()
             }
         }
+        checkSpatialAudioPulse(azimuth)
     }
 
     fun checkTargetAlignmentHaptic(targetBearing: Float): Boolean {
