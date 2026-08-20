@@ -26,12 +26,39 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private var localTts: TextToSpeech? = null
 
+    private val requestBackgroundLocationLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            Toast.makeText(this, "バックグラウンド位置情報（常に許可）が有効になりました", Toast.LENGTH_SHORT).show()
+        }
+        updateServiceStatusDisplay()
+    }
+
     private val requestAllPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val grantedCount = permissions.values.count { it }
         Toast.makeText(this, "権限を更新しました (${grantedCount}/${permissions.size})", Toast.LENGTH_SHORT).show()
         updateServiceStatusDisplay()
+
+        // 位置情報が許可された場合、Android 10+ で「常に許可」のバックグラウンド権限を案内＆リクエスト
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val hasFine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasCoarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasBg = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+            if ((hasFine || hasCoarse) && !hasBg) {
+                AlertDialog.Builder(this)
+                    .setTitle("📍 バックグラウンド位置情報の許可")
+                    .setMessage("端末をシェイクしたときにいつでも現在地住所を読み上げるため、次の画面で『常に許可』を選択してください。")
+                    .setPositiveButton("許可に進む") { _, _ ->
+                        requestBackgroundLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    }
+                    .setNegativeButton("後で", null)
+                    .show()
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
