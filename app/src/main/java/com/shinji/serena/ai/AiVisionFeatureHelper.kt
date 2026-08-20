@@ -42,32 +42,37 @@ object AiVisionFeatureHelper {
         }
 
         // 2. 性別・年代のオンデバイス推定
-        val eulerY = abs(face.headEulerAngleY) // 横向き角度
-        val eulerZ = abs(face.headEulerAngleZ) // 傾き
-
-        // 輪郭のアスペクト比と笑顔度・目開き度による高速ヒューリスティック分類
         val boxAspect = box.height().toFloat() / box.width().coerceAtLeast(1).toFloat()
         val smile = face.smilingProbability ?: 0f
         val leftEye = face.leftEyeOpenProbability ?: 0.5f
         val rightEye = face.rightEyeOpenProbability ?: 0.5f
         val eyeAvg = (leftEye + rightEye) / 2f
+        val headAngle = abs(face.headEulerAngleZ)
 
-        // 年代と性別の総合判定
+        // 年代と性別の明示的推定（必ず年代と性別を両方含む言葉にする！）
         val genderAndAge = when {
-            // 小さな顔幅で目元が丸い場合
+            // 顔幅が小さく丸みを帯びている場合（子供・若年層）
             widthRatio < 0.15f && boxAspect > 1.25f -> {
-                if (smile > 0.5f) "若い女性" else "若い人"
+                if (smile > 0.45f) "10代から20代くらいの女性" else "10代から20代くらいの若い人"
             }
-            // 縦横比がすっきりしており目元がはっきり
-            boxAspect in 1.15f..1.40f && smile > 0.4f -> {
-                "女性"
+            // 縦横比がすっきり＆笑顔または目元が丸い（女性）
+            boxAspect in 1.12f..1.42f && (smile > 0.35f || eyeAvg > 0.55f) -> {
+                when {
+                    smile > 0.6f -> "20代から30代くらいの女性"
+                    eyeAvg > 0.6f -> "20代くらいの女性"
+                    else -> "30代から40代くらいの女性"
+                }
             }
-            // 骨格がしっかりめ（縦横比がやや四角に近い）
-            boxAspect in 0.95f..1.18f -> {
-                if (eyeAvg > 0.6f) "男性" else "大人の男性"
+            // 骨格がしっかりめ（男性）
+            boxAspect in 0.90f..1.18f -> {
+                when {
+                    eyeAvg > 0.6f && smile < 0.2f -> "30代から40代くらいの男性"
+                    smile > 0.5f -> "20代から30代くらいの男性"
+                    else -> "大人の男性（30代から50代くらい）"
+                }
             }
             else -> {
-                if (smile > 0.5f) "女性" else "男性"
+                if (smile > 0.4f) "20代から30代くらいの女性" else "30代から40代くらいの男性"
             }
         }
 

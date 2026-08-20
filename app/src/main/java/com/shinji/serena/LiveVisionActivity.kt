@@ -182,12 +182,52 @@ class LiveVisionActivity : AppCompatActivity() {
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
                         if (faces.isNotEmpty()) {
-                            val faceCount = faces.size
-                            val firstFace = faces[0]
-                            val smile = firstFace.smilingProbability ?: 0f
-                            val isLooking = (firstFace.leftEyeOpenProbability ?: 0f) > 0.4f && (firstFace.rightEyeOpenProbability ?: 0f) > 0.4f
-                            val smilingCount = if (smile > 0.4f) 1 else 0
-                            val desc = geminiNanoEngine.describeScene(faceCount, smilingCount, isLooking, emptyList(), emptyList())
+                            val imgWidth = image.width
+                            val imgHeight = image.height
+                            val persons = faces.map { face ->
+                                val box = face.boundingBox
+                                val centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1)
+
+                                val pos = when {
+                                    centerX < 0.35f -> "左側"
+                                    centerX > 0.65f -> "右側"
+                                    else -> "正面"
+                                }
+
+                                val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
+                                    face = face,
+                                    imageWidth = imgWidth,
+                                    imageHeight = imgHeight,
+                                    bitmap = null
+                                )
+
+                                val smileProb = face.smilingProbability ?: 0f
+                                val leftEye = face.leftEyeOpenProbability ?: 0.5f
+                                val rightEye = face.rightEyeOpenProbability ?: 0.5f
+                                val avgEye = (leftEye + rightEye) / 2f
+                                val isLooking = avgEye > 0.4f
+
+                                val (expressionDesc, meaningDesc) = when {
+                                    smileProb > 0.65f -> Pair("満面の明るい笑顔", "とても楽しそうに喜んでいる様子")
+                                    smileProb in 0.30f..0.65f -> Pair("穏やかな微笑み", "リラックスして安心している雰囲気")
+                                    avgEye > 0.6f && smileProb < 0.15f -> Pair("真剣な表情", "集中して深く考え事をしている様子")
+                                    avgEye < 0.35f && smileProb < 0.15f -> Pair("少し暗めの落ち着いた表情", "物思いにふけっている様子")
+                                    else -> Pair("自然体な表情", "落ち着いた普段の様子")
+                                }
+
+                                com.shinji.serena.ai.GeminiNanoEngine.PersonAnalysisDetail(
+                                    position = pos,
+                                    distanceMeters = attrs.estimatedDistanceMeters,
+                                    genderAndAge = attrs.genderAndAge,
+                                    clothingColor = "服",
+                                    pantsColor = "ボトムス",
+                                    expression = expressionDesc,
+                                    emotionalMeaning = meaningDesc,
+                                    isLookingAtCamera = isLooking
+                                )
+                            }
+
+                            val desc = geminiNanoEngine.describeSceneComprehensive("", persons, emptyList(), emptyList())
                             if (desc != lastFaceDescription && desc.isNotEmpty()) {
                                 lastFaceDescription = desc
                                 lastSpokenTime = currentTime
