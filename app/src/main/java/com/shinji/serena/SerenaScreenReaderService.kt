@@ -1871,33 +1871,29 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("📍", "現在地と方角の確認") {
                 speak(nav.getCurrentLocationSummary(), TextToSpeech.QUEUE_FLUSH)
             },
-            serenaMenuItem("🏪", "周辺のコンビニ一覧から選ぶ") {
-                soundHelper?.playActionDone()
-                speak("現在地周辺のコンビニを検索中...", TextToSpeech.QUEUE_FLUSH)
-                Thread {
-                    val places = nav.searchNearbyPlaces("コンビニ")
-                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        if (places.isNotEmpty()) {
-                            showNearbyPlacesListDialog("コンビニ", places, nav)
-                        } else {
-                            speak("現在地周辺のコンビニが見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
-                        }
-                    }
-                }.start()
+            serenaMenuItem("🏪", "周辺のコンビニを探す") {
+                searchAndShowPlaces("コンビニ", "🏪", nav)
             },
-            serenaMenuItem("🚉", "周辺の駅一覧から選ぶ") {
-                soundHelper?.playActionDone()
-                speak("現在地周辺の駅を検索中...", TextToSpeech.QUEUE_FLUSH)
-                Thread {
-                    val places = nav.searchNearbyPlaces("駅")
-                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        if (places.isNotEmpty()) {
-                            showNearbyPlacesListDialog("駅", places, nav)
-                        } else {
-                            speak("現在地周辺の駅が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
-                        }
-                    }
-                }.start()
+            serenaMenuItem("🚉", "周辺の駅を探す") {
+                searchAndShowPlaces("駅", "🚉", nav)
+            },
+            serenaMenuItem("☕", "周辺の喫茶店・カフェを探す") {
+                searchAndShowPlaces("喫茶店", "☕", nav)
+            },
+            serenaMenuItem("🍔", "周辺のファストフード店を探す") {
+                searchAndShowPlaces("ファストフード", "🍔", nav)
+            },
+            serenaMenuItem("🍽️", "周辺のレストラン・飲食店を探す") {
+                searchAndShowPlaces("レストラン", "🍽️", nav)
+            },
+            serenaMenuItem("🛍️", "周辺のスーパー・商業施設を探す") {
+                searchAndShowPlaces("スーパー", "🛍️", nav)
+            },
+            serenaMenuItem("🏥", "周辺の病院・薬局を探す") {
+                searchAndShowPlaces("病院", "🏥", nav)
+            },
+            serenaMenuItem("📮", "周辺の郵便局・銀行を探す") {
+                searchAndShowPlaces("郵便局", "📮", nav)
             },
             serenaMenuItem("🧭", "3D空間オーディオ・コンパス案内を開始") {
                 toggleSpatialCompassAudio()
@@ -1909,7 +1905,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         )
 
-        speak("${currentSummary}。徒歩ナビメニューを開きました。全${items.size}項目。1番目、${items[0].title}", TextToSpeech.QUEUE_FLUSH)
+        speak("${currentSummary}。徒歩ナビ・周辺施設メニューを開きました。全${items.size}項目。1番目、${items[0].title}", TextToSpeech.QUEUE_FLUSH)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             try {
@@ -1922,14 +1918,29 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    private fun searchAndShowPlaces(category: String, icon: String, nav: com.shinji.serena.navigation.SerenaWalkingNavigator) {
+        soundHelper?.playActionDone()
+        speak("現在地周辺の${category}を検索中...", TextToSpeech.QUEUE_FLUSH)
+        Thread {
+            val places = nav.searchNearbyPlaces(category)
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                if (places.isNotEmpty()) {
+                    showNearbyPlacesListDialog(category, icon, places, nav)
+                } else {
+                    speak("現在地周辺の${category}が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
+                }
+            }
+        }.start()
+    }
+
     private fun showNearbyPlacesListDialog(
         categoryTitle: String,
+        categoryIcon: String,
         places: List<com.shinji.serena.navigation.SerenaWalkingNavigator.NavPlace>,
         nav: com.shinji.serena.navigation.SerenaWalkingNavigator
     ) {
         val items = places.map { place ->
-            val icon = if (categoryTitle.contains("コンビニ")) "🏪" else "🚉"
-            serenaMenuItem(icon, "${place.name}（約${place.distanceMeters}m）") {
+            serenaMenuItem(categoryIcon, "${place.name}（約${place.distanceMeters}m）") {
                 showPlaceDetailsDialog(place, nav)
             }
         }

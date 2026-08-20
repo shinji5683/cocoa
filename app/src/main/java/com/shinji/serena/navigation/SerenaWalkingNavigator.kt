@@ -151,9 +151,9 @@ class SerenaWalkingNavigator(
     )
 
     /**
-     * 現在地周辺の施設候補（コンビニ・駅等）を複数件検索して距離順で取得
+     * 現在地周辺の施設候補（コンビニ・駅・喫茶店・ファストフード・スーパー・レストラン等）を複数件検索して距離順で取得
      */
-    fun searchNearbyPlaces(type: String): List<NavPlace> {
+    fun searchNearbyPlaces(category: String): List<NavPlace> {
         val loc = currentLocation
         val geocoder = Geocoder(context, Locale.JAPAN)
         val candidatePlaces = mutableListOf<NavPlace>()
@@ -161,65 +161,148 @@ class SerenaWalkingNavigator(
         val city = if (addressSync.contains("市")) addressSync.substringBefore("市") + "市" else ""
 
         val queries = mutableListOf<String>()
-        if (type == "コンビニ") {
-            if (city.isNotEmpty()) {
-                queries.add("$city セブンイレブン")
-                queries.add("$city ローソン")
-                queries.add("$city ファミリーマート")
-                queries.add("$city ミニストップ")
+        when (category) {
+            "コンビニ" -> {
+                if (city.isNotEmpty()) {
+                    queries.add("$city セブンイレブン")
+                    queries.add("$city ローソン")
+                    queries.add("$city ファミリーマート")
+                    queries.add("$city ミニストップ")
+                }
+                queries.add("セブンイレブン")
+                queries.add("ローソン")
+                queries.add("ファミリーマート")
+                queries.add("コンビニ")
             }
-            queries.add("セブンイレブン")
-            queries.add("ローソン")
-            queries.add("ファミリーマート")
-        } else if (type == "駅") {
-            if (city.isNotEmpty()) {
-                queries.add("$city 駅")
+            "駅" -> {
+                if (city.isNotEmpty()) {
+                    queries.add("$city 駅")
+                }
+                queries.add("駅")
+                queries.add("JR駅")
+                queries.add("近鉄駅")
+                queries.add("養老鉄道駅")
             }
-            queries.add("駅")
-        } else {
-            if (city.isNotEmpty()) queries.add("$city $type")
-            queries.add(type)
+            "喫茶店", "カフェ" -> {
+                if (city.isNotEmpty()) {
+                    queries.add("$city コメダ珈琲")
+                    queries.add("$city スターバックス")
+                    queries.add("$city ドトール")
+                    queries.add("$city カフェ")
+                    queries.add("$city 喫茶店")
+                }
+                queries.add("コメダ珈琲")
+                queries.add("スターバックス")
+                queries.add("カフェ")
+                queries.add("喫茶店")
+            }
+            "ファストフード" -> {
+                if (city.isNotEmpty()) {
+                    queries.add("$city マクドナルド")
+                    queries.add("$city モスバーガー")
+                    queries.add("$city ケンタッキー")
+                    queries.add("$city すき家")
+                    queries.add("$city 吉野家")
+                }
+                queries.add("マクドナルド")
+                queries.add("モスバーガー")
+                queries.add("すき家")
+            }
+            "レストラン", "飲食店" -> {
+                if (city.isNotEmpty()) {
+                    queries.add("$city ガスト")
+                    queries.add("$city サイゼリヤ")
+                    queries.add("$city レストラン")
+                    queries.add("$city 食堂")
+                }
+                queries.add("レストラン")
+                queries.add("定食")
+            }
+            "スーパー", "ショッピングモール", "食料品店" -> {
+                if (city.isNotEmpty()) {
+                    queries.add("$city イオン")
+                    queries.add("$city 平和堂")
+                    queries.add("$city スーパー")
+                    queries.add("$city バロー")
+                    queries.add("$city ドラッグストア")
+                }
+                queries.add("イオン")
+                queries.add("スーパーマーケット")
+                queries.add("ショッピングモール")
+            }
+            "病院", "薬局" -> {
+                if (city.isNotEmpty()) {
+                    queries.add("$city 総合病院")
+                    queries.add("$city クリニック")
+                    queries.add("$city 薬局")
+                }
+                queries.add("病院")
+                queries.add("クリニック")
+                queries.add("調剤薬局")
+            }
+            "郵便局", "銀行" -> {
+                if (city.isNotEmpty()) {
+                    queries.add("$city 郵便局")
+                    queries.add("$city 銀行")
+                }
+                queries.add("郵便局")
+                queries.add("銀行")
+            }
+            else -> {
+                if (city.isNotEmpty()) queries.add("$city $category")
+                queries.add(category)
+            }
         }
 
-        val seenAddresses = mutableSetOf<String>()
+        val seenKeys = mutableSetOf<String>()
 
         for (query in queries) {
             try {
                 @Suppress("DEPRECATION")
                 val results = if (loc != null) {
-                    val latDelta = 0.06 // 約6km四方
-                    val lonDelta = 0.06
+                    val latDelta = 0.08 // 約8km四方
+                    val lonDelta = 0.08
                     geocoder.getFromLocationName(
                         query,
-                        5,
+                        6,
                         loc.latitude - latDelta,
                         loc.longitude - lonDelta,
                         loc.latitude + latDelta,
                         loc.longitude + lonDelta
                     )
                 } else {
-                    geocoder.getFromLocationName(query, 4)
+                    geocoder.getFromLocationName(query, 5)
                 }
 
                 results?.forEach { r ->
-                    val rawDestName = r.featureName ?: r.thoroughfare ?: query
-                    val fullAddress = r.getAddressLine(0)?.replace(Regex("^日本、?"), "")?.replace(Regex("〒[0-9-]+\\s*"), "")?.trim() ?: rawDestName
+                    val fullAddress = r.getAddressLine(0)?.replace(Regex("^日本、?"), "")?.replace(Regex("〒[0-9-]+\\s*"), "")?.trim() ?: ""
+                    var featName = r.featureName ?: ""
+
+                    // featureName が番地数字のみ（例: "1741"）の場合は query 名を付与
+                    val isNumberOnly = featName.matches(Regex("^[0-9-]+$"))
+                    var displayName = when {
+                        featName.isNotEmpty() && !isNumberOnly && featName != city -> featName
+                        r.thoroughfare != null && !r.thoroughfare.matches(Regex("^[0-9-]+$")) -> "${query.substringAfter(" ")}（${r.thoroughfare}）"
+                        fullAddress.isNotEmpty() -> "${query.substringAfter(" ")}（$fullAddress）"
+                        else -> query
+                    }
+
+                    val uniqueKey = "${r.latitude.toBigDecimal().setScale(4, java.math.RoundingMode.HALF_UP)},${r.longitude.toBigDecimal().setScale(4, java.math.RoundingMode.HALF_UP)}"
                     
-                    if (!seenAddresses.contains(fullAddress)) {
-                        seenAddresses.add(fullAddress)
+                    if (!seenKeys.contains(uniqueKey)) {
+                        seenKeys.add(uniqueKey)
                         val dist = FloatArray(1)
                         if (loc != null) {
                             Location.distanceBetween(loc.latitude, loc.longitude, r.latitude, r.longitude, dist)
                         }
                         val distMeters = dist[0].toInt()
-                        val displayName = if (rawDestName.length in 2..25 && rawDestName != city) rawDestName else fullAddress
                         val phoneNum = r.phone ?: ""
                         val webUrl = r.url ?: "https://www.google.com/search?q=${java.net.URLEncoder.encode("$displayName $fullAddress", "UTF-8")}"
                         
                         candidatePlaces.add(
                             NavPlace(
                                 name = displayName,
-                                address = fullAddress,
+                                address = if (fullAddress.isNotEmpty()) fullAddress else displayName,
                                 distanceMeters = distMeters,
                                 latitude = r.latitude,
                                 longitude = r.longitude,
@@ -234,7 +317,7 @@ class SerenaWalkingNavigator(
             }
         }
 
-        return candidatePlaces.sortedBy { it.distanceMeters }.take(6)
+        return candidatePlaces.sortedBy { it.distanceMeters }.take(8)
     }
 
     /**
