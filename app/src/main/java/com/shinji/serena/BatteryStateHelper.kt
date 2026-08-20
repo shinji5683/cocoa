@@ -32,12 +32,13 @@ class BatteryStateHelper(
             if (intent == null) return
             val action = intent.action
 
-            val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-            val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-            val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-            val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
+            val bm = service.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1).takeIf { it != -1 }
+                ?: if (bm?.isCharging == true) BatteryManager.BATTERY_STATUS_CHARGING else BatteryManager.BATTERY_STATUS_DISCHARGING
+            val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1).takeIf { it != -1 }
+                ?: if (bm?.isCharging == true) BatteryManager.BATTERY_PLUGGED_AC else 0
 
-            val pct = if (level >= 0 && scale > 0) (level * 100 / scale.toFloat()).toInt() else -1
+            val pct = getBatteryPercentage(intent)
             val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
             val isFull = status == BatteryManager.BATTERY_STATUS_FULL || pct == 100
 
@@ -160,5 +161,39 @@ class BatteryStateHelper(
         }
 
         return "${source}から${speed}"
+    }
+
+    private fun getBatteryPercentage(intent: Intent): Int {
+        // 1. BatteryManager から直接リアルタイム残量プロパティを取得（最優先）
+        try {
+            val bm = service.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            if (bm != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val cap = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                if (cap in 0..100) return cap
+            }
+        } catch (_: Exception) {}
+
+        // 2. Intent から level と scale を取得
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        if (level >= 0 && scale > 0) {
+            val pct = (level * 100 / scale.toFloat()).toInt()
+            if (pct in 0..100) return pct
+        }
+
+        // 3. Sticky Intent の ACTION_BATTERY_CHANGED から再取得
+        try {
+            val sticky = service.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            if (sticky != null) {
+                val sLevel = sticky.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                val sScale = sticky.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+                if (sLevel >= 0 && sScale > 0) {
+                    val pct = (sLevel * 100 / sScale.toFloat()).toInt()
+                    if (pct in 0..100) return pct
+                }
+            }
+        } catch (_: Exception) {}
+
+        return 50 // フォールバック
     }
 }
