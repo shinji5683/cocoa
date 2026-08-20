@@ -1400,7 +1400,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 showHelp()
             }
         )
-        speak("セレナメニューが開きました。全${items.size}項目。", TextToSpeech.QUEUE_FLUSH)
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             try {
                 val dialog = serenaMenuDialog(this, false, items)

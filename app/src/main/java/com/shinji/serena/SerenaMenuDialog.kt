@@ -30,6 +30,7 @@ class serenaMenuDialog(
 ) {
 
     init {
+        SerenaScreenReaderService.instance?.activeMenuDialog = this
         window?.let { win ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 win.setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
@@ -163,41 +164,39 @@ class serenaMenuDialog(
 
     private fun focusAndAnnounceIndex(index: Int, initial: Boolean = false) {
         val targetView = itemViews.getOrNull(index) ?: return
-        val service = SerenaScreenReaderService.instance
+        val service = SerenaScreenReaderService.instance ?: return
 
-        targetView.post {
-            targetView.requestFocus()
+        targetView.requestFocus()
 
-            scrollMenuItems?.let { scroll ->
-                val targetY = (targetView.top - 100).coerceAtLeast(0)
-                scroll.smoothScrollTo(0, targetY)
-            }
-
-            if (!initial) {
-                if (index == 0) {
-                    service?.soundHelper?.playFirstItemEdgeSound()
-                } else if (index == itemViews.size - 1) {
-                    service?.soundHelper?.playLastItemEdgeSound()
-                } else {
-                    service?.soundHelper?.playFocusMove()
-                }
-            }
-
-            val textToSpeak = if (index < items.size) {
-                val item = items[index]
-                if (initial) {
-                    val titlePrefix = if (isEditTextFocus) "✏️ serena 編集アシスト" else "🌸 serena メニュー"
-                    "$titlePrefix、1番目、${item.title}"
-                } else {
-                    val pos = "${index + 1}番目、"
-                    "${pos}${item.title}"
-                }
-            } else {
-                "閉じる ボタン"
-            }
-
-            service?.speak(textToSpeak, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        scrollMenuItems?.let { scroll ->
+            val targetY = (targetView.top - 100).coerceAtLeast(0)
+            scroll.smoothScrollTo(0, targetY)
         }
+
+        if (!initial) {
+            if (index == 0) {
+                service.soundHelper?.playFirstItemEdgeSound()
+            } else if (index == itemViews.size - 1) {
+                service.soundHelper?.playLastItemEdgeSound()
+            } else {
+                service.soundHelper?.playFocusMove()
+            }
+        }
+
+        val textToSpeak = if (index < items.size) {
+            val item = items[index]
+            if (initial) {
+                val titlePrefix = if (isEditTextFocus) "✏️ serena 編集アシスト" else "🌸 serena メニュー"
+                "$titlePrefix、全${items.size}項目、1番目、${item.title}"
+            } else {
+                val pos = "${index + 1}番目、"
+                "${pos}${item.title}"
+            }
+        } else {
+            "閉じる ボタン"
+        }
+
+        service.speak(textToSpeak, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
     }
 }
 
