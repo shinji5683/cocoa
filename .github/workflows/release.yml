@@ -1,9 +1,6 @@
-name: Build and Release Serena APK
+name: Manual Cloud Build and Release Serena APK (Optional)
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 jobs:
