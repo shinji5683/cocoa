@@ -1610,43 +1610,49 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun unlockKeyguardSwipe() {
         val now = System.currentTimeMillis()
-        if (now - lastUnlockTime < 800) return
+        if (now - lastUnlockTime < 1000) return
         lastUnlockTime = now
 
         soundHelper?.playActionDone()
         speak("ロック解除中", TextToSpeech.QUEUE_FLUSH)
-        
-        performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
 
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        // 2本指による滑らかな上スワイプ（画面中央 0.75f から 0.15f）
+        // TalkBack互換の強力な垂直高速上スワイプ（画面下部 0.88f から 上部 0.10f）
         val path1 = android.graphics.Path().apply {
-            moveTo(width * 0.35f, height * 0.75f)
-            lineTo(width * 0.35f, height * 0.15f)
+            moveTo(width * 0.35f, height * 0.88f)
+            lineTo(width * 0.35f, height * 0.10f)
         }
         val path2 = android.graphics.Path().apply {
-            moveTo(width * 0.65f, height * 0.75f)
-            lineTo(width * 0.65f, height * 0.15f)
+            moveTo(width * 0.65f, height * 0.88f)
+            lineTo(width * 0.65f, height * 0.10f)
         }
-        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 240)
-        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 240)
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 160)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 160)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke1)
             .addStroke(stroke2)
             .build()
-            
+
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        
+        fun pollPinFocus(retriesLeft: Int) {
+            val found = focusPinEntryField()
+            if (!found && retriesLeft > 0) {
+                mainHandler.postDelayed({ pollPinFocus(retriesLeft - 1) }, 300)
+            }
+        }
+
         dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
-                mainHandler.postDelayed({ focusPinEntryField() }, 300)
+                mainHandler.postDelayed({ pollPinFocus(5) }, 250)
             }
             override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCancelled(gestureDescription)
-                mainHandler.postDelayed({ focusPinEntryField() }, 300)
+                mainHandler.postDelayed({ pollPinFocus(5) }, 250)
             }
         }, mainHandler)
     }
@@ -1670,7 +1676,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 announceNode(node)
                 return true
             }
-            for (digit in 0..9) {
+            for (digit in 1..9) {
                 val keyNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/key$digit")
                 if (keyNodes.isNotEmpty()) {
                     val keyNode = keyNodes[0]
@@ -1679,14 +1685,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     announceNode(keyNode)
                     return true
                 }
-                val textNodes = r.findAccessibilityNodeInfosByText("$digit")
-                if (textNodes.isNotEmpty()) {
-                    val candidate = textNodes.firstOrNull { it.isClickable || it.isFocusable } ?: textNodes.first()
-                    candidate.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                    soundHelper?.playFocusMove()
-                    announceNode(candidate)
-                    return true
-                }
+            }
+            val zeroNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/key0")
+            if (zeroNodes.isNotEmpty()) {
+                val zeroNode = zeroNodes[0]
+                zeroNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                soundHelper?.playFocusMove()
+                announceNode(zeroNode)
+                return true
             }
             val bouncerNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_bouncer")
             if (bouncerNodes.isNotEmpty()) {
