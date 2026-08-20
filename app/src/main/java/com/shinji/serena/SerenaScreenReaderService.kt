@@ -1400,9 +1400,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 showHelp()
             }
         )
+        val firstTitle = items.firstOrNull()?.title ?: ""
+        speak("🌸 serena メニュー、全${items.size}項目。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
+        soundHelper?.playActionDone()
+
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             try {
                 val dialog = serenaMenuDialog(this, false, items)
+                activeMenuDialog = dialog
                 dialog.show()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to show dialog: ${e.message}")
@@ -1465,6 +1470,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         speak("アクションメニューを開きました。全${items.size}項目。", TextToSpeech.QUEUE_FLUSH)
         try {
             val dialog = serenaMenuDialog(this, false, items)
+            activeMenuDialog = dialog
             dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show actions menu: ${e.message}")
@@ -1945,6 +1951,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         )
         try {
             val dialog = serenaMenuDialog(this, true, items)
+            activeMenuDialog = dialog
             dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show edit dialog: ${e.message}")

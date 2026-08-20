@@ -156,11 +156,23 @@ class serenaMenuDialog(
     }
 
     fun performCurrentItemClick(): Boolean {
-        if (currentIndex in itemViews.indices) {
-            itemViews[currentIndex].performClick()
+        val service = SerenaScreenReaderService.instance
+        service?.activeMenuDialog = null
+        try {
+            dismiss()
+        } catch (_: Exception) {}
+
+        if (currentIndex in items.indices) {
+            val selectedItem = items[currentIndex]
+            service?.soundHelper?.playActionDone()
+            selectedItem.action.invoke()
+            return true
+        } else {
+            // 閉じるボタン
+            service?.soundHelper?.playActionDone()
+            service?.speak("セレナメニューを閉じました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return true
         }
-        return false
     }
 
     private fun focusAndAnnounceIndex(index: Int, initial: Boolean = false) {
@@ -174,25 +186,23 @@ class serenaMenuDialog(
             scroll.smoothScrollTo(0, targetY)
         }
 
-        if (!initial) {
-            if (index == 0) {
-                service.soundHelper?.playFirstItemEdgeSound()
-            } else if (index == itemViews.size - 1) {
-                service.soundHelper?.playLastItemEdgeSound()
-            } else {
-                service.soundHelper?.playFocusMove()
-            }
+        if (initial) {
+            // 初期表示時の音声は showNormalSerenaMenu 側で即時アナウンス済み
+            return
+        }
+
+        if (index == 0) {
+            service.soundHelper?.playFirstItemEdgeSound()
+        } else if (index == itemViews.size - 1) {
+            service.soundHelper?.playLastItemEdgeSound()
+        } else {
+            service.soundHelper?.playFocusMove()
         }
 
         val textToSpeak = if (index < items.size) {
             val item = items[index]
-            if (initial) {
-                val titlePrefix = if (isEditTextFocus) "✏️ serena 編集アシスト" else "🌸 serena メニュー"
-                "$titlePrefix、全${items.size}項目、1番目、${item.title}"
-            } else {
-                val pos = "${index + 1}番目、"
-                "${pos}${item.title}"
-            }
+            val pos = "${index + 1}番目、"
+            "${pos}${item.title}"
         } else {
             "閉じる ボタン"
         }
