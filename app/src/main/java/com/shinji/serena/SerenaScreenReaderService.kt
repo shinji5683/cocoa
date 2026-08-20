@@ -1854,14 +1854,61 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playActionDone()
         val nav = walkingNavigator
         if (nav != null) {
-            val text = if (nav.activeDestination != null) {
-                nav.getNavigationGuidance()
+            if (nav.activeDestination != null) {
+                val text = nav.getNavigationGuidance()
+                speak(text, TextToSpeech.QUEUE_FLUSH)
             } else {
-                nav.getCurrentLocationSummary()
+                showWalkingNavMenu(nav)
             }
-            speak(text, TextToSpeech.QUEUE_FLUSH)
         } else {
             speak("位置情報機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    private fun showWalkingNavMenu(nav: com.shinji.serena.navigation.SerenaWalkingNavigator) {
+        val currentSummary = nav.getCurrentLocationSummary()
+        val items = listOf(
+            serenaMenuItem("📍", "現在地と方角の確認") {
+                speak(nav.getCurrentLocationSummary(), TextToSpeech.QUEUE_FLUSH)
+            },
+            serenaMenuItem("🏪", "最寄りのコンビニへ案内開始") {
+                soundHelper?.playActionDone()
+                speak("最寄りのコンビニを検索し、ナビゲーションを開始します", TextToSpeech.QUEUE_FLUSH)
+                if (nav.setDestinationByName("コンビニ")) {
+                    speak("目的地を「最寄りコンビニ」に設定しました。" + nav.getNavigationGuidance(), TextToSpeech.QUEUE_FLUSH)
+                } else {
+                    speak("コンビニの位置が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
+                }
+            },
+            serenaMenuItem("🚉", "最寄り駅へ案内開始") {
+                soundHelper?.playActionDone()
+                speak("最寄り駅を検索し、ナビゲーションを開始します", TextToSpeech.QUEUE_FLUSH)
+                if (nav.setDestinationByName("駅")) {
+                    speak("目的地を「最寄り駅」に設定しました。" + nav.getNavigationGuidance(), TextToSpeech.QUEUE_FLUSH)
+                } else {
+                    speak("駅の位置が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
+                }
+            },
+            serenaMenuItem("🧭", "3D空間オーディオ・コンパス案内を開始") {
+                toggleSpatialCompassAudio()
+            },
+            serenaMenuItem("❌", "目的地の案内を終了・解除") {
+                nav.clearDestination()
+                soundHelper?.playActionDone()
+                speak("目的地の案内を終了しました", TextToSpeech.QUEUE_FLUSH)
+            }
+        )
+
+        speak("${currentSummary}。徒歩ナビメニューを開きました。全${items.size}項目。1番目、${items[0].title}", TextToSpeech.QUEUE_FLUSH)
+
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            try {
+                val dialog = serenaMenuDialog(this, false, items)
+                activeMenuDialog = dialog
+                dialog.show()
+            } catch (e: Exception) {
+                Log.e(TAG, "Walking nav dialog error: ${e.message}")
+            }
         }
     }
 

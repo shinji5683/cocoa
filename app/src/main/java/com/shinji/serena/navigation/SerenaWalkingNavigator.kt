@@ -98,7 +98,7 @@ class SerenaWalkingNavigator(
         return try {
             val geocoder = Geocoder(context, Locale.JAPAN)
             @Suppress("DEPRECATION")
-            val addresses: List<Address>? = geocoder.getFromLocation(loc.latitude, loc.longitude, 1)
+            val addresses: List<Address>? = geocoder.getFromLocation(loc.latitude, loc.longitude, 3)
             if (!addresses.isNullOrEmpty()) {
                 val addr = addresses[0]
                 val admin = addr.adminArea ?: ""
@@ -191,7 +191,7 @@ class SerenaWalkingNavigator(
     fun getCurrentLocationSummary(): String {
         val address = getCurrentAddressSync()
         val compass = compassHelper
-        val direction = compass?.getDirectionAnnouncement() ?: ""
-        return "現在地: $address。$direction"
+        val direction = compass?.getDirectionName() ?: "北"
+        return "現在地: $address。向いている方角は「${direction}」です。"
     }
 }
