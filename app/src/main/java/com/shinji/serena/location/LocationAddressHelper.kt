@@ -187,9 +187,9 @@ class LocationAddressHelper(private val context: Context) {
         val exact = isExactBlockPrecision()
 
         return if (isJapanese) {
-            val admin = address.adminArea ?: "" // 都道府県 (東京都)
-            val locality = address.locality ?: address.subAdminArea ?: "" // 市区町村 (千代田区、横浜市など)
-            val subLocality = address.subLocality ?: "" // 町名・丁目 (神田神保町、道玄坂1丁目など)
+            val admin = address.adminArea ?: "" // 都道府県 (岐阜県)
+            val locality = address.locality ?: address.subAdminArea ?: "" // 市区町村 (大垣市)
+            val subLocality = address.subLocality ?: "" // 町名・丁目 (郭町1丁目)
             val thoroughfare = address.thoroughfare ?: ""
             val subThoroughfare = address.subThoroughfare ?: "" // 番地・号
             val featureName = address.featureName ?: ""
@@ -220,22 +220,29 @@ class LocationAddressHelper(private val context: Context) {
                     if (full.isNotEmpty()) "現在地: $full" else "現在地: 住所取得中"
                 }
             } else {
-                // 市区町村・町名まで (プライバシー保護: 番地数字をカットして町・丁目で止める)
-                val townCandidate = when {
-                    subLocality.isNotEmpty() -> subLocality
-                    thoroughfare.isNotEmpty() -> thoroughfare
-                    else -> ""
-                }
-
-                if (admin.isNotEmpty() || locality.isNotEmpty() || townCandidate.isNotEmpty()) {
-                    val base = "${admin}${locality}${townCandidate}".trim()
-                    "現在地: $base"
-                } else if (cleanedLine.isNotEmpty()) {
-                    // 番地数字（1-2-3や12番地など）を取り除いて町名まで切り出す
-                    val stripped = cleanedLine.replace(Regex("[\\d\\uFF10-\\uFF19]+[\\-ー番地号].*$"), "").trim()
+                // 市区町村・町名まで (プライバシー保護: 番地数字のみをカットして何町・何丁目で止める)
+                if (cleanedLine.isNotEmpty()) {
+                    var stripped = cleanedLine
+                    // 1. 「〇〇丁目」の後の番地数字（1-2-3や12番地など）をカット
+                    if (stripped.contains(Regex("[\\d\\uFF10-\\uFF19]+丁目"))) {
+                        stripped = stripped.replace(Regex("(?<=[\\d\\uFF10-\\uFF19]+丁目)[\\s\\d\\uFF10-\\uFF19\\-ー番地号]+.*$"), "").trim()
+                    } else if (stripped.contains(Regex("(?<=[^\\d\\s])(町|村|大字|字|通|条|番街)"))) {
+                        // 2. 「〇〇町」などの直後の番地数字（1-2-3や123番地など）をカット
+                        stripped = stripped.replace(Regex("(?<=(?:町|村|大字|字|通|条|番街))[\\s\\d\\uFF10-\\uFF19\\-ー番地号]+.*$"), "").trim()
+                    } else {
+                        // 3. 末尾の番地数字をカット
+                        stripped = stripped.replace(Regex("[\\s\\d\\uFF10-\\uFF19\\-ー番地号]+$"), "").trim()
+                    }
                     "現在地: $stripped"
                 } else {
-                    "現在地: 住所取得中"
+                    val townPart = when {
+                        subLocality.isNotEmpty() -> subLocality
+                        thoroughfare.isNotEmpty() -> thoroughfare
+                        featureName.isNotEmpty() && featureName != admin && featureName != locality -> featureName
+                        else -> ""
+                    }
+                    val full = "${admin}${locality}${townPart}".trim()
+                    if (full.isNotEmpty()) "現在地: $full" else "現在地: 住所取得中"
                 }
             }
         } else {
