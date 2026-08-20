@@ -188,27 +188,55 @@ class LocationAddressHelper(private val context: Context) {
 
         return if (isJapanese) {
             val admin = address.adminArea ?: "" // 都道府県 (東京都)
-            val locality = address.locality ?: address.subAdminArea ?: "" // 市区町村 (渋谷区)
-            val subLocality = address.subLocality ?: "" // 町名・丁目 (道玄坂1丁目)
+            val locality = address.locality ?: address.subAdminArea ?: "" // 市区町村 (千代田区、横浜市など)
+            val subLocality = address.subLocality ?: "" // 町名・丁目 (神田神保町、道玄坂1丁目など)
             val thoroughfare = address.thoroughfare ?: ""
             val subThoroughfare = address.subThoroughfare ?: "" // 番地・号
             val featureName = address.featureName ?: ""
 
-            val townPart = if (subLocality.isNotEmpty()) subLocality else thoroughfare
+            // 1. addressLine (最も完全な住所文字列) からの精密解析
+            val fullLine = address.getAddressLine(0) ?: ""
+            val cleanedLine = fullLine
+                .replace(Regex("^日本[、,\\s]*"), "")
+                .replace(Regex("^[〒\\d\\-\\s]+"), "")
+                .trim()
 
             if (exact) {
                 // 番地・号まで詳細
-                val blockPart = when {
-                    subThoroughfare.isNotEmpty() -> "${townPart} ${subThoroughfare}"
-                    featureName.isNotEmpty() && featureName != townPart && featureName != admin && featureName != locality -> "${townPart} ${featureName}"
-                    else -> townPart
+                if (cleanedLine.isNotEmpty()) {
+                    "現在地: $cleanedLine"
+                } else {
+                    val townPart = when {
+                        subLocality.isNotEmpty() -> subLocality
+                        thoroughfare.isNotEmpty() -> thoroughfare
+                        else -> ""
+                    }
+                    val blockPart = when {
+                        subThoroughfare.isNotEmpty() -> "${townPart} ${subThoroughfare}"
+                        featureName.isNotEmpty() && featureName != townPart && featureName != admin && featureName != locality -> "${townPart} ${featureName}"
+                        else -> townPart
+                    }
+                    val full = "${admin}${locality}${blockPart}".trim()
+                    if (full.isNotEmpty()) "現在地: $full" else "現在地: 住所取得中"
                 }
-                val full = "${admin}${locality}${blockPart}".trim()
-                if (full.isNotEmpty()) "現在地: $full" else "現在地: 住所取得中"
             } else {
-                // 市区町村・町名まで (プライバシー保護)
-                val full = "${admin}${locality}${townPart}".trim()
-                if (full.isNotEmpty()) "現在地: $full" else "現在地: 住所取得中"
+                // 市区町村・町名まで (プライバシー保護: 番地数字をカットして町・丁目で止める)
+                val townCandidate = when {
+                    subLocality.isNotEmpty() -> subLocality
+                    thoroughfare.isNotEmpty() -> thoroughfare
+                    else -> ""
+                }
+
+                if (admin.isNotEmpty() || locality.isNotEmpty() || townCandidate.isNotEmpty()) {
+                    val base = "${admin}${locality}${townCandidate}".trim()
+                    "現在地: $base"
+                } else if (cleanedLine.isNotEmpty()) {
+                    // 番地数字（1-2-3や12番地など）を取り除いて町名まで切り出す
+                    val stripped = cleanedLine.replace(Regex("[\\d\\uFF10-\\uFF19]+[\\-ー番地号].*$"), "").trim()
+                    "現在地: $stripped"
+                } else {
+                    "現在地: 住所取得中"
+                }
             }
         } else {
             // インターナショナル対応 (英語圏 / 海外)
