@@ -164,7 +164,7 @@ class SerenaWalkingNavigator(
         var targetBearing = results[1]
         if (targetBearing < 0) targetBearing += 360f
 
-        // 2. 空間コンパスからクロックポジションと詳細相対方向を取得
+        // 2. 空間コンパスから直感的な相対方向を取得
         val compass = compassHelper
         val clockGuidance = compass?.getClockPositionGuidance(targetBearing)
 
@@ -174,15 +174,15 @@ class SerenaWalkingNavigator(
         }
 
         // 4. ナビゲーション案内アナウンス
-        val dirText = clockGuidance?.directionText ?: "正面方向"
+        val dirText = clockGuidance?.directionText ?: "正面"
         val advice = if (clockGuidance?.isStraightAhead == true) {
             compass.checkTargetAlignmentHaptic(targetBearing)
-            "正面 12時方向に向いています。そのまま直進してください。"
+            "正面を向いています。そのまま直進してください。"
         } else {
             clockGuidance?.detailedDescription ?: ""
         }
 
-        return "目的地「${dest.name}」まで 直線距離 約${distanceMeters}メートル、$dirText。$advice"
+        return "目的地「${dest.name}」まで約${distanceMeters}メートル、方向は${dirText}です。$advice"
     }
 
     /**

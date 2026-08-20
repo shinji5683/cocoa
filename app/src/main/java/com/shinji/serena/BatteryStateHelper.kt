@@ -26,6 +26,7 @@ class BatteryStateHelper(
     private var lastChargingState = false
     private var lastPluggedType = -1
     private var hasAnnouncedFull = false
+    private var hasAnnouncedOverheat = false
 
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -71,11 +72,24 @@ class BatteryStateHelper(
                         hasAnnouncedFull = false
                     }
 
-                    // 100% 満充電の初検知
+                    // 100% 満充電の初検知（プレミアム完了ジングル♪）
                     if (isFull && isCharging && !hasAnnouncedFull) {
                         hasAnnouncedFull = true
-                        service.soundHelper?.playActionDone()
+                        service.soundHelper?.playFullChargeJingle()
                         service.speak("バッテリーが100パーセント満充電になりました。充電器を取り外せます。", TextToSpeech.QUEUE_ADD)
+                    }
+
+                    // バッテリー発熱警告（45℃以上）
+                    val tempTenths = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
+                    if (tempTenths > 0) {
+                        val tempCelsius = tempTenths / 10
+                        if (tempCelsius >= 45 && !hasAnnouncedOverheat) {
+                            hasAnnouncedOverheat = true
+                            service.soundHelper?.playWarningSound()
+                            service.speak("警告。バッテリー温度が${tempCelsius}度と高温になっています。充電器を外すか、端末を休ませてください。", TextToSpeech.QUEUE_ADD)
+                        } else if (tempCelsius < 40) {
+                            hasAnnouncedOverheat = false
+                        }
                     }
                 }
             }

@@ -91,6 +91,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var liveEnvironmentHandler: android.os.Handler? = null
     private var liveEnvironmentRunnable: Runnable? = null
 
+    var aiAutoLabelHelper: AiAutoLabelHelper? = null
+    var morningSummaryHelper: MorningSummaryHelper? = null
+
     // 通話時間計測用
     var isCallActive = false
     private var activeCallApp: String = ""
@@ -117,6 +120,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             walkingNavigator = com.shinji.serena.navigation.SerenaWalkingNavigator(this, compassHelper).apply { try { startTracking() } catch (_: Exception) {} }
             wifiConnectivityHelper = WifiConnectivityHelper(this).apply { try { startMonitoring() } catch (_: Exception) {} }
             batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} }
+            aiAutoLabelHelper = AiAutoLabelHelper()
+            morningSummaryHelper = MorningSummaryHelper(this)
 
             shakeDetectorHelper = ShakeDetectorHelper(safeContext) {
                 announceFullStatus()
@@ -2087,6 +2092,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     return
                 }
 
+                // 朝の初回ロック解除時のモーニングサマリー挨拶
+                morningSummaryHelper?.checkAndAnnounceMorningSummary()
+
                 checkCallState(pkgName)
 
                 val windowTitle = event.contentDescription?.toString()
@@ -2516,7 +2524,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            // 5. 特定のキー・ボタンIDからの推定
+            // 5. AIスマート自動ラベリング（無名ボタンへのAI推論名付与）
+            val aiInferred = aiAutoLabelHelper?.inferLabelForUnlabeledNode(node)
+            if (!aiInferred.isNullOrEmpty()) {
+                return aiInferred
+            }
+
+            // 6. 特定のキー・ボタンIDからの推定
             val inferred = inferLabelFromViewId(node.viewIdResourceName)
             if (inferred.isNotEmpty()) {
                 return inferred

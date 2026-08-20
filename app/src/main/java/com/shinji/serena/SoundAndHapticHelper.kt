@@ -97,6 +97,27 @@ class SoundAndHapticHelper(private val context: Context) {
         vibrate(20)
     }
 
+    fun playFullChargeJingle() {
+        // 満充電完了の華やかな3音ジングル♪
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            toneGenerator?.startTone(ToneGenerator.TONE_DTMF_1, 50)
+            vibrate(15)
+        }
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            toneGenerator?.startTone(ToneGenerator.TONE_DTMF_3, 50)
+            vibrate(15)
+        }, 70)
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 80)
+            vibrate(30)
+        }, 140)
+    }
+
+    fun playWarningSound() {
+        toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 100)
+        vibratePattern(longArrayOf(0, 50, 40, 50))
+    }
+
     fun playFirstItemEdgeSound() {
         // 1番目（最初）の項目：高音チャイム + 軽快なダブル振動
         toneGenerator?.startTone(ToneGenerator.TONE_DTMF_A, 60)

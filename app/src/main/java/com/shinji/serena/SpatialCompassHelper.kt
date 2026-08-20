@@ -270,26 +270,26 @@ class SpatialCompassHelper(private val context: Context) : SensorEventListener {
     }
 
     /**
-     * 目的地方位角 (targetBearing) と端末方位 (userHeading) からクロックポジションと詳細相対方向を算出
+     * 目的地方位角 (targetBearing) と端末方位 (userHeading) から直感的な相対方向（正面・右斜め前・右・後ろ等）を算出
      */
     fun getClockPositionGuidance(targetBearing: Float, userHeading: Float = currentAzimuth): ClockGuidance {
         var diff = (targetBearing - userHeading + 360f) % 360f
         if (diff < 0) diff += 360f
 
         return when {
-            diff >= 345f || diff < 15f -> ClockGuidance(12, "正面 12時の方向", "正面 まっすぐ進んでください", true)
-            diff in 15f..<45f -> ClockGuidance(1, "右斜め前 1時の方向", "少し右斜め前を向いてください", false)
-            diff in 45f..<75f -> ClockGuidance(2, "右前 2時の方向", "右前を向いてください", false)
-            diff in 75f..<105f -> ClockGuidance(3, "右真横 3時の方向", "右真横を向いてください", false)
-            diff in 105f..<135f -> ClockGuidance(4, "右斜め後ろ 4時の方向", "右斜め後ろです", false)
-            diff in 135f..<165f -> ClockGuidance(5, "右後方 5時の方向", "右後ろを向いてください", false)
-            diff in 165f..<195f -> ClockGuidance(6, "真後ろ 6時の方向", "真後ろです。Uターンしてください", false)
-            diff in 195f..<225f -> ClockGuidance(7, "左後方 7時の方向", "左後ろを向いてください", false)
-            diff in 225f..<255f -> ClockGuidance(8, "左斜め後ろ 8時の方向", "左斜め後ろです", false)
-            diff in 255f..<285f -> ClockGuidance(9, "左真横 9時の方向", "左真横を向いてください", false)
-            diff in 285f..<315f -> ClockGuidance(10, "左前 10時の方向", "左前を向いてください", false)
-            diff in 315f..<345f -> ClockGuidance(11, "左斜め前 11時の方向", "少し左斜め前を向いてください", false)
-            else -> ClockGuidance(12, "正面 12時の方向", "正面 まっすぐ進んでください", true)
+            diff >= 345f || diff < 15f -> ClockGuidance(12, "正面", "正面です。まっすぐ直進してください", true)
+            diff in 15f..<45f -> ClockGuidance(1, "少し右斜め前", "少し右前を向いてください", false)
+            diff in 45f..<75f -> ClockGuidance(2, "右斜め前", "右斜め前を向いてください", false)
+            diff in 75f..<105f -> ClockGuidance(3, "右方向", "右を向いてください", false)
+            diff in 105f..<135f -> ClockGuidance(4, "右斜め後ろ", "右斜め後ろです", false)
+            diff in 135f..<165f -> ClockGuidance(5, "右後ろ", "右後ろを向いてください", false)
+            diff in 165f..<195f -> ClockGuidance(6, "真後ろ", "真後ろです。Uターンしてください", false)
+            diff in 195f..<225f -> ClockGuidance(7, "左後ろ", "左後ろを向いてください", false)
+            diff in 225f..<255f -> ClockGuidance(8, "左斜め後ろ", "左斜め後ろです", false)
+            diff in 255f..<285f -> ClockGuidance(9, "左方向", "左を向いてください", false)
+            diff in 285f..<315f -> ClockGuidance(10, "左斜め前", "左斜め前を向いてください", false)
+            diff in 315f..<345f -> ClockGuidance(11, "少し左斜め前", "少し左前を向いてください", false)
+            else -> ClockGuidance(12, "正面", "正面です。まっすぐ直進してください", true)
         }
     }
 
