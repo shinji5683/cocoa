@@ -99,16 +99,41 @@ class SerenaFocusNavigator(
     }
 
     private fun traverseTree(node: AccessibilityNodeInfo, list: MutableList<AccessibilityNodeInfo>) {
-        if (evaluator.isFocusableTarget(node)) {
+        if (!node.isVisibleToUser) {
+            val rect = Rect()
+            node.getBoundsInScreen(rect)
+            if (rect.isEmpty || rect.width() <= 0 || rect.height() <= 0) {
+                return
+            }
+        }
+
+        val isTarget = evaluator.isFocusableTarget(node)
+        val hasFocusableChildren = evaluator.hasFocusableChildren(node)
+
+        // 1. 子要素にフォーカス可能要素を持たない意味のあるノード（末端ノード/ボタン/テキスト等）なら登録
+        if (isTarget && !hasFocusableChildren) {
             if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
                 list.add(node)
             }
             return
         }
 
+        // 2. 子要素が存在する場合、全子要素を必ず再帰探索！
+        var addedAnyChild = false
+        val initialSize = list.size
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
             traverseTree(child, list)
+        }
+        if (list.size > initialSize) {
+            addedAnyChild = true
+        }
+
+        // 3. 子要素から1つもターゲットが取れなかったが、このノード自体がターゲット（クリック可能行など）ならフォールバック登録
+        if (!addedAnyChild && isTarget) {
+            if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
+                list.add(node)
+            }
         }
     }
 
