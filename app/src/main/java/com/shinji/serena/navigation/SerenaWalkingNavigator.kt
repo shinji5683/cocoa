@@ -101,16 +101,36 @@ class SerenaWalkingNavigator(
             val addresses: List<Address>? = geocoder.getFromLocation(loc.latitude, loc.longitude, 3)
             if (!addresses.isNullOrEmpty()) {
                 val addr = addresses[0]
+                
+                // 1. getAddressLine(0) から完全な正式住所を取得してサニタイズ
+                val rawLine = addr.getAddressLine(0) ?: ""
+                if (rawLine.isNotEmpty()) {
+                    val cleanAddress = rawLine
+                        .replace(Regex("^日本、?"), "")
+                        .replace(Regex("〒[0-9]{3}-?[0-9]{4}\\s*"), "")
+                        .trim()
+                    if (cleanAddress.isNotEmpty()) {
+                        return cleanAddress
+                    }
+                }
+
+                // 2. フォールバック：町名(subLocality)・番地(thoroughfare/featureName)を一切漏らさず連結
                 val admin = addr.adminArea ?: ""
                 val locality = addr.locality ?: addr.subAdminArea ?: ""
-                val thoroughfare = addr.thoroughfare ?: addr.subLocality ?: ""
+                val subLocality = addr.subLocality ?: ""
+                val thoroughfare = addr.thoroughfare ?: ""
+                val subThoroughfare = addr.subThoroughfare ?: ""
                 val feature = addr.featureName ?: ""
 
-                val full = listOf(admin, locality, thoroughfare, feature)
-                    .filter { it.isNotEmpty() }
-                    .distinct()
-                    .joinToString("")
+                val parts = mutableListOf<String>()
+                if (admin.isNotEmpty()) parts.add(admin)
+                if (locality.isNotEmpty() && locality != admin) parts.add(locality)
+                if (subLocality.isNotEmpty() && !parts.contains(subLocality)) parts.add(subLocality)
+                if (thoroughfare.isNotEmpty() && !parts.contains(thoroughfare)) parts.add(thoroughfare)
+                if (subThoroughfare.isNotEmpty() && !parts.contains(subThoroughfare)) parts.add(subThoroughfare)
+                if (feature.isNotEmpty() && !parts.contains(feature) && feature != locality && feature != subLocality) parts.add(feature)
 
+                val full = parts.joinToString("")
                 if (full.isNotEmpty()) full else "緯度 ${String.format("%.4f", loc.latitude)}、経度 ${String.format("%.4f", loc.longitude)}"
             } else {
                 "緯度 ${String.format("%.4f", loc.latitude)}、経度 ${String.format("%.4f", loc.longitude)}"
@@ -121,25 +141,80 @@ class SerenaWalkingNavigator(
     }
 
     /**
-     * 施設名や住所から目的地を設定（APIキー不要）
+     * 施設名や住所から現在地周辺の最寄り目的地を設定
      */
     fun setDestinationByName(name: String): Boolean {
-        return try {
-            val geocoder = Geocoder(context, Locale.JAPAN)
-            @Suppress("DEPRECATION")
-            val results = geocoder.getFromLocationName(name, 1)
-            if (!results.isNullOrEmpty()) {
-                val dest = results[0]
-                val fullAddress = dest.getAddressLine(0) ?: name
-                activeDestination = NavDestination(name, dest.latitude, dest.longitude, fullAddress)
-                true
-            } else {
-                false
+        val loc = currentLocation
+        val geocoder = Geocoder(context, Locale.JAPAN)
+
+        val queries = mutableListOf<String>()
+        val addressSync = try { getCurrentAddressSync() } catch (_: Exception) { "" }
+        val city = if (addressSync.contains("市")) addressSync.substringBefore("市") + "市" else ""
+
+        if (name == "コンビニ") {
+            if (city.isNotEmpty()) {
+                queries.add("$city セブンイレブン")
+                queries.add("$city ファミリーマート")
+                queries.add("$city ローソン")
+                queries.add("$city コンビニ")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to resolve destination: ${e.message}")
-            false
+            queries.add("セブンイレブン")
+            queries.add("ファミリーマート")
+            queries.add("ローソン")
+            queries.add("コンビニ")
+        } else if (name == "駅") {
+            if (city.isNotEmpty()) {
+                queries.add("$city 駅")
+            }
+            queries.add("駅")
+        } else {
+            if (city.isNotEmpty()) queries.add("$city $name")
+            queries.add(name)
         }
+
+        for (query in queries) {
+            try {
+                @Suppress("DEPRECATION")
+                val results = if (loc != null) {
+                    val latDelta = 0.05 // 約5km四方
+                    val lonDelta = 0.05
+                    geocoder.getFromLocationName(
+                        query,
+                        5,
+                        loc.latitude - latDelta,
+                        loc.longitude - lonDelta,
+                        loc.latitude + latDelta,
+                        loc.longitude + lonDelta
+                    )
+                } else {
+                    geocoder.getFromLocationName(query, 3)
+                }
+
+                if (!results.isNullOrEmpty()) {
+                    // 現在地から最も近い候補を選定
+                    val best = if (loc != null && results.size > 1) {
+                        results.minByOrNull { r ->
+                            val dist = FloatArray(1)
+                            Location.distanceBetween(loc.latitude, loc.longitude, r.latitude, r.longitude, dist)
+                            dist[0]
+                        } ?: results[0]
+                    } else {
+                        results[0]
+                    }
+
+                    val rawDestName = best.featureName ?: best.thoroughfare ?: name
+                    val fullAddress = best.getAddressLine(0)?.replace(Regex("^日本、?"), "")?.replace(Regex("〒[0-9-]+\\s*"), "")?.trim() ?: rawDestName
+                    val displayName = if (rawDestName.length in 2..20) rawDestName else fullAddress
+                    activeDestination = NavDestination(displayName, best.latitude, best.longitude, fullAddress)
+                    Log.i(TAG, "Destination successfully set to: $displayName ($fullAddress) at ${best.latitude},${best.longitude}")
+                    return true
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Search query '$query' failed: ${e.message}")
+            }
+        }
+
+        return false
     }
 
     fun setDestinationCoordinates(name: String, latitude: Double, longitude: Double) {

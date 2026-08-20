@@ -1873,21 +1873,35 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             },
             serenaMenuItem("🏪", "最寄りのコンビニへ案内開始") {
                 soundHelper?.playActionDone()
-                speak("最寄りのコンビニを検索し、ナビゲーションを開始します", TextToSpeech.QUEUE_FLUSH)
-                if (nav.setDestinationByName("コンビニ")) {
-                    speak("目的地を「最寄りコンビニ」に設定しました。" + nav.getNavigationGuidance(), TextToSpeech.QUEUE_FLUSH)
-                } else {
-                    speak("コンビニの位置が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
-                }
+                speak("最寄りのコンビニを検索中...", TextToSpeech.QUEUE_FLUSH)
+                Thread {
+                    val success = nav.setDestinationByName("コンビニ")
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        if (success) {
+                            soundHelper?.playActionDone()
+                            val guidance = nav.getNavigationGuidance()
+                            speak(guidance, TextToSpeech.QUEUE_FLUSH)
+                        } else {
+                            speak("現在地周辺のコンビニが見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
+                        }
+                    }
+                }.start()
             },
             serenaMenuItem("🚉", "最寄り駅へ案内開始") {
                 soundHelper?.playActionDone()
-                speak("最寄り駅を検索し、ナビゲーションを開始します", TextToSpeech.QUEUE_FLUSH)
-                if (nav.setDestinationByName("駅")) {
-                    speak("目的地を「最寄り駅」に設定しました。" + nav.getNavigationGuidance(), TextToSpeech.QUEUE_FLUSH)
-                } else {
-                    speak("駅の位置が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
-                }
+                speak("最寄り駅を検索中...", TextToSpeech.QUEUE_FLUSH)
+                Thread {
+                    val success = nav.setDestinationByName("駅")
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        if (success) {
+                            soundHelper?.playActionDone()
+                            val guidance = nav.getNavigationGuidance()
+                            speak(guidance, TextToSpeech.QUEUE_FLUSH)
+                        } else {
+                            speak("現在地周辺の駅が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
+                        }
+                    }
+                }.start()
             },
             serenaMenuItem("🧭", "3D空間オーディオ・コンパス案内を開始") {
                 toggleSpatialCompassAudio()
