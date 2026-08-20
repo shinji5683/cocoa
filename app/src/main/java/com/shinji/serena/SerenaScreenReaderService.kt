@@ -2082,6 +2082,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // セレナメニューダイアログ表示中の場合、OSがウィンドウ内の全項目テキストを結合して送ってくるため全読みを抑制！
+                if (activeMenuDialog != null) {
+                    return
+                }
+
                 checkCallState(pkgName)
 
                 val windowTitle = event.contentDescription?.toString()
