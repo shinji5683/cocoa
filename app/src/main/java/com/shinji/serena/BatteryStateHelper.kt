@@ -44,8 +44,8 @@ class BatteryStateHelper(
             when (action) {
                 Intent.ACTION_POWER_CONNECTED -> {
                     service.soundHelper?.playActionDone()
-                    val chargingSource = getPluggedSourceDesc(plugged)
-                    service.speak("${chargingSource}を開始しました。バッテリー残量は${pct}パーセントです。", TextToSpeech.QUEUE_FLUSH)
+                    val chargingDetails = getChargingDetailsDesc(intent, plugged)
+                    service.speak("${chargingDetails}を開始しました。バッテリー残量は${pct}パーセントです。", TextToSpeech.QUEUE_FLUSH)
                     lastChargingState = true
                     lastPluggedType = plugged
                 }
@@ -61,9 +61,9 @@ class BatteryStateHelper(
                     if (isCharging && !lastChargingState) {
                         lastChargingState = true
                         lastPluggedType = plugged
-                        val chargingSource = getPluggedSourceDesc(plugged)
+                        val chargingDetails = getChargingDetailsDesc(intent, plugged)
                         service.soundHelper?.playActionDone()
-                        service.speak("${chargingSource}を開始しました。バッテリー残量は${pct}パーセントです。", TextToSpeech.QUEUE_ADD)
+                        service.speak("${chargingDetails}を開始しました。バッテリー残量は${pct}パーセントです。", TextToSpeech.QUEUE_ADD)
                     } else if (!isCharging && lastChargingState) {
                         lastChargingState = false
                         lastPluggedType = -1
@@ -112,13 +112,53 @@ class BatteryStateHelper(
         }
     }
 
-    private fun getPluggedSourceDesc(plugged: Int): String {
-        return when (plugged) {
-            BatteryManager.BATTERY_PLUGGED_AC -> "コンセントから急速充電"
-            BatteryManager.BATTERY_PLUGGED_USB -> "USB充電"
-            BatteryManager.BATTERY_PLUGGED_WIRELESS -> "ワイヤレス充電"
-            4 -> "スマートドック充電"
-            else -> "充電"
+    private fun getChargingDetailsDesc(intent: Intent, plugged: Int): String {
+        val source = when (plugged) {
+            BatteryManager.BATTERY_PLUGGED_AC -> "AC電源"
+            BatteryManager.BATTERY_PLUGGED_USB -> "USB"
+            BatteryManager.BATTERY_PLUGGED_WIRELESS -> "ワイヤレス"
+            4 -> "専用ドック"
+            else -> "充電器"
         }
+
+        // 充電速度判定 (急速 / 普通 / 低速)
+        var speed = "普通充電"
+        try {
+            val bm = service.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            var currentMicroAmps = intent.getIntExtra("max_charging_current", -1)
+            var voltageMicroVolts = intent.getIntExtra("max_charging_voltage", -1)
+
+            if (currentMicroAmps <= 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && bm != null) {
+                currentMicroAmps = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+            }
+
+            if (currentMicroAmps > 0 && voltageMicroVolts > 0) {
+                val watts = (currentMicroAmps / 1_000_000.0) * (voltageMicroVolts / 1_000_000.0)
+                speed = when {
+                    watts >= 15.0 -> "急速充電"
+                    watts >= 7.0 -> "普通充電"
+                    else -> "低速充電"
+                }
+            } else if (currentMicroAmps > 0) {
+                val milliamps = kotlin.math.abs(currentMicroAmps) / 1000
+                speed = when {
+                    milliamps >= 2000 -> "急速充電"
+                    milliamps >= 1000 -> "普通充電"
+                    else -> "低速充電"
+                }
+            } else {
+                // 電流取得不可時のフォールバック
+                speed = when (plugged) {
+                    BatteryManager.BATTERY_PLUGGED_AC -> "急速充電"
+                    BatteryManager.BATTERY_PLUGGED_WIRELESS -> "普通充電"
+                    BatteryManager.BATTERY_PLUGGED_USB -> "低速充電"
+                    else -> "充電"
+                }
+            }
+        } catch (_: Exception) {
+            speed = if (plugged == BatteryManager.BATTERY_PLUGGED_AC) "急速充電" else "充電"
+        }
+
+        return "${source}から${speed}"
     }
 }
