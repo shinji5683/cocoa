@@ -1,11 +1,13 @@
 # ==============================================================================
-# Serena Screen Reader - One-Click GitHub Release Script
-# Usage: .\release_github.ps1 [-Tag "v1.0.0-alpha01"] [-Title "Serena Alpha 1.0.0"]
+# Serena Screen Reader - High-Speed Local GitHub Release Script
+# Usage examples:
+#   .\release_github.ps1
+#   .\release_github.ps1 -Tag "v1.0.0-alpha02" -Title "Serena Alpha 2" -Notes "新機能追加と修正"
 # ==============================================================================
 param (
     [string]$Tag = "",
     [string]$Title = "",
-    [string]$Notes = "Serena Screen Reader Alpha Release"
+    [string]$Notes = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -26,11 +28,19 @@ if ([string]::IsNullOrWhiteSpace($Title)) {
 }
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " Serena Automated GitHub Release: $Tag" -ForegroundColor Green
+Write-Host " Serena High-Speed GitHub Release: $Tag" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# Step 1: Build Release and Debug APKs
-Write-Host "[1/3] Building Release and Debug APKs with signing..." -ForegroundColor Yellow
+# Step 1: Check GitHub CLI authentication
+Write-Host "[1/3] Checking GitHub CLI auth status..." -ForegroundColor Yellow
+$authCheck = gh auth status 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "GitHub CLI (gh) is not logged in. Please run: gh auth login" -ForegroundColor Red
+    exit 1
+}
+
+# Step 2: High-speed local build (Release & Debug APKs)
+Write-Host "[2/3] Building Release and Debug APKs (using local Gradle cache)..." -ForegroundColor Yellow
 $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat :app:assembleRelease :app:assembleDebug --stacktrace
 
@@ -41,19 +51,24 @@ if (-not (Test-Path $releaseApk)) {
     Write-Error "Release APK not found at $releaseApk"
 }
 
-# Step 2: Check GitHub CLI authentication
-Write-Host "[2/3] Checking GitHub CLI auth status..." -ForegroundColor Yellow
-$authCheck = gh auth status 2>&1
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "GitHub CLI (gh) is not logged in." -ForegroundColor Yellow
-    Write-Host "Please login once using: gh auth login" -ForegroundColor Cyan
-    exit 1
+# Step 3: Create or update GitHub Release with APK assets & Release Notes
+Write-Host "[3/3] Uploading APKs to GitHub Releases ($Tag)..." -ForegroundColor Yellow
+
+$ghArgs = @("release", "create", $Tag, $releaseApk, $debugApk, "--title", $Title, "--prerelease")
+if (-not [string]::IsNullOrWhiteSpace($Notes)) {
+    $ghArgs += @("--notes", $Notes)
+} else {
+    $ghArgs += "--generate-notes"
 }
 
-# Step 3: Create GitHub Release and Upload APKs
-Write-Host "[3/3] Creating GitHub Release $Tag and uploading APKs..." -ForegroundColor Yellow
-gh release create $Tag $releaseApk $debugApk --title $Title --notes $Notes --prerelease
+# Execute release create; if already exists, fallback to clobber upload
+& gh @ghArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Release already exists. Updating and overwriting assets..." -ForegroundColor Yellow
+    gh release upload $Tag $releaseApk $debugApk --clobber
+}
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " Release $Tag published successfully to GitHub!" -ForegroundColor Green
+Write-Host " Release $Tag successfully published to GitHub in seconds!" -ForegroundColor Green
+Write-Host " URL: https://github.com/shinji5683/cocoa/releases/tag/$Tag" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
