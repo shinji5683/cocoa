@@ -308,8 +308,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 handleMagicTapAction()
                 return true
             }
-            // 2本指トリプルタップ (29 / GESTURE_2_FINGER_TRIPLE_TAP): 音声読み上げの消音（ミュート）切替
-            29 -> {
+            // 2本指トリプルタップ (21 / GESTURE_2_FINGER_TRIPLE_TAP): 音声読み上げの消音（ミュート）切替
+            21 -> {
                 toggleSpeechMute()
                 return true
             }
@@ -337,8 +337,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            // 3本指シングルタップ (21, 22): Serena メニューを開く！
-            21, 22 -> {
+            // 3本指シングルタップ (22 / GESTURE_3_FINGER_SINGLE_TAP): Serena メニューを開く！
+            22 -> {
                 soundHelper?.playMenuOpen()
                 showNormalSerenaMenu()
                 return true
