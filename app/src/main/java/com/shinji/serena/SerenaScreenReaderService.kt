@@ -125,6 +125,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             soundHelper?.let {
                 spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
             }
+            focusNavigator = com.shinji.serena.navigation.SerenaFocusNavigator(this)
+            gestureDispatcher = com.shinji.serena.gesture.SerenaGestureDispatcher(this)
             com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing non-core helpers: ${e.message}")
