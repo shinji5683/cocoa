@@ -131,6 +131,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             soundHelper?.let {
                 spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
             }
+            focusNavigator = com.shinji.serena.navigation.SerenaFocusNavigator(this)
+            gestureDispatcher = com.shinji.serena.gesture.SerenaGestureDispatcher(this)
             com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
             
             // serenaオリジナルモードを正統デフォルトとして初期化
