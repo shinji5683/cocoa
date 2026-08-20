@@ -32,28 +32,46 @@ class SerenaFocusNavigator(
 
     fun getAllRoots(): List<AccessibilityNodeInfo> {
         val list = mutableListOf<AccessibilityNodeInfo>()
+        
+        // 1. 最優先: アクティブウィンドウのルートノード
         val activeRoot = service.rootInActiveWindow
-        val activeWindowId = activeRoot?.windowId ?: -1
-
-        val wins = service.windows
-        if (!wins.isNullOrEmpty()) {
-            val sortedWins = wins.sortedWith(Comparator { w1, w2 ->
-                val p1 = getWindowPriority(w1, activeWindowId)
-                val p2 = getWindowPriority(w2, activeWindowId)
-                p1.compareTo(p2)
-            })
-
-            for (w in sortedWins) {
-                val r = w.root ?: continue
-                if (list.none { it.windowId == r.windowId || it == r }) {
-                    list.add(r)
-                }
-            }
-        }
-
-        if (list.isEmpty() && activeRoot != null) {
+        if (activeRoot != null) {
             list.add(activeRoot)
         }
+
+        // 2. 現在フォーカスされているノードのルート
+        try {
+            val focusNode = service.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
+                ?: service.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+            var p = focusNode
+            while (p?.parent != null) {
+                p = p.parent
+            }
+            if (p != null && list.none { it == p || it.windowId == p.windowId }) {
+                list.add(p)
+            }
+        } catch (_: Exception) {}
+
+        // 3. windows リストからのルート探索
+        try {
+            val wins = service.windows
+            if (!wins.isNullOrEmpty()) {
+                val activeWindowId = activeRoot?.windowId ?: -1
+                val sortedWins = wins.sortedWith(Comparator { w1, w2 ->
+                    val p1 = getWindowPriority(w1, activeWindowId)
+                    val p2 = getWindowPriority(w2, activeWindowId)
+                    p1.compareTo(p2)
+                })
+
+                for (w in sortedWins) {
+                    val r = w.root ?: continue
+                    if (list.none { it == r || it.windowId == r.windowId }) {
+                        list.add(r)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
         return list
     }
 
@@ -149,7 +167,13 @@ class SerenaFocusNavigator(
             return
         }
 
-        val currentIndex = findCurrentNodeIndex(nodes, currentFocus)
+        val currentIndex = if (currentFocus != null) {
+            findCurrentNodeIndex(nodes, currentFocus)
+        } else if (lastFocusedNodeIndex in nodes.indices) {
+            lastFocusedNodeIndex
+        } else {
+            -1
+        }
 
         val targetIndex = if (forward) {
             if (currentIndex < 0) 0 else currentIndex + 1
