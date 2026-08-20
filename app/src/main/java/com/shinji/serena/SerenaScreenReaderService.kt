@@ -1438,10 +1438,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val firstTitle = items.firstOrNull()?.title ?: ""
         soundHelper?.playMenuOpen()
         
-        // メニューオープンチャイムが一呼吸鳴り響いてから、心地よくナレーション開始！
+        // メニューオープン音とほぼ同時に超高速レスポンスでナレーション開始！
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             speak("セレナメニューが開きました。全${items.size}項目。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
-        }, 120)
+        }, 40)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             try {
