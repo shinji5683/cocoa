@@ -1620,20 +1620,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        // TalkBack互換の強力な垂直高速上スワイプ（画面下部 0.88f から 上部 0.10f）
-        val path1 = android.graphics.Path().apply {
-            moveTo(width * 0.35f, height * 0.88f)
-            lineTo(width * 0.35f, height * 0.10f)
+        // Android標準ロック画面（Keyguard）用の中央高速上スワイプ（画面下部 0.85f から 上部 0.10f、140ms）
+        val pathCenter = android.graphics.Path().apply {
+            moveTo(width * 0.50f, height * 0.85f)
+            lineTo(width * 0.50f, height * 0.10f)
         }
-        val path2 = android.graphics.Path().apply {
-            moveTo(width * 0.65f, height * 0.88f)
-            lineTo(width * 0.65f, height * 0.10f)
-        }
-        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 160)
-        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 160)
+        val strokeCenter = android.accessibilityservice.GestureDescription.StrokeDescription(pathCenter, 0, 140)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(stroke1)
-            .addStroke(stroke2)
+            .addStroke(strokeCenter)
             .build()
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
