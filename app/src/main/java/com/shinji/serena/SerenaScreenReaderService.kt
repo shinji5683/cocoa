@@ -122,6 +122,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 announceFullStatus()
             }.apply { try { start() } catch (_: Exception) {} }
 
+            focusNavigator = com.shinji.serena.navigation.SerenaFocusNavigator(this)
             soundHelper?.let {
                 spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
             }
@@ -197,16 +198,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN
         info.notificationTimeout = 0
-        var flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
+        var flags = info.flags or
+                AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
                 AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                 AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
                 AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
+            flags = flags or AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
         }
         info.flags = flags
         serviceInfo = info
-        Log.i(TAG, "serena AccessibilityService connected with Multi-Finger & Touch Exploration enabled.")
+        Log.i(TAG, "serena AccessibilityService connected with Multi-Finger & Touch Exploration flags=$flags.")
 
         // 再起動直後（Direct Boot）やサービス接続時の初期フォーカス自動捕捉
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -222,20 +225,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val gestureId = gestureEvent.gestureId
+            Log.i(TAG, "onGesture(AccessibilityGestureEvent) received: $gestureId")
             if (handleGestureId(gestureId)) {
                 return true
             }
         }
-        return super.onGesture(gestureEvent)
+        return false
     }
 
     @Deprecated("Deprecated in API 30+")
     override fun onGesture(gestureId: Int): Boolean {
+        Log.i(TAG, "onGesture(Int) received: $gestureId")
         if (handleGestureId(gestureId)) {
             return true
         }
-        @Suppress("DEPRECATION")
-        return super.onGesture(gestureId)
+        return false
     }
 
     private var lastUnlockTime = 0L
