@@ -84,15 +84,21 @@ class GeminiNanoEngine(private val context: Context) {
         return baseSummary.toString()
     }
 
+    data class PersonAnalysisDetail(
+        val position: String,          // 例: "正面近く", "左側少し奥", "右側"
+        val clothingColor: String,     // 例: "白いトップス", "黒い服", "青系の服"
+        val pantsColor: String,        // 例: "黒いズボン", "ジーンズ", "暗めのボトムス"
+        val expression: String,        // 例: "満面の明るい笑顔", "穏やかな微笑み", "真剣な表情", "少し暗めの落ち着いた表情"
+        val emotionalMeaning: String,  // 例: "とても楽しそうに喜んでいる様子", "安心している雰囲気", "深く考え事をしている様子", "少し疲れているか物思いにふけっている様子"
+        val isLookingAtCamera: Boolean
+    )
+
     /**
-     * 視覚・人物・表情・位置・照度・物体認識結果から、温かく立体的なシーン解説テキストを生成
+     * 視覚・複数人物・服装・表情・感情の意味・位置・照度・物体認識結果から、詳細な解説テキストを生成
      */
-    fun describeSceneEnhanced(
-        personCount: Int,
-        smilingPersonCount: Int,
-        lookingAtCamera: Boolean,
-        personDetails: List<String>, // 例: "正面近く", "左側", "右奥" など
-        lightingLevel: String,        // 例: "明るい室内", "薄暗い場所", "真っ暗"
+    fun describeSceneComprehensive(
+        lightingLevel: String,
+        persons: List<PersonAnalysisDetail>,
         objects: List<String>,
         texts: List<String>
     ): String {
@@ -102,22 +108,21 @@ class GeminiNanoEngine(private val context: Context) {
             sb.append("${lightingLevel}です。")
         }
 
-        if (personCount > 0) {
-            val detail = personDetails.firstOrNull() ?: "正面"
-            if (personCount == 1) {
-                if (smilingPersonCount > 0) {
-                    sb.append("${detail}ににっこり笑顔の人が1人います。")
-                } else {
-                    sb.append("${detail}に人が1人います。")
-                }
-                if (lookingAtCamera) {
-                    sb.append("こちらを見ています。")
+        if (persons.isNotEmpty()) {
+            if (persons.size == 1) {
+                val p = persons[0]
+                val clothesDesc = if (p.clothingColor.isNotEmpty()) "${p.clothingColor}を着た" else ""
+                sb.append("${p.position}に、${clothesDesc}人が1人います。")
+                sb.append("表情は${p.expression}で、${p.emotionalMeaning}です。")
+                if (p.isLookingAtCamera) {
+                    sb.append("視線はこちらを向いています。")
                 }
             } else {
-                val positions = personDetails.take(2).joinToString("と")
-                sb.append("${positions}などに人が${personCount}人います。")
-                if (smilingPersonCount > 0) {
-                    sb.append("そのうち${smilingPersonCount}人が笑顔です。")
+                sb.append("人物が${persons.size}人います。")
+                persons.take(3).forEachIndexed { idx, p ->
+                    val numStr = "${idx + 1}人目は"
+                    val clothesDesc = if (p.clothingColor.isNotEmpty()) "${p.clothingColor}で、" else ""
+                    sb.append("${numStr}${p.position}、${clothesDesc}表情は${p.expression}（${p.emotionalMeaning}）。")
                 }
             }
         } else {
@@ -125,7 +130,7 @@ class GeminiNanoEngine(private val context: Context) {
         }
 
         if (objects.isNotEmpty()) {
-            val topObjects = objects.take(4).joinToString("、")
+            val topObjects = objects.take(3).joinToString("、")
             sb.append("物: ${topObjects}。")
         }
 
@@ -134,6 +139,41 @@ class GeminiNanoEngine(private val context: Context) {
             sb.append("文字: 「${topTexts}」。")
         }
 
+        return sb.toString().trim()
+    }
+
+    /**
+     * 互換用
+     */
+    fun describeSceneEnhanced(
+        personCount: Int,
+        smilingPersonCount: Int,
+        lookingAtCamera: Boolean,
+        personDetails: List<String>,
+        lightingLevel: String,
+        objects: List<String>,
+        texts: List<String>
+    ): String {
+        val sb = StringBuilder()
+        if (lightingLevel.isNotEmpty()) sb.append("${lightingLevel}です。")
+        if (personCount > 0) {
+            val detail = personDetails.firstOrNull() ?: "正面"
+            if (personCount == 1) {
+                if (smilingPersonCount > 0) {
+                    sb.append("${detail}に笑顔の人が1人います。")
+                } else {
+                    sb.append("${detail}に人が1人います。")
+                }
+                if (lookingAtCamera) sb.append("こちらを見ています。")
+            } else {
+                val positions = personDetails.take(2).joinToString("と")
+                sb.append("${positions}などに人が${personCount}人います。")
+            }
+        } else {
+            sb.append("周囲に人物は見当たりません。")
+        }
+        if (objects.isNotEmpty()) sb.append("物: ${objects.take(3).joinToString("、")}。")
+        if (texts.isNotEmpty()) sb.append("文字: 「${texts.take(2).joinToString("、")}」。")
         return sb.toString().trim()
     }
 

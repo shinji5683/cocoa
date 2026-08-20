@@ -140,44 +140,55 @@ class SerenaWalkingNavigator(
         }
     }
 
+    data class NavPlace(
+        val name: String,
+        val address: String,
+        val distanceMeters: Int,
+        val latitude: Double,
+        val longitude: Double,
+        val phone: String = "",
+        val website: String = ""
+    )
+
     /**
-     * 施設名や住所から現在地周辺の最寄り目的地を設定
+     * 現在地周辺の施設候補（コンビニ・駅等）を複数件検索して距離順で取得
      */
-    fun setDestinationByName(name: String): Boolean {
+    fun searchNearbyPlaces(type: String): List<NavPlace> {
         val loc = currentLocation
         val geocoder = Geocoder(context, Locale.JAPAN)
-
-        val queries = mutableListOf<String>()
+        val candidatePlaces = mutableListOf<NavPlace>()
         val addressSync = try { getCurrentAddressSync() } catch (_: Exception) { "" }
         val city = if (addressSync.contains("市")) addressSync.substringBefore("市") + "市" else ""
 
-        if (name == "コンビニ") {
+        val queries = mutableListOf<String>()
+        if (type == "コンビニ") {
             if (city.isNotEmpty()) {
                 queries.add("$city セブンイレブン")
-                queries.add("$city ファミリーマート")
                 queries.add("$city ローソン")
-                queries.add("$city コンビニ")
+                queries.add("$city ファミリーマート")
+                queries.add("$city ミニストップ")
             }
             queries.add("セブンイレブン")
-            queries.add("ファミリーマート")
             queries.add("ローソン")
-            queries.add("コンビニ")
-        } else if (name == "駅") {
+            queries.add("ファミリーマート")
+        } else if (type == "駅") {
             if (city.isNotEmpty()) {
                 queries.add("$city 駅")
             }
             queries.add("駅")
         } else {
-            if (city.isNotEmpty()) queries.add("$city $name")
-            queries.add(name)
+            if (city.isNotEmpty()) queries.add("$city $type")
+            queries.add(type)
         }
+
+        val seenAddresses = mutableSetOf<String>()
 
         for (query in queries) {
             try {
                 @Suppress("DEPRECATION")
                 val results = if (loc != null) {
-                    val latDelta = 0.05 // 約5km四方
-                    val lonDelta = 0.05
+                    val latDelta = 0.06 // 約6km四方
+                    val lonDelta = 0.06
                     geocoder.getFromLocationName(
                         query,
                         5,
@@ -187,33 +198,55 @@ class SerenaWalkingNavigator(
                         loc.longitude + lonDelta
                     )
                 } else {
-                    geocoder.getFromLocationName(query, 3)
+                    geocoder.getFromLocationName(query, 4)
                 }
 
-                if (!results.isNullOrEmpty()) {
-                    // 現在地から最も近い候補を選定
-                    val best = if (loc != null && results.size > 1) {
-                        results.minByOrNull { r ->
-                            val dist = FloatArray(1)
+                results?.forEach { r ->
+                    val rawDestName = r.featureName ?: r.thoroughfare ?: query
+                    val fullAddress = r.getAddressLine(0)?.replace(Regex("^日本、?"), "")?.replace(Regex("〒[0-9-]+\\s*"), "")?.trim() ?: rawDestName
+                    
+                    if (!seenAddresses.contains(fullAddress)) {
+                        seenAddresses.add(fullAddress)
+                        val dist = FloatArray(1)
+                        if (loc != null) {
                             Location.distanceBetween(loc.latitude, loc.longitude, r.latitude, r.longitude, dist)
-                            dist[0]
-                        } ?: results[0]
-                    } else {
-                        results[0]
+                        }
+                        val distMeters = dist[0].toInt()
+                        val displayName = if (rawDestName.length in 2..25 && rawDestName != city) rawDestName else fullAddress
+                        val phoneNum = r.phone ?: ""
+                        val webUrl = r.url ?: "https://www.google.com/search?q=${java.net.URLEncoder.encode("$displayName $fullAddress", "UTF-8")}"
+                        
+                        candidatePlaces.add(
+                            NavPlace(
+                                name = displayName,
+                                address = fullAddress,
+                                distanceMeters = distMeters,
+                                latitude = r.latitude,
+                                longitude = r.longitude,
+                                phone = phoneNum,
+                                website = webUrl
+                            )
+                        )
                     }
-
-                    val rawDestName = best.featureName ?: best.thoroughfare ?: name
-                    val fullAddress = best.getAddressLine(0)?.replace(Regex("^日本、?"), "")?.replace(Regex("〒[0-9-]+\\s*"), "")?.trim() ?: rawDestName
-                    val displayName = if (rawDestName.length in 2..20) rawDestName else fullAddress
-                    activeDestination = NavDestination(displayName, best.latitude, best.longitude, fullAddress)
-                    Log.i(TAG, "Destination successfully set to: $displayName ($fullAddress) at ${best.latitude},${best.longitude}")
-                    return true
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Search query '$query' failed: ${e.message}")
+                Log.w(TAG, "Search query '$query' error: ${e.message}")
             }
         }
 
+        return candidatePlaces.sortedBy { it.distanceMeters }.take(6)
+    }
+
+    /**
+     * 施設名や住所から現在地周辺の最寄り目的地を設定
+     */
+    fun setDestinationByName(name: String): Boolean {
+        val places = searchNearbyPlaces(name)
+        if (places.isNotEmpty()) {
+            val best = places[0]
+            activeDestination = NavDestination(best.name, best.latitude, best.longitude, best.address)
+            return true
+        }
         return false
     }
 

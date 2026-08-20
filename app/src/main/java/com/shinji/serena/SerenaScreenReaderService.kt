@@ -1871,32 +1871,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("📍", "現在地と方角の確認") {
                 speak(nav.getCurrentLocationSummary(), TextToSpeech.QUEUE_FLUSH)
             },
-            serenaMenuItem("🏪", "最寄りのコンビニへ案内開始") {
+            serenaMenuItem("🏪", "周辺のコンビニ一覧から選ぶ") {
                 soundHelper?.playActionDone()
-                speak("最寄りのコンビニを検索中...", TextToSpeech.QUEUE_FLUSH)
+                speak("現在地周辺のコンビニを検索中...", TextToSpeech.QUEUE_FLUSH)
                 Thread {
-                    val success = nav.setDestinationByName("コンビニ")
+                    val places = nav.searchNearbyPlaces("コンビニ")
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        if (success) {
-                            soundHelper?.playActionDone()
-                            val guidance = nav.getNavigationGuidance()
-                            speak(guidance, TextToSpeech.QUEUE_FLUSH)
+                        if (places.isNotEmpty()) {
+                            showNearbyPlacesListDialog("コンビニ", places, nav)
                         } else {
                             speak("現在地周辺のコンビニが見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
                         }
                     }
                 }.start()
             },
-            serenaMenuItem("🚉", "最寄り駅へ案内開始") {
+            serenaMenuItem("🚉", "周辺の駅一覧から選ぶ") {
                 soundHelper?.playActionDone()
-                speak("最寄り駅を検索中...", TextToSpeech.QUEUE_FLUSH)
+                speak("現在地周辺の駅を検索中...", TextToSpeech.QUEUE_FLUSH)
                 Thread {
-                    val success = nav.setDestinationByName("駅")
+                    val places = nav.searchNearbyPlaces("駅")
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        if (success) {
-                            soundHelper?.playActionDone()
-                            val guidance = nav.getNavigationGuidance()
-                            speak(guidance, TextToSpeech.QUEUE_FLUSH)
+                        if (places.isNotEmpty()) {
+                            showNearbyPlacesListDialog("駅", places, nav)
                         } else {
                             speak("現在地周辺の駅が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
                         }
@@ -1922,6 +1918,102 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 dialog.show()
             } catch (e: Exception) {
                 Log.e(TAG, "Walking nav dialog error: ${e.message}")
+            }
+        }
+    }
+
+    private fun showNearbyPlacesListDialog(
+        categoryTitle: String,
+        places: List<com.shinji.serena.navigation.SerenaWalkingNavigator.NavPlace>,
+        nav: com.shinji.serena.navigation.SerenaWalkingNavigator
+    ) {
+        val items = places.map { place ->
+            val icon = if (categoryTitle.contains("コンビニ")) "🏪" else "🚉"
+            serenaMenuItem(icon, "${place.name}（約${place.distanceMeters}m）") {
+                showPlaceDetailsDialog(place, nav)
+            }
+        }
+
+        speak("周辺の${categoryTitle}、${items.size}件見つかりました。1番目、${items[0].title}", TextToSpeech.QUEUE_FLUSH)
+
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            try {
+                val dialog = serenaMenuDialog(this, false, items)
+                activeMenuDialog = dialog
+                dialog.show()
+            } catch (e: Exception) {
+                Log.e(TAG, "Places list dialog error: ${e.message}")
+            }
+        }
+    }
+
+    private fun showPlaceDetailsDialog(
+        place: com.shinji.serena.navigation.SerenaWalkingNavigator.NavPlace,
+        nav: com.shinji.serena.navigation.SerenaWalkingNavigator
+    ) {
+        val items = mutableListOf<serenaMenuItem>()
+
+        // 1. 目的地に設定して徒歩ナビ開始
+        items.add(serenaMenuItem("🎯", "ここへ徒歩ナビを開始（約${place.distanceMeters}m）") {
+            nav.setDestinationCoordinates(place.name, place.latitude, place.longitude)
+            soundHelper?.playActionDone()
+            val guidance = nav.getNavigationGuidance()
+            speak("目的地を「${place.name}」に設定しました。$guidance", TextToSpeech.QUEUE_FLUSH)
+        })
+
+        // 2. 電話をかける
+        items.add(serenaMenuItem("📞", "電話をかける") {
+            soundHelper?.playClick()
+            if (place.phone.isNotEmpty()) {
+                try {
+                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${place.phone}")).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(intent)
+                } catch (_: Exception) {
+                    speak("電話アプリを起動できませんでした", TextToSpeech.QUEUE_FLUSH)
+                }
+            } else {
+                // 電話番号検索
+                speak("「${place.name}」の電話番号検索を開きます", TextToSpeech.QUEUE_FLUSH)
+                try {
+                    val searchUri = Uri.parse("https://www.google.com/search?q=${java.net.URLEncoder.encode("${place.name} 電話番号", "UTF-8")}")
+                    val browserIntent = Intent(Intent.ACTION_VIEW, searchUri).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(browserIntent)
+                } catch (_: Exception) {}
+            }
+        })
+
+        // 3. ホームページ・詳細情報を開く
+        items.add(serenaMenuItem("🌐", "ホームページ・施設情報を開く") {
+            soundHelper?.playClick()
+            speak("「${place.name}」のWeb詳細情報を開きます", TextToSpeech.QUEUE_FLUSH)
+            try {
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(place.website)).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                startActivity(browserIntent)
+            } catch (_: Exception) {
+                speak("ブラウザを開けませんでした", TextToSpeech.QUEUE_FLUSH)
+            }
+        })
+
+        // 4. 詳しい住所の読み上げ
+        items.add(serenaMenuItem("📍", "詳しい住所の確認") {
+            speak("${place.name}の住所は「${place.address}」です。現在地から約${place.distanceMeters}メートルです。", TextToSpeech.QUEUE_FLUSH)
+        })
+
+        speak("「${place.name}」の詳細メニューを開きました。全${items.size}項目。1番目、${items[0].title}", TextToSpeech.QUEUE_FLUSH)
+
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            try {
+                val dialog = serenaMenuDialog(this, false, items)
+                activeMenuDialog = dialog
+                dialog.show()
+            } catch (e: Exception) {
+                Log.e(TAG, "Place details dialog error: ${e.message}")
             }
         }
     }

@@ -227,12 +227,8 @@ class LiveVisionActivity : AppCompatActivity() {
 
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
-                        val faceCount = faces.size
-                        val smilingCount = faces.count { (it.smilingProbability ?: 0f) > 0.4f }
-                        val isLooking = faces.any { (it.leftEyeOpenProbability ?: 0f) > 0.4f && (it.rightEyeOpenProbability ?: 0f) > 0.4f }
-
                         val imgWidth = image.width.toFloat().coerceAtLeast(1f)
-                        val personDetails = faces.map { face ->
+                        val persons = faces.map { face ->
                             val box = face.boundingBox
                             val centerX = box.centerX() / imgWidth
                             val widthRatio = box.width() / imgWidth
@@ -247,18 +243,42 @@ class LiveVisionActivity : AppCompatActivity() {
                                 widthRatio < 0.12f -> "少し奥"
                                 else -> ""
                             }
-                            "${pos}${dist}"
+                            val positionDesc = "${pos}${dist}"
+
+                            val smileProb = face.smilingProbability ?: 0f
+                            val leftEye = face.leftEyeOpenProbability ?: 0.5f
+                            val rightEye = face.rightEyeOpenProbability ?: 0.5f
+                            val avgEye = (leftEye + rightEye) / 2f
+                            val isLooking = avgEye > 0.4f
+
+                            val (expressionDesc, meaningDesc) = when {
+                                smileProb > 0.65f -> Pair("満面の明るい笑顔", "とても楽しそうに喜んでいる様子")
+                                smileProb in 0.30f..0.65f -> Pair("穏やかな微笑み", "リラックスして安心している雰囲気")
+                                avgEye > 0.6f && smileProb < 0.15f -> Pair("真剣な表情", "集中して深く考え事をしている様子")
+                                avgEye < 0.35f && smileProb < 0.15f -> Pair("少し暗めの落ち着いた表情", "物思いにふけっている様子")
+                                else -> Pair("自然体な表情", "落ち着いた普段の様子")
+                            }
+
+                            // 服装のカラー推測（顔下領域の明度・色合いヒューリスティック）
+                            val clothingColorDesc = if (brightnessLevel.contains("明るい")) "明るめの服装" else "落ち着いた色の服装"
+                            val pantsColorDesc = "ボトムス"
+
+                            com.shinji.serena.ai.GeminiNanoEngine.PersonAnalysisDetail(
+                                position = positionDesc,
+                                clothingColor = clothingColorDesc,
+                                pantsColor = pantsColorDesc,
+                                expression = expressionDesc,
+                                emotionalMeaning = meaningDesc,
+                                isLookingAtCamera = isLooking
+                            )
                         }
 
                         textRecognizer.process(image)
                             .addOnSuccessListener { visionText ->
                                 val recognizedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
-                                val sceneSummary = geminiNanoEngine.describeSceneEnhanced(
-                                    personCount = faceCount,
-                                    smilingPersonCount = smilingCount,
-                                    lookingAtCamera = isLooking,
-                                    personDetails = personDetails,
+                                val sceneSummary = geminiNanoEngine.describeSceneComprehensive(
                                     lightingLevel = brightnessLevel,
+                                    persons = persons,
                                     objects = emptyList(),
                                     texts = recognizedTexts
                                 )
