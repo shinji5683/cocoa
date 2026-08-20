@@ -374,15 +374,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 showNormalSerenaMenu()
                 return true
             }
-            // 下→左スワイプ: 戻る
+            // 下→左スワイプ: 戻る (セレナメニュー表示中ならメニューを即時閉じる)
             GESTURE_SWIPE_DOWN_AND_LEFT -> {
+                val menu = activeMenuDialog
+                if (menu != null && menu.isShowing) {
+                    activeMenuDialog = null
+                    try { menu.dismiss() } catch (_: Exception) {}
+                    soundHelper?.playActionDone()
+                    speak("セレナメニューを閉じました", TextToSpeech.QUEUE_FLUSH)
+                    return true
+                }
                 soundHelper?.playClick()
                 speak("戻る", TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_BACK)
                 return true
             }
-            // 上→左スワイプ: ホーム画面
+            // 上→左スワイプ: ホーム画面 (セレナメニュー表示中ならメニューも閉じる)
             GESTURE_SWIPE_UP_AND_LEFT -> {
+                val menu = activeMenuDialog
+                if (menu != null && menu.isShowing) {
+                    activeMenuDialog = null
+                    try { menu.dismiss() } catch (_: Exception) {}
+                }
                 soundHelper?.playClick()
                 speak("ホーム画面", TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_HOME)
@@ -390,6 +403,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             // 左→上スワイプ (43): 最近使ったアプリ
             GESTURE_SWIPE_LEFT_AND_UP, 43 -> {
+                val menu = activeMenuDialog
+                if (menu != null && menu.isShowing) {
+                    activeMenuDialog = null
+                    try { menu.dismiss() } catch (_: Exception) {}
+                }
                 soundHelper?.playClick()
                 speak("最近使ったアプリ", TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_RECENTS)
@@ -759,17 +777,34 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val visibleNodes = nodes.filter { node ->
             val rect = android.graphics.Rect()
             node.getBoundsInScreen(rect)
+            val text = getNodeText(node)
             rect.width() > 0 && rect.height() > 0 &&
             rect.left >= 0 && rect.right <= screenW &&
-            rect.top >= (screenH * 0.12f).toInt() && rect.bottom <= (screenH * 0.88f).toInt()
+            rect.top >= (screenH * 0.08f).toInt() && rect.bottom <= (screenH * 0.92f).toInt() &&
+            !text.contains("最近の項目はありません", ignoreCase = true)
         }
 
         if (visibleNodes.isEmpty()) return null
 
+        if (horizontal) {
+            // 横スクロール（ページめくり）時は、新しいページの左上（一番最初のアプリ・項目）を最優先！
+            return visibleNodes.minWithOrNull(Comparator { n1, n2 ->
+                val r1 = android.graphics.Rect()
+                val r2 = android.graphics.Rect()
+                n1.getBoundsInScreen(r1)
+                n2.getBoundsInScreen(r2)
+                if (kotlin.math.abs(r1.top - r2.top) > 50) {
+                    r1.top.compareTo(r2.top)
+                } else {
+                    r1.left.compareTo(r2.left)
+                }
+            })
+        }
+
         val centerX = screenW / 2
         val centerY = screenH / 2
 
-        // 画面中央に最も近い要素を選択（Home/End端点ジャンプを物理的に完全根絶）
+        // 縦スクロール時は画面中央に最も近い要素を選択
         return visibleNodes.minByOrNull { node ->
             val r = android.graphics.Rect()
             node.getBoundsInScreen(r)
