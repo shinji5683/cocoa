@@ -93,8 +93,8 @@ class SoundAndHapticHelper(private val context: Context) {
     }
 
     fun playMenuOpen() {
-        toneGenerator?.startTone(ToneGenerator.TONE_DTMF_A, 80)
-        vibratePattern(longArrayOf(0, 30, 40, 50))
+        toneGenerator?.startTone(ToneGenerator.TONE_PROP_PROMPT, 60)
+        vibrate(20)
     }
 
     fun playFirstItemEdgeSound() {
