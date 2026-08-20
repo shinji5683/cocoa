@@ -9,6 +9,11 @@
 - Environment & App Phase:
   - App Status: Alpha Version (アルファ版). Maintain debug builds while supporting small-scale Alpha test releases.
   - Test OS Channels: User tests across Android OS release channels (Canary Channel, QPR Beta Channel, Stable Channel). Always enforce multi-channel compatibility (API 30+ to API 35/36+), defensive API fallbacks, resilient accessibility node handling, and strict Canary/QPR permission compliance.
+- Automated Debug Build & Verification Workflow:
+  - Whenever code modifications or dependency updates are made, automatically execute debug build verification (`.\gradlew.bat assembleDebug` / `build_apk.ps1`) to ensure 100% build success and zero broken code before reporting.
+- Automated Git Commit, Merge & Remote Push Workflow:
+  - Automatically stage and commit verified changes with concise, descriptive conventional commit messages.
+  - Keep active branches (`main` and `alpha`) in sync: automatically merge/push updates to remote repositories (`origin/main` and `origin/alpha`) so Shinjiさん does not have to worry about manual git maintenance.
 - Automated Build, Deploy & Accessibility Auto-Activation Workflow:
   - Whenever completing a build or code modification, automatically proceed to deploy/install the generated APK onto connected Android devices (`adb install -r ...`).
   - Immediately auto-enable the `serena` Accessibility Service on the target device via ADB so Shinjiさん does not need to manually open settings and toggle it:
