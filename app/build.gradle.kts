@@ -72,10 +72,10 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
 
     // Google Play Services & ML Kit on-device Vision (Japanese OCR & Face)
@@ -83,10 +83,10 @@ dependencies {
     implementation("com.google.android.gms:play-services-mlkit-face-detection:17.1.0")
 
     // CameraX for Live Vision and Camera Capture
-    implementation("androidx.camera:camera-core:1.3.1")
-    implementation("androidx.camera:camera-camera2:1.3.1")
-    implementation("androidx.camera:camera-lifecycle:1.3.1")
-    implementation("androidx.camera:camera-view:1.3.1")
+    implementation("androidx.camera:camera-core:1.3.4")
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
 
     // Unit Testing
     testImplementation("junit:junit:4.13.2")
