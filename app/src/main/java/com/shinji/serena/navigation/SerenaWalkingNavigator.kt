@@ -151,10 +151,109 @@ class SerenaWalkingNavigator(
     )
 
     /**
+     * Overpass API（OpenStreetMap）から現在地周辺の100%正確な店舗名・駅名・施設名を取得
+     */
+    private fun fetchOverpassPlaces(category: String, loc: Location): List<NavPlace> {
+        val radiusMeters = 2500 // 半径2.5km
+        val filter = when (category) {
+            "コンビニ" -> """node["shop"="convenience"](around:$radiusMeters,${loc.latitude},${loc.longitude});way["shop"="convenience"](around:$radiusMeters,${loc.latitude},${loc.longitude});"""
+            "駅" -> """node["railway"="station"](around:5000,${loc.latitude},${loc.longitude});node["station"](around:5000,${loc.latitude},${loc.longitude});"""
+            "喫茶店", "カフェ" -> """node["amenity"="cafe"](around:$radiusMeters,${loc.latitude},${loc.longitude});way["amenity"="cafe"](around:$radiusMeters,${loc.latitude},${loc.longitude});"""
+            "ファストフード" -> """node["amenity"="fast_food"](around:$radiusMeters,${loc.latitude},${loc.longitude});way["amenity"="fast_food"](around:$radiusMeters,${loc.latitude},${loc.longitude});"""
+            "レストラン", "飲食店" -> """node["amenity"="restaurant"](around:$radiusMeters,${loc.latitude},${loc.longitude});way["amenity"="restaurant"](around:$radiusMeters,${loc.latitude},${loc.longitude});"""
+            "スーパー", "ショッピングモール", "食料品店" -> """node["shop"="supermarket"](around:4000,${loc.latitude},${loc.longitude});way["shop"="supermarket"](around:4000,${loc.latitude},${loc.longitude});node["shop"="mall"](around:4000,${loc.latitude},${loc.longitude});"""
+            "病院", "薬局" -> """node["amenity"="hospital"](around:$radiusMeters,${loc.latitude},${loc.longitude});node["amenity"="clinic"](around:$radiusMeters,${loc.latitude},${loc.longitude});node["amenity"="pharmacy"](around:$radiusMeters,${loc.latitude},${loc.longitude});"""
+            "郵便局", "銀行" -> """node["amenity"="post_office"](around:$radiusMeters,${loc.latitude},${loc.longitude});node["amenity"="bank"](around:$radiusMeters,${loc.latitude},${loc.longitude});"""
+            else -> """node["name"~"$category"](around:$radiusMeters,${loc.latitude},${loc.longitude});"""
+        }
+
+        val q = "[out:json][timeout:4];($filter);out center 15;"
+        val encodedQuery = java.net.URLEncoder.encode(q, "UTF-8")
+        val endpoints = listOf(
+            "https://overpass-api.de/api/interpreter?data=$encodedQuery",
+            "https://maps.mail.ru/osm/tools/overpass/api/interpreter?data=$encodedQuery"
+        )
+
+        for (endpoint in endpoints) {
+            try {
+                val url = java.net.URL(endpoint)
+                val conn = url.openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 3000
+                conn.readTimeout = 3000
+                conn.requestMethod = "GET"
+                conn.setRequestProperty("User-Agent", "SerenaScreenReader/1.0 (Android; Accessibility)")
+
+                if (conn.responseCode == 200) {
+                    val body = conn.inputStream.bufferedReader().use { it.readText() }
+                    val json = org.json.JSONObject(body)
+                    val elements = json.optJSONArray("elements") ?: continue
+
+                    val places = mutableListOf<NavPlace>()
+                    for (i in 0 until elements.length()) {
+                        val elem = elements.getJSONObject(i)
+                        val tags = elem.optJSONObject("tags") ?: continue
+                        var name = tags.optString("name", "").trim()
+                        val branch = tags.optString("branch", "").trim()
+                        val brand = tags.optString("brand", "").trim()
+
+                        if (name.isEmpty() && brand.isNotEmpty()) {
+                            name = if (branch.isNotEmpty()) "$brand $branch" else brand
+                        } else if (name.isNotEmpty() && branch.isNotEmpty() && !name.contains(branch)) {
+                            name = "$name $branch"
+                        }
+
+                        if (name.isEmpty()) continue
+
+                        val pLat = if (elem.has("lat")) elem.getDouble("lat") else elem.optJSONObject("center")?.optDouble("lat") ?: 0.0
+                        val pLon = if (elem.has("lon")) elem.getDouble("lon") else elem.optJSONObject("center")?.optDouble("lon") ?: 0.0
+                        if (pLat == 0.0 || pLon == 0.0) continue
+
+                        val dist = FloatArray(1)
+                        Location.distanceBetween(loc.latitude, loc.longitude, pLat, pLon, dist)
+                        val distMeters = dist[0].toInt()
+
+                        val phoneNum = tags.optString("phone", tags.optString("contact:phone", ""))
+                        val webUrl = tags.optString("website", tags.optString("contact:website", "https://www.google.com/search?q=${java.net.URLEncoder.encode(name, "UTF-8")}"))
+                        val street = tags.optString("addr:street", "")
+                        val housenumber = tags.optString("addr:housenumber", "")
+                        val addressDesc = if (street.isNotEmpty()) "$street $housenumber" else name
+
+                        places.add(
+                            NavPlace(
+                                name = name,
+                                address = addressDesc,
+                                distanceMeters = distMeters,
+                                latitude = pLat,
+                                longitude = pLon,
+                                phone = phoneNum,
+                                website = webUrl
+                            )
+                        )
+                    }
+
+                    if (places.isNotEmpty()) {
+                        return places.sortedBy { it.distanceMeters }.take(8)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Overpass query failed on $endpoint: ${e.message}")
+            }
+        }
+        return emptyList()
+    }
+
+    /**
      * 現在地周辺の施設候補（コンビニ・駅・喫茶店・ファストフード・スーパー・レストラン等）を複数件検索して距離順で取得
      */
     fun searchNearbyPlaces(category: String): List<NavPlace> {
         val loc = currentLocation
+        if (loc != null) {
+            val osmPlaces = fetchOverpassPlaces(category, loc)
+            if (osmPlaces.isNotEmpty()) {
+                return osmPlaces
+            }
+        }
+
         val geocoder = Geocoder(context, Locale.JAPAN)
         val candidatePlaces = mutableListOf<NavPlace>()
         val addressSync = try { getCurrentAddressSync() } catch (_: Exception) { "" }
