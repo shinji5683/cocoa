@@ -39,6 +39,7 @@ class serenaMenuDialog(
                 win.setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT)
             }
             win.addFlags(
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
             )
