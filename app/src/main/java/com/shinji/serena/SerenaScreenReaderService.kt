@@ -1315,8 +1315,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🔄", modeLabel) {
                 toggleTalkBackMode()
             },
-            serenaMenuItem("📊", "スマホ状態 (バッテリー/電波/Wi-Fi/時刻)") {
+            serenaMenuItem("📊", "スマホ状態 & 現在地 (バッテリー/電波/Wi-Fi/時刻/現在地)") {
                 announceFullStatus()
+            },
+            serenaMenuItem("📍", "現在地読み上げ精度 (現在: ${statusHelper?.locationHelper?.getPrecisionDisplayName() ?: "市区町村・町名まで"})") {
+                val exact = statusHelper?.locationHelper?.togglePrecision() ?: false
+                soundHelper?.playActionDone()
+                val name = if (exact) "番地まで詳細" else "市区町村・町名まで（プライバシー保護）"
+                speak("現在地読み上げ精度を $name に変更しました", TextToSpeech.QUEUE_FLUSH)
             },
             serenaMenuItem("🎛️", "読み上げコントロール (現在: ${currentGranularity.displayName})") {
                 cycleGranularity(forward = true)
@@ -1575,8 +1581,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun announceFullStatus() {
         soundHelper?.playActionDone()
-        val statusText = statusHelper?.buildFullStatusAnnouncement() ?: "ステータス情報を取得できませんでした"
-        speak(statusText, TextToSpeech.QUEUE_FLUSH)
+        val helper = statusHelper
+        if (helper != null) {
+            helper.buildFullStatusAnnouncement { fullText ->
+                speak(fullText, TextToSpeech.QUEUE_FLUSH)
+            }
+        } else {
+            speak("ステータス情報を取得できませんでした", TextToSpeech.QUEUE_FLUSH)
+        }
     }
 
     fun toggleScreenCurtain() {

@@ -18,7 +18,9 @@ class StatusAnnouncementHelper(private val context: Context) {
         private const val TAG = "StatusAnnouncementHelper"
     }
 
-    fun buildFullStatusAnnouncement(): String {
+    val locationHelper = com.shinji.serena.location.LocationAddressHelper(context)
+
+    fun buildFullStatusAnnouncement(callback: ((String) -> Unit)? = null): String {
         val parts = mutableListOf<String>()
 
         // 1. 現在時刻
@@ -41,7 +43,19 @@ class StatusAnnouncementHelper(private val context: Context) {
         val carrierStr = getCarrierText()
         if (carrierStr.isNotEmpty()) parts.add(carrierStr)
 
-        return parts.joinToString("、")
+        val baseStatus = parts.joinToString("、")
+
+        if (callback != null) {
+            locationHelper.getCurrentLocationAddress { locStr ->
+                if (locStr.isNotEmpty()) {
+                    callback("$baseStatus、${locStr}")
+                } else {
+                    callback(baseStatus)
+                }
+            }
+        }
+
+        return baseStatus
     }
 
     private fun getCurrentTimeText(): String {
