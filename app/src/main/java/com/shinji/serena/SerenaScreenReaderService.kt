@@ -1324,6 +1324,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val name = if (exact) "番地まで詳細" else "市区町村・町名まで（プライバシー保護）"
                 speak("現在地読み上げ精度を $name に変更しました", TextToSpeech.QUEUE_FLUSH)
             },
+            serenaMenuItem("🌍", "国名読み上げ設定 (現在: ${statusHelper?.locationHelper?.getCountrySettingDisplayName() ?: "スマート"})") {
+                val always = statusHelper?.locationHelper?.toggleAlwaysIncludeCountry() ?: false
+                soundHelper?.playActionDone()
+                val name = if (always) "常時国名付き（例: 日本、岐阜県...）" else "スマート（国内は省略、海外は国名付き）"
+                speak("国名読み上げ設定を $name に変更しました", TextToSpeech.QUEUE_FLUSH)
+            },
             serenaMenuItem("🎛️", "読み上げコントロール (現在: ${currentGranularity.displayName})") {
                 cycleGranularity(forward = true)
             },

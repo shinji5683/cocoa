@@ -32,6 +32,9 @@ class LocationAddressHelper(private val context: Context) {
         // 粒度設定
         const val PRECISION_TOWN = "town"              // 市区町村・町名まで (デフォルト: プライバシー保護)
         const val PRECISION_EXACT_BLOCK = "exact_block" // 番地・号まで詳細
+
+        // 国名読み上げ設定
+        const val PREF_KEY_ALWAYS_INCLUDE_COUNTRY = "pref_always_include_country"
     }
 
     private val prefs: SharedPreferences = context.getSharedPreferences("serena_prefs", Context.MODE_PRIVATE)
@@ -57,6 +60,21 @@ class LocationAddressHelper(private val context: Context) {
 
     fun getPrecisionDisplayName(): String {
         return if (isExactBlockPrecision()) "番地まで詳細" else "市区町村・町名まで（プライバシー保護）"
+    }
+
+    fun isAlwaysIncludeCountry(): Boolean {
+        return prefs.getBoolean(PREF_KEY_ALWAYS_INCLUDE_COUNTRY, false)
+    }
+
+    fun toggleAlwaysIncludeCountry(): Boolean {
+        val current = isAlwaysIncludeCountry()
+        val next = !current
+        prefs.edit().putBoolean(PREF_KEY_ALWAYS_INCLUDE_COUNTRY, next).apply()
+        return next
+    }
+
+    fun getCountrySettingDisplayName(): String {
+        return if (isAlwaysIncludeCountry()) "常時国名付き（例: 日本、岐阜県...）" else "スマート（国内は省略、海外は国名付き）"
     }
 
     @SuppressLint("MissingPermission")
@@ -186,6 +204,10 @@ class LocationAddressHelper(private val context: Context) {
         val isJapanese = locale.language == Locale.JAPANESE.language || locale.country == "JP"
         val exact = isExactBlockPrecision()
 
+        val isCountryIncluded = isAlwaysIncludeCountry()
+        val countryName = address.countryName ?: ""
+        val isOverseas = address.countryCode != null && address.countryCode != "JP"
+
         return if (isJapanese) {
             val admin = address.adminArea ?: "" // 都道府県 (岐阜県)
             val locality = address.locality ?: address.subAdminArea ?: "" // 市区町村 (大垣市)
@@ -193,6 +215,15 @@ class LocationAddressHelper(private val context: Context) {
             val thoroughfare = address.thoroughfare ?: ""
             val subThoroughfare = address.subThoroughfare ?: "" // 番地・号
             val featureName = address.featureName ?: ""
+
+            // 国名プレフィックス（常時国名オンまたは海外の場合）
+            val countryPrefix = if (isCountryIncluded && countryName.isNotEmpty()) {
+                "${countryName}、"
+            } else if (isOverseas && countryName.isNotEmpty()) {
+                "${countryName}、"
+            } else {
+                ""
+            }
 
             // 1. addressLine (最も完全な住所文字列) からの精密解析
             val fullLine = address.getAddressLine(0) ?: ""
@@ -204,7 +235,7 @@ class LocationAddressHelper(private val context: Context) {
             if (exact) {
                 // 番地・号まで詳細
                 if (cleanedLine.isNotEmpty()) {
-                    "現在地: $cleanedLine"
+                    "現在地: ${countryPrefix}$cleanedLine"
                 } else {
                     val townPart = when {
                         subLocality.isNotEmpty() -> subLocality
@@ -217,7 +248,7 @@ class LocationAddressHelper(private val context: Context) {
                         else -> townPart
                     }
                     val full = "${admin}${locality}${blockPart}".trim()
-                    if (full.isNotEmpty()) "現在地: $full" else "現在地: 住所取得中"
+                    if (full.isNotEmpty()) "現在地: ${countryPrefix}$full" else "現在地: 住所取得中"
                 }
             } else {
                 // 市区町村・町名まで (プライバシー保護: 番地数字のみをカットして何町・何丁目で止める)
@@ -233,7 +264,7 @@ class LocationAddressHelper(private val context: Context) {
                         // 3. 末尾の番地数字をカット
                         stripped = stripped.replace(Regex("[\\s\\d\\uFF10-\\uFF19\\-ー番地号]+$"), "").trim()
                     }
-                    "現在地: $stripped"
+                    "現在地: ${countryPrefix}$stripped"
                 } else {
                     val townPart = when {
                         subLocality.isNotEmpty() -> subLocality
@@ -242,24 +273,25 @@ class LocationAddressHelper(private val context: Context) {
                         else -> ""
                     }
                     val full = "${admin}${locality}${townPart}".trim()
-                    if (full.isNotEmpty()) "現在地: $full" else "現在地: 住所取得中"
+                    if (full.isNotEmpty()) "現在地: ${countryPrefix}$full" else "現在地: 住所取得中"
                 }
             }
         } else {
             // インターナショナル対応 (英語圏 / 海外)
             val city = address.locality ?: address.subAdminArea ?: ""
             val state = address.adminArea ?: ""
-            val country = address.countryName ?: ""
             val street = address.thoroughfare ?: ""
             val streetNumber = address.subThoroughfare ?: ""
 
+            val countryPart = if (isCountryIncluded || isOverseas) countryName else ""
+
             if (exact) {
                 val streetFull = listOfNotNull(streetNumber.ifEmpty { null }, street.ifEmpty { null }).joinToString(" ")
-                val parts = listOfNotNull(streetFull.ifEmpty { null }, city.ifEmpty { null }, state.ifEmpty { null }, country.ifEmpty { null })
+                val parts = listOfNotNull(streetFull.ifEmpty { null }, city.ifEmpty { null }, state.ifEmpty { null }, countryPart.ifEmpty { null })
                 val full = parts.joinToString(", ")
                 if (full.isNotEmpty()) "Location: $full" else "Location: Unknown"
             } else {
-                val parts = listOfNotNull(city.ifEmpty { null }, state.ifEmpty { null }, country.ifEmpty { null })
+                val parts = listOfNotNull(city.ifEmpty { null }, state.ifEmpty { null }, countryPart.ifEmpty { null })
                 val full = parts.joinToString(", ")
                 if (full.isNotEmpty()) "Location: $full" else "Location: Unknown"
             }
