@@ -127,6 +127,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
             }
             com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
+            
+            // serenaオリジナルモードを正統デフォルトとして初期化
+            if (!prefs.contains(KEY_TALKBACK_MODE)) {
+                prefs.edit().putBoolean(KEY_TALKBACK_MODE, false).apply()
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing non-core helpers: ${e.message}")
         }
@@ -162,6 +167,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             updateTtsSettings()
             isTtsReady = true
+            // serenaオリジナルモードが常に正統デフォルト
             val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
             val welcomeMsg = if (isTalkBackMode) "TalkBack互換モードで serena が起動しました。" else "ほっと一息、serena スクリーンリーダーが起動しました。"
             speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
