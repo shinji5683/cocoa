@@ -1440,7 +1440,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         
         // メニューオープンチャイムが一呼吸鳴り響いてから、心地よくナレーション開始！
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            speak("🌸 serena メニューが開きました。全${items.size}項目。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
+            speak("セレナメニューが開きました。全${items.size}項目。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
         }, 120)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {

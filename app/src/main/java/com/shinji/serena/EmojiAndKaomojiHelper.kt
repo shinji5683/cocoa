@@ -1,9 +1,32 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 class EmojiAndKaomojiHelper {
 
     companion object {
         private val EMOJI_MAP = mapOf(
+            "🌸" to "桜",
+            "🦯" to "白杖",
+            "🪷" to "ハス",
+            "🧭" to "コンパス",
+            "💡" to "ひらめき",
+            "👥" to "人影",
+            "🚶‍♂️" to "徒歩ナビ",
+            "📷" to "カメラ",
+            "👤" to "人物",
+            "📦" to "物体",
+            "🌐" to "ワールド",
+            "⚡" to "速度",
+            "📄" to "ページ",
+            "📖" to "読書",
+            "🐛" to "レポート",
+            "⚙️" to "設定",
+            "❓" to "ヘルプ",
+            "🗑️" to "削除",
+            "ℹ️" to "情報",
+            "💬" to "メッセージ",
+            "✂️" to "切り取り",
+            "🧹" to "消去",
+            "🔊" to "音声",
             "😊" to "笑顔",
             "😃" to "大笑い",
             "😄" to "にっこり顔",
