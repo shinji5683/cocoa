@@ -167,7 +167,6 @@ class serenaMenuDialog(
 
         targetView.post {
             targetView.requestFocus()
-            targetView.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED)
 
             scrollMenuItems?.let { scroll ->
                 val targetY = (targetView.top - 100).coerceAtLeast(0)
@@ -188,9 +187,10 @@ class serenaMenuDialog(
                 val item = items[index]
                 if (initial) {
                     val titlePrefix = if (isEditTextFocus) "✏️ serena 編集アシスト" else "🌸 serena メニュー"
-                    "$titlePrefix、${item.title}"
+                    "$titlePrefix、1番目、${item.title}"
                 } else {
-                    item.title
+                    val pos = "${index + 1}番目、"
+                    "${pos}${item.title}"
                 }
             } else {
                 "閉じる ボタン"
