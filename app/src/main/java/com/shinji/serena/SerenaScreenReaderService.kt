@@ -308,6 +308,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 handleMagicTapAction()
                 return true
             }
+            // 2本指トリプルタップ (29 / GESTURE_2_FINGER_TRIPLE_TAP): 音声読み上げの消音（ミュート）切替
+            29 -> {
+                toggleSpeechMute()
+                return true
+            }
             // 2本指右フリック (28): 前のページへ（横スクロール戻る）
             28 -> {
                 return scrollHorizontalBackward()
@@ -2892,12 +2897,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var isMuted = false
 
     fun toggleSpeechMute() {
-        isMuted = !isMuted
-        if (isMuted) {
-            stopSpeech()
-            Toast.makeText(this, "消音モード", Toast.LENGTH_SHORT).show()
+        if (!isMuted) {
+            // ミュート（消音）へ移行
+            soundHelper?.playActionDone()
+            speak("音声をミュートしました", TextToSpeech.QUEUE_FLUSH)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                isMuted = true
+                stopSpeech()
+                Toast.makeText(this, "🔇 音声ミュート中（2本指トリプルタップで解除）", Toast.LENGTH_SHORT).show()
+            }, 1200)
         } else {
-            speak("消音を解除しました", TextToSpeech.QUEUE_FLUSH)
+            // ミュート解除へ移行
+            isMuted = false
+            soundHelper?.playActionDone()
+            speak("音声のミュートを解除しました", TextToSpeech.QUEUE_FLUSH)
+            Toast.makeText(this, "🔊 音声ミュート解除", Toast.LENGTH_SHORT).show()
         }
     }
 

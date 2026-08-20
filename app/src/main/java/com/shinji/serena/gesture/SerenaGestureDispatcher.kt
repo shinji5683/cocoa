@@ -156,6 +156,11 @@ class SerenaGestureDispatcher(
                 service.handleMagicTapAction()
                 return true
             }
+            AccessibilityService.GESTURE_2_FINGER_TRIPLE_TAP -> {
+                // 2本指トリプルタップ: 音声読み上げのミュート（消音）とミュート解除
+                service.toggleSpeechMute()
+                return true
+            }
             AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT -> {
                 // 2本指右フリック: 前のページへ
                 service.scrollHorizontalBackward()
