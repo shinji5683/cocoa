@@ -179,6 +179,27 @@ class LiveVisionActivity : AppCompatActivity() {
                     }
             }
             "FACE" -> {
+                val planes = mediaImage.planes
+                val brightnessLevel = if (planes.isNotEmpty()) {
+                    val buffer = planes[0].buffer
+                    var sum = 0L
+                    val step = (buffer.remaining() / 200).coerceAtLeast(1)
+                    var count = 0
+                    for (i in 0 until buffer.remaining() step step) {
+                        sum += (buffer.get(i).toInt() and 0xFF)
+                        count++
+                    }
+                    val avg = if (count > 0) sum / count else 128
+                    when {
+                        avg >= 150 -> "明るい室内"
+                        avg in 60..149 -> "落ち着いた明るさの場所"
+                        avg in 20..59 -> "薄暗い場所"
+                        else -> "真っ暗な場所"
+                    }
+                } else {
+                    ""
+                }
+
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
                         if (faces.isNotEmpty()) {
@@ -215,11 +236,13 @@ class LiveVisionActivity : AppCompatActivity() {
                                     else -> Pair("自然体な表情", "落ち着いた普段の様子")
                                 }
 
+                                val clothingColorDesc = if (brightnessLevel.contains("明るい")) "明るめの服" else "落ち着いた色の服"
+
                                 com.shinji.serena.ai.GeminiNanoEngine.PersonAnalysisDetail(
                                     position = pos,
                                     distanceMeters = attrs.estimatedDistanceMeters,
                                     genderAndAge = attrs.genderAndAge,
-                                    clothingColor = "服",
+                                    clothingColor = clothingColorDesc,
                                     pantsColor = "ボトムス",
                                     expression = expressionDesc,
                                     emotionalMeaning = meaningDesc,
@@ -227,7 +250,7 @@ class LiveVisionActivity : AppCompatActivity() {
                                 )
                             }
 
-                            val desc = geminiNanoEngine.describeSceneComprehensive("", persons, emptyList(), emptyList())
+                            val desc = geminiNanoEngine.describeSceneComprehensive(brightnessLevel, persons, emptyList(), emptyList())
                             if (desc != lastFaceDescription && desc.isNotEmpty()) {
                                 lastFaceDescription = desc
                                 lastSpokenTime = currentTime
