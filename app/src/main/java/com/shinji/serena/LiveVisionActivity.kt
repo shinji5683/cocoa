@@ -227,23 +227,25 @@ class LiveVisionActivity : AppCompatActivity() {
 
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
-                        val imgWidth = image.width.toFloat().coerceAtLeast(1f)
+                        val imgWidth = image.width
+                        val imgHeight = image.height
                         val persons = faces.map { face ->
                             val box = face.boundingBox
-                            val centerX = box.centerX() / imgWidth
-                            val widthRatio = box.width() / imgWidth
+                            val centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1)
 
                             val pos = when {
                                 centerX < 0.35f -> "左側"
                                 centerX > 0.65f -> "右側"
                                 else -> "正面"
                             }
-                            val dist = when {
-                                widthRatio > 0.35f -> "近く"
-                                widthRatio < 0.12f -> "少し奥"
-                                else -> ""
-                            }
-                            val positionDesc = "${pos}${dist}"
+
+                            // 完全無料・オンデバイス属性解析（性別・推定年代・服の色・精密距離）
+                            val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
+                                face = face,
+                                imageWidth = imgWidth,
+                                imageHeight = imgHeight,
+                                bitmap = null
+                            )
 
                             val smileProb = face.smilingProbability ?: 0f
                             val leftEye = face.leftEyeOpenProbability ?: 0.5f
@@ -259,14 +261,14 @@ class LiveVisionActivity : AppCompatActivity() {
                                 else -> Pair("自然体な表情", "落ち着いた普段の様子")
                             }
 
-                            // 服装のカラー推測（顔下領域の明度・色合いヒューリスティック）
-                            val clothingColorDesc = if (brightnessLevel.contains("明るい")) "明るめの服装" else "落ち着いた色の服装"
-                            val pantsColorDesc = "ボトムス"
+                            val clothingColorDesc = if (brightnessLevel.contains("明るい")) "明るめの服" else "落ち着いた色の服"
 
                             com.shinji.serena.ai.GeminiNanoEngine.PersonAnalysisDetail(
-                                position = positionDesc,
+                                position = pos,
+                                distanceMeters = attrs.estimatedDistanceMeters,
+                                genderAndAge = attrs.genderAndAge,
                                 clothingColor = clothingColorDesc,
-                                pantsColor = pantsColorDesc,
+                                pantsColor = "ボトムス",
                                 expression = expressionDesc,
                                 emotionalMeaning = meaningDesc,
                                 isLookingAtCamera = isLooking
