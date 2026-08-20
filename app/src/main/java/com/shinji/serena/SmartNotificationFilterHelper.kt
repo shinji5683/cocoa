@@ -39,12 +39,24 @@ class SmartNotificationFilterHelper(context: Context) {
     }
 
     fun shouldAnnounce(packageName: String, text: String): Boolean {
+        val textLower = text.lowercase()
+        val pkgLower = packageName.lowercase()
+
+        // 1. Android OSの重複システム充電通知（「このデバイスをUSBで充電しています」等）を完全除外！
+        // SerenaのBatteryStateHelperが高精度に充電速度・残量をアナウンスするため、OS通知は不要。
+        val isSystemChargingNoise = (pkgLower == "android" || pkgLower.contains("systemui")) && (
+                textLower.contains("usbで充電") ||
+                textLower.contains("充電しています") ||
+                textLower.contains("充電中") ||
+                textLower.contains("充電器") ||
+                textLower.contains("usb を接続") ||
+                textLower.contains("usb 接続")
+        )
+        if (isSystemChargingNoise) return false
+
         val mode = currentMode
         if (mode == NotificationFilterMode.SILENT_SUMMARY) return false
         if (mode == NotificationFilterMode.ALL) return true
-
-        val pkgLower = packageName.lowercase()
-        val textLower = text.lowercase()
 
         val isMessagingOrCallApp = pkgLower.contains("dialer") ||
                 pkgLower.contains("incallui") ||
