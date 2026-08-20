@@ -1440,7 +1440,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         
         // メニューオープン音とほぼ同時に超高速レスポンスでナレーション開始！
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            speak("セレナメニューが開きました。全${items.size}項目。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
+            speak("serenaメニューが開きました。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
         }, 40)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {
