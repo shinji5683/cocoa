@@ -99,14 +99,6 @@ class SerenaFocusNavigator(
     }
 
     private fun traverseTree(node: AccessibilityNodeInfo, list: MutableList<AccessibilityNodeInfo>) {
-        if (!node.isVisibleToUser) {
-            val rect = Rect()
-            node.getBoundsInScreen(rect)
-            if (rect.isEmpty || rect.width() <= 0 || rect.height() <= 0) {
-                return
-            }
-        }
-
         val isTarget = evaluator.isFocusableTarget(node)
         val hasFocusableChildren = evaluator.hasFocusableChildren(node)
 
@@ -118,7 +110,7 @@ class SerenaFocusNavigator(
             return
         }
 
-        // 2. 子要素が存在する場合、全子要素を必ず再帰探索！
+        // 2. 子要素が存在する場合、全子要素を必ず再帰探索！（スクロールビュー下部の画面外要素も確実に取得）
         var addedAnyChild = false
         val initialSize = list.size
         for (i in 0 until node.childCount) {
@@ -258,7 +250,11 @@ class SerenaFocusNavigator(
     fun setFocusAndShowOnScreen(targetNode: AccessibilityNodeInfo) {
         try {
             targetNode.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id)
-            targetNode.parent?.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id)
+            var p = targetNode.parent
+            while (p != null) {
+                p.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id)
+                p = p.parent
+            }
         } catch (_: Exception) {}
 
         val focused = targetNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
