@@ -990,7 +990,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return true
     }
 
+    private var lastPinFocusTimeMs = 0L
+
     fun autoFocusPinKeypadIfPresent(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastPinFocusTimeMs < 1500L) return false
+
         val root = rootInActiveWindow ?: return false
         val pinButtons = mutableListOf<AccessibilityNodeInfo>()
 
@@ -999,15 +1004,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val viewId = node.viewIdResourceName?.lowercase() ?: ""
             val text = node.text?.toString()?.trim() ?: ""
             val desc = node.contentDescription?.toString()?.trim() ?: ""
-            val isPinDigit = viewId.contains("digit") || viewId.contains("pin_key") ||
-                    viewId.contains("key1") || viewId.contains("key2") || viewId.contains("key3") ||
-                    viewId.contains("key4") || viewId.contains("key5") || viewId.contains("key6") ||
-                    viewId.contains("key7") || viewId.contains("key8") || viewId.contains("key9") ||
-                    viewId.contains("key0") || viewId.contains("numpad") ||
-                    text.matches(Regex("^[0-9]$")) || desc.matches(Regex("^[0-9]$")) ||
-                    desc.contains("1") || desc.contains("2") || desc.contains("3")
 
-            if ((node.isClickable || node.isFocusable) && isPinDigit) {
+            val isKeyguardNode = viewId.contains("keyguard") || viewId.contains("numpad") || viewId.contains("pin") || viewId.contains("systemui:id/key")
+            val isSingleDigit = (text.length == 1 && text[0].isDigit()) || (desc.length == 1 && desc[0].isDigit())
+            val isPinDigitId = viewId.endsWith("key1") || viewId.endsWith("key2") || viewId.endsWith("key3") ||
+                    viewId.endsWith("key4") || viewId.endsWith("key5") || viewId.endsWith("key6") ||
+                    viewId.endsWith("key7") || viewId.endsWith("key8") || viewId.endsWith("key9") ||
+                    viewId.endsWith("key0") || viewId.contains("digit")
+
+            if (node.isClickable && (isPinDigitId || (isKeyguardNode && isSingleDigit))) {
                 pinButtons.add(node)
             }
             for (i in 0 until node.childCount) {
@@ -1018,12 +1023,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         findPinNodes(root)
         if (pinButtons.isNotEmpty()) {
             val target = pinButtons.firstOrNull {
-                val desc = it.contentDescription?.toString() ?: ""
-                val text = it.text?.toString() ?: ""
+                val desc = it.contentDescription?.toString()?.trim() ?: ""
+                val text = it.text?.toString()?.trim() ?: ""
                 val viewId = it.viewIdResourceName?.lowercase() ?: ""
-                desc == "1" || desc.contains("1") || text == "1" || viewId.contains("key1") || viewId.contains("digit1")
+                desc == "1" || text == "1" || viewId.endsWith("key1") || viewId.endsWith("digit1")
             } ?: pinButtons.first()
 
+            lastPinFocusTimeMs = now
             target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
             lastHoveredNode = target
             soundHelper?.playFocusMove()
@@ -2450,18 +2456,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            AccessibilityEvent.TYPE_WINDOWS_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 // セレナメニューダイアログ表示中の場合、OSがウィンドウ内の全項目テキストを結合して送ってくるため全読みを抑制！
                 if (activeMenuDialog != null) {
                     return
-                }
-
-                // ロック画面/PIN入力画面が表示された場合に自動で「1」キーへフォーカス
-                if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
-                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                        autoFocusPinKeypadIfPresent()
-                    }, 200)
                 }
 
                 // 朝の初回ロック解除時のモーニングサマリー挨拶
