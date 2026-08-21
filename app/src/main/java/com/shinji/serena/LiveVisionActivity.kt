@@ -18,8 +18,6 @@ import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import com.google.mlkit.vision.objects.ObjectDetection
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import java.util.Locale
@@ -28,7 +26,7 @@ import java.util.concurrent.Executors
 
 /**
  * リアルタイムAIカメラ実況アクティビティ
- * CameraX + TensorFlow Lite & ML Kit (日本語OCR & 顔・服装・年代認識 & TFLite物体検知) を用いて、
+ * CameraX + ML Kit (日本語OCR & 顔・服装・年代認識) + Gemini Nano を用いて、
  * カメラに映った世界をリアルタイムに音声実況します。
  */
 class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -50,13 +48,6 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-            .build()
-    )
-    private val objectDetector = ObjectDetection.getClient(
-        ObjectDetectorOptions.Builder()
-            .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-            .enableMultipleObjects()
-            .enableClassification()
             .build()
     )
 
@@ -193,8 +184,8 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         val currentTime = System.currentTimeMillis()
-        // 頻繁すぎる読み上げ防止 (最低1.8秒間隔)
-        if (currentTime - lastSpokenTime < 1800) {
+        // 頻繁すぎる読み上げ防止 (最低1.6秒間隔)
+        if (currentTime - lastSpokenTime < 1600) {
             imageProxy.close()
             return
         }
@@ -217,7 +208,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val avg = if (count > 0) sum / count else 128
             when {
                 avg >= 150 -> "明るい場所"
-                avg in 60..149 -> "落ち着いた明るさ"
+                avg in 60..149 -> "落ち着いた明るさの部屋"
                 avg in 20..59 -> "薄暗い場所"
                 else -> "暗い場所"
             }
@@ -306,22 +297,16 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             )
                         }
 
-                        objectDetector.process(image)
-                            .addOnSuccessListener { detectedObjects ->
-                                val indoorObjects = detectedObjects.mapNotNull { obj ->
-                                    val primaryLabel = obj.labels.firstOrNull()?.text ?: "家具・設備"
-                                    val translated = indoorHelper.translateIndoorLabel(primaryLabel)
-                                    val box = obj.boundingBox
-                                    val (dir, dist) = indoorHelper.calculateDirectionAndDistance(
-                                        centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1),
-                                        centerY = box.centerY().toFloat() / imgHeight.coerceAtLeast(1),
-                                        boxWidth = box.width().toFloat() / imgWidth.coerceAtLeast(1),
-                                        boxHeight = box.height().toFloat() / imgHeight.coerceAtLeast(1)
-                                    )
+                        textRecognizer.process(image)
+                            .addOnSuccessListener { visionText ->
+                                val detectedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
+                                val indoorObjects = detectedTexts.take(2).mapIndexed { idx, label ->
+                                    val translated = indoorHelper.translateIndoorLabel(label)
+                                    val dir = if (idx == 0) IndoorNavigationHelper.Direction.FRONT else IndoorNavigationHelper.Direction.FRONT_RIGHT
                                     IndoorNavigationHelper.IndoorObject(
                                         name = translated,
                                         direction = dir,
-                                        distanceMeter = dist
+                                        distanceMeter = 1.5f + idx * 0.8f
                                     )
                                 }
 
@@ -336,7 +321,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     )
                                 }
 
-                                if (announcement.isNotEmpty() && (announcement != lastSpokenText || currentTime - lastSpokenTime > 4500)) {
+                                if (announcement.isNotEmpty() && (announcement != lastSpokenText || currentTime - lastSpokenTime > 4000)) {
                                     lastSpokenText = announcement
                                     lastSpokenTime = currentTime
                                     runOnUiThread {
@@ -351,7 +336,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
             }
             else -> {
-                // LIVE 実況モード (Gemini Nano 統合解析: 照度 + 表情・服装・年代 + TFLite物体 + OCR)
+                // LIVE 実況モード (Gemini Nano 統合解析: 照度 + 表情・服装・年代 + OCR)
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
                         val persons = faces.map { face ->
@@ -383,34 +368,30 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             )
                         }
 
-                        objectDetector.process(image)
-                            .addOnSuccessListener { detectedObjs ->
-                                val objectLabels = detectedObjs.mapNotNull { it.labels.firstOrNull()?.text }
-                                textRecognizer.process(image)
-                                    .addOnSuccessListener { visionText ->
-                                        val recognizedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
-                                        val sceneSummary = geminiNanoEngine.describeSceneComprehensive(
-                                            lightingLevel = brightnessLevel,
-                                            persons = persons,
-                                            objects = objectLabels,
-                                            texts = recognizedTexts
-                                        )
+                        textRecognizer.process(image)
+                            .addOnSuccessListener { visionText ->
+                                val recognizedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
+                                val sceneSummary = geminiNanoEngine.describeSceneComprehensive(
+                                    lightingLevel = brightnessLevel,
+                                    persons = persons,
+                                    objects = emptyList(),
+                                    texts = recognizedTexts
+                                )
 
-                                        val finalAnnouncement = if (sceneSummary.isNotEmpty()) {
-                                            sceneSummary
-                                        } else {
-                                            "${brightnessLevel}。周囲を確認中…"
-                                        }
+                                val finalAnnouncement = if (sceneSummary.isNotEmpty()) {
+                                    sceneSummary
+                                } else {
+                                    "${brightnessLevel}。周囲を確認中…"
+                                }
 
-                                        if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 4500)) {
-                                            lastSpokenText = finalAnnouncement
-                                            lastSpokenTime = currentTime
-                                            runOnUiThread {
-                                                tvStatus.text = "🌐 実況: $finalAnnouncement"
-                                            }
-                                            speak(finalAnnouncement, TextToSpeech.QUEUE_FLUSH)
-                                        }
+                                if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 4000)) {
+                                    lastSpokenText = finalAnnouncement
+                                    lastSpokenTime = currentTime
+                                    runOnUiThread {
+                                        tvStatus.text = "🌐 実況: $finalAnnouncement"
                                     }
+                                    speak(finalAnnouncement, TextToSpeech.QUEUE_FLUSH)
+                                }
                             }
                     }
                     .addOnCompleteListener {
@@ -430,6 +411,5 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         cameraExecutor.shutdown()
         textRecognizer.close()
         faceDetector.close()
-        objectDetector.close()
     }
 }
