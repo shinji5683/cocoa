@@ -43,6 +43,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         const val KEY_SPEECH_RATE = "speech_rate"
         const val KEY_SPEECH_PITCH = "speech_pitch"
         const val KEY_HOURLY_CHIME_ENABLED = "hourly_chime_enabled"
+        const val KEY_SHAKE_THRESHOLD = "shake_threshold"
         const val KEY_TALKBACK_MODE = "key_talkback_mode"
         const val KEY_CHIME_STYLE = "key_chime_style"
         const val CHIME_STYLE_NHK = "nhk_radio"
@@ -131,6 +132,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             soundHelper?.let {
                 spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
             }
+            focusNavigator = com.shinji.serena.navigation.SerenaFocusNavigator(this)
+            gestureDispatcher = com.shinji.serena.gesture.SerenaGestureDispatcher(this)
             com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
             
             // serenaオリジナルモードを正統デフォルトとして初期化

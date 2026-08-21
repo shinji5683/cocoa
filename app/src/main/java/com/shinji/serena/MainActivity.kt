@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         setupPermissionsSection()
         setupTtsControls()
         setupHourlyChimeSection()
+        setupShakeSensitivitySection()
         setupDeveloperCallSection()
         setupTestBench()
         setupTelemetrySection()
@@ -380,6 +381,34 @@ class MainActivity : AppCompatActivity() {
                 val sampleText = "${periodStr}${displayHour}時をお知らせします。（テスト再生）"
                 localTts?.speak(sampleText, TextToSpeech.QUEUE_FLUSH, null, "testHourlyChime")
             }
+        }
+    }
+
+    private fun setupShakeSensitivitySection() {
+        val currentThreshold = prefs.getFloat(SerenaScreenReaderService.KEY_SHAKE_THRESHOLD, 2.3f)
+        when (currentThreshold) {
+            2.3f -> binding.rbShakeSensitive.isChecked = true
+            3.5f -> binding.rbShakeNormal.isChecked = true
+            4.3f -> binding.rbShakeFirm.isChecked = true
+            else -> binding.rbShakeSensitive.isChecked = true
+        }
+
+        binding.rgShakeSensitivity.setOnCheckedChangeListener { _, checkedId ->
+            val newThreshold = when (checkedId) {
+                R.id.rbShakeSensitive -> 2.3f
+                R.id.rbShakeNormal -> 3.5f
+                R.id.rbShakeFirm -> 4.3f
+                else -> 2.3f
+            }
+            prefs.edit().putFloat(SerenaScreenReaderService.KEY_SHAKE_THRESHOLD, newThreshold).apply()
+            
+            val label = when (newThreshold) {
+                2.3f -> "敏感 (2.3f)"
+                3.5f -> "標準 (3.5f)"
+                4.3f -> "しっかり (4.3f)"
+                else -> "敏感 (2.3f)"
+            }
+            Toast.makeText(this, "シェイク感度を${label}に設定しました", Toast.LENGTH_SHORT).show()
         }
     }
 
