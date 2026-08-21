@@ -983,10 +983,23 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun isKeyguardLocked(): Boolean {
         val km = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
-        if (km?.isKeyguardLocked == true) return true
-        val rootPkg = rootInActiveWindow?.packageName?.toString() ?: ""
-        return rootPkg.contains("systemui") && (rootInActiveWindow?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")?.isNotEmpty() == true ||
-                rootInActiveWindow?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_carrier_text")?.isNotEmpty() == true)
+        if (km?.isKeyguardLocked == true || km?.isDeviceLocked == true) return true
+        val root = rootInActiveWindow
+        val rootPkg = root?.packageName?.toString() ?: ""
+        if (rootPkg.contains("systemui") || rootPkg.contains("keyguard")) {
+            val hasLock = root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")?.isNotEmpty() == true ||
+                    root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_carrier_text")?.isNotEmpty() == true ||
+                    root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_status_view")?.isNotEmpty() == true ||
+                    root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/notification_stack_scroller")?.isNotEmpty() == true
+            if (hasLock) return true
+        }
+        for (w in windows) {
+            if (w.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM) {
+                val pkg = w.root?.packageName?.toString() ?: ""
+                if (pkg.contains("systemui") || pkg.contains("keyguard")) return true
+            }
+        }
+        return false
     }
 
     fun unlockKeyguardOrShowBouncer(): Boolean {
@@ -994,24 +1007,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX = width * 0.5f
-        val startY = height * 0.85f
-        val endY = height * 0.15f
+        val startX = width * 0.50f
+        val startY = height * 0.90f
+        val endY = height * 0.08f
 
-        val path1 = android.graphics.Path().apply {
-            moveTo(startX - 25f, startY)
-            lineTo(startX - 25f, endY)
+        // 1. Android 標準の単一高速アンロックスワイプ (Y: 90% -> 8%, 150ms)
+        val path = android.graphics.Path().apply {
+            moveTo(startX, startY)
+            lineTo(startX, endY)
         }
-        val path2 = android.graphics.Path().apply {
-            moveTo(startX + 25f, startY)
-            lineTo(startX + 25f, endY)
-        }
-
-        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 220)
-        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 220)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 150)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(stroke1)
-            .addStroke(stroke2)
+            .addStroke(stroke)
             .build()
 
         soundHelper?.playFocusMove()

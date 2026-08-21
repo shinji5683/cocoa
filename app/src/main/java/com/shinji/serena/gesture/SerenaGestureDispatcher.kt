@@ -71,17 +71,19 @@ class SerenaGestureDispatcher(
                 }
                 if (service.executeActiveCustomAction()) return true
                 val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
-                if (focusNode != null) {
-                    val viewId = focusNode.viewIdResourceName?.lowercase() ?: ""
-                    val text = focusNode.text?.toString() ?: ""
-                    val contentDesc = focusNode.contentDescription?.toString() ?: ""
-                    val isLockElement = viewId.contains("lock") || viewId.contains("keyguard") ||
-                            text.contains("ロック") || contentDesc.contains("ロック") || contentDesc.contains("解除")
+                if (service.isKeyguardLocked()) {
+                    val viewId = focusNode?.viewIdResourceName?.lowercase() ?: ""
+                    val text = focusNode?.text?.toString() ?: ""
+                    val isPinKeypadButton = viewId.contains("digit") || viewId.contains("pin_key") ||
+                            (viewId.contains("key") && text.matches(Regex("[0-9]"))) ||
+                            viewId.contains("delete") || viewId.contains("cancel")
 
-                    if (service.isKeyguardLocked() && isLockElement) {
+                    if (!isPinKeypadButton) {
                         return service.unlockKeyguardOrShowBouncer()
                     }
+                }
 
+                if (focusNode != null) {
                     // 1. ノード直接のクリック試行
                     if (focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
                         service.soundHelper?.playClick()
