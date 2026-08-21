@@ -3241,6 +3241,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
         }
+
+        // 3. PINテンキー（「1」ボタン）へのフォーカス移動
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            autoFocusPinKeypadIfPresent()
+        }, 250)
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            autoFocusPinKeypadIfPresent()
+        }, 600)
     }
 
     private fun registerTimeTickReceiver() {

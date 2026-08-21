@@ -84,20 +84,22 @@ class AccessibilityNodeEvaluator {
                 }
             }
 
-            // SystemUI / ロック画面の画面全体通知シェードやスクリム暗転背景を完全スキップ
+            // SystemUI / ロック画面の画面全体通知シェードやスクリム暗転背景、通知リスト行を完全スキップ
             if (pkgName.contains("systemui", ignoreCase = true) || pkgName.contains("keyguard", ignoreCase = true)) {
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 if (viewId.contains("scrim") || viewId.contains("notification_stack_scroller") ||
                     viewId.contains("ambient_indication_container") || viewId.contains("keyguard_carrier_text") ||
                     viewId.contains("keyguard_status_view") || viewId.contains("keyguard_clock") ||
+                    viewId.contains("notification_shelf") || viewId.contains("notification_info") ||
+                    viewId.contains("notification_main_column") ||
                     className.contains("ScrimView", ignoreCase = true) ||
                     className.contains("NotificationPanelView", ignoreCase = true) ||
                     className.contains("NotificationShade", ignoreCase = true) ||
+                    className.contains("NotificationStackScrollLayout", ignoreCase = true) ||
+                    className.contains("ExpandableNotificationRow", ignoreCase = true) ||
                     className.contains("KeyguardRootView", ignoreCase = true)
                 ) {
-                    if (node.childCount > 0) {
-                        return false
-                    }
+                    return false
                 }
             }
 

@@ -95,6 +95,23 @@ class SerenaFocusNavigator(
         for (r in roots) {
             traverseTree(r, list)
         }
+        if (service.isKeyguardLocked()) {
+            // ロック画面時はPINキーパッドとロック解除ボタンを最優先で先頭に並べ替え！通知領域は末尾へ隔離
+            list.sortByDescending { node ->
+                val viewId = node.viewIdResourceName?.lowercase() ?: ""
+                val text = node.text?.toString()?.trim() ?: ""
+                val desc = node.contentDescription?.toString()?.trim() ?: ""
+                when {
+                    viewId.endsWith("key1") || desc == "1" || text == "1" -> 100
+                    viewId.contains("digit") || (viewId.contains("key") && (text.matches(Regex("[0-9]")) || desc.matches(Regex("[0-9]")))) -> 90
+                    text.matches(Regex("^[0-9]$")) || desc.matches(Regex("^[0-9]$")) -> 85
+                    viewId.contains("delete") || viewId.contains("cancel") || viewId.contains("enter") || viewId.contains("ok") || desc.contains("削除") || desc.contains("決定") -> 80
+                    viewId.contains("lock_icon") || desc.contains("ロック") || text.contains("ロック") || desc.contains("解除") -> 70
+                    viewId.contains("notification") || node.className?.contains("Notification", ignoreCase = true) == true -> -100
+                    else -> 0
+                }
+            }
+        }
         return list
     }
 
