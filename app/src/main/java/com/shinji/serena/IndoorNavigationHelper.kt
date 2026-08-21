@@ -1,14 +1,13 @@
 package com.shinji.serena
 
 import android.content.Context
-import android.graphics.Rect
 import android.util.Log
 
 /**
  * Serena Indoor Navigation & Spatial Vision Helper
- * 屋内インドア空間ナビゲーション ＆ リアルタイム実況エンジン
+ * 屋内インドア空間ナビゲーション ＆ リアルタイム実況エンジン (TensorFlow Lite & ML Kit Vision)
  * 日常の直感的な方向表現（正面・右斜め前・左斜め前・右側・左側・足元・前方）で
- * 家具・扉・人物・表情・足元クリアランスを音声実況します。
+ * 家具・扉・人物の服装・年代・性別・表情・足元クリアランスを音声実況します。
  */
 class IndoorNavigationHelper(private val context: Context) {
 
@@ -36,8 +35,11 @@ class IndoorNavigationHelper(private val context: Context) {
     data class PersonState(
         val direction: Direction,
         val distanceMeter: Float,
-        val isSmiling: Boolean,
-        val poseDescription: String
+        val genderAndAge: String,
+        val clothingColor: String,
+        val expression: String,
+        val isLookingAtCamera: Boolean,
+        val poseDescription: String = "人"
     )
 
     /**
@@ -72,7 +74,7 @@ class IndoorNavigationHelper(private val context: Context) {
     }
 
     /**
-     * 家具やオブジェクトの屋内実況文を生成
+     * 家具やオブジェクト・人物（服装・年代・表情）の屋内実況文を生成
      */
     fun buildIndoorAnnouncement(
         roomName: String = "",
@@ -86,11 +88,15 @@ class IndoorNavigationHelper(private val context: Context) {
             parts.add("${roomName}にいます")
         }
 
-        // 人物の実況
+        // 人物（服装・年代・性別・表情・視線）の詳細実況
         for (p in people) {
-            val smileStr = if (p.isSmiling) "笑顔です" else "落ち着いた表情です"
             val distStr = if (p.distanceMeter <= 1.0f) "1メートル付近" else "${p.distanceMeter.toInt()}メートル先"
-            parts.add("${p.direction.label} ${distStr}に${p.poseDescription}がいます。${smileStr}")
+            val clothingStr = if (p.clothingColor.isNotEmpty() && !p.clothingColor.contains("不明")) "${p.clothingColor}を着た" else ""
+            val personLabel = if (p.genderAndAge.isNotEmpty()) p.genderAndAge else p.poseDescription
+            val lookingStr = if (p.isLookingAtCamera) "こちらを見ています" else ""
+            val exprDesc = listOf(p.expression, lookingStr).filter { it.isNotEmpty() }.joinToString("で")
+
+            parts.add("${p.direction.label} ${distStr}に ${clothingStr}${personLabel}がいます。${exprDesc}")
         }
 
         // 重要家具・扉・足元障害物の実況
@@ -129,6 +135,8 @@ class IndoorNavigationHelper(private val context: Context) {
             lower.contains("television") || lower.contains("tv") || lower.contains("screen") -> "テレビ"
             lower.contains("box") || lower.contains("trash") -> "ゴミ箱・箱"
             lower.contains("shelf") || lower.contains("cabinet") -> "棚・キャビネット"
+            lower.contains("fashion goods") || lower.contains("clothing") -> "洋服"
+            lower.contains("plant") -> "観葉植物"
             else -> label
         }
     }

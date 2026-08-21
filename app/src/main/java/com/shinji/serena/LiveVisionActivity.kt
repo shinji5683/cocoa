@@ -18,6 +18,8 @@ import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import java.util.concurrent.ExecutorService
@@ -25,7 +27,7 @@ import java.util.concurrent.Executors
 
 /**
  * リアルタイムAIカメラ実況アクティビティ
- * CameraX + ML Kit (日本語OCR & 顔・表情認識) を用いて、
+ * CameraX + TensorFlow Lite & ML Kit (日本語OCR & 顔・服装・年代認識 & TFLite物体検知) を用いて、
  * カメラに映った世界をリアルタイムに音声実況します。
  */
 class LiveVisionActivity : AppCompatActivity() {
@@ -45,6 +47,13 @@ class LiveVisionActivity : AppCompatActivity() {
         FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+            .build()
+    )
+    private val objectDetector = ObjectDetection.getClient(
+        ObjectDetectorOptions.Builder()
+            .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+            .enableMultipleObjects()
+            .enableClassification()
             .build()
     )
 
@@ -286,31 +295,59 @@ class LiveVisionActivity : AppCompatActivity() {
                                 boxWidth = box.width().toFloat() / imgWidth.coerceAtLeast(1),
                                 boxHeight = box.height().toFloat() / imgHeight.coerceAtLeast(1)
                             )
-                            val isSmile = (face.smilingProbability ?: 0f) > 0.4f
-                            val pose = if (dist <= 1.2f) "立っている人" else "人"
+                            val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
+                                face = face,
+                                imageWidth = imgWidth,
+                                imageHeight = imgHeight,
+                                bitmap = null
+                            )
+                            val smileProb = face.smilingProbability ?: 0f
+                            val leftEye = face.leftEyeOpenProbability ?: 0.5f
+                            val rightEye = face.rightEyeOpenProbability ?: 0.5f
+                            val avgEye = (leftEye + rightEye) / 2f
+                            val isLooking = avgEye > 0.4f
+
+                            val expressionDesc = when {
+                                smileProb > 0.60f -> "満面の笑顔"
+                                smileProb in 0.30f..0.60f -> "穏やかな微笑み"
+                                avgEye > 0.6f && smileProb < 0.15f -> "真剣な表情"
+                                avgEye < 0.35f && smileProb < 0.15f -> "落ち着いた表情"
+                                else -> "自然な表情"
+                            }
+
+                            val clothingDesc = if (attrs.clothingDescription.isNotEmpty() && !attrs.clothingDescription.contains("不明")) {
+                                attrs.clothingDescription
+                            } else {
+                                "服"
+                            }
+
                             IndoorNavigationHelper.PersonState(
                                 direction = dir,
                                 distanceMeter = dist,
-                                isSmiling = isSmile,
-                                poseDescription = pose
+                                genderAndAge = attrs.genderAndAge,
+                                clothingColor = clothingDesc,
+                                expression = expressionDesc,
+                                isLookingAtCamera = isLooking,
+                                poseDescription = "人"
                             )
                         }
 
-                        textRecognizer.process(image)
-                            .addOnSuccessListener { visionText ->
-                                val detectedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
-                                val rawLabels = detectedTexts.take(3)
-                                val indoorObjects = rawLabels.mapIndexed { idx, label ->
-                                    val translatedName = indoorHelper.translateIndoorLabel(label)
-                                    val dir = when (idx) {
-                                        0 -> IndoorNavigationHelper.Direction.FRONT
-                                        1 -> IndoorNavigationHelper.Direction.FRONT_RIGHT
-                                        else -> IndoorNavigationHelper.Direction.FRONT_LEFT
-                                    }
+                        objectDetector.process(image)
+                            .addOnSuccessListener { detectedObjects ->
+                                val indoorObjects = detectedObjects.mapNotNull { obj ->
+                                    val primaryLabel = obj.labels.firstOrNull()?.text ?: "家具・障害物"
+                                    val translated = indoorHelper.translateIndoorLabel(primaryLabel)
+                                    val box = obj.boundingBox
+                                    val (dir, dist) = indoorHelper.calculateDirectionAndDistance(
+                                        centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1),
+                                        centerY = box.centerY().toFloat() / imgHeight.coerceAtLeast(1),
+                                        boxWidth = box.width().toFloat() / imgWidth.coerceAtLeast(1),
+                                        boxHeight = box.height().toFloat() / imgHeight.coerceAtLeast(1)
+                                    )
                                     IndoorNavigationHelper.IndoorObject(
-                                        name = translatedName,
+                                        name = translated,
                                         direction = dir,
-                                        distanceMeter = (1.5f + idx * 0.8f)
+                                        distanceMeter = dist
                                     )
                                 }
 
@@ -408,24 +445,28 @@ class LiveVisionActivity : AppCompatActivity() {
                             )
                         }
 
-                        textRecognizer.process(image)
-                            .addOnSuccessListener { visionText ->
-                                val recognizedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
-                                val sceneSummary = geminiNanoEngine.describeSceneComprehensive(
-                                    lightingLevel = brightnessLevel,
-                                    persons = persons,
-                                    objects = emptyList(),
-                                    texts = recognizedTexts
-                                )
+                        objectDetector.process(image)
+                            .addOnSuccessListener { detectedObjs ->
+                                val objectLabels = detectedObjs.mapNotNull { it.labels.firstOrNull()?.text }
+                                textRecognizer.process(image)
+                                    .addOnSuccessListener { visionText ->
+                                        val recognizedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
+                                        val sceneSummary = geminiNanoEngine.describeSceneComprehensive(
+                                            lightingLevel = brightnessLevel,
+                                            persons = persons,
+                                            objects = objectLabels,
+                                            texts = recognizedTexts
+                                        )
 
-                                if (sceneSummary.isNotEmpty() && sceneSummary != lastSpokenText) {
-                                    lastSpokenText = sceneSummary
-                                    lastSpokenTime = currentTime
-                                    runOnUiThread {
-                                        tvStatus.text = "🌐 実況: $sceneSummary"
+                                        if (sceneSummary.isNotEmpty() && sceneSummary != lastSpokenText) {
+                                            lastSpokenText = sceneSummary
+                                            lastSpokenTime = currentTime
+                                            runOnUiThread {
+                                                tvStatus.text = "🌐 実況: $sceneSummary"
+                                            }
+                                            speak(sceneSummary, TextToSpeech.QUEUE_FLUSH)
+                                        }
                                     }
-                                    speak(sceneSummary, TextToSpeech.QUEUE_FLUSH)
-                                }
                             }
                     }
                     .addOnCompleteListener {
