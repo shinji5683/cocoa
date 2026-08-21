@@ -67,10 +67,10 @@ class StatusAnnouncementHelper(private val context: Context) {
     @SuppressLint("NewApi")
     private fun parseDisplayInfo(displayInfo: TelephonyDisplayInfo): String {
         return when (displayInfo.overrideNetworkType) {
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED -> "5Gミリ波 (高速5G)"
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED -> "5Gミリ波"
             TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA -> "5G"
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA -> "4G+"
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO -> "4G+"
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA -> "4Gプラス"
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO -> "4Gプラス"
             else -> {
                 when (displayInfo.networkType) {
                     TelephonyManager.NETWORK_TYPE_NR -> "5G"
