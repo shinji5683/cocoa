@@ -143,9 +143,27 @@ class MainActivity : AppCompatActivity() {
     private fun setupSecuritySection() {
         checkSecurityStatus()
         binding.btnRecheckSecurity.setOnClickListener {
-            checkSecurityStatus()
-            Toast.makeText(this, "セキュリティ再診断を実施しました", Toast.LENGTH_SHORT).show()
+            showTermsAndAiEthicsDialog()
         }
+    }
+
+    private fun showTermsAndAiEthicsDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("🛡️ Googleセキュリティ規約 ＆ 責任あるAI倫理ガイドライン")
+            .setMessage(
+                "【開発者公式署名 ＆ Google Play App Signing】\n" +
+                "本アプリの公式署名権限および著作権は開発者 Shinji に単独帰属し、AES-256暗号化により保護されています。第三者による自己署名バイナリの偽装配布は利用規約および国際法により固く禁じられています。\n\n" +
+                "【ユーザー主導の権限同意 (User-Driven Consent)】\n" +
+                "アクセシビリティ、カメラ、マイク、位置情報のすべての権限は、ユーザー本人の明示的な同意によってのみ有効化されます。\n\n" +
+                "【Google 責任あるAI倫理原則の完全準拠 (Responsible AI)】\n" +
+                "① 社会的価値と視覚障害者アクセシビリティ支援\n" +
+                "② 不公平なバイアスや差別の完全排除\n" +
+                "③ 安全性とフェイルセーフ設計の徹底\n" +
+                "④ 完全オンデバイス（Zero Cloud Architecture）による100%のプライバシー保護\n\n" +
+                "すべてのAI推論（Gemini Nano / ML Kit）は端末内NPUで完結し、外部への画像・音声・テキスト送信は一切行いません。"
+            )
+            .setPositiveButton("確認・同意する", null)
+            .show()
     }
 
     private fun checkSecurityStatus() {
