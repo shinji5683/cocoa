@@ -4,20 +4,23 @@ import android.content.Context
 import com.shinji.serena.ai.GeminiNanoEngine
 
 /**
- * Serena IME - マルチリンガルAI予測変換言語エンジン
- * 日本語・英語・タガログ語（フィリピン語 - Serenaさんの故郷の言語）・グローバル言語に対応。
+ * Serena IME - マルチリンガル＆地域別QWERTY・点字AI言語エンジン
+ * 日本語（かな/ローマ字QWERTY）、英語（US/UK/AU地域別）、タガログ語（フィリピン）、6点点字、グローバル対応。
  */
 class SerenaLanguageEngine(private val context: Context) {
 
     enum class LanguageMode {
-        JAPANESE,
-        ENGLISH,
-        TAGALOG,
-        BRAILLE,
-        GLOBAL
+        JAPANESE_KANA,      // 日本語 50音かな
+        JAPANESE_QWERTY,    // 日本語 ローマ字QWERTY
+        ENGLISH_US,         // 英語 (アメリカ US: $)
+        ENGLISH_UK,         // 英語 (イギリス UK: £)
+        ENGLISH_AU,         // 英語 (オーストラリア AU: A$)
+        TAGALOG,            // タガログ語 (フィリピン: ñ, ₱)
+        BRAILLE,            // 6点点字入力 (日本点字2018年版)
+        GLOBAL              // グローバル・絵文字
     }
 
-    var currentMode: LanguageMode = LanguageMode.JAPANESE
+    var currentMode: LanguageMode = LanguageMode.JAPANESE_KANA
         private set
 
     var isPhoneticModeEnabled: Boolean = true
@@ -29,11 +32,14 @@ class SerenaLanguageEngine(private val context: Context) {
 
     fun switchMode(): LanguageMode {
         currentMode = when (currentMode) {
-            LanguageMode.JAPANESE -> LanguageMode.ENGLISH
-            LanguageMode.ENGLISH -> LanguageMode.TAGALOG
+            LanguageMode.JAPANESE_KANA -> LanguageMode.JAPANESE_QWERTY
+            LanguageMode.JAPANESE_QWERTY -> LanguageMode.ENGLISH_US
+            LanguageMode.ENGLISH_US -> LanguageMode.ENGLISH_UK
+            LanguageMode.ENGLISH_UK -> LanguageMode.ENGLISH_AU
+            LanguageMode.ENGLISH_AU -> LanguageMode.TAGALOG
             LanguageMode.TAGALOG -> LanguageMode.BRAILLE
             LanguageMode.BRAILLE -> LanguageMode.GLOBAL
-            LanguageMode.GLOBAL -> LanguageMode.JAPANESE
+            LanguageMode.GLOBAL -> LanguageMode.JAPANESE_KANA
         }
         return currentMode
     }
@@ -49,8 +55,8 @@ class SerenaLanguageEngine(private val context: Context) {
 
         // 1. Serena AI / Gemini Nano による文脈予測を最優先取得
         val langStr = when (currentMode) {
-            LanguageMode.JAPANESE, LanguageMode.BRAILLE -> "ja"
-            LanguageMode.ENGLISH -> "en"
+            LanguageMode.JAPANESE_KANA, LanguageMode.JAPANESE_QWERTY, LanguageMode.BRAILLE -> "ja"
+            LanguageMode.ENGLISH_US, LanguageMode.ENGLISH_UK, LanguageMode.ENGLISH_AU -> "en"
             LanguageMode.TAGALOG -> "tl"
             LanguageMode.GLOBAL -> "en"
         }
@@ -60,18 +66,29 @@ class SerenaLanguageEngine(private val context: Context) {
         if (cleanInput.isEmpty()) {
             // 入力中文字列がない場合のデフォルト文脈候補
             when (currentMode) {
-                LanguageMode.JAPANESE, LanguageMode.BRAILLE -> {
+                LanguageMode.JAPANESE_KANA, LanguageMode.JAPANESE_QWERTY, LanguageMode.BRAILLE -> {
                     results.add(Pair("こんにちは", "挨拶：こんにちは"))
                     results.add(Pair("ありがとうございます", "感謝：ありがとうございます"))
                     results.add(Pair("よろしくお願いします", "挨拶：よろしくお願いします"))
                     results.add(Pair("お疲れ様です", "労い：お疲れ様です"))
                     results.add(Pair("Serena", "アプリ名：Serenaスクリーンリーダー"))
                 }
-                LanguageMode.ENGLISH -> {
-                    results.add(Pair("Hello", "Greeting: Hello"))
-                    results.add(Pair("Thank you", "Expression: Thank you"))
-                    results.add(Pair("Good morning", "Greeting: Good morning"))
+                LanguageMode.ENGLISH_US -> {
+                    results.add(Pair("Hello", "US Greeting: Hello"))
+                    results.add(Pair("Thank you", "US Expression: Thank you"))
+                    results.add(Pair("Awesome", "US Expression: Awesome"))
                     results.add(Pair("Serena IME", "App Name: Serena IME"))
+                }
+                LanguageMode.ENGLISH_UK -> {
+                    results.add(Pair("Good morning", "UK Greeting: Good morning"))
+                    results.add(Pair("Cheers", "UK Expression: Cheers (ありがとう)"))
+                    results.add(Pair("Brilliant", "UK Expression: Brilliant (素晴らしい)"))
+                    results.add(Pair("Serena IME", "App Name: Serena IME"))
+                }
+                LanguageMode.ENGLISH_AU -> {
+                    results.add(Pair("G'day", "AU Greeting: G'day mate!"))
+                    results.add(Pair("No worries", "AU Expression: No worries (どういたしまして)"))
+                    results.add(Pair("Cheers", "AU Expression: Cheers"))
                 }
                 LanguageMode.TAGALOG -> {
                     results.add(Pair("Salamat po", "Greeting: Salamat po (ありがとうございます)"))
@@ -89,148 +106,60 @@ class SerenaLanguageEngine(private val context: Context) {
         }
 
         when (currentMode) {
-            LanguageMode.JAPANESE, LanguageMode.BRAILLE -> {
-                results.add(Pair(cleanInput, "ひらがな：$cleanInput"))
+            LanguageMode.JAPANESE_KANA, LanguageMode.JAPANESE_QWERTY, LanguageMode.BRAILLE -> {
+                val convertedHiragana = if (currentMode == LanguageMode.JAPANESE_QWERTY) {
+                    convertRomajiToHiragana(cleanInput)
+                } else {
+                    cleanInput
+                }
+
+                results.add(Pair(convertedHiragana, "ひらがな：$convertedHiragana"))
 
                 // 日本語単語・漢字変換辞書
                 val japaneseDict = mapOf(
-                    // 開発者・固有名詞
                     "しんじ" to listOf("晋司", "新司", "慎二", "真二"),
                     "しん" to listOf("新", "進", "晋", "真", "心", "信", "伸"),
                     "さきやま" to listOf("崎山", "先山"),
                     "せれな" to listOf("Serena", "セレナ"),
                     "あいえむいー" to listOf("IME", "アイエムイー"),
-                    // 挨拶・日常
                     "あい" to listOf("愛", "相", "会", "合"),
                     "せい" to listOf("晴", "正", "清", "生", "成", "声"),
+                    "じ" to listOf("司", "治", "字", "時", "事", "次", "寺"),
                     "とうきょう" to listOf("東京"),
-                    "にほん" to listOf("日本"),
-                    "あした" to listOf("明日"),
-                    "きょう" to listOf("今日"),
-                    "きのう" to listOf("昨日"),
-                    "ありがとう" to listOf("ありがとうございます", "有難う"),
-                    "おつかれ" to listOf("お疲れ様です", "お疲れ様でした", "お疲れ"),
-                    "よろしく" to listOf("よろしくお願いします", "宜しく"),
-                    "おはよう" to listOf("おはようございます", "お早う"),
-                    "こんにち" to listOf("こんにちは"),
-                    "こんばん" to listOf("こんばんは", "今晩"),
-                    // 開発・技術
-                    "あんどろいど" to listOf("Android"),
-                    "あくせしびりてぃ" to listOf("アクセシビリティ"),
-                    "すくりーんりーだー" to listOf("スクリーンリーダー"),
-                    "びるど" to listOf("ビルド"),
-                    "こーど" to listOf("コード"),
-                    "てすと" to listOf("テスト"),
-                    "かいはつ" to listOf("開発"),
-                    "きのう" to listOf("機能", "昨日"),
-                    "せってい" to listOf("設定"),
-                    "おんせい" to listOf("音声"),
-                    "じぇすちゃー" to listOf("ジェスチャー"),
-                    "ふりっく" to listOf("フリック"),
-                    "かーそる" to listOf("カーソル"),
-                    "よみあげ" to listOf("読み上げ"),
-                    "へんかん" to listOf("変換"),
-                    "けっか" to listOf("結果"),
-                    "じかん" to listOf("時間"),
-                    "ばってりー" to listOf("バッテリー"),
-                    "つうち" to listOf("通知")
+                    "おおがき" to listOf("大垣"),
+                    "ぎふ" to listOf("岐阜"),
+                    "なごや" to listOf("名古屋")
                 )
 
-                japaneseDict[cleanInput]?.forEach { word ->
-                    val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(word)
-                    val desc = if (detail.isNotEmpty() && detail != word) "漢字：$detail" else "変換：$word"
-                    results.add(Pair(word, desc))
+                japaneseDict[convertedHiragana]?.forEach { kanji ->
+                    val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(kanji)
+                    results.add(Pair(kanji, detail))
                 }
 
-                // プレフィックス前方一致予測
-                japaneseDict.keys.filter { it.startsWith(cleanInput) && it != cleanInput }.forEach { key ->
-                    japaneseDict[key]?.forEach { word ->
-                        val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(word)
-                        val desc = if (detail.isNotEmpty() && detail != word) "予測：$detail" else "予測：$word"
-                        results.add(Pair(word, desc))
+                // 1文字ずつの詳細漢字マッチ
+                for (char in convertedHiragana) {
+                    val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(char.toString())
+                    if (detail.isNotEmpty() && detail != char.toString()) {
+                        results.add(Pair(char.toString(), detail))
                     }
                 }
             }
 
-            LanguageMode.ENGLISH -> {
-                results.add(Pair(cleanInput, "English: $cleanInput"))
-
-                val englishDict = listOf(
-                    "Accessibility", "Android", "Alpha", "Application", "Audio", "Assistant",
-                    "Battery", "Bluetooth", "Build", "Button",
-                    "Cancel", "Clear", "Close", "Code", "Compass", "Connection",
-                    "Developer", "Device", "Download",
-                    "Enable", "Engine", "Enter",
-                    "Focus", "Flick", "Forward",
-                    "Gesture", "Google", "Gemini", "Good morning", "Good afternoon", "Good evening",
-                    "Haptic", "Hello", "Help",
-                    "Input", "Install", "Internet",
-                    "Japanese", "Just",
-                    "Keyboard", "Keypad",
-                    "Language", "Light", "Live", "Log",
-                    "Message", "Microphone", "Mode",
-                    "Navigation", "Network", "Next", "Notification",
-                    "Object", "OK", "Open", "Option",
-                    "Package", "Password", "Permission", "Phone", "Phonetic", "Play", "Predictive",
-                    "Reader", "Release", "Restart", "Running",
-                    "Screen", "Search", "Select", "Send", "Serena", "Service", "Setting", "Sound", "Speech", "Status", "Success",
-                    "Tagalog", "TalkBack", "Tap", "Thank you", "Time", "Toggle", "Touch",
-                    "Update", "Upload", "User",
-                    "Version", "Vibration", "View", "Vision", "Voice", "Volume",
-                    "Welcome", "Wifi", "Window", "Word"
-                )
-
-                englishDict.filter { it.startsWith(cleanInput, ignoreCase = true) }.forEach { word ->
-                    results.add(Pair(word, "English word: $word"))
-                }
+            LanguageMode.ENGLISH_US, LanguageMode.ENGLISH_UK, LanguageMode.ENGLISH_AU -> {
+                results.add(Pair(cleanInput, "Word: $cleanInput"))
+                results.add(Pair(cleanInput.lowercase(), "Lowercase: ${cleanInput.lowercase()}"))
+                results.add(Pair(cleanInput.uppercase(), "Uppercase: ${cleanInput.uppercase()}"))
+                results.add(Pair(cleanInput.replaceFirstChar { it.uppercase() }, "Capitalized: ${cleanInput.replaceFirstChar { it.uppercase() }}"))
             }
 
             LanguageMode.TAGALOG -> {
-                results.add(Pair(cleanInput, "Tagalog: $cleanInput"))
-
-                val tagalogDict = mapOf(
-                    "salamat" to "Salamat（ありがとう）",
-                    "salamat po" to "Salamat po（ありがとうございます・丁寧語）",
-                    "maraming salamat" to "Maraming salamat po（どうもありがとうございます）",
-                    "kamusta" to "Kamusta（元気？・こんにちは）",
-                    "kamusta ka po" to "Kamusta ka po?（お元気ですか？）",
-                    "maganda" to "Maganda（美しい・素晴らしい）",
-                    "magandang umaga" to "Magandang umaga po（おはようございます）",
-                    "magandang tanghali" to "Magandang tanghali po（お昼のこんにちは）",
-                    "magandang hapon" to "Magandang hapon po（夕方のこんにちは）",
-                    "magandang gabi" to "Magandang gabi po（こんばんは）",
-                    "magandang araw" to "Magandang araw po（良い一日を・こんにちは）",
-                    "mahal" to "Mahal（愛・大切な）",
-                    "mahal kita" to "Mahal kita（愛しています・大好きです）",
-                    "ingat" to "Ingat ka（気をつけてね）",
-                    "ingat po" to "Ingat po kayo（お気をつけて）",
-                    "mabuhay" to "Mabuhay（ようこそ・万歳・乾杯）",
-                    "oo" to "Oo（はい）",
-                    "opo" to "Opo（はい・丁寧語）",
-                    "hindi" to "Hindi（いいえ）",
-                    "hindi po" to "Hindi po（いいえ・丁寧語）",
-                    "paalam" to "Paalam（さようなら）",
-                    "walang anuman" to "Walang anuman（どういたしまして）",
-                    "masaya" to "Masaya（嬉しい・楽しい）",
-                    "tulong" to "Tulong（助け・サポート）",
-                    "kaibigan" to "Kaibigan（友達）",
-                    "kapatid" to "Kapatid（兄弟・姉妹）",
-                    "masarap" to "Masarap（美味しい）",
-                    "ayos" to "Ayos（大丈夫・OK）"
-                )
-
-                tagalogDict.filter { it.key.startsWith(cleanInput.lowercase()) }.forEach { (word, desc) ->
-                    results.add(Pair(word, desc))
-                }
-
-                if (cleanInput.lowercase() == "n") {
-                    results.add(Pair("ñ", "小文字 エニェ (Eñe - タガログ文字)"))
-                    results.add(Pair("Ñ", "大文字 エニェ (Eñe - タガログ文字)"))
-                }
+                results.add(Pair(cleanInput, "Salita: $cleanInput"))
+                results.add(Pair(cleanInput.lowercase(), "Maliit: ${cleanInput.lowercase()}"))
+                results.add(Pair(cleanInput.uppercase(), "Malaki: ${cleanInput.uppercase()}"))
             }
 
             LanguageMode.GLOBAL -> {
-                results.add(Pair(cleanInput, "Global Unicode: $cleanInput"))
+                results.add(Pair(cleanInput, "Raw: $cleanInput"))
             }
         }
 
@@ -243,5 +172,46 @@ class SerenaLanguageEngine(private val context: Context) {
         } else {
             char.toString()
         }
+    }
+
+    /**
+     * ローマ字から平仮名への高速変換
+     */
+    fun convertRomajiToHiragana(romaji: String): String {
+        var str = romaji.lowercase()
+        val romajiMap = listOf(
+            "kya" to "きゃ", "kyu" to "きゅ", "kyo" to "きょ",
+            "sha" to "しゃ", "shu" to "しゅ", "sho" to "しょ", "shi" to "し",
+            "cha" to "ちゃ", "chu" to "ちゅ", "cho" to "ちょ", "chi" to "ち", "tsu" to "つ",
+            "nya" to "にゃ", "nyu" to "にゅ", "nyo" to "にょ",
+            "hya" to "ひゃ", "hyu" to "ひゅ", "hyo" to "ひょ",
+            "mya" to "みゃ", "myu" to "みゅ", "myo" to "みょ",
+            "rya" to "りゃ", "ryu" to "りゅ", "ryo" to "りょ",
+            "gya" to "ぎゃ", "gyu" to "ぎゅ", "gyo" to "ぎょ",
+            "ja" to "じゃ", "ju" to "じゅ", "jo" to "じょ", "ji" to "じ",
+            "bya" to "びゃ", "byu" to "びゅ", "byo" to "びょ",
+            "pya" to "ぴゃ", "pyu" to "ぴゅ", "pyo" to "ぴょ",
+            "ka" to "か", "ki" to "き", "ku" to "く", "ke" to "け", "ko" to "こ",
+            "sa" to "さ", "su" to "す", "se" to "せ", "so" to "そ",
+            "ta" to "た", "ti" to "ち", "tu" to "つ", "te" to "て", "to" to "と",
+            "na" to "な", "ni" to "に", "nu" to "ぬ", "ne" to "ね", "no" to "の",
+            "ha" to "は", "hi" to "ひ", "fu" to "ふ", "he" to "へ", "ho" to "ほ",
+            "ma" to "ま", "mi" to "み", "mu" to "む", "me" to "め", "mo" to "も",
+            "ya" to "や", "yu" to "ゆ", "yo" to "よ",
+            "ra" to "ら", "ri" to "り", "ru" to "る", "re" to "れ", "ro" to "ろ",
+            "wa" to "わ", "wo" to "を", "nn" to "ん",
+            "ga" to "が", "gi" to "ぎ", "gu" to "ぐ", "ge" to "げ", "go" to "ご",
+            "za" to "ざ", "zu" to "ず", "ze" to "ぜ", "zo" to "ぞ",
+            "da" to "だ", "di" to "ぢ", "du" to "づ", "de" to "で", "do" to "ど",
+            "ba" to "ば", "bi" to "び", "bu" to "ぶ", "be" to "べ", "bo" to "ぼ",
+            "pa" to "ぱ", "pi" to "ぴ", "pu" to "ぷ", "pe" to "ぺ", "po" to "ぽ",
+            "a" to "あ", "i" to "い", "u" to "う", "e" to "え", "o" to "お",
+            "-" to "ー"
+        )
+
+        for ((r, h) in romajiMap) {
+            str = str.replace(r, h)
+        }
+        return str
     }
 }

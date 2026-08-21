@@ -119,13 +119,16 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
     }
 
     override fun onLanguageSwitchPressed() {
-        val nextMode = languageEngine?.switchMode() ?: SerenaLanguageEngine.LanguageMode.JAPANESE
+        val nextMode = languageEngine?.switchMode() ?: SerenaLanguageEngine.LanguageMode.JAPANESE_KANA
         val modeName = when (nextMode) {
-            SerenaLanguageEngine.LanguageMode.JAPANESE -> "日本語かな"
-            SerenaLanguageEngine.LanguageMode.ENGLISH -> "英語 QWERTY"
+            SerenaLanguageEngine.LanguageMode.JAPANESE_KANA -> "日本語かな (50音)"
+            SerenaLanguageEngine.LanguageMode.JAPANESE_QWERTY -> "日本語ローマ字 (QWERTY)"
+            SerenaLanguageEngine.LanguageMode.ENGLISH_US -> "英語 US (アメリカ)"
+            SerenaLanguageEngine.LanguageMode.ENGLISH_UK -> "英語 UK (イギリス)"
+            SerenaLanguageEngine.LanguageMode.ENGLISH_AU -> "英語 AU (オーストラリア)"
             SerenaLanguageEngine.LanguageMode.TAGALOG -> "タガログ語 (フィリピン)"
             SerenaLanguageEngine.LanguageMode.BRAILLE -> "6点点字入力"
-            SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル Unicode"
+            SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル 絵文字・記号"
         }
         val isPhonetic = languageEngine?.isPhoneticModeEnabled ?: true
         keyboardView?.updateStatusText(modeName, isPhonetic)
@@ -137,8 +140,11 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
     override fun onPhoneticTogglePressed() {
         val isEnabled = languageEngine?.togglePhoneticMode() ?: true
         val modeName = when (languageEngine?.currentMode) {
-            SerenaLanguageEngine.LanguageMode.JAPANESE -> "日本語"
-            SerenaLanguageEngine.LanguageMode.ENGLISH -> "英語"
+            SerenaLanguageEngine.LanguageMode.JAPANESE_KANA -> "日本語かな"
+            SerenaLanguageEngine.LanguageMode.JAPANESE_QWERTY -> "日本語ローマ字"
+            SerenaLanguageEngine.LanguageMode.ENGLISH_US -> "英語 US"
+            SerenaLanguageEngine.LanguageMode.ENGLISH_UK -> "英語 UK"
+            SerenaLanguageEngine.LanguageMode.ENGLISH_AU -> "英語 AU"
             SerenaLanguageEngine.LanguageMode.TAGALOG -> "タガログ語"
             SerenaLanguageEngine.LanguageMode.BRAILLE -> "6点点字"
             SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル"

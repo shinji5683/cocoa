@@ -142,14 +142,17 @@ class SerenaKeyboardView @JvmOverloads constructor(
     fun rebuildLayout() {
         mainKeyContainer.removeAllViews()
 
-        val mode = languageEngine?.currentMode ?: SerenaLanguageEngine.LanguageMode.JAPANESE
+        val mode = languageEngine?.currentMode ?: SerenaLanguageEngine.LanguageMode.JAPANESE_KANA
 
         when (mode) {
-            SerenaLanguageEngine.LanguageMode.JAPANESE -> buildJapaneseKanaLayout()
-            SerenaLanguageEngine.LanguageMode.ENGLISH -> buildQwertyLayout(isTagalog = false)
-            SerenaLanguageEngine.LanguageMode.TAGALOG -> buildQwertyLayout(isTagalog = true)
+            SerenaLanguageEngine.LanguageMode.JAPANESE_KANA -> buildJapaneseKanaLayout()
+            SerenaLanguageEngine.LanguageMode.JAPANESE_QWERTY -> buildRegionalQwertyLayout(mode)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_US -> buildRegionalQwertyLayout(mode)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_UK -> buildRegionalQwertyLayout(mode)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_AU -> buildRegionalQwertyLayout(mode)
+            SerenaLanguageEngine.LanguageMode.TAGALOG -> buildRegionalQwertyLayout(mode)
             SerenaLanguageEngine.LanguageMode.BRAILLE -> buildBrailleLayout()
-            SerenaLanguageEngine.LanguageMode.GLOBAL -> buildQwertyLayout(isTagalog = false)
+            SerenaLanguageEngine.LanguageMode.GLOBAL -> buildGlobalLayout()
         }
 
         val controlRow = LinearLayout(context).apply { orientation = HORIZONTAL }
@@ -293,25 +296,68 @@ class SerenaKeyboardView @JvmOverloads constructor(
         }
     }
 
-    private fun buildQwertyLayout(isTagalog: Boolean) {
-        val rows = mutableListOf(
-            listOf('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
-            listOf('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
-            listOf('z', 'x', 'c', 'v', 'b', 'n', 'm')
-        )
+    private fun buildRegionalQwertyLayout(mode: SerenaLanguageEngine.LanguageMode) {
+        val numRow = listOf('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
+        val firstRow = listOf('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p')
+        val secondRow = mutableListOf('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l')
+        val thirdRow = mutableListOf('z', 'x', 'c', 'v', 'b', 'n', 'm')
 
-        if (isTagalog) {
-            val secondRowWithEne = rows[1].toMutableList()
-            secondRowWithEne.add('ñ')
-            rows[1] = secondRowWithEne
+        // 地域固有キーの追加
+        when (mode) {
+            SerenaLanguageEngine.LanguageMode.TAGALOG -> {
+                secondRow.add('ñ')
+                thirdRow.add('₱') // フィリピン・ペソ
+            }
+            SerenaLanguageEngine.LanguageMode.ENGLISH_UK -> {
+                thirdRow.add('£') // イギリス・ポンド
+                thirdRow.add('€') // ユーロ
+            }
+            SerenaLanguageEngine.LanguageMode.ENGLISH_US -> {
+                thirdRow.add('$') // USドル
+                thirdRow.add('@')
+            }
+            SerenaLanguageEngine.LanguageMode.ENGLISH_AU -> {
+                thirdRow.add('$') // オーストラリア・ドル
+                thirdRow.add('&')
+            }
+            SerenaLanguageEngine.LanguageMode.JAPANESE_QWERTY -> {
+                thirdRow.add('¥') // 日本円
+                thirdRow.add('-')
+            }
+            else -> {}
         }
 
-        for (row in rows) {
+        val allRows = listOf(numRow, firstRow, secondRow, thirdRow)
+
+        for (row in allRows) {
             val rowLayout = LinearLayout(context).apply { orientation = HORIZONTAL }
             for (char in row) {
                 val speech = languageEngine?.getSpeechForChar(char) ?: char.toString()
                 val btn = createKeyButton(char.toString(), speech) {
                     listener?.onKeyTyped(char)
+                }
+                rowLayout.addView(btn)
+            }
+            mainKeyContainer.addView(rowLayout)
+        }
+    }
+
+    private fun buildGlobalLayout() {
+        val emojiRows = listOf(
+            listOf("✨", "💖", "🌸", "☕", "👍", "🎉"),
+            listOf("😊", "😆", "🥺", "😭", "🔥", "🚀"),
+            listOf("❤️", "⭐", "🎵", "🍙", "🍣", "🍰"),
+            listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")
+        )
+        for (row in emojiRows) {
+            val rowLayout = LinearLayout(context).apply { orientation = HORIZONTAL }
+            for (str in row) {
+                val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(str)
+                val speech = if (detail.isNotEmpty() && detail != str) detail else str
+                val btn = createKeyButton(str, speech) {
+                    for (c in str) {
+                        listener?.onKeyTyped(c)
+                    }
                 }
                 rowLayout.addView(btn)
             }
