@@ -18,6 +18,8 @@ build_output.txt
 *.apk
 *.bin
 *.jks
+*.keystore
+*.aes256
 *.log
 *.txt
 scratch/
