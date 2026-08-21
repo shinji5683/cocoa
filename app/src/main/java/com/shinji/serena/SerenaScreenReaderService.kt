@@ -2773,7 +2773,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             className.contains("CheckBox", ignoreCase = true) -> "チェックボックス"
             className.contains("RadioButton", ignoreCase = true) -> "ラジオボタン"
             className.contains("Button", ignoreCase = true) -> "ボタン"
-            className.contains("EditText", ignoreCase = true) -> "テキスト入力欄"
+            className.contains("EditText", ignoreCase = true) || node.isEditable -> {
+                val inputType = node.inputType
+                val isPass = node.isPassword || (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+                        (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD ||
+                        (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_NUMBER && (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+                
+                when {
+                    isPass -> "パスワード入力欄"
+                    (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_NUMBER -> "数字入力欄"
+                    (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_PHONE -> "電話番号入力欄"
+                    (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS -> "メールアドレス入力欄"
+                    (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_URI -> "URL入力欄"
+                    else -> "テキスト入力欄"
+                }
+            }
             className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> "画像"
             className.contains("SeekBar", ignoreCase = true) -> "スライダー"
             target.isCheckable -> "スイッチ"

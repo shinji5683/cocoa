@@ -13,6 +13,7 @@ class SerenaLanguageEngine(private val context: Context) {
         JAPANESE,
         ENGLISH,
         TAGALOG,
+        BRAILLE,
         GLOBAL
     }
 
@@ -30,7 +31,8 @@ class SerenaLanguageEngine(private val context: Context) {
         currentMode = when (currentMode) {
             LanguageMode.JAPANESE -> LanguageMode.ENGLISH
             LanguageMode.ENGLISH -> LanguageMode.TAGALOG
-            LanguageMode.TAGALOG -> LanguageMode.GLOBAL
+            LanguageMode.TAGALOG -> LanguageMode.BRAILLE
+            LanguageMode.BRAILLE -> LanguageMode.GLOBAL
             LanguageMode.GLOBAL -> LanguageMode.JAPANESE
         }
         return currentMode
@@ -47,7 +49,7 @@ class SerenaLanguageEngine(private val context: Context) {
 
         // 1. Serena AI / Gemini Nano による文脈予測を最優先取得
         val langStr = when (currentMode) {
-            LanguageMode.JAPANESE -> "ja"
+            LanguageMode.JAPANESE, LanguageMode.BRAILLE -> "ja"
             LanguageMode.ENGLISH -> "en"
             LanguageMode.TAGALOG -> "tl"
             LanguageMode.GLOBAL -> "en"
@@ -58,7 +60,7 @@ class SerenaLanguageEngine(private val context: Context) {
         if (cleanInput.isEmpty()) {
             // 入力中文字列がない場合のデフォルト文脈候補
             when (currentMode) {
-                LanguageMode.JAPANESE -> {
+                LanguageMode.JAPANESE, LanguageMode.BRAILLE -> {
                     results.add(Pair("こんにちは", "挨拶：こんにちは"))
                     results.add(Pair("ありがとうございます", "感謝：ありがとうございます"))
                     results.add(Pair("よろしくお願いします", "挨拶：よろしくお願いします"))
@@ -87,7 +89,7 @@ class SerenaLanguageEngine(private val context: Context) {
         }
 
         when (currentMode) {
-            LanguageMode.JAPANESE -> {
+            LanguageMode.JAPANESE, LanguageMode.BRAILLE -> {
                 results.add(Pair(cleanInput, "ひらがな：$cleanInput"))
 
                 // 日本語単語・漢字変換辞書

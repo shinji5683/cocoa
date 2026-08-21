@@ -121,16 +121,17 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
     override fun onLanguageSwitchPressed() {
         val nextMode = languageEngine?.switchMode() ?: SerenaLanguageEngine.LanguageMode.JAPANESE
         val modeName = when (nextMode) {
-            SerenaLanguageEngine.LanguageMode.JAPANESE -> "日本語"
-            SerenaLanguageEngine.LanguageMode.ENGLISH -> "英語"
+            SerenaLanguageEngine.LanguageMode.JAPANESE -> "日本語かな"
+            SerenaLanguageEngine.LanguageMode.ENGLISH -> "英語 QWERTY"
             SerenaLanguageEngine.LanguageMode.TAGALOG -> "タガログ語 (フィリピン)"
+            SerenaLanguageEngine.LanguageMode.BRAILLE -> "6点点字入力"
             SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル Unicode"
         }
         val isPhonetic = languageEngine?.isPhoneticModeEnabled ?: true
         keyboardView?.updateStatusText(modeName, isPhonetic)
         keyboardView?.rebuildLayout()
         updateCandidateList()
-        soundAndHapticHelper?.announceTts("言語切り替え：$modeName")
+        soundAndHapticHelper?.announceTts("入力モード切替：$modeName")
     }
 
     override fun onPhoneticTogglePressed() {
@@ -139,6 +140,7 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
             SerenaLanguageEngine.LanguageMode.JAPANESE -> "日本語"
             SerenaLanguageEngine.LanguageMode.ENGLISH -> "英語"
             SerenaLanguageEngine.LanguageMode.TAGALOG -> "タガログ語"
+            SerenaLanguageEngine.LanguageMode.BRAILLE -> "6点点字"
             SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル"
             null -> "日本語"
         }
