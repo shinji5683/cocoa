@@ -142,7 +142,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             soundHelper?.let {
                 spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
             }
-            focusNavigator = com.shinji.serena.navigation.SerenaFocusNavigator(this)
+            callManager = com.shinji.serena.telephony.SerenaCallManager(this, com.shinji.serena.speech.SerenaSpeechEngine(this))
             gestureDispatcher = com.shinji.serena.gesture.SerenaGestureDispatcher(this)
             com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
             
@@ -2530,6 +2530,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (event == null) return
 
         val pkgName = event.packageName?.toString() ?: ""
+        callManager?.checkCallState(pkgName, rootInActiveWindow)
 
         when (event.eventType) {
             AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED -> {
@@ -3489,6 +3490,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             Thread.sleep(1200)
         } catch (_: Exception) {}
         super.onDestroy()
+        callManager?.release()
+        callManager = null
         wifiConnectivityHelper?.stopMonitoring()
         wifiConnectivityHelper = null
         batteryHelper?.stop()

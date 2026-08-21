@@ -6,6 +6,9 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.SystemClock
 import android.telecom.TelecomManager
+import android.telephony.PhoneStateListener
+import android.telephony.TelephonyCallback
+import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import com.shinji.serena.SerenaScreenReaderService
@@ -13,8 +16,8 @@ import com.shinji.serena.speech.SerenaSpeechEngine
 
 /**
  * SerenaCallManager
- * 電話アプリ（標準電話）および全メッセージングアプリ（LINE, Discord, Skype, WhatsApp, Messenger, Rakuten Link等）対応
- * 着信分離・リアルタイム画面タイマー読み取り・通話時間計測・合計通話時間レポート・2本指ダブルタップ応答/切断マネージャー
+ * 電話アプリ（標準キャリア電話）および全VoIP・メッセージングアプリ（LINE, Discord, Skype, WhatsApp, Messenger, Rakuten Link, Zoom等）対応
+ * 通話開始時の音声ガイダンス・通話終了時の合計通話時間レポート・着信案内・2本指ダブルタップ応答/切断マネージャー
  */
 class SerenaCallManager(
     private val service: SerenaScreenReaderService,
@@ -27,6 +30,7 @@ class SerenaCallManager(
 
     private val telecomManager = service.getSystemService(Context.TELECOM_SERVICE) as? TelecomManager
     private val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+    private val telephonyManager = service.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
 
     private var isCallActive = false
     private var activeCallApp: String = ""
@@ -35,20 +39,109 @@ class SerenaCallManager(
     private var lastCallCheckTimeMs = 0L
     private var lastAnnouncedMinute = 0L
 
+    private var telephonyCallback: Any? = null
+    private var phoneStateListener: PhoneStateListener? = null
+
+    init {
+        initTelephonyListener()
+    }
+
+    private fun initTelephonyListener() {
+        try {
+            if (telephonyManager == null) return
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val callback = object : TelephonyCallback(), TelephonyCallback.CallStateListener {
+                    override fun onCallStateChanged(state: Int) {
+                        handleTelephonyCallState(state)
+                    }
+                }
+                telephonyCallback = callback
+                telephonyManager.registerTelephonyCallback(service.mainExecutor, callback)
+                Log.i(TAG, "TelephonyCallback registered for API 31+.")
+            } else {
+                @Suppress("DEPRECATION")
+                val listener = object : PhoneStateListener() {
+                    @Deprecated("Deprecated in Java")
+                    override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+                        handleTelephonyCallState(state)
+                    }
+                }
+                phoneStateListener = listener
+                @Suppress("DEPRECATION")
+                telephonyManager.listen(listener, PhoneStateListener.LISTEN_CALL_STATE)
+                Log.i(TAG, "PhoneStateListener registered for legacy API.")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "initTelephonyListener error (permission or device restriction): ${e.message}")
+        }
+    }
+
+    private fun handleTelephonyCallState(state: Int) {
+        when (state) {
+            TelephonyManager.CALL_STATE_RINGING -> {
+                Log.i(TAG, "Telephony: CALL_STATE_RINGING")
+            }
+            TelephonyManager.CALL_STATE_OFFHOOK -> {
+                Log.i(TAG, "Telephony: CALL_STATE_OFFHOOK -> Call connected")
+                onCallStarted("電話")
+            }
+            TelephonyManager.CALL_STATE_IDLE -> {
+                Log.i(TAG, "Telephony: CALL_STATE_IDLE -> Call ended")
+                if (isCallActive && (activeCallApp == "電話" || activeCallApp.isEmpty())) {
+                    onCallEnded("電話")
+                }
+            }
+        }
+    }
+
+    fun onCallStarted(appName: String, extraInfo: String = "") {
+        if (isCallActive) return
+        isCallActive = true
+        activeCallApp = if (appName.isNotEmpty()) appName else "電話"
+        callStartTimeMs = SystemClock.elapsedRealtime()
+        lastAnnouncedMinute = 0L
+        service.soundHelper?.playActionDone()
+
+        val extra = if (extraInfo.isNotEmpty()) "（${extraInfo}）" else ""
+        service.speak("${activeCallApp}の通話を開始しました${extra}。", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        Log.i(TAG, "onCallStarted: $activeCallApp at $callStartTimeMs")
+    }
+
+    fun onCallEnded(appName: String = activeCallApp) {
+        if (!isCallActive) return
+        isCallActive = false
+        val elapsedMs = (SystemClock.elapsedRealtime() - callStartTimeMs).coerceAtLeast(1000L)
+        val durationText = formatDuration(elapsedMs)
+        val appLabel = if (appName.isNotEmpty()) appName else if (activeCallApp.isNotEmpty()) activeCallApp else "電話"
+        
+        service.soundHelper?.playActionDone()
+        service.speak("${appLabel}の通話が終了しました。合計通話時間は ${durationText} でした。", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        Log.i(TAG, "onCallEnded: $appLabel. Duration: $durationText")
+
+        activeCallApp = ""
+        callerName = ""
+        callStartTimeMs = 0L
+        lastAnnouncedMinute = 0L
+    }
+
     fun checkCallState(pkgName: String, root: AccessibilityNodeInfo?) {
         val now = SystemClock.elapsedRealtime()
-        if (now - lastCallCheckTimeMs < 1000) return
+        if (now - lastCallCheckTimeMs < 800) return
         lastCallCheckTimeMs = now
 
         val isCallPkg = isCallRelatedPackage(pkgName)
-        if (!isCallPkg && audioManager?.mode != AudioManager.MODE_IN_CALL && audioManager?.mode != AudioManager.MODE_RINGTONE) return
+        val currentAudioMode = audioManager?.mode ?: AudioManager.MODE_NORMAL
+        val isAudioInCall = currentAudioMode == AudioManager.MODE_IN_CALL || currentAudioMode == AudioManager.MODE_IN_COMMUNICATION
+
+        if (!isCallPkg && !isAudioInCall && currentAudioMode != AudioManager.MODE_RINGTONE && !isCallActive) return
 
         val windowText = if (root != null) parseCallerFromNode(root) else ""
 
         // 着信中（プルルル…と鳴っている状態）の判定
-        val isRinging = windowText.contains("着信") || windowText.contains("からの通話") || audioManager?.mode == AudioManager.MODE_RINGTONE
+        val isRinging = windowText.contains("着信") || windowText.contains("からの通話") || currentAudioMode == AudioManager.MODE_RINGTONE
 
-        // 画面ノードから本物の通話タイマーテキスト（「01:23」や「01:15:20」など）を抽出
+        // 画面ノードから通話タイマーテキスト（「01:23」や「01:15:20」など）を抽出
         val uiTimerText = extractCallTimerFromText(windowText)
 
         // 実際の通話接続中の判定（着信中を除く！）
@@ -56,7 +149,7 @@ class SerenaCallManager(
             uiTimerText.isNotEmpty() ||
             windowText.contains("通話中") ||
             windowText.contains("通話時間") ||
-            audioManager?.mode == AudioManager.MODE_IN_CALL
+            isAudioInCall
         )
 
         // 1. 着信アナウンス（着信中のみ）
@@ -64,21 +157,17 @@ class SerenaCallManager(
             callerName = extractNameFromText(windowText)
             val appLabel = getMessagingAppName(pkgName)
             if (callerName.isNotEmpty()) {
-                speechEngine.speak("${appLabel}で${callerName}さんから着信です", interrupt = true)
+                service.speak("${appLabel}で${callerName}さんから着信です", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             } else {
-                speechEngine.speak("${appLabel}から着信です", interrupt = true)
+                service.speak("${appLabel}から着信です", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             }
         }
 
         // 2. 通話開始判定（実際に相手と接続された瞬間からタイマースタート！）
         if (isCurrentlyInCall && !isCallActive) {
-            isCallActive = true
-            activeCallApp = getMessagingAppName(pkgName)
-            callStartTimeMs = SystemClock.elapsedRealtime()
-            lastAnnouncedMinute = 0L
-            val targetName = if (callerName.isNotEmpty()) "（${callerName}さん）" else ""
-            speechEngine.speak("${activeCallApp}の通話を開始しました${targetName}", interrupt = true)
-            Log.i(TAG, "Call connected ($activeCallApp) at $callStartTimeMs")
+            val appLabel = getMessagingAppName(pkgName)
+            val name = if (callerName.isNotEmpty()) "${callerName}さん" else ""
+            onCallStarted(appLabel, name)
         } 
         // 3. 通話中の経過時間案内（1分ごとのオート経過アナウンス）
         else if (isCurrentlyInCall && isCallActive) {
@@ -87,30 +176,18 @@ class SerenaCallManager(
             if (currentMinutes > 0 && currentMinutes > lastAnnouncedMinute) {
                 lastAnnouncedMinute = currentMinutes
                 val timeToAnnounce = if (uiTimerText.isNotEmpty()) uiTimerText else "${currentMinutes}分"
-                speechEngine.speak("現在、通話時間 ${timeToAnnounce} 経過しています", interrupt = false)
+                service.speak("現在、通話時間 ${timeToAnnounce} 経過しています", android.speech.tts.TextToSpeech.QUEUE_ADD)
             }
         }
         // 4. 通話終了判定 ＆ 正確な合計通話時間レポート
-        else if (!isCurrentlyInCall && isCallActive) {
-            isCallActive = false
-            val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
-            val durationText = if (uiTimerText.isNotEmpty()) uiTimerText else formatDuration(elapsedMs)
-            val appLabel = if (activeCallApp.isNotEmpty()) activeCallApp else "通話"
-            
-            speechEngine.speak("${appLabel}の通話が終了しました。合計通話時間は ${durationText} でした。", interrupt = true)
-            Log.i(TAG, "$appLabel ended. Duration: $durationText")
-            
-            // ピカピカに初期化
-            activeCallApp = ""
-            callerName = ""
-            callStartTimeMs = 0L
-            lastAnnouncedMinute = 0L
+        else if (!isCurrentlyInCall && isCallActive && !isCallPkg) {
+            onCallEnded()
         }
     }
 
     fun announceCurrentCallDuration() {
         if (!isCallActive) {
-            speechEngine.speak("現在、アクティブな通話はありません", interrupt = true)
+            service.speak("現在、アクティブな通話はありません", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return
         }
         val root = service.rootInActiveWindow
@@ -123,8 +200,10 @@ class SerenaCallManager(
             val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
             formatDuration(elapsedMs)
         }
-        speechEngine.speak("現在、${activeCallApp}の通話時間は ${durationText} 経過しています", interrupt = true)
+        service.speak("現在、${activeCallApp}の通話時間は ${durationText} 経過しています", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
     }
+
+    fun isCallActive(): Boolean = isCallActive
 
     /**
      * 2本指ダブルタップ時に呼ばれるスマート判定通話ハンドラ
@@ -157,12 +236,11 @@ class SerenaCallManager(
     }
 
     fun handleAnswerCallGesture(): Boolean {
-        // 1. TelecomManager による直接応答
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && telecomManager != null) {
                 if (audioManager?.mode == AudioManager.MODE_RINGTONE || telecomManager.isInCall) {
                     telecomManager.acceptRingingCall()
-                    speechEngine.speak("通話を応答しました", interrupt = true)
+                    service.speak("通話を応答しました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
                     return true
                 }
             }
@@ -170,7 +248,6 @@ class SerenaCallManager(
             Log.w(TAG, "acceptRingingCall permission error: ${e.message}")
         }
 
-        // 2. UIノード検索 ＆ 親要素トラバース ＆ 物理タッチエミュレーション
         val root = service.rootInActiveWindow ?: return false
         val answerNode = findCallAnswerNode(root)
         if (answerNode != null) {
@@ -185,21 +262,20 @@ class SerenaCallManager(
                 }
             }
 
-            speechEngine.speak("通話を応答しました", interrupt = true)
+            service.speak("通話を応答しました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return true
         }
 
-        speechEngine.speak("応答ボタンが見つかりませんでした", interrupt = true)
+        service.speak("応答ボタンが見つかりませんでした", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
         return false
     }
 
     fun handleEndCallGesture(): Boolean {
-        // 1. TelecomManager による直接切断
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && telecomManager != null) {
                 if (isCallActive || audioManager?.mode == AudioManager.MODE_IN_CALL) {
                     if (telecomManager.endCall()) {
-                        speechEngine.speak("通話を終了します", interrupt = true)
+                        service.speak("通話を終了します", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
                         return true
                     }
                 }
@@ -208,7 +284,6 @@ class SerenaCallManager(
             Log.w(TAG, "endCall permission error: ${e.message}")
         }
 
-        // 2. UIノード検索 ＆ 親要素トラバース ＆ 物理タッチエミュレーション
         val root = service.rootInActiveWindow ?: return false
         val endNode = findCallEndNode(root)
         if (endNode != null) {
@@ -223,11 +298,11 @@ class SerenaCallManager(
                 }
             }
 
-            speechEngine.speak("通話を終了します", interrupt = true)
+            service.speak("通話を終了します", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return true
         }
 
-        speechEngine.speak("切断ボタンが見つかりませんでした", interrupt = true)
+        service.speak("切断ボタンが見つかりませんでした", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
         return false
     }
 
@@ -328,6 +403,19 @@ class SerenaCallManager(
     private fun extractNameFromText(fullText: String): String {
         val cleaned = fullText.replace("着信", "").replace("からの通話", "").replace("音声通話", "").trim()
         return if (cleaned.length in 1..20) cleaned else ""
+    }
+
+    fun release() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && telephonyCallback is TelephonyCallback) {
+                telephonyManager?.unregisterTelephonyCallback(telephonyCallback as TelephonyCallback)
+            } else if (phoneStateListener != null) {
+                @Suppress("DEPRECATION")
+                telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
+            }
+        } catch (_: Exception) {}
+        telephonyCallback = null
+        phoneStateListener = null
     }
 
     private fun findCallAnswerNode(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
