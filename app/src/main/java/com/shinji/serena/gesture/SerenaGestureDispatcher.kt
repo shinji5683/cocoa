@@ -50,9 +50,6 @@ class SerenaGestureDispatcher(
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP -> {
-                if (service.isKeyguardLocked()) {
-                    return service.unlockKeyguardOrShowBouncer()
-                }
                 if (service.handleVerticalSwipe(up = true)) return true
                 navigator?.navigateLinearFocus(forward = false)
                 return true
@@ -74,20 +71,9 @@ class SerenaGestureDispatcher(
                 }
                 if (service.executeActiveCustomAction()) return true
                 val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
-                if (service.isKeyguardLocked()) {
-                    val viewId = focusNode?.viewIdResourceName?.lowercase() ?: ""
-                    val text = focusNode?.text?.toString() ?: ""
-                    val isPinKeypadButton = viewId.contains("digit") || viewId.contains("pin_key") ||
-                            (viewId.contains("key") && text.matches(Regex("[0-9]"))) ||
-                            viewId.contains("delete") || viewId.contains("cancel")
-
-                    if (!isPinKeypadButton) {
-                        return service.unlockKeyguardOrShowBouncer()
-                    }
-                }
 
                 if (focusNode != null) {
-                    // 1. ノード直接のクリック試行
+                    // 1. ノード直接のクリック試行 (PINボタン、一般ボタン等)
                     if (focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
                         service.soundHelper?.playClick()
                         return true
@@ -122,6 +108,12 @@ class SerenaGestureDispatcher(
                         return true
                     }
                 }
+
+                // ロック画面でフォーカス対象がない/クリック不能な場所をダブルタップした時のみ解除スワイプを発動
+                if (service.isKeyguardLocked()) {
+                    return service.unlockKeyguardOrShowBouncer()
+                }
+
                 return false
             }
             AccessibilityService.GESTURE_DOUBLE_TAP_AND_HOLD -> {

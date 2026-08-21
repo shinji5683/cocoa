@@ -983,23 +983,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun isKeyguardLocked(): Boolean {
         val km = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
-        if (km?.isKeyguardLocked == true || km?.isDeviceLocked == true) return true
-        val root = rootInActiveWindow
-        val rootPkg = root?.packageName?.toString() ?: ""
-        if (rootPkg.contains("systemui") || rootPkg.contains("keyguard")) {
-            val hasLock = root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")?.isNotEmpty() == true ||
-                    root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_carrier_text")?.isNotEmpty() == true ||
-                    root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_status_view")?.isNotEmpty() == true ||
-                    root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/notification_stack_scroller")?.isNotEmpty() == true
-            if (hasLock) return true
-        }
-        for (w in windows) {
-            if (w.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM) {
-                val pkg = w.root?.packageName?.toString() ?: ""
-                if (pkg.contains("systemui") || pkg.contains("keyguard")) return true
-            }
-        }
-        return false
+        if (km?.isKeyguardLocked != true && km?.isDeviceLocked != true) return false
+        val root = rootInActiveWindow ?: return true
+        val rootPkg = root.packageName?.toString()?.lowercase() ?: ""
+        if (rootPkg.contains("launcher") || rootPkg.contains("trebuchet") || rootPkg.contains("home")) return false
+        return true
     }
 
     fun unlockKeyguardOrShowBouncer(): Boolean {
@@ -1008,15 +996,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val height = displayMetrics.heightPixels.toFloat()
 
         val startX = width * 0.50f
-        val startY = height * 0.90f
-        val endY = height * 0.08f
+        val startY = height * 0.65f
+        val endY = height * 0.15f
 
-        // 1. Android 標準の単一高速アンロックスワイプ (Y: 90% -> 8%, 150ms)
+        // ナビバー領域 (下端) を避けた画面中央からの解除スワイプ (Y: 65% -> 15%, 200ms)
         val path = android.graphics.Path().apply {
             moveTo(startX, startY)
             lineTo(startX, endY)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 150)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 200)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -1049,11 +1037,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             } else {
                 if (forward) {
-                    startX1 = width * 0.45f; endX1 = width * 0.45f; startY1 = height * 0.75f; endY1 = height * 0.25f
-                    startX2 = width * 0.55f; endX2 = width * 0.55f; startY2 = height * 0.75f; endY2 = height * 0.25f
+                    startX1 = width * 0.45f; endX1 = width * 0.45f; startY1 = height * 0.65f; endY1 = height * 0.30f
+                    startX2 = width * 0.55f; endX2 = width * 0.55f; startY2 = height * 0.65f; endY2 = height * 0.30f
                 } else {
-                    startX1 = width * 0.45f; endX1 = width * 0.45f; startY1 = height * 0.25f; endY1 = height * 0.75f
-                    startX2 = width * 0.55f; endX2 = width * 0.55f; startY2 = height * 0.25f; endY2 = height * 0.75f
+                    startX1 = width * 0.45f; endX1 = width * 0.45f; startY1 = height * 0.30f; endY1 = height * 0.65f
+                    startX2 = width * 0.55f; endX2 = width * 0.55f; startY2 = height * 0.30f; endY2 = height * 0.65f
                 }
             }
 
