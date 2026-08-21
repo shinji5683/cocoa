@@ -15,18 +15,22 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
+import com.shinji.serena.ai.FoodAndExpirationScannerHelper
+import com.shinji.serena.navigation.WalkAndTransitVisionHelper
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
  * リアルタイムAIカメラ実況アクティビティ
- * CameraX + ML Kit (日本語OCR & 顔・服装・年代認識) + Gemini Nano を用いて、
+ * CameraX + ML Kit (日本語OCR & 顔・服装・年代認識 & バーコード) + Gemini Nano を用いて、
  * カメラに映った世界をリアルタイムに音声実況します。
  * 音声ガイドが途中で遮られず最後まで落ち着いて聞けるよう、発声中は待機制御を行います。
  */
@@ -45,6 +49,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var isTtsReady = false
 
     private val textRecognizer = TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
+    private val barcodeScanner = BarcodeScanning.getClient()
     private val faceDetector = FaceDetection.getClient(
         FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
@@ -76,13 +81,20 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "OCR" -> "文字読み取りカメラ"
             "FACE" -> "表情・人物認識カメラ"
             "INDOOR" -> "🏠 インドア空間ナビ ＆ 屋内実況"
+            "FOOD_EXPIRATION" -> "🥫 食品＆賞味期限スキャナー"
+            "WALK_TRANSIT" -> "🚦 歩行・信号＆点字ブロックナビ"
+            "BARCODE_DOC" -> "📄 バーコード＆書類・レシート読み取り"
             else -> "リアルタイムAI環境実況"
         }
         tvStatus.text = "🌸 $modeTitle 起動中…"
-        val startAnnounce = if (mode == "INDOOR") {
-            "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
-        } else {
-            "リアルタイムカメラ実況を起動しました。周囲をゆっくり映してください。"
+        val startAnnounce = when (mode) {
+            "INDOOR" -> "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
+            "FOOD_EXPIRATION" -> "食品と賞味期限スキャナーを起動しました。食品パッケージや賞味期限の印字をゆっくり映してください。"
+            "WALK_TRANSIT" -> "歩行・信号および点字ブロックナビを起動しました。正面の道路や信号機を映してください。"
+            "BARCODE_DOC" -> "バーコードおよび書類スキャナーを起動しました。商品バーコードやレシート、請求書を映してください。"
+            "OCR" -> "文字読み取りカメラを起動しました。"
+            "FACE" -> "表情・人物認識カメラを起動しました。"
+            else -> "リアルタイムカメラ実況を起動しました。周囲をゆっくり映してください。"
         }
         speak(startAnnounce)
 
@@ -102,10 +114,14 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             tts?.language = Locale.JAPANESE
             tts?.setSpeechRate(1.05f)
             isTtsReady = true
-            val initialPrompt = if (mode == "INDOOR") {
-                "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
-            } else {
-                "リアルタイムカメラ実況を起動しました。周囲をゆっくり映してください。"
+            val initialPrompt = when (mode) {
+                "INDOOR" -> "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
+                "FOOD_EXPIRATION" -> "食品と賞味期限スキャナーを起動しました。食品パッケージや賞味期限の印字をゆっくり映してください。"
+                "WALK_TRANSIT" -> "歩行・信号および点字ブロックナビを起動しました。正面の道路や信号機を映してください。"
+                "BARCODE_DOC" -> "バーコードおよび書類スキャナーを起動しました。商品バーコードやレシート、請求書を映してください。"
+                "OCR" -> "文字読み取りカメラを起動しました。"
+                "FACE" -> "表情・人物認識カメラを起動しました。"
+                else -> "リアルタイムカメラ実況を起動しました。周囲をゆっくり映してください。"
             }
             speak(initialPrompt)
         }
@@ -270,6 +286,123 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         imageProxy.close()
                     }
             }
+            "FOOD_EXPIRATION" -> {
+                textRecognizer.process(image)
+                    .addOnSuccessListener { visionText ->
+                        val rawText = visionText.text.trim()
+                        if (rawText.isNotEmpty()) {
+                            val foodResult = FoodAndExpirationScannerHelper.analyzeFoodItem(rawText)
+                            val expirationResult = FoodAndExpirationScannerHelper.extractExpirationDate(rawText)
+
+                            val announcement = when {
+                                foodResult != null && foodResult.expiration != null -> {
+                                    "【${foodResult.category}】${foodResult.estimatedItemName}を検出。${foodResult.expiration.spokenMessage}"
+                                }
+                                foodResult != null -> {
+                                    "【${foodResult.category}】${foodResult.estimatedItemName}を検出しました。"
+                                }
+                                expirationResult != null -> {
+                                    expirationResult.spokenMessage
+                                }
+                                else -> {
+                                    // 一般OCR文字
+                                    val topText = visionText.textBlocks.firstOrNull()?.text?.trim() ?: ""
+                                    if (topText.isNotEmpty()) "文字: $topText" else ""
+                                }
+                            }
+
+                            if (announcement.isNotEmpty() && (announcement != lastSpokenText || currentTime - lastSpokenTime > 4000)) {
+                                lastSpokenText = announcement
+                                lastSpokenTime = currentTime
+                                runOnUiThread {
+                                    tvStatus.text = "🥫 $announcement"
+                                }
+                                speak(announcement, TextToSpeech.QUEUE_FLUSH)
+                            }
+                        }
+                    }
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
+            }
+            "WALK_TRANSIT" -> {
+                try {
+                    val bitmap = imageProxy.toBitmap()
+                    val walkState = WalkAndTransitVisionHelper.analyzeWalkingScene(
+                        bitmap = bitmap,
+                        imageWidth = imgWidth,
+                        imageHeight = imgHeight
+                    )
+
+                    val parts = mutableListOf<String>()
+                    if (walkState.trafficLightMessage != null) {
+                        parts.add(walkState.trafficLightMessage)
+                    }
+                    if (walkState.brailleBlockMessage != null) {
+                        parts.add(walkState.brailleBlockMessage)
+                    }
+
+                    if (parts.isNotEmpty()) {
+                        val announcement = parts.joinToString(" ")
+                        if (announcement != lastSpokenText || currentTime - lastSpokenTime > 3500) {
+                            lastSpokenText = announcement
+                            lastSpokenTime = currentTime
+                            runOnUiThread {
+                                tvStatus.text = "🚦 $announcement"
+                            }
+                            speak(announcement, TextToSpeech.QUEUE_FLUSH)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Walk transit analysis error: ${e.message}")
+                } finally {
+                    imageProxy.close()
+                }
+            }
+            "BARCODE_DOC" -> {
+                barcodeScanner.process(image)
+                    .addOnSuccessListener { barcodes ->
+                        if (barcodes.isNotEmpty()) {
+                            val bc = barcodes[0]
+                            val rawValue = bc.rawValue ?: ""
+                            val formatName = when (bc.format) {
+                                Barcode.FORMAT_QR_CODE -> "QRコード"
+                                Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8, Barcode.FORMAT_UPC_A, Barcode.FORMAT_UPC_E -> "商品バーコード"
+                                else -> "コード"
+                            }
+                            val msg = "📌 $formatName を検出: $rawValue"
+                            if (msg != lastSpokenText || currentTime - lastSpokenTime > 4000) {
+                                lastSpokenText = msg
+                                lastSpokenTime = currentTime
+                                runOnUiThread {
+                                    tvStatus.text = msg
+                                }
+                                speak(msg, TextToSpeech.QUEUE_FLUSH)
+                            }
+                        } else {
+                            // バーコードがない場合は書類・レシートOCR解析
+                            textRecognizer.process(image)
+                                .addOnSuccessListener { visionText ->
+                                    val rawText = visionText.text.trim()
+                                    if (rawText.isNotEmpty()) {
+                                        val docSummary = FoodAndExpirationScannerHelper.summarizeDocument(rawText)
+                                        val msg = docSummary.summarySpokenText
+                                        if (msg != lastSpokenText || currentTime - lastSpokenTime > 4000) {
+                                            lastSpokenText = msg
+                                            lastSpokenTime = currentTime
+                                            runOnUiThread {
+                                                tvStatus.text = "📄 $msg"
+                                            }
+                                            speak(msg, TextToSpeech.QUEUE_FLUSH)
+                                        }
+                                    }
+                                }
+                        }
+                    }
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
+            }
             "INDOOR" -> {
                 val indoorHelper = IndoorNavigationHelper(this)
 
@@ -419,6 +552,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         } catch (_: Exception) {}
         cameraExecutor.shutdown()
         textRecognizer.close()
+        barcodeScanner.close()
         faceDetector.close()
     }
 }

@@ -1416,6 +1416,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🚶‍♂️", "徒歩ナビ・現在地と目的地案内") {
                 announceCurrentLocationAndNav()
             },
+            serenaMenuItem("🥫", "食品＆賞味期限スキャナー (缶詰・調味料・飲料・日付の自動判別)") {
+                launchFoodExpirationScanner()
+            },
+            serenaMenuItem("🚦", "歩行・信号＆点字ブロックナビ (青信号/赤信号・誘導ブロック案内)") {
+                launchWalkTransitNav()
+            },
+            serenaMenuItem("📄", "バーコード＆書類・レシート読み取り (合計金額・期日・商品コード)") {
+                launchBarcodeDocScanner()
+            },
+            serenaMenuItem("📖", "漢字詳細読み上げ (現在の文字を「信じるの信」等で解説)") {
+                explainCurrentFocusedKanji()
+            },
             serenaMenuItem("📷", "カメラ・文字読み取り (On-Device OCR)") {
                 launchCameraOcr()
             },
@@ -1865,6 +1877,62 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch Indoor Navigation: ${e.message}")
+        }
+    }
+
+    fun launchFoodExpirationScanner() {
+        soundHelper?.playClick()
+        speak("食品および賞味期限スキャナーを起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "FOOD_EXPIRATION")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch Food Expiration: ${e.message}")
+        }
+    }
+
+    fun launchWalkTransitNav() {
+        soundHelper?.playClick()
+        speak("歩行・信号および点字ブロックナビを起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "WALK_TRANSIT")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch Walk Transit: ${e.message}")
+        }
+    }
+
+    fun launchBarcodeDocScanner() {
+        soundHelper?.playClick()
+        speak("バーコードおよび書類スキャナーを起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "BARCODE_DOC")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch Barcode Doc: ${e.message}")
+        }
+    }
+
+    fun explainCurrentFocusedKanji() {
+        soundHelper?.playClick()
+        val text = lastHoveredNode?.text?.toString()
+            ?: lastHoveredNode?.contentDescription?.toString()
+            ?: rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)?.text?.toString()
+            ?: ""
+        if (text.isNotBlank()) {
+            val explanation = com.shinji.serena.ai.KanjiExplainerHelper.explainWord(text)
+            speak("漢字詳細読み: $explanation", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            speak("フォーカス中の文字が見つかりません。", TextToSpeech.QUEUE_FLUSH)
         }
     }
 
