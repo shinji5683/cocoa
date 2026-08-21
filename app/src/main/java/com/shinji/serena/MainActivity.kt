@@ -461,18 +461,73 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 3. LINE / WhatsApp / SMS 等のメッセージサポート（共有・メッセージ起動）
+        // 3. LINE / WhatsApp / SMS 等のメッセージサポートダイアログ
         binding.btnMessageDeveloper.setOnClickListener {
-            try {
-                val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "【Serena Screen Reader サポート相談】\nShinjiさん宛て\n\n")
+            val options = arrayOf(
+                "🟢 WhatsApp で直通チャットを開く",
+                "💬 SMS (ショートメッセージ) で直接送信",
+                "🟢 LINE で電話番号検索 (番号を自動コピーしてLINE起動)",
+                "📤 その他のアプリで共有送信"
+            )
+            AlertDialog.Builder(this)
+                .setTitle("💬 メッセージサポート窓口の選択")
+                .setItems(options) { _, which ->
+                    when (which) {
+                        0 -> {
+                            // WhatsApp 直通リンク
+                            try {
+                                val url = "https://wa.me/818094959134?text=" + Uri.encode("【Serena Screen Reader サポート相談】\nShinjiさん、こんにちは！\n")
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                startActivity(intent)
+                                Toast.makeText(this, "WhatsAppを起動します", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(this, "WhatsAppの起動に失敗しました: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        1 -> {
+                            // SMS 直通
+                            try {
+                                val smsUri = Uri.parse("smsto:$phoneNumber")
+                                val intent = Intent(Intent.ACTION_SENDTO, smsUri).apply {
+                                    putExtra("sms_body", "【Serena サポート相談】\nShinjiさん、こんにちは！\n")
+                                }
+                                startActivity(intent)
+                                Toast.makeText(this, "SMSメッセージアプリを起動します", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(this, "SMSアプリの起動に失敗しました: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        2 -> {
+                            // LINE 電話番号検索サポート
+                            try {
+                                val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText("Shinji Phone", phoneNumber)
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(this, "電話番号 ($phoneNumber) をコピーしました。LINEの友だち追加で電話番号検索してください", Toast.LENGTH_LONG).show()
+
+                                val lineIntent = packageManager.getLaunchIntentForPackage("jp.naver.line.android")
+                                if (lineIntent != null) {
+                                    startActivity(lineIntent)
+                                } else {
+                                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://line.me/")))
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(this, "LINEの起動に失敗しました: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        3 -> {
+                            // その他共有
+                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, "【Serena Screen Reader サポート相談】\nShinjiさん宛て\n\n")
+                            }
+                            val chooser = Intent.createChooser(sendIntent, "相談するアプリを選択")
+                            startActivity(chooser)
+                        }
+                    }
                 }
-                val chooser = Intent.createChooser(sendIntent, "相談するアプリを選択 (LINE / WhatsApp / メッセージ等)")
-                startActivity(chooser)
-            } catch (e: Exception) {
-                Toast.makeText(this, "アプリの起動に失敗しました: ${e.message}", Toast.LENGTH_LONG).show()
-            }
+                .setNegativeButton("キャンセル", null)
+                .show()
         }
     }
 
