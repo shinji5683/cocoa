@@ -42,6 +42,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         const val PREFS_NAME = "serena_prefs"
         const val KEY_SPEECH_RATE = "speech_rate"
         const val KEY_SPEECH_PITCH = "speech_pitch"
+        const val KEY_CALL_PERIODIC_ANNOUNCE = "call_periodic_announce"
         const val KEY_HOURLY_CHIME_ENABLED = "hourly_chime_enabled"
         const val KEY_SHAKE_THRESHOLD = "shake_threshold"
         const val KEY_TALKBACK_MODE = "key_talkback_mode"

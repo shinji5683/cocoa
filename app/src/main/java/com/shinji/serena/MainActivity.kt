@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         setupPermissionsSection()
         setupTtsControls()
         setupHourlyChimeSection()
+        setupCallAssistantSection()
         setupShakeSensitivitySection()
         setupDeveloperCallSection()
         setupTestBench()
@@ -399,6 +400,17 @@ class MainActivity : AppCompatActivity() {
                 val sampleText = "${periodStr}${displayHour}時をお知らせします。（テスト再生）"
                 localTts?.speak(sampleText, TextToSpeech.QUEUE_FLUSH, null, "testHourlyChime")
             }
+        }
+    }
+
+    private fun setupCallAssistantSection() {
+        val isPeriodicEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_CALL_PERIODIC_ANNOUNCE, false)
+        binding.switchCallPeriodicAnnounce.isChecked = isPeriodicEnabled
+
+        binding.switchCallPeriodicAnnounce.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_CALL_PERIODIC_ANNOUNCE, isChecked).apply()
+            val statusStr = if (isChecked) "通話中の経過時間定期読み上げを有効にしました" else "通話中の経過時間定期読み上げを無効にしました"
+            Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
         }
     }
 

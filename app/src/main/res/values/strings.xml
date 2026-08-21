@@ -52,6 +52,11 @@
     <string name="label_hourly_chime_switch">時報（毎時アナウンス）を有効にする</string>
     <string name="btn_test_hourly_chime">時報の音声・チャイムテスト</string>
 
+    <string name="title_call_settings">電話・通話アシスタント設定</string>
+    <string name="desc_call_settings">着信相手の通知、通話開始・終了時の合計通話時間を音声でお知らせします。</string>
+    <string name="label_call_periodic_switch">通話中の経過時間を1分ごとに定期アナウンス</string>
+    <string name="desc_call_periodic_switch">※有効にすると通話中に1分ごとの経過時間を読み上げます（デフォルトOFF推奨）。開始・終了時の案内は常に動作します。</string>
+
     <string name="title_security_health">OS環境 ＆ セキュリティ安全診断</string>
     <string name="btn_recheck_security">端末セキュリティを再診断</string>
 

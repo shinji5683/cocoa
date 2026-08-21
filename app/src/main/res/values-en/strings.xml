@@ -53,6 +53,11 @@
     <string name="label_hourly_chime_switch">Enable Hourly Chime</string>
     <string name="btn_test_hourly_chime">Test Chime &amp; Voice</string>
 
+    <string name="title_call_settings">Phone &amp; Call Assistant</string>
+    <string name="desc_call_settings">Provides voice announcements for caller ID and total duration upon call completion.</string>
+    <string name="label_call_periodic_switch">Announce in-call elapsed time every minute</string>
+    <string name="desc_call_periodic_switch">Periodically announces call duration every minute during active calls (Default: OFF).</string>
+
     <string name="title_security_health">Security &amp; OS Health Diagnostics</string>
     <string name="btn_recheck_security">Re-diagnose Device Security</string>
 

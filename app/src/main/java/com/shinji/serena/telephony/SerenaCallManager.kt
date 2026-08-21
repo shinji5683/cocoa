@@ -12,6 +12,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import com.shinji.serena.SerenaScreenReaderService
+import com.shinji.serena.getSafeSharedPreferences
 import com.shinji.serena.speech.SerenaSpeechEngine
 
 /**
@@ -31,6 +32,7 @@ class SerenaCallManager(
     private val telecomManager = service.getSystemService(Context.TELECOM_SERVICE) as? TelecomManager
     private val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
     private val telephonyManager = service.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+    private val prefs = service.getSafeSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
 
     private var isCallActive = false
     private var activeCallApp: String = ""
@@ -141,15 +143,12 @@ class SerenaCallManager(
         // 着信中（プルルル…と鳴っている状態）の判定
         val isRinging = windowText.contains("着信") || windowText.contains("からの通話") || currentAudioMode == AudioManager.MODE_RINGTONE
 
-        // 画面ノードから通話タイマーテキスト（「01:23」や「01:15:20」など）を抽出
-        val uiTimerText = extractCallTimerFromText(windowText)
-
-        // 実際の通話接続中の判定（着信中を除く！）
+        // 実際の通話接続中の判定（着信中を除く）
         val isCurrentlyInCall = !isRinging && (
-            uiTimerText.isNotEmpty() ||
+            isAudioInCall ||
             windowText.contains("通話中") ||
             windowText.contains("通話時間") ||
-            isAudioInCall
+            (isCallPkg && (windowText.contains("ミュート") || windowText.contains("スピーカー") || windowText.contains("切断") || windowText.contains("終話")))
         )
 
         // 1. 着信アナウンス（着信中のみ）
@@ -169,37 +168,32 @@ class SerenaCallManager(
             val name = if (callerName.isNotEmpty()) "${callerName}さん" else ""
             onCallStarted(appLabel, name)
         } 
-        // 3. 通話中の経過時間案内（1分ごとのオート経過アナウンス）
-        else if (isCurrentlyInCall && isCallActive) {
-            val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
-            val currentMinutes = (elapsedMs / 1000) / 60
-            if (currentMinutes > 0 && currentMinutes > lastAnnouncedMinute) {
-                lastAnnouncedMinute = currentMinutes
-                val timeToAnnounce = if (uiTimerText.isNotEmpty()) uiTimerText else "${currentMinutes}分"
-                service.speak("現在、通話時間 ${timeToAnnounce} 経過しています", android.speech.tts.TextToSpeech.QUEUE_ADD)
+        // 3. 通話中の経過時間案内（設定でONになっている場合のみ、実測時間で1分ごとにアナウンス）
+        else if (isCurrentlyInCall && isCallActive && callStartTimeMs > 0L) {
+            val periodicEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_CALL_PERIODIC_ANNOUNCE, false)
+            if (periodicEnabled) {
+                val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
+                val currentMinutes = (elapsedMs / 1000) / 60
+                if (currentMinutes > 0 && currentMinutes > lastAnnouncedMinute) {
+                    lastAnnouncedMinute = currentMinutes
+                    val timeToAnnounce = formatDuration(elapsedMs)
+                    service.speak("現在、通話時間 ${timeToAnnounce} 経過しています", android.speech.tts.TextToSpeech.QUEUE_ADD)
+                }
             }
         }
         // 4. 通話終了判定 ＆ 正確な合計通話時間レポート
-        else if (!isCurrentlyInCall && isCallActive && !isCallPkg) {
+        else if (!isCurrentlyInCall && isCallActive && !isCallPkg && !isAudioInCall) {
             onCallEnded()
         }
     }
 
     fun announceCurrentCallDuration() {
-        if (!isCallActive) {
+        if (!isCallActive || callStartTimeMs <= 0L) {
             service.speak("現在、アクティブな通話はありません", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return
         }
-        val root = service.rootInActiveWindow
-        val windowText = if (root != null) parseCallerFromNode(root) else ""
-        val uiTimerText = extractCallTimerFromText(windowText)
-
-        val durationText = if (uiTimerText.isNotEmpty()) {
-            uiTimerText
-        } else {
-            val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
-            formatDuration(elapsedMs)
-        }
+        val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
+        val durationText = formatDuration(elapsedMs)
         service.speak("現在、${activeCallApp}の通話時間は ${durationText} 経過しています", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
     }
 
