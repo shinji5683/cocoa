@@ -6,8 +6,14 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.BatteryManager
 import android.os.Build
+import android.telephony.PhoneStateListener
+import android.telephony.ServiceState
+import android.telephony.TelephonyCallback
+import android.telephony.TelephonyDisplayInfo
 import android.telephony.TelephonyManager
 import android.util.Log
 import java.util.Calendar
@@ -16,9 +22,67 @@ class StatusAnnouncementHelper(private val context: Context) {
 
     companion object {
         private const val TAG = "StatusAnnouncementHelper"
+        @Volatile
+        var latestNetworkGeneration: String = "4G LTE"
+            private set
     }
 
     val locationHelper = com.shinji.serena.location.LocationAddressHelper(context)
+    private val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+
+    init {
+        initTelephonyListener()
+    }
+
+    private fun initTelephonyListener() {
+        if (telephonyManager == null) return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Android 12 (API 31+) TelephonyCallback
+                val callback = object : TelephonyCallback(), TelephonyCallback.DisplayInfoListener {
+                    override fun onDisplayInfoChanged(telephonyDisplayInfo: TelephonyDisplayInfo) {
+                        latestNetworkGeneration = parseDisplayInfo(telephonyDisplayInfo)
+                        Log.i(TAG, "TelephonyCallback: updated network generation to $latestNetworkGeneration")
+                    }
+                }
+                telephonyManager.registerTelephonyCallback(context.mainExecutor, callback)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // Android 11 (API 30) PhoneStateListener
+                @Suppress("DEPRECATION")
+                val listener = object : PhoneStateListener() {
+                    @Deprecated("Deprecated in Java")
+                    override fun onDisplayInfoChanged(telephonyDisplayInfo: TelephonyDisplayInfo) {
+                        latestNetworkGeneration = parseDisplayInfo(telephonyDisplayInfo)
+                        Log.i(TAG, "PhoneStateListener: updated network generation to $latestNetworkGeneration")
+                    }
+                }
+                @Suppress("DEPRECATION")
+                telephonyManager.listen(listener, PhoneStateListener.LISTEN_DISPLAY_INFO_CHANGED)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registering telephony listener: ${e.message}")
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private fun parseDisplayInfo(displayInfo: TelephonyDisplayInfo): String {
+        return when (displayInfo.overrideNetworkType) {
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED -> "5Gミリ波 (高速5G)"
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA -> "5G"
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA -> "4G+"
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO -> "4G+"
+            else -> {
+                when (displayInfo.networkType) {
+                    TelephonyManager.NETWORK_TYPE_NR -> "5G"
+                    TelephonyManager.NETWORK_TYPE_LTE -> "4G LTE"
+                    TelephonyManager.NETWORK_TYPE_HSPAP,
+                    TelephonyManager.NETWORK_TYPE_HSPA,
+                    TelephonyManager.NETWORK_TYPE_UMTS -> "3G"
+                    else -> "4G LTE"
+                }
+            }
+        }
+    }
 
     fun buildFullStatusAnnouncement(callback: ((String) -> Unit)? = null): String {
         val parts = mutableListOf<String>()
@@ -39,7 +103,7 @@ class StatusAnnouncementHelper(private val context: Context) {
         val btStr = getBluetoothText()
         if (btStr.isNotEmpty()) parts.add(btStr)
 
-        // 5. モバイル通信・キャリア名
+        // 5. モバイル通信・キャリア名 (超高精度 5G/4G リアルタイム判定)
         val carrierStr = getCarrierText()
         if (carrierStr.isNotEmpty()) parts.add(carrierStr)
 
@@ -88,7 +152,7 @@ class StatusAnnouncementHelper(private val context: Context) {
                 BatteryManager.BATTERY_PLUGGED_AC -> "コンセントから急速充電中"
                 BatteryManager.BATTERY_PLUGGED_USB -> "USB充電中"
                 BatteryManager.BATTERY_PLUGGED_WIRELESS -> "ワイヤレス充電中"
-                4 -> "スマートドック充電中" // BATTERY_PLUGGED_DOCK
+                4 -> "スマートドック充電中"
                 else -> if (isCharging) "充電中" else "バッテリー駆動"
             }
 
@@ -98,9 +162,11 @@ class StatusAnnouncementHelper(private val context: Context) {
                 } else if (isCharging) {
                     "バッテリー残り${pct}%（${chargingType}）"
                 } else {
-                    "バッテリー残り${pct}%（バッテリー駆動）"
+                    "バッテリー残り${pct}%"
                 }
-            } else ""
+            } else {
+                ""
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Battery info error: ${e.message}")
             ""
@@ -108,13 +174,25 @@ class StatusAnnouncementHelper(private val context: Context) {
     }
 
     private fun getWifiText(): String {
-        return WifiConnectivityHelper.getWifiStatusText(context)
+        return try {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            val network = cm?.activeNetwork
+            val caps = cm?.getNetworkCapabilities(network)
+
+            if (caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
+                "Wi-Fi接続中"
+            } else {
+                "Wi-Fi未接続"
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Wi-Fi info error: ${e.message}")
+            ""
+        }
     }
 
-    @SuppressLint("MissingPermission")
     private fun getBluetoothText(): String {
         return try {
-            val isEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val isEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val bm = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
                 bm?.adapter?.isEnabled == true
             } else {
@@ -132,31 +210,32 @@ class StatusAnnouncementHelper(private val context: Context) {
     @SuppressLint("MissingPermission")
     private fun getCarrierText(): String {
         return try {
-            val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
-            val carrierName = tm?.networkOperatorName?.trim()
+            val tm = telephonyManager ?: return ""
+            val carrierName = tm.networkOperatorName?.trim()
             val carrierLabel = if (!carrierName.isNullOrEmpty()) carrierName else "携帯電波"
 
-            // 4G / 5G / LTE 判定
-            val netTypeStr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            // 1. 最新のリアルタイム 5G / 4G+ / 4G 判定
+            var netTypeStr = latestNetworkGeneration
+
+            // フォールバック: dataNetworkType 判定
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && (netTypeStr.isEmpty() || netTypeStr == "モバイル回線")) {
                 try {
-                    when (tm?.dataNetworkType) {
+                    netTypeStr = when (tm.dataNetworkType) {
                         TelephonyManager.NETWORK_TYPE_NR -> "5G"
                         TelephonyManager.NETWORK_TYPE_LTE -> "4G LTE"
                         TelephonyManager.NETWORK_TYPE_HSPAP,
                         TelephonyManager.NETWORK_TYPE_HSPA,
                         TelephonyManager.NETWORK_TYPE_UMTS -> "3G"
-                        else -> "モバイル回線"
+                        else -> "4G LTE"
                     }
-                } catch (e: SecurityException) {
-                    "モバイル回線"
-                }
-            } else {
-                "モバイル回線"
+                } catch (_: SecurityException) {}
             }
 
-            // 信号レベル (0〜4本)
+            // 2. リアルタイム信号強度 (0〜4本)
             val signalLevel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                tm?.signalStrength?.level ?: 3
+                try {
+                    tm.signalStrength?.level ?: 3
+                } catch (_: Exception) { 3 }
             } else {
                 3
             }
@@ -176,5 +255,3 @@ class StatusAnnouncementHelper(private val context: Context) {
         }
     }
 }
-
-
