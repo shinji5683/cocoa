@@ -9,12 +9,17 @@
 - Environment & App Phase:
   - App Status: Alpha Version (アルファ版). Maintain debug builds while supporting small-scale Alpha test releases.
   - Test OS Channels: User tests across Android OS release channels (Canary Channel, QPR Beta Channel, Stable Channel). Always enforce multi-channel compatibility (API 30+ to API 35/36+), defensive API fallbacks, resilient accessibility node handling, and strict Canary/QPR permission compliance.
-- Automated Debug Build & Verification Workflow:
-  - Whenever code modifications or dependency updates are made, automatically execute debug build verification (`.\gradlew.bat assembleDebug` / `build_apk.ps1`) to ensure 100% build success and zero broken code before reporting.
+- Automated Full Build & Artifact Naming Workflow (一括フルビルド ＆ 命名規則):
+  - Whenever code modifications or dependency updates are made, automatically execute full batch build verification (`build_apk.ps1` or `assembleRelease`, `assembleDebug`, `bundleRelease`) to ensure 100% build success across all targets.
+  - Artifact File Naming Policy: Always include `serena` in all `.apk` and `.aab` file names:
+    - Release APK: `app-serena-release.apk`
+    - Debug APK: `app-serena-debug.apk`
+    - Play Store Bundle: `serena-release.aab`
+  - Automated 16KB Alignment & Local Sync: Always apply 16KB ELF page alignment (0x4000) patching, 16KB zipalign, and signing, and automatically sync outputs to `C:\Users\shinj\Desktop\serena\` and `C:\Users\shinj\Downloads\serena\`.
 - Automated Git Commit, Merge, Remote Push & GitHub Release Workflow:
   - Automatically stage and commit verified changes with concise, descriptive conventional commit messages.
   - Keep active branches (`main` and `alpha`) in sync: automatically merge/push updates to remote repositories (`origin/main` and `origin/alpha`) so Shinjiさん does not have to worry about manual git maintenance.
-  - Automatically generate detailed, structured release notes and publish local-built signed APKs (`app-release.apk` & `app-debug.apk`) to GitHub Releases (`gh release create <tag> ...`) whenever creating an Alpha release, ensuring 100% local-first build execution with zero conflicting cloud CI builds.
+  - Automatically generate detailed, structured release notes and publish local-built signed APKs (`app-serena-release.apk` & `app-serena-debug.apk`) and bundles (`serena-release.aab`) to GitHub Releases (`gh release create <tag> ...`) whenever creating an Alpha release, ensuring 100% local-first build execution with zero conflicting cloud CI builds.
 - Automated Build, Deploy & Accessibility Auto-Activation Workflow:
   - Whenever completing a build or code modification, automatically proceed to deploy/install the generated APK onto connected Android devices (`adb install -r ...`).
   - Immediately auto-enable the `serena` Accessibility Service on the target device via ADB so Shinjiさん does not need to manually open settings and toggle it:
