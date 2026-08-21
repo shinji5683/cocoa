@@ -85,6 +85,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var batteryHelper: BatteryStateHelper? = null
     var colorAndLightHelper: ColorAndLightHelper? = null
     var compassHelper: SpatialCompassHelper? = null
+    var spatialObstacleSonarHelper: SpatialObstacleSonarHelper? = null
     var walkingNavigator: com.shinji.serena.navigation.SerenaWalkingNavigator? = null
     private var shakeDetectorHelper: ShakeDetectorHelper? = null
     private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
@@ -118,6 +119,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             assistantHelper = SerenaAiAssistantHelper(this)
             colorAndLightHelper = ColorAndLightHelper(safeContext)
             compassHelper = SpatialCompassHelper(safeContext).apply { try { startListening() } catch (_: Exception) {} }
+            spatialObstacleSonarHelper = SpatialObstacleSonarHelper(safeContext)
             walkingNavigator = com.shinji.serena.navigation.SerenaWalkingNavigator(this, compassHelper).apply { try { startTracking() } catch (_: Exception) {} }
             wifiConnectivityHelper = WifiConnectivityHelper(this).apply { try { startMonitoring() } catch (_: Exception) {} }
             batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} }
@@ -1405,6 +1407,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🧭", "3D空間オーディオ・コンパス案内 (左右立体音響 & 方角アナウンス)") {
                 toggleSpatialCompassAudio()
             },
+            serenaMenuItem("🦇", "3D空間オーディオ・障害物＆段差検知ソナー (ステレオ立体音響)") {
+                toggleSpatialObstacleSonar()
+            },
             serenaMenuItem("🚶‍♂️", "徒歩ナビ・現在地と目的地クロックポジション案内") {
                 announceCurrentLocationAndNav()
             },
@@ -1880,28 +1885,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 speak(nav.getCurrentLocationSummary(), TextToSpeech.QUEUE_FLUSH)
             },
             serenaMenuItem("🏪", "周辺のコンビニを探す") {
-                searchAndShowPlaces("コンビニ", "🏪", nav)
+                searchAndShowPlaces("コンビニ", "🏪")
             },
             serenaMenuItem("🚉", "周辺の駅を探す") {
-                searchAndShowPlaces("駅", "🚉", nav)
+                searchAndShowPlaces("駅", "🚉")
             },
             serenaMenuItem("☕", "周辺の喫茶店・カフェを探す") {
-                searchAndShowPlaces("喫茶店", "☕", nav)
+                searchAndShowPlaces("喫茶店", "☕")
             },
             serenaMenuItem("🍔", "周辺のファストフード店を探す") {
-                searchAndShowPlaces("ファストフード", "🍔", nav)
+                searchAndShowPlaces("ファストフード", "🍔")
             },
             serenaMenuItem("🍽️", "周辺のレストラン・飲食店を探す") {
-                searchAndShowPlaces("レストラン", "🍽️", nav)
+                searchAndShowPlaces("レストラン", "🍽️")
             },
             serenaMenuItem("🛍️", "周辺のスーパー・商業施設を探す") {
-                searchAndShowPlaces("スーパー", "🛍️", nav)
+                searchAndShowPlaces("スーパー", "🛍️")
             },
             serenaMenuItem("🏥", "周辺の病院・薬局を探す") {
-                searchAndShowPlaces("病院", "🏥", nav)
+                searchAndShowPlaces("病院", "🏥")
             },
             serenaMenuItem("📮", "周辺の郵便局・銀行を探す") {
-                searchAndShowPlaces("郵便局", "📮", nav)
+                searchAndShowPlaces("郵便局", "📮")
             },
             serenaMenuItem("🧭", "3D空間オーディオ・コンパス案内を開始") {
                 toggleSpatialCompassAudio()
@@ -1926,7 +1931,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    private fun searchAndShowPlaces(category: String, icon: String, nav: com.shinji.serena.navigation.SerenaWalkingNavigator) {
+    fun searchAndShowPlaces(category: String, icon: String) {
+        val nav = walkingNavigator ?: run {
+            speak("徒歩ナビゲーション機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+            return
+        }
         soundHelper?.playActionDone()
         speak("現在地周辺の${category}を検索中...", TextToSpeech.QUEUE_FLUSH)
         Thread {
@@ -2222,6 +2231,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             speak("${heading}。3D空間オーディオコンパスを開始しました。スマホを真北に向けると両耳の中央で澄んだ音が鳴ります。終了するにはもう一度メニューからタップしてください。", TextToSpeech.QUEUE_FLUSH)
         } else {
             speak("3D空間オーディオコンパスを停止しました。", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    fun toggleSpatialObstacleSonar() {
+        soundHelper?.playActionDone()
+        val helper = spatialObstacleSonarHelper ?: run {
+            speak("障害物ソナー機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+            return
+        }
+        val isRunning = helper.toggleSonar()
+        if (isRunning) {
+            speak("3D空間障害物ソナーを開始しました。前方の壁や段差に近づくとステレオ立体音響と振動で距離を案内します。終了するにはもう一度メニューからタップするか、音声でソナー停止と言ってください。", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            speak("3D空間障害物ソナーを停止しました。", TextToSpeech.QUEUE_FLUSH)
         }
     }
 

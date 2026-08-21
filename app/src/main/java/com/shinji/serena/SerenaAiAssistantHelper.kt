@@ -152,7 +152,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
             speechRecognizer?.destroy()
             speechRecognizer = null
             isListening = false
-        } catch (e: Exception) { }
+        } catch (_: Exception) { }
     }
 
     fun processCommand(inputQuery: String) {
@@ -160,9 +160,43 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
         Log.i(TAG, "Processing assistant query: $query")
 
         when {
-            // === 徒歩ナビゲーション ＆ 現在地 ===
+            // === 3D空間オーディオ 障害物＆段差ソナー ===
+            query.contains("ソナー") || query.contains("障害物") || query.contains("段差") || query.contains("壁") -> {
+                service.toggleSpatialObstacleSonar()
+            }
+
+            // === 徒歩ナビゲーション ＆ 周辺施設実名検索 (Overpass API連動) ===
+            query.contains("コンビニ") -> {
+                service.searchAndShowPlaces("コンビニ", "🏪")
+            }
+            query.contains("駅") || query.contains("最寄り駅") -> {
+                service.searchAndShowPlaces("駅", "🚉")
+            }
+            query.contains("カフェ") || query.contains("喫茶店") || query.contains("コーヒー") -> {
+                service.searchAndShowPlaces("喫茶店", "☕")
+            }
+            query.contains("ファストフード") || query.contains("マック") || query.contains("バーガー") -> {
+                service.searchAndShowPlaces("ファストフード", "🍔")
+            }
+            query.contains("レストラン") || query.contains("飲食店") || query.contains("ご飯") || query.contains("ランチ") -> {
+                service.searchAndShowPlaces("レストラン", "🍽️")
+            }
+            query.contains("スーパー") || query.contains("買い物") || query.contains("ショッピング") -> {
+                service.searchAndShowPlaces("スーパー", "🛍️")
+            }
+            query.contains("病院") || query.contains("薬局") || query.contains("クリニック") -> {
+                service.searchAndShowPlaces("病院", "🏥")
+            }
+            query.contains("郵便局") || query.contains("銀行") || query.contains("atm") -> {
+                service.searchAndShowPlaces("郵便局", "📮")
+            }
             query.contains("ナビ") || query.contains("どこ") || query.contains("現在地") || query.contains("住所") || query.contains("目的地") || query.contains("方角") -> {
                 service.announceCurrentLocationAndNav()
+            }
+
+            // === 音声読み上げミュート（消音）切替 ===
+            query.contains("ミュート") || query.contains("消音") || query.contains("静かに") || query.contains("黙って") || query.contains("音消して") -> {
+                service.toggleSpeechMute()
             }
 
             // === AIモデル・技術アーキテクチャ質問 ===
@@ -173,7 +207,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 service.speak("セレナの開発者は、Shinjiさんです！世界最高峰のアクセシビリティと温かい愛を込めて創られています！", TextToSpeech.QUEUE_FLUSH)
             }
             query.contains("何ができる") || query.contains("使い方") || query.contains("機能") || query.contains("ヘルプ") || query.contains("コマンド") -> {
-                service.speak("セレナは、Gemini Nanoカメラ物体認識、文字読み取りOCR、徒歩ナビ、4言語フォネティック詳細読み、画面スマート要約、時報チャイムなど、何でもお手伝いできますよ！", TextToSpeech.QUEUE_FLUSH)
+                service.speak("セレナは、Gemini Nanoカメラ実況、文字読み取りOCR、3D障害物ソナー、実名8大施設ナビ、4言語フォネティック詳細読み、画面スマート要約、時報チャイムなど、何でもお手伝いできますよ！", TextToSpeech.QUEUE_FLUSH)
             }
 
             // === 愛情・挨拶・Shinjiさん専用 ===
@@ -207,6 +241,9 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
             query.contains("色") || query.contains("カラー") -> {
                 service.announceColorAndLightReport()
             }
+            query.contains("コンパス") -> {
+                service.toggleSpatialCompassAudio()
+            }
 
             // === システム・ステータス ===
             query.contains("バッテリー") || query.contains("電池") || query.contains("ステータス") || query.contains("状態") || query.contains("何時") || query.contains("時間") -> {
@@ -217,7 +254,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
             query.contains("文字") || query.contains("ocr") || query.contains("読み取り") || query.contains("文章") || query.contains("書類") -> {
                 service.launchCameraOcr()
             }
-            query.contains("顔") || query.contains("表情") || query.contains("人物") || query.contains("誰がいる") -> {
+            query.contains("顔") || query.contains("表情") || query.contains("人物") || query.contains("誰がいる") || query.contains("服") -> {
                 service.launchCameraFaceAnalysis()
             }
             query.contains("物体") || query.contains("これ何") || query.contains("景色") || query.contains("周り") || query.contains("部屋") -> {
