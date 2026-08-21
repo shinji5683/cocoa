@@ -82,14 +82,10 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
 
-    // Google Play Services & ML Kit on-device Vision (Japanese OCR, Face & TFLite Object Detection)
+    // Google Play Services & ML Kit on-device Vision (Japanese OCR, Face & Object Detection)
     implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
     implementation("com.google.android.gms:play-services-mlkit-face-detection:17.1.0")
     implementation("com.google.mlkit:object-detection:17.0.2")
-
-    // TensorFlow Lite On-Device AI Engine
-    implementation("org.tensorflow:tensorflow-lite:2.16.1")
-    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
 
     // CameraX for Live Vision and Camera Capture
     implementation("androidx.camera:camera-core:1.3.4")
