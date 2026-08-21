@@ -1039,6 +1039,38 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return false
     }
 
+    fun isKeyboardOrPinKeyNode(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+        val viewId = node.viewIdResourceName?.lowercase() ?: ""
+        val text = node.text?.toString()?.trim() ?: ""
+        val desc = node.contentDescription?.toString()?.trim() ?: ""
+        val pkg = node.packageName?.toString()?.lowercase() ?: ""
+        val className = node.className?.toString() ?: ""
+
+        // 1. PIN keypad buttons on Lock Screen
+        val isPinDigitId = viewId.contains("digit") || viewId.contains("pin_key") ||
+                viewId.endsWith("key1") || viewId.endsWith("key2") || viewId.endsWith("key3") ||
+                viewId.endsWith("key4") || viewId.endsWith("key5") || viewId.endsWith("key6") ||
+                viewId.endsWith("key7") || viewId.endsWith("key8") || viewId.endsWith("key9") ||
+                viewId.endsWith("key0") || viewId.contains("delete") || viewId.contains("cancel") ||
+                viewId.contains("enter") || viewId.contains("ok") || viewId.contains("numpad") ||
+                viewId.contains("klav")
+
+        val isSingleCharOrDigit = (text.length == 1 && !text.all { it.isWhitespace() }) ||
+                (desc.length == 1 && !desc.all { it.isWhitespace() })
+
+        val isKeyguardKey = (isKeyguardLocked() || pkg.contains("systemui") || pkg.contains("keyguard")) &&
+                (isPinDigitId || (node.isClickable && (isSingleCharOrDigit || desc.contains("削除") || desc.contains("決定"))))
+
+        // 2. Soft Keyboard / IME keys (Gboard, Serena Keyboard, etc.)
+        val isImeKey = (pkg.contains("inputmethod") || pkg.contains("latin") || pkg.contains("gboard") ||
+                pkg.contains("keyboard") || className.contains("Key", ignoreCase = true) || className.contains("Keyboard", ignoreCase = true)) &&
+                node.isClickable && (isSingleCharOrDigit || isPinDigitId || viewId.contains("key") ||
+                desc.contains("削除") || desc.contains("スペース") || desc.contains("確定") || desc.contains("改行"))
+
+        return isKeyguardKey || isImeKey
+    }
+
     fun unlockKeyguardOrShowBouncer(): Boolean {
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
@@ -2527,6 +2559,22 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 soundHelper?.playFocusMove()
                 if (isTtsReady) {
                     announceNode(node)
+                }
+            }
+
+            AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> {
+                val node = lastHoveredNode
+                if (node != null && isKeyboardOrPinKeyNode(node)) {
+                    val isRecentFocus = (System.currentTimeMillis() - lastFocusTimeMs) < 2500
+                    if (isRecentFocus) {
+                        soundHelper?.playClick()
+                        val text = getNodeText(node)
+                        if (text.isNotEmpty()) {
+                            speak("$text 入力", TextToSpeech.QUEUE_FLUSH)
+                        }
+                        node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        clickNodeByGesture(node)
+                    }
                 }
             }
 
