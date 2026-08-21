@@ -28,6 +28,7 @@ import java.util.concurrent.Executors
  * リアルタイムAIカメラ実況アクティビティ
  * CameraX + ML Kit (日本語OCR & 顔・服装・年代認識) + Gemini Nano を用いて、
  * カメラに映った世界をリアルタイムに音声実況します。
+ * 音声ガイドが途中で遮られず最後まで落ち着いて聞けるよう、発声中は待機制御を行います。
  */
 class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
@@ -99,7 +100,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts?.language = Locale.JAPANESE
-            tts?.setSpeechRate(1.1f)
+            tts?.setSpeechRate(1.05f)
             isTtsReady = true
             val initialPrompt = if (mode == "INDOOR") {
                 "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
@@ -183,9 +184,15 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             return
         }
 
+        // 音声ガイドを発声中の場合、前の読み上げを遮らずに最後まで聞かせる！
+        if (tts?.isSpeaking == true) {
+            imageProxy.close()
+            return
+        }
+
         val currentTime = System.currentTimeMillis()
-        // 頻繁すぎる読み上げ防止 (最低1.6秒間隔)
-        if (currentTime - lastSpokenTime < 1600) {
+        // 落ち着いて聞き取れるスキャン間隔（最低3秒待機）
+        if (currentTime - lastSpokenTime < 3000) {
             imageProxy.close()
             return
         }
@@ -243,12 +250,13 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 face = face,
                                 imageWidth = imgWidth,
                                 imageHeight = imgHeight,
+                                mediaImage = mediaImage,
                                 bitmap = null
                             )
                             val smileProb = face.smilingProbability ?: 0f
-                            val expr = if (smileProb > 0.4f) "笑顔" else "真剣な表情"
+                            val expr = if (smileProb > 0.4f) "笑顔" else "落ち着いた表情"
                             val desc = "正面に ${attrs.clothingDescription}を着た${attrs.genderAndAge}がいます。${expr}で${attrs.estimatedDistanceMeters}です"
-                            if (desc != lastSpokenText) {
+                            if (desc != lastSpokenText || currentTime - lastSpokenTime > 5000) {
                                 lastSpokenText = desc
                                 lastSpokenTime = currentTime
                                 runOnUiThread {
@@ -279,18 +287,18 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 face = face,
                                 imageWidth = imgWidth,
                                 imageHeight = imgHeight,
+                                mediaImage = mediaImage,
                                 bitmap = null
                             )
                             val smileProb = face.smilingProbability ?: 0f
                             val isLooking = ((face.leftEyeOpenProbability ?: 0.5f) + (face.rightEyeOpenProbability ?: 0.5f)) / 2f > 0.4f
                             val expr = if (smileProb > 0.5f) "満面の笑顔" else if (smileProb > 0.25f) "微笑み" else "落ち着いた表情"
-                            val cloth = if (attrs.clothingDescription.isNotEmpty() && !attrs.clothingDescription.contains("不明")) attrs.clothingDescription else "服"
 
                             IndoorNavigationHelper.PersonState(
                                 direction = dir,
                                 distanceMeter = dist,
                                 genderAndAge = attrs.genderAndAge,
-                                clothingColor = cloth,
+                                clothingColor = attrs.clothingDescription,
                                 expression = expr,
                                 isLookingAtCamera = isLooking,
                                 poseDescription = "人"
@@ -321,7 +329,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     )
                                 }
 
-                                if (announcement.isNotEmpty() && (announcement != lastSpokenText || currentTime - lastSpokenTime > 4000)) {
+                                if (announcement.isNotEmpty() && (announcement != lastSpokenText || currentTime - lastSpokenTime > 5000)) {
                                     lastSpokenText = announcement
                                     lastSpokenTime = currentTime
                                     runOnUiThread {
@@ -336,7 +344,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
             }
             else -> {
-                // LIVE 実況モード (Gemini Nano 統合解析: 照度 + 表情・服装・年代 + OCR)
+                // LIVE 実況モード (Gemini Nano 統合解析: 照度 + 表情・服装・詳細年代 + OCR)
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
                         val persons = faces.map { face ->
@@ -351,10 +359,11 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 face = face,
                                 imageWidth = imgWidth,
                                 imageHeight = imgHeight,
+                                mediaImage = mediaImage,
                                 bitmap = null
                             )
                             val smileProb = face.smilingProbability ?: 0f
-                            val expr = if (smileProb > 0.5f) "満面の笑顔" else if (smileProb > 0.25f) "穏やかな微笑み" else "自然な表情"
+                            val expr = if (smileProb > 0.5f) "満面の笑顔" else if (smileProb > 0.25f) "穏やかな微笑み" else "落ち着いた表情"
 
                             com.shinji.serena.ai.GeminiNanoEngine.PersonAnalysisDetail(
                                 position = pos,
@@ -384,7 +393,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     "${brightnessLevel}。周囲を確認中…"
                                 }
 
-                                if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 4000)) {
+                                if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 5000)) {
                                     lastSpokenText = finalAnnouncement
                                     lastSpokenTime = currentTime
                                     runOnUiThread {
