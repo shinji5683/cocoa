@@ -990,6 +990,49 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return true
     }
 
+    fun autoFocusPinKeypadIfPresent(): Boolean {
+        val root = rootInActiveWindow ?: return false
+        val pinButtons = mutableListOf<AccessibilityNodeInfo>()
+
+        fun findPinNodes(node: AccessibilityNodeInfo?) {
+            if (node == null) return
+            val viewId = node.viewIdResourceName?.lowercase() ?: ""
+            val text = node.text?.toString()?.trim() ?: ""
+            val desc = node.contentDescription?.toString()?.trim() ?: ""
+            val isPinDigit = viewId.contains("digit") || viewId.contains("pin_key") ||
+                    viewId.contains("key1") || viewId.contains("key2") || viewId.contains("key3") ||
+                    viewId.contains("key4") || viewId.contains("key5") || viewId.contains("key6") ||
+                    viewId.contains("key7") || viewId.contains("key8") || viewId.contains("key9") ||
+                    viewId.contains("key0") || viewId.contains("numpad") ||
+                    text.matches(Regex("^[0-9]$")) || desc.matches(Regex("^[0-9]$")) ||
+                    desc.contains("1") || desc.contains("2") || desc.contains("3")
+
+            if ((node.isClickable || node.isFocusable) && isPinDigit) {
+                pinButtons.add(node)
+            }
+            for (i in 0 until node.childCount) {
+                findPinNodes(node.getChild(i))
+            }
+        }
+
+        findPinNodes(root)
+        if (pinButtons.isNotEmpty()) {
+            val target = pinButtons.firstOrNull {
+                val desc = it.contentDescription?.toString() ?: ""
+                val text = it.text?.toString() ?: ""
+                val viewId = it.viewIdResourceName?.lowercase() ?: ""
+                desc == "1" || desc.contains("1") || text == "1" || viewId.contains("key1") || viewId.contains("digit1")
+            } ?: pinButtons.first()
+
+            target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+            lastHoveredNode = target
+            soundHelper?.playFocusMove()
+            announceNode(target)
+            return true
+        }
+        return false
+    }
+
     fun unlockKeyguardOrShowBouncer(): Boolean {
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
@@ -1010,11 +1053,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             .build()
 
         soundHelper?.playFocusMove()
-        return dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+        val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
             }
         }, null)
+
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 250)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 600)
+        return dispatched
     }
 
     private fun performPhysical2FingerScroll(forward: Boolean, horizontal: Boolean) {
@@ -2402,10 +2450,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 // セレナメニューダイアログ表示中の場合、OSがウィンドウ内の全項目テキストを結合して送ってくるため全読みを抑制！
                 if (activeMenuDialog != null) {
                     return
+                }
+
+                // ロック画面/PIN入力画面が表示された場合に自動で「1」キーへフォーカス
+                if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        autoFocusPinKeypadIfPresent()
+                    }, 200)
                 }
 
                 // 朝の初回ロック解除時のモーニングサマリー挨拶
@@ -2431,7 +2487,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
-                if (windowTitle.isNotEmpty() && !isCallActive) {
+                if (windowTitle.isNotEmpty() && !isCallActive && !isKeyguardLocked()) {
                     speak("画面: $windowTitle", TextToSpeech.QUEUE_FLUSH)
                 }
             }
