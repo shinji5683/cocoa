@@ -84,6 +84,23 @@ class AccessibilityNodeEvaluator {
                 }
             }
 
+            // SystemUI / ロック画面の画面全体通知シェードやスクリム暗転背景を完全スキップ
+            if (pkgName.contains("systemui", ignoreCase = true) || pkgName.contains("keyguard", ignoreCase = true)) {
+                val viewId = node.viewIdResourceName?.lowercase() ?: ""
+                if (viewId.contains("scrim") || viewId.contains("notification_stack_scroller") ||
+                    viewId.contains("ambient_indication_container") || viewId.contains("keyguard_carrier_text") ||
+                    viewId.contains("keyguard_status_view") || viewId.contains("keyguard_clock") ||
+                    className.contains("ScrimView", ignoreCase = true) ||
+                    className.contains("NotificationPanelView", ignoreCase = true) ||
+                    className.contains("NotificationShade", ignoreCase = true) ||
+                    className.contains("KeyguardRootView", ignoreCase = true)
+                ) {
+                    if (node.childCount > 0) {
+                        return false
+                    }
+                }
+            }
+
             val rect = Rect()
             node.getBoundsInScreen(rect)
             if (rect.width() <= 0 && rect.height() <= 0 && !node.isClickable && !node.isFocusable && !node.isCheckable) return false

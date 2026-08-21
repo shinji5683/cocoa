@@ -2492,6 +2492,23 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             AccessibilityEvent.TYPE_VIEW_HOVER_ENTER -> {
                 val node = event.source ?: return
+                val pkg = node.packageName?.toString() ?: ""
+                val viewId = node.viewIdResourceName?.lowercase() ?: ""
+                val className = node.className?.toString() ?: ""
+
+                if (isKeyguardLocked() || pkg.contains("systemui") || pkg.contains("keyguard")) {
+                    if (viewId.contains("scrim") || viewId.contains("notification_stack_scroller") ||
+                        viewId.contains("keyguard_carrier_text") || viewId.contains("keyguard_status_view") ||
+                        viewId.contains("keyguard_clock") ||
+                        className.contains("ScrimView", ignoreCase = true) ||
+                        className.contains("NotificationPanelView", ignoreCase = true) ||
+                        className.contains("NotificationShade", ignoreCase = true) ||
+                        className.contains("KeyguardRootView", ignoreCase = true)
+                    ) {
+                        if (node.childCount > 0) return
+                    }
+                }
+
                 lastFocusTimeMs = System.currentTimeMillis()
                 lastHoveredNode = node
                 soundHelper?.playFocusMove()
