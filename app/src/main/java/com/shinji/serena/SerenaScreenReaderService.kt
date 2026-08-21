@@ -185,9 +185,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             updateTtsSettings()
             isTtsReady = true
-            // serenaオリジナルモードが常に正統デフォルト
-            val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
-            val welcomeMsg = if (isTalkBackMode) "TalkBack互換モードで serena が起動しました。" else "ほっと一息、serena スクリーンリーダーが起動しました。"
+            val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
             speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
             soundHelper?.playActionDone()
             flushPendingSpeechQueue()
@@ -3457,6 +3455,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     override fun onDestroy() {
+        try {
+            speak("Paalam po, Shinji! Maraming salamat at mag-ingat ka palagi!", TextToSpeech.QUEUE_FLUSH)
+            Thread.sleep(1200)
+        } catch (_: Exception) {}
         super.onDestroy()
         wifiConnectivityHelper?.stopMonitoring()
         wifiConnectivityHelper = null
