@@ -177,6 +177,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    private var hasSpokenStartupGreeting = false
+    private var isStartupGreetingSpeaking = false
+
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             val result = tts?.setLanguage(Locale.JAPANESE)
@@ -185,11 +188,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             updateTtsSettings()
             isTtsReady = true
-            val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
-            speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
-            soundHelper?.playActionDone()
-            flushPendingSpeechQueue()
-            Log.i(TAG, "TTS initialized successfully.")
+            if (!hasSpokenStartupGreeting) {
+                hasSpokenStartupGreeting = true
+                isStartupGreetingSpeaking = true
+                val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
+                speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
+                soundHelper?.playActionDone()
+                Log.i(TAG, "TTS initialized successfully. Spoke Tagalog startup greeting.")
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    isStartupGreetingSpeaking = false
+                    flushPendingSpeechQueue()
+                }, 3000)
+            } else {
+                flushPendingSpeechQueue()
+            }
         } else {
             Log.e(TAG, "TTS Initialization failed with status: $status")
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -233,6 +245,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         serviceInfo = info
         Log.i(TAG, "serena AccessibilityService connected with Multi-Finger & Touch Exploration flags=$flags.")
 
+        if (isTtsReady && !hasSpokenStartupGreeting) {
+            hasSpokenStartupGreeting = true
+            isStartupGreetingSpeaking = true
+            val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
+            speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
+            soundHelper?.playActionDone()
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                isStartupGreetingSpeaking = false
+            }, 3000)
+        }
+
         // 再起動直後（Direct Boot）やサービス接続時の初期フォーカス自動捕捉
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
@@ -241,7 +264,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             } else {
                 navigateLinearFocus(forward = true)
             }
-        }, 500)
+        }, 3200)
     }
 
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
@@ -3255,12 +3278,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_ADD) {
         if (text.isBlank() || isMuted) return
+        val effectiveQueueMode = if (isStartupGreetingSpeaking && !text.startsWith("Magandang araw")) {
+            TextToSpeech.QUEUE_ADD
+        } else {
+            queueMode
+        }
+
         if (!isTtsReady || tts == null) {
             synchronized(pendingSpeechQueue) {
-                if (queueMode == TextToSpeech.QUEUE_FLUSH) {
+                if (effectiveQueueMode == TextToSpeech.QUEUE_FLUSH) {
                     pendingSpeechQueue.clear()
                 }
-                pendingSpeechQueue.add(Pair(text, queueMode))
+                pendingSpeechQueue.add(Pair(text, effectiveQueueMode))
             }
             return
         }
@@ -3276,7 +3305,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
         } catch (_: Exception) {}
 
-        tts?.speak(processedText, queueMode, null, "serenaUtterance_${System.currentTimeMillis()}")
+        tts?.speak(processedText, effectiveQueueMode, null, "serenaUtterance_${System.currentTimeMillis()}")
     }
 
     fun toggleSpeechPauseResume() {
