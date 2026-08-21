@@ -71,10 +71,16 @@ class LiveVisionActivity : AppCompatActivity() {
         val modeTitle = when (mode) {
             "OCR" -> "文字読み取りカメラ"
             "FACE" -> "表情・人物認識カメラ"
+            "INDOOR" -> "🏠 インドア空間ナビ ＆ 屋内実況"
             else -> "リアルタイムAI環境実況"
         }
         tvStatus.text = "🌸 $modeTitle 起動中…"
-        speak("カメラが起動しました。周囲をゆっくり映してください。")
+        val startAnnounce = if (mode == "INDOOR") {
+            "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
+        } else {
+            "カメラが起動しました。周囲をゆっくり映してください。"
+        }
+        speak(startAnnounce)
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -260,6 +266,70 @@ class LiveVisionActivity : AppCompatActivity() {
                                 speak(desc, TextToSpeech.QUEUE_FLUSH)
                             }
                         }
+                    }
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
+            }
+            "INDOOR" -> {
+                val indoorHelper = IndoorNavigationHelper(this)
+                val imgWidth = image.width
+                val imgHeight = image.height
+
+                faceDetector.process(image)
+                    .addOnSuccessListener { faces ->
+                        val peopleList = faces.map { face ->
+                            val box = face.boundingBox
+                            val (dir, dist) = indoorHelper.calculateDirectionAndDistance(
+                                centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1),
+                                centerY = box.centerY().toFloat() / imgHeight.coerceAtLeast(1),
+                                boxWidth = box.width().toFloat() / imgWidth.coerceAtLeast(1),
+                                boxHeight = box.height().toFloat() / imgHeight.coerceAtLeast(1)
+                            )
+                            val isSmile = (face.smilingProbability ?: 0f) > 0.4f
+                            val pose = if (dist <= 1.2f) "立っている人" else "人"
+                            IndoorNavigationHelper.PersonState(
+                                direction = dir,
+                                distanceMeter = dist,
+                                isSmiling = isSmile,
+                                poseDescription = pose
+                            )
+                        }
+
+                        textRecognizer.process(image)
+                            .addOnSuccessListener { visionText ->
+                                val detectedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
+                                val rawLabels = detectedTexts.take(3)
+                                val indoorObjects = rawLabels.mapIndexed { idx, label ->
+                                    val translatedName = indoorHelper.translateIndoorLabel(label)
+                                    val dir = when (idx) {
+                                        0 -> IndoorNavigationHelper.Direction.FRONT
+                                        1 -> IndoorNavigationHelper.Direction.FRONT_RIGHT
+                                        else -> IndoorNavigationHelper.Direction.FRONT_LEFT
+                                    }
+                                    IndoorNavigationHelper.IndoorObject(
+                                        name = translatedName,
+                                        direction = dir,
+                                        distanceMeter = (1.5f + idx * 0.8f)
+                                    )
+                                }
+
+                                val announcement = indoorHelper.buildIndoorAnnouncement(
+                                    roomName = "",
+                                    objects = indoorObjects,
+                                    people = peopleList,
+                                    isPathClear = true
+                                )
+
+                                if (announcement.isNotEmpty() && announcement != lastSpokenText) {
+                                    lastSpokenText = announcement
+                                    lastSpokenTime = currentTime
+                                    runOnUiThread {
+                                        tvStatus.text = "🏠 インドア実況: $announcement"
+                                    }
+                                    speak(announcement, TextToSpeech.QUEUE_FLUSH)
+                                }
+                            }
                     }
                     .addOnCompleteListener {
                         imageProxy.close()

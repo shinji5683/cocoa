@@ -1410,7 +1410,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🦇", "3D空間オーディオ・障害物＆段差検知ソナー (ステレオ立体音響)") {
                 toggleSpatialObstacleSonar()
             },
-            serenaMenuItem("🚶‍♂️", "徒歩ナビ・現在地と目的地クロックポジション案内") {
+            serenaMenuItem("🏠", "インドア空間ナビ ＆ 屋内リアルタイム実況 (正面・左右・足元案内)") {
+                launchIndoorNavigation()
+            },
+            serenaMenuItem("🚶‍♂️", "徒歩ナビ・現在地と目的地案内") {
                 announceCurrentLocationAndNav()
             },
             serenaMenuItem("📷", "カメラ・文字読み取り (On-Device OCR)") {
@@ -1848,6 +1851,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch Object: ${e.message}")
+        }
+    }
+
+    fun launchIndoorNavigation() {
+        soundHelper?.playClick()
+        speak("インドア空間ナビを起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", "INDOOR")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch Indoor Navigation: ${e.message}")
         }
     }
 

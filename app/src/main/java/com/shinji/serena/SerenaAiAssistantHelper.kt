@@ -160,6 +160,11 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
         Log.i(TAG, "Processing assistant query: $query")
 
         when {
+            // === 🏠 インドア空間ナビ ＆ 屋内リアルタイム実況 ===
+            query.contains("インドア") || query.contains("屋内") || query.contains("家の中") || query.contains("部屋") || query.contains("家具") -> {
+                service.launchIndoorNavigation()
+            }
+
             // === 3D空間オーディオ 障害物＆段差ソナー ===
             query.contains("ソナー") || query.contains("障害物") || query.contains("段差") || query.contains("壁") -> {
                 service.toggleSpatialObstacleSonar()
