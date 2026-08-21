@@ -22,6 +22,7 @@ import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
+import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -30,7 +31,7 @@ import java.util.concurrent.Executors
  * CameraX + TensorFlow Lite & ML Kit (日本語OCR & 顔・服装・年代認識 & TFLite物体検知) を用いて、
  * カメラに映った世界をリアルタイムに音声実況します。
  */
-class LiveVisionActivity : AppCompatActivity() {
+class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     companion object {
         private const val TAG = "LiveVisionActivity"
@@ -41,6 +42,8 @@ class LiveVisionActivity : AppCompatActivity() {
     private lateinit var tvStatus: TextView
     private lateinit var btnClose: Button
     private lateinit var cameraExecutor: ExecutorService
+    private var tts: TextToSpeech? = null
+    private var isTtsReady = false
 
     private val textRecognizer = TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
     private val faceDetector = FaceDetection.getClient(
@@ -60,7 +63,6 @@ class LiveVisionActivity : AppCompatActivity() {
     private var mode = "LIVE"
     private var lastSpokenText = ""
     private var lastSpokenTime = 0L
-    private var lastFaceDescription = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +74,7 @@ class LiveVisionActivity : AppCompatActivity() {
         btnClose = findViewById(R.id.btnClose)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
+        tts = TextToSpeech(this, this)
 
         btnClose.setOnClickListener {
             finish()
@@ -87,7 +90,7 @@ class LiveVisionActivity : AppCompatActivity() {
         val startAnnounce = if (mode == "INDOOR") {
             "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
         } else {
-            "カメラが起動しました。周囲をゆっくり映してください。"
+            "リアルタイムカメラ実況を起動しました。周囲をゆっくり映してください。"
         }
         speak(startAnnounce)
 
@@ -102,8 +105,31 @@ class LiveVisionActivity : AppCompatActivity() {
         }
     }
 
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts?.language = Locale.JAPANESE
+            tts?.setSpeechRate(1.1f)
+            isTtsReady = true
+            val initialPrompt = if (mode == "INDOOR") {
+                "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
+            } else {
+                "リアルタイムカメラ実況を起動しました。周囲をゆっくり映してください。"
+            }
+            speak(initialPrompt)
+        }
+    }
+
     private fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_FLUSH) {
+        if (text.isEmpty()) return
+        Log.i(TAG, "LiveVision speak: $text")
+
+        // 1. AccessibilityService TTS
         SerenaScreenReaderService.instance?.speak(text, queueMode)
+
+        // 2. Activity 専用直接 TTS フォールバック
+        if (isTtsReady && tts != null) {
+            tts?.speak(text, queueMode, null, "live_vision_${System.currentTimeMillis()}")
+        }
     }
 
     private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
@@ -167,13 +193,37 @@ class LiveVisionActivity : AppCompatActivity() {
         }
 
         val currentTime = System.currentTimeMillis()
-        // 頻繁すぎる読み上げ防止 (最低2秒間隔)
-        if (currentTime - lastSpokenTime < 2000) {
+        // 頻繁すぎる読み上げ防止 (最低1.8秒間隔)
+        if (currentTime - lastSpokenTime < 1800) {
             imageProxy.close()
             return
         }
 
         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+        val imgWidth = image.width
+        val imgHeight = image.height
+
+        // 明るさの計算
+        val planes = mediaImage.planes
+        val brightnessLevel = if (planes.isNotEmpty()) {
+            val buffer = planes[0].buffer
+            var sum = 0L
+            val step = (buffer.remaining() / 200).coerceAtLeast(1)
+            var count = 0
+            for (i in 0 until buffer.remaining() step step) {
+                sum += (buffer.get(i).toInt() and 0xFF)
+                count++
+            }
+            val avg = if (count > 0) sum / count else 128
+            when {
+                avg >= 150 -> "明るい場所"
+                avg in 60..149 -> "落ち着いた明るさ"
+                avg in 20..59 -> "薄暗い場所"
+                else -> "暗い場所"
+            }
+        } else {
+            "明るい場所"
+        }
 
         when (mode) {
             "OCR" -> {
@@ -194,80 +244,21 @@ class LiveVisionActivity : AppCompatActivity() {
                     }
             }
             "FACE" -> {
-                val planes = mediaImage.planes
-                val brightnessLevel = if (planes.isNotEmpty()) {
-                    val buffer = planes[0].buffer
-                    var sum = 0L
-                    val step = (buffer.remaining() / 200).coerceAtLeast(1)
-                    var count = 0
-                    for (i in 0 until buffer.remaining() step step) {
-                        sum += (buffer.get(i).toInt() and 0xFF)
-                        count++
-                    }
-                    val avg = if (count > 0) sum / count else 128
-                    when {
-                        avg >= 150 -> "明るい室内"
-                        avg in 60..149 -> "落ち着いた明るさの場所"
-                        avg in 20..59 -> "薄暗い場所"
-                        else -> "真っ暗な場所"
-                    }
-                } else {
-                    ""
-                }
-
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
                         if (faces.isNotEmpty()) {
-                            val imgWidth = image.width
-                            val imgHeight = image.height
-                            val persons = faces.map { face ->
-                                val box = face.boundingBox
-                                val centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1)
-
-                                val pos = when {
-                                    centerX < 0.35f -> "左側"
-                                    centerX > 0.65f -> "右側"
-                                    else -> "正面"
-                                }
-
-                                val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
-                                    face = face,
-                                    imageWidth = imgWidth,
-                                    imageHeight = imgHeight,
-                                    bitmap = null
-                                )
-
-                                val smileProb = face.smilingProbability ?: 0f
-                                val leftEye = face.leftEyeOpenProbability ?: 0.5f
-                                val rightEye = face.rightEyeOpenProbability ?: 0.5f
-                                val avgEye = (leftEye + rightEye) / 2f
-                                val isLooking = avgEye > 0.4f
-
-                                val (expressionDesc, meaningDesc) = when {
-                                    smileProb > 0.65f -> Pair("満面の明るい笑顔", "とても楽しそうに喜んでいる様子")
-                                    smileProb in 0.30f..0.65f -> Pair("穏やかな微笑み", "リラックスして安心している雰囲気")
-                                    avgEye > 0.6f && smileProb < 0.15f -> Pair("真剣な表情", "集中して深く考え事をしている様子")
-                                    avgEye < 0.35f && smileProb < 0.15f -> Pair("少し暗めの落ち着いた表情", "物思いにふけっている様子")
-                                    else -> Pair("自然体な表情", "落ち着いた普段の様子")
-                                }
-
-                                val clothingColorDesc = if (brightnessLevel.contains("明るい")) "明るめの服" else "落ち着いた色の服"
-
-                                com.shinji.serena.ai.GeminiNanoEngine.PersonAnalysisDetail(
-                                    position = pos,
-                                    distanceMeters = attrs.estimatedDistanceMeters,
-                                    genderAndAge = attrs.genderAndAge,
-                                    clothingColor = clothingColorDesc,
-                                    pantsColor = "ボトムス",
-                                    expression = expressionDesc,
-                                    emotionalMeaning = meaningDesc,
-                                    isLookingAtCamera = isLooking
-                                )
-                            }
-
-                            val desc = geminiNanoEngine.describeSceneComprehensive(brightnessLevel, persons, emptyList(), emptyList())
-                            if (desc != lastFaceDescription && desc.isNotEmpty()) {
-                                lastFaceDescription = desc
+                            val face = faces[0]
+                            val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
+                                face = face,
+                                imageWidth = imgWidth,
+                                imageHeight = imgHeight,
+                                bitmap = null
+                            )
+                            val smileProb = face.smilingProbability ?: 0f
+                            val expr = if (smileProb > 0.4f) "笑顔" else "真剣な表情"
+                            val desc = "正面に ${attrs.clothingDescription}を着た${attrs.genderAndAge}がいます。${expr}で${attrs.estimatedDistanceMeters}です"
+                            if (desc != lastSpokenText) {
+                                lastSpokenText = desc
                                 lastSpokenTime = currentTime
                                 runOnUiThread {
                                     tvStatus.text = "👤 $desc"
@@ -282,8 +273,6 @@ class LiveVisionActivity : AppCompatActivity() {
             }
             "INDOOR" -> {
                 val indoorHelper = IndoorNavigationHelper(this)
-                val imgWidth = image.width
-                val imgHeight = image.height
 
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
@@ -302,31 +291,16 @@ class LiveVisionActivity : AppCompatActivity() {
                                 bitmap = null
                             )
                             val smileProb = face.smilingProbability ?: 0f
-                            val leftEye = face.leftEyeOpenProbability ?: 0.5f
-                            val rightEye = face.rightEyeOpenProbability ?: 0.5f
-                            val avgEye = (leftEye + rightEye) / 2f
-                            val isLooking = avgEye > 0.4f
-
-                            val expressionDesc = when {
-                                smileProb > 0.60f -> "満面の笑顔"
-                                smileProb in 0.30f..0.60f -> "穏やかな微笑み"
-                                avgEye > 0.6f && smileProb < 0.15f -> "真剣な表情"
-                                avgEye < 0.35f && smileProb < 0.15f -> "落ち着いた表情"
-                                else -> "自然な表情"
-                            }
-
-                            val clothingDesc = if (attrs.clothingDescription.isNotEmpty() && !attrs.clothingDescription.contains("不明")) {
-                                attrs.clothingDescription
-                            } else {
-                                "服"
-                            }
+                            val isLooking = ((face.leftEyeOpenProbability ?: 0.5f) + (face.rightEyeOpenProbability ?: 0.5f)) / 2f > 0.4f
+                            val expr = if (smileProb > 0.5f) "満面の笑顔" else if (smileProb > 0.25f) "微笑み" else "落ち着いた表情"
+                            val cloth = if (attrs.clothingDescription.isNotEmpty() && !attrs.clothingDescription.contains("不明")) attrs.clothingDescription else "服"
 
                             IndoorNavigationHelper.PersonState(
                                 direction = dir,
                                 distanceMeter = dist,
                                 genderAndAge = attrs.genderAndAge,
-                                clothingColor = clothingDesc,
-                                expression = expressionDesc,
+                                clothingColor = cloth,
+                                expression = expr,
                                 isLookingAtCamera = isLooking,
                                 poseDescription = "人"
                             )
@@ -335,7 +309,7 @@ class LiveVisionActivity : AppCompatActivity() {
                         objectDetector.process(image)
                             .addOnSuccessListener { detectedObjects ->
                                 val indoorObjects = detectedObjects.mapNotNull { obj ->
-                                    val primaryLabel = obj.labels.firstOrNull()?.text ?: "家具・障害物"
+                                    val primaryLabel = obj.labels.firstOrNull()?.text ?: "家具・設備"
                                     val translated = indoorHelper.translateIndoorLabel(primaryLabel)
                                     val box = obj.boundingBox
                                     val (dir, dist) = indoorHelper.calculateDirectionAndDistance(
@@ -351,14 +325,18 @@ class LiveVisionActivity : AppCompatActivity() {
                                     )
                                 }
 
-                                val announcement = indoorHelper.buildIndoorAnnouncement(
-                                    roomName = "",
-                                    objects = indoorObjects,
-                                    people = peopleList,
-                                    isPathClear = true
-                                )
+                                val announcement = if (peopleList.isEmpty() && indoorObjects.isEmpty()) {
+                                    "${brightnessLevel}。前方クリアです。周囲を確認中…"
+                                } else {
+                                    indoorHelper.buildIndoorAnnouncement(
+                                        roomName = "",
+                                        objects = indoorObjects,
+                                        people = peopleList,
+                                        isPathClear = true
+                                    )
+                                }
 
-                                if (announcement.isNotEmpty() && announcement != lastSpokenText) {
+                                if (announcement.isNotEmpty() && (announcement != lastSpokenText || currentTime - lastSpokenTime > 4500)) {
                                     lastSpokenText = announcement
                                     lastSpokenTime = currentTime
                                     runOnUiThread {
@@ -373,75 +351,35 @@ class LiveVisionActivity : AppCompatActivity() {
                     }
             }
             else -> {
-                // LIVE 実況モード (Gemini Nano 統合解析: 照度 + 表情・位置 + OCR)
-                val planes = mediaImage.planes
-                val brightnessLevel = if (planes.isNotEmpty()) {
-                    val buffer = planes[0].buffer
-                    var sum = 0L
-                    val step = (buffer.remaining() / 200).coerceAtLeast(1)
-                    var count = 0
-                    for (i in 0 until buffer.remaining() step step) {
-                        sum += (buffer.get(i).toInt() and 0xFF)
-                        count++
-                    }
-                    val avg = if (count > 0) sum / count else 128
-                    when {
-                        avg >= 150 -> "明るい室内"
-                        avg in 60..149 -> "落ち着いた明るさの場所"
-                        avg in 20..59 -> "薄暗い場所"
-                        else -> "真っ暗な場所"
-                    }
-                } else {
-                    ""
-                }
-
+                // LIVE 実況モード (Gemini Nano 統合解析: 照度 + 表情・服装・年代 + TFLite物体 + OCR)
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
-                        val imgWidth = image.width
-                        val imgHeight = image.height
                         val persons = faces.map { face ->
                             val box = face.boundingBox
                             val centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1)
-
                             val pos = when {
                                 centerX < 0.35f -> "左側"
                                 centerX > 0.65f -> "右側"
                                 else -> "正面"
                             }
-
-                            // 完全無料・オンデバイス属性解析（性別・推定年代・服の色・精密距離）
                             val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
                                 face = face,
                                 imageWidth = imgWidth,
                                 imageHeight = imgHeight,
                                 bitmap = null
                             )
-
                             val smileProb = face.smilingProbability ?: 0f
-                            val leftEye = face.leftEyeOpenProbability ?: 0.5f
-                            val rightEye = face.rightEyeOpenProbability ?: 0.5f
-                            val avgEye = (leftEye + rightEye) / 2f
-                            val isLooking = avgEye > 0.4f
-
-                            val (expressionDesc, meaningDesc) = when {
-                                smileProb > 0.65f -> Pair("満面の明るい笑顔", "とても楽しそうに喜んでいる様子")
-                                smileProb in 0.30f..0.65f -> Pair("穏やかな微笑み", "リラックスして安心している雰囲気")
-                                avgEye > 0.6f && smileProb < 0.15f -> Pair("真剣な表情", "集中して深く考え事をしている様子")
-                                avgEye < 0.35f && smileProb < 0.15f -> Pair("少し暗めの落ち着いた表情", "物思いにふけっている様子")
-                                else -> Pair("自然体な表情", "落ち着いた普段の様子")
-                            }
-
-                            val clothingColorDesc = if (brightnessLevel.contains("明るい")) "明るめの服" else "落ち着いた色の服"
+                            val expr = if (smileProb > 0.5f) "満面の笑顔" else if (smileProb > 0.25f) "穏やかな微笑み" else "自然な表情"
 
                             com.shinji.serena.ai.GeminiNanoEngine.PersonAnalysisDetail(
                                 position = pos,
                                 distanceMeters = attrs.estimatedDistanceMeters,
                                 genderAndAge = attrs.genderAndAge,
-                                clothingColor = clothingColorDesc,
+                                clothingColor = attrs.clothingDescription,
                                 pantsColor = "ボトムス",
-                                expression = expressionDesc,
-                                emotionalMeaning = meaningDesc,
-                                isLookingAtCamera = isLooking
+                                expression = expr,
+                                emotionalMeaning = "安心している様子",
+                                isLookingAtCamera = true
                             )
                         }
 
@@ -458,13 +396,19 @@ class LiveVisionActivity : AppCompatActivity() {
                                             texts = recognizedTexts
                                         )
 
-                                        if (sceneSummary.isNotEmpty() && sceneSummary != lastSpokenText) {
-                                            lastSpokenText = sceneSummary
+                                        val finalAnnouncement = if (sceneSummary.isNotEmpty()) {
+                                            sceneSummary
+                                        } else {
+                                            "${brightnessLevel}。周囲を確認中…"
+                                        }
+
+                                        if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 4500)) {
+                                            lastSpokenText = finalAnnouncement
                                             lastSpokenTime = currentTime
                                             runOnUiThread {
-                                                tvStatus.text = "🌐 実況: $sceneSummary"
+                                                tvStatus.text = "🌐 実況: $finalAnnouncement"
                                             }
-                                            speak(sceneSummary, TextToSpeech.QUEUE_FLUSH)
+                                            speak(finalAnnouncement, TextToSpeech.QUEUE_FLUSH)
                                         }
                                     }
                             }
@@ -478,7 +422,14 @@ class LiveVisionActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        try {
+            tts?.stop()
+            tts?.shutdown()
+            tts = null
+        } catch (_: Exception) {}
         cameraExecutor.shutdown()
-        speak("実況カメラを終了しました。")
+        textRecognizer.close()
+        faceDetector.close()
+        objectDetector.close()
     }
 }
