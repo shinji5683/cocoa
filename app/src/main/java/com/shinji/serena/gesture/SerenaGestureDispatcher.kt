@@ -72,6 +72,16 @@ class SerenaGestureDispatcher(
                 if (service.executeActiveCustomAction()) return true
                 val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
                 if (focusNode != null) {
+                    val viewId = focusNode.viewIdResourceName?.lowercase() ?: ""
+                    val text = focusNode.text?.toString() ?: ""
+                    val contentDesc = focusNode.contentDescription?.toString() ?: ""
+                    val isLockElement = viewId.contains("lock") || viewId.contains("keyguard") ||
+                            text.contains("ロック") || contentDesc.contains("ロック") || contentDesc.contains("解除")
+
+                    if (service.isKeyguardLocked() && isLockElement) {
+                        return service.unlockKeyguardOrShowBouncer()
+                    }
+
                     // 1. ノード直接のクリック試行
                     if (focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
                         service.soundHelper?.playClick()
@@ -177,6 +187,9 @@ class SerenaGestureDispatcher(
                 return true
             }
             AccessibilityService.GESTURE_2_FINGER_SWIPE_UP -> {
+                if (service.isKeyguardLocked()) {
+                    return service.unlockKeyguardOrShowBouncer()
+                }
                 // 2本指上フリック: 次へ縦スクロール
                 service.scrollVerticalForward()
                 return true

@@ -981,6 +981,48 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return true
     }
 
+    fun isKeyguardLocked(): Boolean {
+        val km = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
+        if (km?.isKeyguardLocked == true) return true
+        val rootPkg = rootInActiveWindow?.packageName?.toString() ?: ""
+        return rootPkg.contains("systemui") && (rootInActiveWindow?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")?.isNotEmpty() == true ||
+                rootInActiveWindow?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_carrier_text")?.isNotEmpty() == true)
+    }
+
+    fun unlockKeyguardOrShowBouncer(): Boolean {
+        val displayMetrics = resources.displayMetrics
+        val width = displayMetrics.widthPixels.toFloat()
+        val height = displayMetrics.heightPixels.toFloat()
+
+        val startX = width * 0.5f
+        val startY = height * 0.85f
+        val endY = height * 0.15f
+
+        val path1 = android.graphics.Path().apply {
+            moveTo(startX - 25f, startY)
+            lineTo(startX - 25f, endY)
+        }
+        val path2 = android.graphics.Path().apply {
+            moveTo(startX + 25f, startY)
+            lineTo(startX + 25f, endY)
+        }
+
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(path1, 0, 220)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(path2, 0, 220)
+        val gesture = android.accessibilityservice.GestureDescription.Builder()
+            .addStroke(stroke1)
+            .addStroke(stroke2)
+            .build()
+
+        soundHelper?.playFocusMove()
+        speak("ロック画面を上にスワイプして解除画面を開きます", TextToSpeech.QUEUE_FLUSH)
+        return dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCompleted(gestureDescription)
+            }
+        }, null)
+    }
+
     private fun performPhysical2FingerScroll(forward: Boolean, horizontal: Boolean) {
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
         mainHandler.postDelayed({
@@ -1001,11 +1043,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             } else {
                 if (forward) {
-                    startX1 = width * 0.48f; endX1 = width * 0.48f; startY1 = height * 0.58f; endY1 = height * 0.42f
-                    startX2 = width * 0.52f; endX2 = width * 0.52f; startY2 = height * 0.58f; endY2 = height * 0.42f
+                    startX1 = width * 0.45f; endX1 = width * 0.45f; startY1 = height * 0.75f; endY1 = height * 0.25f
+                    startX2 = width * 0.55f; endX2 = width * 0.55f; startY2 = height * 0.75f; endY2 = height * 0.25f
                 } else {
-                    startX1 = width * 0.48f; endX1 = width * 0.48f; startY1 = height * 0.42f; endY1 = height * 0.58f
-                    startX2 = width * 0.52f; endX2 = width * 0.52f; startY2 = height * 0.42f; endY2 = height * 0.58f
+                    startX1 = width * 0.45f; endX1 = width * 0.45f; startY1 = height * 0.25f; endY1 = height * 0.75f
+                    startX2 = width * 0.55f; endX2 = width * 0.55f; startY2 = height * 0.25f; endY2 = height * 0.75f
                 }
             }
 
