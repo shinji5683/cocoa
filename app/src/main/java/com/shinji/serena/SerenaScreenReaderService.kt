@@ -87,6 +87,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var compassHelper: SpatialCompassHelper? = null
     var spatialObstacleSonarHelper: SpatialObstacleSonarHelper? = null
     var walkingNavigator: com.shinji.serena.navigation.SerenaWalkingNavigator? = null
+    var osmValhallaNavHelper: com.shinji.serena.location.OsmValhallaNavigationHelper? = null
+    var spatialSurroundingRadarHelper: com.shinji.serena.location.SpatialSurroundingRadarHelper? = null
     private var shakeDetectorHelper: ShakeDetectorHelper? = null
     private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
     private var isLiveEnvironmentModeActive = false
@@ -121,6 +123,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             compassHelper = SpatialCompassHelper(safeContext).apply { try { startListening() } catch (_: Exception) {} }
             spatialObstacleSonarHelper = SpatialObstacleSonarHelper(safeContext)
             walkingNavigator = com.shinji.serena.navigation.SerenaWalkingNavigator(this, compassHelper).apply { try { startTracking() } catch (_: Exception) {} }
+            osmValhallaNavHelper = com.shinji.serena.location.OsmValhallaNavigationHelper(this, soundHelper) { msg ->
+                speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            }
+            spatialSurroundingRadarHelper = com.shinji.serena.location.SpatialSurroundingRadarHelper(this, soundHelper) { msg ->
+                speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            }
             wifiConnectivityHelper = WifiConnectivityHelper(this).apply { try { startMonitoring() } catch (_: Exception) {} }
             batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} }
             aiAutoLabelHelper = AiAutoLabelHelper()
@@ -2085,9 +2093,34 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    fun startOsmValhallaNavigation(destName: String) {
+        soundHelper?.playMenuOpen()
+        osmValhallaNavHelper?.startNavigationToDestination(destName)
+    }
+
+    fun stopOsmValhallaNavigation() {
+        osmValhallaNavHelper?.stopNavigation()
+    }
+
+    fun toggleSurroundingRadar() {
+        val radar = spatialSurroundingRadarHelper ?: return
+        if (radar.isRadarActive()) {
+            radar.stopSurroundingRadar()
+        } else {
+            radar.startSurroundingRadar()
+        }
+    }
+
     private fun showWalkingNavMenu(nav: com.shinji.serena.navigation.SerenaWalkingNavigator) {
         val currentSummary = nav.getCurrentLocationSummary()
         val items = listOf(
+            serenaMenuItem("📡", "3D音響・周辺マップレーダー (開始/停止)") {
+                toggleSurroundingRadar()
+            },
+            serenaMenuItem("🚶‍♂️", "目的地へのValhalla徒歩ルート案内 (音声検索)") {
+                speak("目的地（施設名や駅名など）を音声で検索します。どうぞ！", TextToSpeech.QUEUE_FLUSH)
+                assistantHelper?.startListening()
+            },
             serenaMenuItem("📍", "現在地と方角の確認") {
                 speak(nav.getCurrentLocationSummary(), TextToSpeech.QUEUE_FLUSH)
             },
@@ -2119,6 +2152,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 toggleSpatialCompassAudio()
             },
             serenaMenuItem("❌", "目的地の案内を終了・解除") {
+                stopOsmValhallaNavigation()
                 nav.clearDestination()
                 soundHelper?.playActionDone()
                 speak("目的地の案内を終了しました", TextToSpeech.QUEUE_FLUSH)

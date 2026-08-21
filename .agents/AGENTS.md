@@ -29,3 +29,15 @@
     - Do NOT force-grant permissions via ADB (`pm grant`).
     - Enforce User-Driven permission control where Shinjiさん directly interacts with the standard Android permission dialog upon app launch.
   - Automatically launch `com.shinji.serena/.MainActivity` to show the standard permission dialog for user consent.
+- Map & Spatial Navigation Direction Policy (地図・ナビ・空間案内における方向表現の鉄則):
+  - NEVER use clock positions (e.g. "12時の方向", "3時の方向") in any map, navigation, surrounding radar, or spatial audio features!
+  - ALWAYS use intuitive relative direction terms:
+    - 「正面」 (Straight ahead / Front)
+    - 「右斜め前」 (Front right)
+    - 「右」 (Right)
+    - 「右斜め後ろ」 (Back right)
+    - 「真後ろ」 (Directly behind)
+    - 「左斜め後ろ」 (Back left)
+    - 「左」 (Left)
+    - 「左斜め前」 (Front left)
+    - 例: 「正面 30m先に横断歩道」「右斜め前 50m先にコンビニ」「左 100m先に駅の入口」

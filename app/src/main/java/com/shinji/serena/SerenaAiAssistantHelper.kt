@@ -170,6 +170,19 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 service.toggleSpatialObstacleSonar()
             }
 
+            // === 📡 OSM ＆ Valhalla 徒歩ナビ ＆ 3D音響触知周辺マップ ===
+            query.contains("レーダー") || query.contains("周辺マップ") || query.contains("周りに何がある") || query.contains("周囲") -> {
+                service.toggleSurroundingRadar()
+            }
+            query.contains("ルート") || query.contains("案内開始") || query.contains("まで案内") || query.contains("へ行く") || query.contains("への道") -> {
+                val dest = query.replace("ルート", "").replace("案内開始", "").replace("まで案内", "").replace("へ行く", "").replace("への道", "").replace("教えて", "").trim()
+                if (dest.isNotEmpty()) {
+                    service.startOsmValhallaNavigation(dest)
+                } else {
+                    service.announceCurrentLocationAndNav()
+                }
+            }
+
             // === 徒歩ナビゲーション ＆ 周辺施設実名検索 (Overpass API連動) ===
             query.contains("コンビニ") -> {
                 service.searchAndShowPlaces("コンビニ", "🏪")
