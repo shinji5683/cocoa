@@ -3225,12 +3225,44 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         stopSpeech()
     }
 
+    fun dismissKeyguardViaOs() {
+        soundHelper?.playFocusMove()
+        // 1. 通知シェードを閉じる
+        performGlobalAction(AccessibilityService.GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+
+        // 2. 鍵アイコンやロック解除トリガーへのダイレクト解除命令
+        val root = rootInActiveWindow
+        if (root != null) {
+            val lockIcons = root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")
+            for (icon in lockIcons) {
+                icon.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    icon.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
+                }
+            }
+        }
+    }
+
     private fun registerTimeTickReceiver() {
         if (timeTickReceiver != null) return
         timeTickReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     Intent.ACTION_TIME_TICK -> checkHourlyChime()
+                    Intent.ACTION_SCREEN_OFF -> {
+                        soundHelper?.playClick()
+                        speak("画面をロックしました", TextToSpeech.QUEUE_FLUSH)
+                    }
+                    Intent.ACTION_SCREEN_ON -> {
+                        if (isKeyguardLocked()) {
+                            soundHelper?.playFocusMove()
+                            speak("ロック画面です。2本指で上にスワイプしてロックを解除します。", TextToSpeech.QUEUE_FLUSH)
+                        }
+                    }
+                    Intent.ACTION_USER_PRESENT -> {
+                        soundHelper?.playActionDone()
+                        speak("ロックを解除しました", TextToSpeech.QUEUE_FLUSH)
+                    }
                     Intent.ACTION_USER_UNLOCKED -> {
                         Log.i(TAG, "Device unlocked from Direct Boot. Reloading storage & TTS.")
                         try {
@@ -3250,6 +3282,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_USER_PRESENT)
             addAction(Intent.ACTION_USER_UNLOCKED)
         }
         try {
