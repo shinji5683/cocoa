@@ -675,6 +675,25 @@
                     android:layout_height="48dp"
                     android:text="@string/btn_call_developer"
                     android:backgroundTint="@color/serena_primary"
+                    android:layout_marginBottom="8dp"
+                    app:cornerRadius="12dp" />
+
+                <Button
+                    android:id="@+id/btnEmailDeveloper"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/btn_email_developer"
+                    android:backgroundTint="@color/serena_secondary"
+                    android:layout_marginBottom="8dp"
+                    app:cornerRadius="12dp" />
+
+                <Button
+                    android:id="@+id/btnMessageDeveloper"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/btn_message_developer"
+                    android:backgroundTint="@color/serena_accent"
+                    android:textColor="@color/serena_text_dark"
                     android:layout_marginBottom="12dp"
                     app:cornerRadius="12dp" />
 

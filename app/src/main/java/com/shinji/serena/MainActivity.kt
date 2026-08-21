@@ -431,8 +431,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupDeveloperCallSection() {
-        val phoneNumber = BuildConfig.DEVELOPER_PHONE
-        val developerName = BuildConfig.DEVELOPER_NAME
+        val phoneNumber = "08094959134"
+        val developerEmail = "shinjisakiyama@gmail.com"
+        val developerName = "Shinji"
+
+        // 1. 電話サポート（直接ダイヤル起動）
         binding.btnCallDeveloper.setOnClickListener {
             try {
                 val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phoneNumber"))
@@ -440,6 +443,35 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "開発者(${developerName})への電話アプリを起動します", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(this, "電話アプリの起動に失敗しました: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        // 2. メールサポート（Gmail / 標準メーラー起動）
+        binding.btnEmailDeveloper.setOnClickListener {
+            try {
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:$developerEmail")
+                    putExtra(Intent.EXTRA_SUBJECT, "【Serena Screen Reader】お問い合わせ・フィードバック")
+                    putExtra(Intent.EXTRA_TEXT, "Shinjiさん、こんにちは！\n\n【お問い合わせ内容】\n\n")
+                }
+                startActivity(intent)
+                Toast.makeText(this, "メールアプリを起動します", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "メールアプリの起動に失敗しました: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        // 3. LINE / WhatsApp / SMS 等のメッセージサポート（共有・メッセージ起動）
+        binding.btnMessageDeveloper.setOnClickListener {
+            try {
+                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "【Serena Screen Reader サポート相談】\nShinjiさん宛て\n\n")
+                }
+                val chooser = Intent.createChooser(sendIntent, "相談するアプリを選択 (LINE / WhatsApp / メッセージ等)")
+                startActivity(chooser)
+            } catch (e: Exception) {
+                Toast.makeText(this, "アプリの起動に失敗しました: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }

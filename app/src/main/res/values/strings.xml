@@ -55,17 +55,19 @@
     <string name="title_security_health">OS環境 ＆ セキュリティ安全診断</string>
     <string name="btn_recheck_security">端末セキュリティを再診断</string>
 
-    <string name="title_developer_info">アプリ提供元 ＆ 署名情報</string>
+    <string name="title_developer_info">アプリ提供元 ＆ 公式サポート窓口</string>
     <string name="developer_name">Shinji</string>
     <string name="provider_name">Shinji</string>
     <string name="developer_email">shinjisakiyama@gmail.com</string>
-    <string name="developer_phone">080-9495-9134</string>
+    <string name="developer_phone">08094959134</string>
     <string name="developer_phone_int">+818094959134</string>
 
     <string name="developer_name_label">開発者: Shinji</string>
     <string name="provider_name_label">提供元: Shinji</string>
-    <string name="btn_call_developer">開発者 (Shinji) へ電話をかける (080-9495-9134)</string>
-    <string name="developer_phone_label">電話サポート: 080-9495-9134 (国際: +81 80-9495-9134)</string>
-    <string name="signature_label">デジタル署名: 認証済み (serena-release-key / Shinji)</string>
+    <string name="developer_phone_label">サポート窓口: 電話・メール・LINE・WhatsApp対応</string>
+    <string name="btn_call_developer">📞 開発者 (Shinji) へ直接電話をかける</string>
+    <string name="btn_email_developer">📧 開発者へメールを送る (shinjisakiyama@gmail.com)</string>
+    <string name="btn_message_developer">💬 LINE / WhatsApp / メッセージで相談する</string>
+    <string name="signature_label">公式デジタル署名: 認証済み (Shinji Official / serena-release-key)</string>
     <string name="copyright_label">Copyright © 2026 Shinji. All Rights Reserved.</string>
 </resources>
