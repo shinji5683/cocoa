@@ -14,34 +14,46 @@ import com.shinji.serena.SoundAndHapticHelper
  */
 class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyActionListener {
 
-    private lateinit var keyboardView: SerenaKeyboardView
-    private lateinit var languageEngine: SerenaLanguageEngine
-    private lateinit var soundAndHapticHelper: SoundAndHapticHelper
+    private var keyboardView: SerenaKeyboardView? = null
+    private var languageEngine: SerenaLanguageEngine? = null
+    private var soundAndHapticHelper: SoundAndHapticHelper? = null
     private val currentComposing = StringBuilder()
 
     override fun onCreate() {
         super.onCreate()
-        val safeCtx = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N && !isDeviceProtectedStorage) {
-            createDeviceProtectedStorageContext()
-        } else {
-            this
+        try {
+            val safeCtx = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N && !isDeviceProtectedStorage) {
+                createDeviceProtectedStorageContext()
+            } else {
+                this
+            }
+            languageEngine = SerenaLanguageEngine(safeCtx)
+            soundAndHapticHelper = SoundAndHapticHelper(safeCtx)
+        } catch (e: Exception) {
+            android.util.Log.e("SerenaIME", "Error in onCreate: ${e.message}")
         }
-        languageEngine = SerenaLanguageEngine(safeCtx)
-        soundAndHapticHelper = SoundAndHapticHelper(safeCtx)
     }
 
     override fun onCreateInputView(): View {
-        keyboardView = SerenaKeyboardView(this).apply {
+        val kv = SerenaKeyboardView(this).apply {
             this.languageEngine = this@SerenaInputMethodService.languageEngine
             this.soundAndHapticHelper = this@SerenaInputMethodService.soundAndHapticHelper
             this.listener = this@SerenaInputMethodService
         }
-        return keyboardView
+        keyboardView = kv
+        kv.rebuildLayout()
+        updateCandidateList()
+        return kv
     }
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         currentComposing.clear()
+        updateCandidateList()
+    }
+
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
         updateCandidateList()
     }
 
@@ -52,8 +64,8 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
 
         updateCandidateList()
 
-        val speech = languageEngine.getSpeechForChar(char)
-        soundAndHapticHelper.announceTts(speech)
+        val speech = languageEngine?.getSpeechForChar(char) ?: char.toString()
+        soundAndHapticHelper?.announceTts(speech)
     }
 
     override fun onDeletePressed() {
@@ -65,25 +77,25 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
             } else {
                 connection?.commitText("", 1)
             }
-            soundAndHapticHelper.announceTts("削除")
+            soundAndHapticHelper?.announceTts("削除")
         } else {
             val connection = currentInputConnection
             val beforeTwo = connection?.getTextBeforeCursor(2, 0)?.toString() ?: ""
             if (beforeTwo.length >= 2 && Character.isSurrogatePair(beforeTwo[0], beforeTwo[1])) {
                 connection?.deleteSurroundingText(2, 0)
-                soundAndHapticHelper.announceTts("$beforeTwo を削除")
+                soundAndHapticHelper?.announceTts("$beforeTwo を削除")
             } else {
                 val before = connection?.getTextBeforeCursor(1, 0)?.toString() ?: ""
                 connection?.deleteSurroundingText(1, 0)
                 if (before.isNotEmpty()) {
                     val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(before)
                     if (detail.isNotEmpty() && detail != before) {
-                        soundAndHapticHelper.announceTts("$before ($detail) を削除")
+                        soundAndHapticHelper?.announceTts("$before ($detail) を削除")
                     } else {
-                        soundAndHapticHelper.announceTts("$before を削除")
+                        soundAndHapticHelper?.announceTts("$before を削除")
                     }
                 } else {
-                    soundAndHapticHelper.announceTts("一文字削除")
+                    soundAndHapticHelper?.announceTts("一文字削除")
                 }
             }
         }
@@ -93,7 +105,7 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
 
     override fun onSpacePressed() {
         commitCurrentComposing(" ")
-        soundAndHapticHelper.announceTts("スペース")
+        soundAndHapticHelper?.announceTts("スペース")
     }
 
     override fun onEnterPressed() {
@@ -103,35 +115,37 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
             val connection = currentInputConnection
             connection?.performEditorAction(EditorInfo.IME_ACTION_DONE)
         }
-        soundAndHapticHelper.announceTts("確定")
+        soundAndHapticHelper?.announceTts("確定")
     }
 
     override fun onLanguageSwitchPressed() {
-        val nextMode = languageEngine.switchMode()
+        val nextMode = languageEngine?.switchMode() ?: SerenaLanguageEngine.LanguageMode.JAPANESE
         val modeName = when (nextMode) {
             SerenaLanguageEngine.LanguageMode.JAPANESE -> "日本語"
             SerenaLanguageEngine.LanguageMode.ENGLISH -> "英語"
             SerenaLanguageEngine.LanguageMode.TAGALOG -> "タガログ語 (フィリピン)"
             SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル Unicode"
         }
-        keyboardView.updateStatusText(modeName, languageEngine.isPhoneticModeEnabled)
-        keyboardView.rebuildLayout()
+        val isPhonetic = languageEngine?.isPhoneticModeEnabled ?: true
+        keyboardView?.updateStatusText(modeName, isPhonetic)
+        keyboardView?.rebuildLayout()
         updateCandidateList()
-        soundAndHapticHelper.announceTts("言語切り替え：$modeName")
+        soundAndHapticHelper?.announceTts("言語切り替え：$modeName")
     }
 
     override fun onPhoneticTogglePressed() {
-        val isEnabled = languageEngine.togglePhoneticMode()
-        val modeName = when (languageEngine.currentMode) {
+        val isEnabled = languageEngine?.togglePhoneticMode() ?: true
+        val modeName = when (languageEngine?.currentMode) {
             SerenaLanguageEngine.LanguageMode.JAPANESE -> "日本語"
             SerenaLanguageEngine.LanguageMode.ENGLISH -> "英語"
             SerenaLanguageEngine.LanguageMode.TAGALOG -> "タガログ語"
             SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル"
+            null -> "日本語"
         }
-        keyboardView.updateStatusText(modeName, isEnabled)
-        keyboardView.rebuildLayout()
+        keyboardView?.updateStatusText(modeName, isEnabled)
+        keyboardView?.rebuildLayout()
         val announcement = if (isEnabled) "AI予測＆詳細読み オン" else "通常読み"
-        soundAndHapticHelper.announceTts(announcement)
+        soundAndHapticHelper?.announceTts(announcement)
     }
 
     override fun onCandidateSelected(candidate: String) {
@@ -142,7 +156,7 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
         } else {
             "選択：$candidate"
         }
-        soundAndHapticHelper.announceTts(speech)
+        soundAndHapticHelper?.announceTts(speech)
     }
 
     /**
@@ -163,9 +177,9 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
         if (charAfter.isNotEmpty()) {
             val char = charAfter[0]
             val phonetic = SerenaPhoneticEngine.getPhoneticReading(char)
-            soundAndHapticHelper.announceTts(phonetic)
+            soundAndHapticHelper?.announceTts(phonetic)
         } else {
-            soundAndHapticHelper.announceTts("行頭")
+            soundAndHapticHelper?.announceTts("行頭")
         }
         updateCandidateList()
     }
@@ -188,9 +202,9 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
         if (charBefore.isNotEmpty()) {
             val char = charBefore.last()
             val phonetic = SerenaPhoneticEngine.getPhoneticReading(char)
-            soundAndHapticHelper.announceTts(phonetic)
+            soundAndHapticHelper?.announceTts(phonetic)
         } else {
-            soundAndHapticHelper.announceTts("行末")
+            soundAndHapticHelper?.announceTts("行末")
         }
         updateCandidateList()
     }
@@ -198,8 +212,8 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
     private fun updateCandidateList() {
         val connection = currentInputConnection
         val contextBefore = connection?.getTextBeforeCursor(30, 0)?.toString() ?: ""
-        val candidates = languageEngine.getCandidatesWithDetails(currentComposing.toString(), contextBefore)
-        keyboardView.displayCandidates(candidates)
+        val candidates = languageEngine?.getCandidatesWithDetails(currentComposing.toString(), contextBefore) ?: emptyList()
+        keyboardView?.displayCandidates(candidates)
     }
 
     private fun commitCurrentComposing(text: String) {
@@ -212,9 +226,7 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
 
     override fun onDestroy() {
         super.onDestroy()
-        if (::soundAndHapticHelper.isInitialized) {
-            soundAndHapticHelper.release()
-        }
+        soundAndHapticHelper?.release()
         currentComposing.clear()
     }
 }
