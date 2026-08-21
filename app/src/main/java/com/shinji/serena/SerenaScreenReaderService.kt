@@ -1022,7 +1022,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             .build()
 
         soundHelper?.playFocusMove()
-        speak("ロック画面を上にスワイプして解除画面を開きます", TextToSpeech.QUEUE_FLUSH)
         return dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
@@ -2533,9 +2532,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (text.isNotEmpty() && fromIndex >= 0 && fromIndex < text.length && isTtsReady) {
                     val end = if (toIndex in (fromIndex + 1)..text.length) toIndex else fromIndex + 1
                     val traversed = text.substring(fromIndex, end)
-                    val detail = com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.getKanjiDetail(traversed)
-                    if (detail.isNotEmpty() && detail != traversed) {
-                        speak("$traversed ($detail)", TextToSpeech.QUEUE_FLUSH)
+                    if (currentGranularity == GranularityMode.CHARACTERS) {
+                        val detail = com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.getKanjiDetail(traversed)
+                        if (detail.isNotEmpty() && detail != traversed) {
+                            speak("$traversed ($detail)", TextToSpeech.QUEUE_FLUSH)
+                        } else {
+                            speak(traversed, TextToSpeech.QUEUE_FLUSH)
+                        }
                     } else {
                         speak(traversed, TextToSpeech.QUEUE_FLUSH)
                     }
@@ -2573,7 +2576,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         } else {
                             text
                         }
-                        if (addedText.length == 1) {
+                        if (addedText.length == 1 && currentGranularity == GranularityMode.CHARACTERS) {
                             val detail = com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.getKanjiDetail(addedText)
                             if (detail.isNotEmpty() && detail != addedText) {
                                 speak("$addedText ($detail)", TextToSpeech.QUEUE_FLUSH)

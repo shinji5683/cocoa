@@ -50,6 +50,9 @@ class SerenaGestureDispatcher(
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP -> {
+                if (service.isKeyguardLocked()) {
+                    return service.unlockKeyguardOrShowBouncer()
+                }
                 if (service.handleVerticalSwipe(up = true)) return true
                 navigator?.navigateLinearFocus(forward = false)
                 return true
