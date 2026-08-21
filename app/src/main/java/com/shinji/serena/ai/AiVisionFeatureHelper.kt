@@ -8,21 +8,30 @@ import com.google.mlkit.vision.face.Face
 import kotlin.math.abs
 
 /**
- * Serena 完全無料・オンデバイス AI 視覚特徴抽出ヘルパー
+ * Serena 完全無料・オンデバイス AI 視覚＆人物・表情・感情解析ヘルパー
  * 外部API / クラウド課金ゼロ・完全端末内完結。
- * 顔の幾何学的比率・輪郭・目鼻口バランス・上半身YUV色相から
- * 性別・推定年代（子供・若者・大人）・服装カラー（黒・白・青・赤・グレー等）をリアルタイム判定。
+ * 笑顔度・目開き度・顔の傾き・目鼻口バランス・首元色相から
+ * 性別・年代・服装・視線・微細な表情段階（ニッコリ笑顔、優しい微笑み、穏やか、真剣、ウインク等）と
+ * 人物の感情・雰囲気をリアルタイムに高精度判定。
  */
 object AiVisionFeatureHelper {
 
+    data class DetailedEmotion(
+        val category: String,         // 例: "満面のニッコリ笑顔", "親しみやすい笑顔", "優しい微笑み", "穏やかな表情", "真剣な眼差し", "少し驚いた表情", "ウインク"
+        val emotionalVibe: String,    // 例: "とても嬉しそうに楽しんでいます", "安心感のある親しみやすい雰囲気です", "穏やかでリラックスしています", "真剣に集中している様子です"
+        val gazeAndHeadPose: String,  // 例: "まっすぐこちらを見ています", "右目でウインクしています", "顔を右に向けています", "目を閉じています"
+        val fullDescription: String   // 読み上げ用の自然な感情要約
+    )
+
     data class PersonAttributes(
-        val genderAndAge: String,      // 例: "20代から30代くらいの女性", "大人の男性", "男の子（子供）", "女の子（子供）"
-        val clothingDescription: String,// 例: "白い服", "黒い服", "青系の服", "明るめのトップス"
-        val estimatedDistanceMeters: String // 例: "約80cm", "約1.5m", "約3m"
+        val genderAndAge: String,          // 例: "20代から30代くらいの女性", "大人の男性", "男の子（子供）", "女の子（子供）"
+        val clothingDescription: String,   // 例: "白い服", "黒い服", "青系の服", "明るめのトップス"
+        val estimatedDistanceMeters: String, // 例: "すぐ近く（約60cm）", "近く（約1m）", "約1.5m", "約2.5m"
+        val emotion: DetailedEmotion
     )
 
     /**
-     * 顔情報とカメラ画像（mediaImageまたはBitmap）から人物属性をオンデバイス高速解析
+     * 顔情報とカメラ画像から人物属性・詳細感情をオンデバイス高速解析
      */
     fun analyzePersonAttributes(
         face: Face,
@@ -43,22 +52,77 @@ object AiVisionFeatureHelper {
             else -> "少し離れた場所（約3m以上）"
         }
 
-        // 2. 性別・詳細年代のオンデバイス推定
-        val boxAspect = box.height().toFloat() / box.width().coerceAtLeast(1).toFloat()
+        // 2. 表情・感情・視線の高精度解析
         val smile = face.smilingProbability ?: 0f
         val leftEye = face.leftEyeOpenProbability ?: 0.5f
         val rightEye = face.rightEyeOpenProbability ?: 0.5f
         val eyeAvg = (leftEye + rightEye) / 2f
+        val eulerX = face.headEulerAngleX // 上下（正が上向き、負が下向き）
+        val eulerY = face.headEulerAngleY // 左右（正が右向き、負が左向き）
+        val eulerZ = face.headEulerAngleZ // 首の傾き
 
+        // 視線・ポーズ判定
+        val gazeStr = when {
+            leftEye < 0.20f && rightEye < 0.20f -> "目を閉じています"
+            leftEye > 0.60f && rightEye < 0.20f -> "右目でウインクしています😉"
+            rightEye > 0.60f && leftEye < 0.20f -> "左目でウインクしています😉"
+            eulerY > 20f -> "顔を右に向けています"
+            eulerY < -20f -> "顔を左に向けています"
+            eulerX > 16f -> "少し上を見上げています"
+            eulerX < -16f -> "下をうつむいています"
+            abs(eulerZ) > 20f -> "首をかしげています"
+            else -> "まっすぐこちらを見ています"
+        }
+
+        // 感情カテゴリとニュアンス判定
+        val (emotionCategory, emotionalVibe) = when {
+            smile >= 0.80f -> {
+                Pair("パッと明るい満面の笑み", "とても嬉しそうに楽しんでいる様子です！")
+            }
+            smile in 0.50f..0.80f -> {
+                Pair("ニッコリ笑顔", "親しみやすく明るい雰囲気です")
+            }
+            smile in 0.20f..0.50f -> {
+                Pair("優しい微笑み（ほほえみ）", "穏やかで安心している様子です")
+            }
+            smile in 0.07f..0.20f -> {
+                Pair("穏やかでリラックスした表情", "落ち着いた雰囲気です")
+            }
+            else -> {
+                // 笑顔度低めの場合のニュアンス解析
+                when {
+                    leftEye > 0.85f && rightEye > 0.85f && eulerX in -10f..10f -> {
+                        Pair("目を丸くした表情", "少し驚いたような、興味津々な様子です")
+                    }
+                    leftEye < 0.30f && rightEye < 0.30f -> {
+                        Pair("目を細めた安らぎの表情", "落ち着いてリラックスしています")
+                    }
+                    else -> {
+                        Pair("真剣で落ち着いた表情", "真面目にこちらに注目しています")
+                    }
+                }
+            }
+        }
+
+        val fullDesc = "${emotionCategory}で、${emotionalVibe}。${gazeStr}"
+        val emotionDetail = DetailedEmotion(
+            category = emotionCategory,
+            emotionalVibe = emotionalVibe,
+            gazeAndHeadPose = gazeStr,
+            fullDescription = fullDesc
+        )
+
+        // 3. 性別・詳細年代のオンデバイス推定
+        val boxAspect = box.height().toFloat() / box.width().coerceAtLeast(1).toFloat()
         val genderAndAge = when {
             // 顔幅が小さく丸みが強い（子供・幼児）
             widthRatio < 0.12f && boxAspect > 1.30f -> {
                 if (eyeAvg > 0.6f && smile > 0.3f) "女の子（子供）" else "男の子（子供）"
             }
             // 縦横比がすっきり＆笑顔・目元が優しい（女性）
-            boxAspect in 1.10f..1.45f && (smile > 0.30f || eyeAvg > 0.50f) -> {
+            boxAspect in 1.10f..1.45f && (smile > 0.25f || eyeAvg > 0.50f) -> {
                 when {
-                    smile > 0.60f -> "20代くらいの女性"
+                    smile > 0.50f -> "20代くらいの女性"
                     eyeAvg > 0.60f -> "20代から30代くらいの女性"
                     else -> "大人の女性（30代から40代くらい）"
                 }
@@ -66,17 +130,17 @@ object AiVisionFeatureHelper {
             // 輪郭がしっかりめ（男性）
             boxAspect in 0.88f..1.18f -> {
                 when {
-                    smile > 0.50f -> "20代から30代くらいの男性"
+                    smile > 0.40f -> "20代から30代くらいの男性"
                     eyeAvg > 0.55f -> "30代から40代くらいの男性"
                     else -> "大人の男性（30代から50代くらい）"
                 }
             }
             else -> {
-                if (smile > 0.40f) "20代から30代くらいの女性" else "30代から40代くらいの男性"
+                if (smile > 0.30f) "20代から30代くらいの女性" else "30代から40代くらいの男性"
             }
         }
 
-        // 3. 上半身・胸元領域の服装カラーサンプリング
+        // 4. 上半身・胸元領域の服装カラーサンプリング
         val clothingColor = when {
             mediaImage != null -> sampleClothingColorFromImage(mediaImage, box, imageWidth, imageHeight)
             bitmap != null && !bitmap.isRecycled -> sampleClothingColorFromBitmap(bitmap, box, imageWidth, imageHeight)
@@ -86,7 +150,8 @@ object AiVisionFeatureHelper {
         return PersonAttributes(
             genderAndAge = genderAndAge,
             clothingDescription = clothingColor,
-            estimatedDistanceMeters = distanceStr
+            estimatedDistanceMeters = distanceStr,
+            emotion = emotionDetail
         )
     }
 

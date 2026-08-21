@@ -52,8 +52,9 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val barcodeScanner = BarcodeScanning.getClient()
     private val faceDetector = FaceDetection.getClient(
         FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
             .build()
     )
 
@@ -269,10 +270,8 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 mediaImage = mediaImage,
                                 bitmap = null
                             )
-                            val smileProb = face.smilingProbability ?: 0f
-                            val expr = if (smileProb > 0.4f) "笑顔" else "落ち着いた表情"
-                            val desc = "正面に ${attrs.clothingDescription}を着た${attrs.genderAndAge}がいます。${expr}で${attrs.estimatedDistanceMeters}です"
-                            if (desc != lastSpokenText || currentTime - lastSpokenTime > 5000) {
+                            val desc = "正面${attrs.estimatedDistanceMeters}に、${attrs.clothingDescription}を着た${attrs.genderAndAge}がいます。${attrs.emotion.fullDescription}"
+                            if (desc != lastSpokenText || currentTime - lastSpokenTime > 4000) {
                                 lastSpokenText = desc
                                 lastSpokenTime = currentTime
                                 runOnUiThread {
@@ -423,18 +422,14 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 mediaImage = mediaImage,
                                 bitmap = null
                             )
-                            val smileProb = face.smilingProbability ?: 0f
-                            val isLooking = ((face.leftEyeOpenProbability ?: 0.5f) + (face.rightEyeOpenProbability ?: 0.5f)) / 2f > 0.4f
-                            val expr = if (smileProb > 0.5f) "満面の笑顔" else if (smileProb > 0.25f) "微笑み" else "落ち着いた表情"
-
                             IndoorNavigationHelper.PersonState(
                                 direction = dir,
                                 distanceMeter = dist,
                                 genderAndAge = attrs.genderAndAge,
                                 clothingColor = attrs.clothingDescription,
-                                expression = expr,
-                                isLookingAtCamera = isLooking,
-                                poseDescription = "人"
+                                expression = "${attrs.emotion.category}（${attrs.emotion.emotionalVibe}）",
+                                isLookingAtCamera = attrs.emotion.gazeAndHeadPose.contains("こちらを見ています"),
+                                poseDescription = attrs.emotion.gazeAndHeadPose
                             )
                         }
 
@@ -495,8 +490,6 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 mediaImage = mediaImage,
                                 bitmap = null
                             )
-                            val smileProb = face.smilingProbability ?: 0f
-                            val expr = if (smileProb > 0.5f) "満面の笑顔" else if (smileProb > 0.25f) "穏やかな微笑み" else "落ち着いた表情"
 
                             com.shinji.serena.ai.GeminiNanoEngine.PersonAnalysisDetail(
                                 position = pos,
@@ -504,9 +497,9 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 genderAndAge = attrs.genderAndAge,
                                 clothingColor = attrs.clothingDescription,
                                 pantsColor = "ボトムス",
-                                expression = expr,
-                                emotionalMeaning = "安心している様子",
-                                isLookingAtCamera = true
+                                expression = attrs.emotion.category,
+                                emotionalMeaning = attrs.emotion.emotionalVibe,
+                                isLookingAtCamera = attrs.emotion.gazeAndHeadPose.contains("こちらを見ています")
                             )
                         }
 
