@@ -1216,37 +1216,26 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playActionDone()
         speak("ロックを解除しています", TextToSpeech.QUEUE_FLUSH)
 
-        // 1. Accessibility Action 解除（画面内の通知シェードやロック解除アクションを直接発火）
-        performGlobalAction(AccessibilityService.GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+        // 1. Keyguard ルートノードの ACTION_DISMISS / ACTION_CLICK 探索
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         for (r in roots) {
-            val lockIcons = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")
-            for (icon in lockIcons) {
-                icon.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    icon.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                r.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
             }
         }
 
-        // 2. Google TalkBack準拠の確実な上スワイプジェスチャー（Y: 85% -> 12%, 280ms）
+        // 2. Google TalkBack準拠の確実な単一縦スワイプジェスチャー（中央下 82% -> 中央上 15%, 300ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val p1 = android.graphics.Path().apply {
-            moveTo(width * 0.35f, height * 0.85f)
-            lineTo(width * 0.35f, height * 0.12f)
+        val p = android.graphics.Path().apply {
+            moveTo(width * 0.50f, height * 0.82f)
+            lineTo(width * 0.50f, height * 0.15f)
         }
-        val p2 = android.graphics.Path().apply {
-            moveTo(width * 0.65f, height * 0.85f)
-            lineTo(width * 0.65f, height * 0.12f)
-        }
-        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 280)
-        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 280)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 300)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(stroke1)
-            .addStroke(stroke2)
+            .addStroke(stroke)
             .build()
 
         isInternalGestureDispatching = true
