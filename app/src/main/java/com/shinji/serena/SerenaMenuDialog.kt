@@ -87,7 +87,9 @@ class serenaMenuDialog(
 
             tvIcon.text = item.icon
             tvItemTitle.text = item.title
-            val accessibleText = item.title
+            tvIcon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            val cleanTitle = item.title.stripMenuEmojis()
+            val accessibleText = "${index + 1}番目、${cleanTitle}"
             itemView.contentDescription = accessibleText
             itemView.isFocusable = true
 
@@ -201,14 +203,20 @@ class serenaMenuDialog(
 
         val textToSpeak = if (index < items.size) {
             val item = items[index]
-            val pos = "${index + 1}番目、"
-            "${pos}${item.title}"
+            val cleanTitle = item.title.stripMenuEmojis()
+            "${index + 1}番目、${cleanTitle}"
         } else {
             "閉じる ボタン"
         }
 
         service.speak(textToSpeak, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
     }
+}
+
+fun String.stripMenuEmojis(): String {
+    return this.replace(Regex("[\\p{So}\\p{Cn}\\p{Cs}\\p{Extended_Pictographic}\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u26FF\u2700-\u27BF]"), "")
+        .replace(Regex("\\s+"), " ")
+        .trim()
 }
 
 

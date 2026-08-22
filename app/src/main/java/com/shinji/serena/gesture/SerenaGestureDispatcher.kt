@@ -46,19 +46,19 @@ class SerenaGestureDispatcher(
         when (gestureId) {
             // 1本指直線スワイプ
             AccessibilityService.GESTURE_SWIPE_RIGHT -> {
-                navigator?.navigateLinearFocus(forward = true)
+                service.navigateLinearFocus(forward = true)
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_LEFT -> {
-                navigator?.navigateLinearFocus(forward = false)
+                service.navigateLinearFocus(forward = false)
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP -> {
-                service.focusPrevious()
+                service.navigateLinearFocus(forward = false)
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_DOWN -> {
-                service.focusNext()
+                service.navigateLinearFocus(forward = true)
                 return true
             }
 

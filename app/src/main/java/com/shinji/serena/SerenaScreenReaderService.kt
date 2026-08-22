@@ -1724,12 +1724,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 showHelp()
             }
         )
-        val firstTitle = items.firstOrNull()?.title ?: ""
+        val totalCount = items.size
+        val firstTitle = items.firstOrNull()?.title?.replace(Regex("[\\p{So}\\p{Cn}\\p{Cs}\\p{Extended_Pictographic}\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u26FF\u2700-\u27BF]"), "")?.replace(Regex("\\s+"), " ")?.trim() ?: ""
         soundHelper?.playMenuOpen()
         
         // メニューオープン音とほぼ同時に超高速レスポンスでナレーション開始！
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            speak("serenaメニューが開きました。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
+            speak("セレナメニュー、全${totalCount}項目。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
         }, 40)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {
