@@ -1216,49 +1216,26 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playActionDone()
         speak("ロックを解除しています", TextToSpeech.QUEUE_FLUSH)
 
-        // 1. Keyguard ルートノードの ACTION_DISMISS / ACTION_CLICK 探索
-        val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
-        for (r in roots) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                r.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
-            }
+        // KeyguardDismissActivity を起動して OS の requestDismissKeyguard() を呼ぶ
+        // dispatchGesture() はセキュリティ制限でロック画面上では動作しないため、
+        // Activity 経由で OS に PIN バウンサーの表示を正式にリクエストする（TalkBack と同じパターン）
+        try {
+            val intent = android.content.Intent(this, KeyguardDismissActivity::class.java)
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                    android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start KeyguardDismissActivity", e)
         }
 
-        // 2. Google TalkBack準拠の確実な単一縦スワイプジェスチャー（中央下 82% -> 中央上 15%, 300ms）
-        val displayMetrics = resources.displayMetrics
-        val width = displayMetrics.widthPixels.toFloat()
-        val height = displayMetrics.heightPixels.toFloat()
-
-        val p = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.82f)
-            lineTo(width * 0.50f, height * 0.15f)
-        }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 300)
-        val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(stroke)
-            .build()
-
-        isInternalGestureDispatching = true
+        // バウンサー展開後のPINキー・入力欄への多段オートフォーカス
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-
-        val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
-            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
-                super.onCompleted(gestureDescription)
-                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 300)
-                autoFocusPinKeypadIfPresent()
-            }
-            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
-                super.onCancelled(gestureDescription)
-                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 300)
-            }
-        }, mainHandler)
-
-        // 3. バウンサー展開後のPINキー・入力欄への多段オートフォーカス
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 150)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 400)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 800)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 1300)
-        return dispatched
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 500)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 1000)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 1800)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 2500)
+        return true
     }
 
     private fun performPhysical2FingerScroll(forward: Boolean, horizontal: Boolean) {
@@ -3450,23 +3427,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun dismissKeyguardViaOs() {
-        soundHelper?.playFocusMove()
-        // 1. 通知シェードを閉じる
-        performGlobalAction(AccessibilityService.GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
-
-        // 2. 鍵アイコンやロック解除トリガーへのダイレクト解除命令
-        val root = rootInActiveWindow
-        if (root != null) {
-            val lockIcons = root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")
-            for (icon in lockIcons) {
-                icon.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    icon.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
-                }
-            }
-        }
-
-        // 3. 上スワイプで確実にPIN画面（bouncer）を表示
         unlockKeyguardOrShowBouncer()
     }
 
