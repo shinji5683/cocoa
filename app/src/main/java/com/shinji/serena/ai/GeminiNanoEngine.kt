@@ -121,7 +121,8 @@ class GeminiNanoEngine(private val context: Context) {
                 if (p.gazeAndPose.isNotEmpty()) {
                     sb.append("${p.gazeAndPose}。")
                 }
-                sb.append("表情は${p.expression}で、${p.emotionalMeaning}です。")
+                val vibeEnding = formatEndingWithDesu(p.emotionalMeaning)
+                sb.append("表情は${p.expression}で、${vibeEnding}。")
             } else {
                 sb.append("人物が${persons.size}人います。")
                 persons.take(3).forEachIndexed { idx, p ->
@@ -130,7 +131,8 @@ class GeminiNanoEngine(private val context: Context) {
                     val distDesc = if (p.distanceMeters.isNotEmpty()) "（${p.distanceMeters}）" else ""
                     val clothesDesc = if (p.clothingColor.isNotEmpty() && p.clothingColor != "服") "${p.clothingColor}で、" else ""
                     val gazePart = if (p.gazeAndPose.isNotEmpty()) "${p.gazeAndPose}、" else ""
-                    sb.append("${numStr}${p.position}${distDesc}の${personNoun}、${clothesDesc}${gazePart}表情は${p.expression}（${p.emotionalMeaning}）。")
+                    val vibePart = p.emotionalMeaning.trimEnd('。')
+                    sb.append("${numStr}${p.position}${distDesc}の${personNoun}、${clothesDesc}${gazePart}表情は${p.expression}（${vibePart}）。")
                 }
             }
         } else {
@@ -307,5 +309,14 @@ class GeminiNanoEngine(private val context: Context) {
             }
         }
         return predictions
+    }
+
+    private fun formatEndingWithDesu(text: String): String {
+        val clean = text.trim().trimEnd('。', '！', '!')
+        return when {
+            clean.endsWith("です") || clean.endsWith("ます") || clean.endsWith("でした") || clean.endsWith("ました") -> clean
+            clean.endsWith("だ") -> clean.dropLast(1) + "です"
+            else -> "${clean}です"
+        }
     }
 }

@@ -115,16 +115,6 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             tts?.language = Locale.JAPANESE
             tts?.setSpeechRate(1.05f)
             isTtsReady = true
-            val initialPrompt = when (mode) {
-                "INDOOR" -> "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
-                "FOOD_EXPIRATION" -> "食品と賞味期限スキャナーを起動しました。食品パッケージや賞味期限の印字をゆっくり映してください。"
-                "WALK_TRANSIT" -> "歩行・信号および点字ブロックナビを起動しました。正面の道路や信号機を映してください。"
-                "BARCODE_DOC" -> "バーコードおよび書類スキャナーを起動しました。商品バーコードやレシート、請求書を映してください。"
-                "OCR" -> "文字読み取りカメラを起動しました。"
-                "FACE" -> "表情・人物認識カメラを起動しました。"
-                else -> "リアルタイムカメラ実況を起動しました。周囲をゆっくり映してください。"
-            }
-            speak(initialPrompt)
         }
     }
 
@@ -132,11 +122,11 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (text.isEmpty()) return
         Log.i(TAG, "LiveVision speak: $text")
 
-        // 1. AccessibilityService TTS
-        SerenaScreenReaderService.instance?.speak(text, queueMode)
-
-        // 2. Activity 専用直接 TTS フォールバック
-        if (isTtsReady && tts != null) {
+        // サービス稼働中はサービス側TTSで1本化、非稼働時のみActivityローカルTTSで発声（2重発声を完全防止）
+        val service = SerenaScreenReaderService.instance
+        if (service != null) {
+            service.speak(text, queueMode)
+        } else if (isTtsReady && tts != null) {
             tts?.speak(text, queueMode, null, "live_vision_${System.currentTimeMillis()}")
         }
     }
@@ -529,7 +519,8 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 } else if (persons.isNotEmpty()) {
                                     val p = persons[0]
                                     val clothesPart = if (p.clothingColor.isNotEmpty() && p.clothingColor != "服") "${p.clothingColor}を着た" else ""
-                                    "${p.position}（${p.distanceMeters}）に、${clothesPart}${p.genderAndAge}が1人います。${p.gazeAndPose}。表情は${p.expression}で、${p.emotionalMeaning}です。"
+                                    val vibePart = if (p.emotionalMeaning.endsWith("です") || p.emotionalMeaning.endsWith("ます")) p.emotionalMeaning else "${p.emotionalMeaning}です"
+                                    "${p.position}（${p.distanceMeters}）に、${clothesPart}${p.genderAndAge}が1人います。${p.gazeAndPose}。表情は${p.expression}で、${vibePart}。"
                                 } else if (recognizedTexts.isNotEmpty()) {
                                     "文字を検出: ${recognizedTexts.take(2).joinToString("、")}"
                                 } else {
