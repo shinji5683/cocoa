@@ -1132,6 +1132,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun unlockKeyguardOrShowBouncer(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastUnlockTime < 1000L) return false
+        lastUnlockTime = now
+
         soundHelper?.playFocusMove()
 
         // 1. Accessibility Action 解除（画面内の通知シェードやロック解除アクションを直接発火）
@@ -1167,18 +1171,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             .addStroke(stroke2)
             .build()
 
+        isInternalGestureDispatching = true
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
         val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
+                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 400)
             }
-        }, null)
+            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCancelled(gestureDescription)
+                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 400)
+            }
+        }, mainHandler)
 
         // 3. バウンサー展開後のPINキー「1」即時オートフォーカス（多段ポーリング）
-        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 100)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 250)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 500)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 800)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 150)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 350)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 650)
         return dispatched
     }
 
