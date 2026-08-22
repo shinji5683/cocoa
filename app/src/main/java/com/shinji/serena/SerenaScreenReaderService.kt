@@ -727,12 +727,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun executeActiveCustomAction(): Boolean {
         val node = getAccessibilityFocusedNode() ?: return false
-        val customActions = node.actionList.filter { 
-            it.id != AccessibilityNodeInfo.ACTION_CLICK && 
-            it.id != AccessibilityNodeInfo.ACTION_FOCUS && 
-            it.id != AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS &&
-            !it.label.isNullOrEmpty()
-        }
+        val isLockscreen = isKeyguardLocked()
+        val customActions = getAvailableCustomActions(node)
 
         // 0 は「デフォルト（通常のアクティベート / クリック）」
         if (selectedCustomActionIndex <= 0) {
@@ -742,15 +738,42 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val actionIdx = selectedCustomActionIndex - 1
         if (actionIdx in customActions.indices) {
-            val action = customActions[actionIdx]
-            val success = node.performAction(action.id)
+            val actionItem = customActions[actionIdx]
+            if (actionItem.isKeyguardUnlock) {
+                return unlockKeyguardOrShowBouncer()
+            }
+            val success = node.performAction(actionItem.action.id)
             if (success) {
                 soundHelper?.playActionDone()
-                speak("${action.label} を実行しました", TextToSpeech.QUEUE_FLUSH)
+                speak("${actionItem.action.label} を実行しました", TextToSpeech.QUEUE_FLUSH)
                 return true
             }
         }
         return false
+    }
+
+    data class SerenaCustomAction(val action: AccessibilityNodeInfo.AccessibilityAction, val isKeyguardUnlock: Boolean = false)
+
+    private fun getAvailableCustomActions(node: AccessibilityNodeInfo): List<SerenaCustomAction> {
+        val list = mutableListOf<SerenaCustomAction>()
+        if (isKeyguardLocked()) {
+            val unlockAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                AccessibilityNodeInfo.AccessibilityAction(0x7F0A0001, "画面ロック解除")
+            } else null
+            if (unlockAction != null) {
+                list.add(SerenaCustomAction(unlockAction, isKeyguardUnlock = true))
+            }
+        }
+        val nodeActions = node.actionList.filter { 
+            it.id != AccessibilityNodeInfo.ACTION_CLICK && 
+            it.id != AccessibilityNodeInfo.ACTION_FOCUS && 
+            it.id != AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS &&
+            !it.label.isNullOrEmpty()
+        }
+        for (a in nodeActions) {
+            list.add(SerenaCustomAction(a, isKeyguardUnlock = false))
+        }
+        return list
     }
     private var selectedCustomActionIndex = 0
     private var charOffsetInFocusedNode = -1
@@ -1416,12 +1439,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             speak("フォーカスされている項目がありません", TextToSpeech.QUEUE_FLUSH)
             return
         }
-        val customActions = node.actionList.filter { 
-            it.id != AccessibilityNodeInfo.ACTION_CLICK && 
-            it.id != AccessibilityNodeInfo.ACTION_FOCUS && 
-            it.id != AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS &&
-            !it.label.isNullOrEmpty()
-        }
+        val customActions = getAvailableCustomActions(node)
         val totalCount = 1 + customActions.size
         if (totalCount <= 1) {
             selectedCustomActionIndex = 0
@@ -1437,8 +1455,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (selectedCustomActionIndex == 0) {
             speak("デフォルト。ダブルタップで有効化します", TextToSpeech.QUEUE_FLUSH)
         } else {
-            val action = customActions[selectedCustomActionIndex - 1]
-            speak("アクション: ${action.label}。実行するにはダブルタップします", TextToSpeech.QUEUE_FLUSH)
+            val actionItem = customActions[selectedCustomActionIndex - 1]
+            speak("アクション: ${actionItem.action.label}。実行するにはダブルタップします", TextToSpeech.QUEUE_FLUSH)
         }
     }
 
