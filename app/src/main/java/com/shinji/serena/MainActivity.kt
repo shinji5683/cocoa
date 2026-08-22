@@ -593,7 +593,56 @@ class MainActivity : AppCompatActivity() {
         val telemetry = AlphaTelemetryHelper.getInstance(this)
         if (!telemetry.isConsentAsked()) {
             showTelemetryConsentDialog()
+        } else {
+            checkAiEthicsConsentOnStart()
         }
+    }
+
+    private fun checkAiEthicsConsentOnStart() {
+        val hasConsented = prefs.getBoolean(KEY_AI_ETHICS_CONSENT, false)
+        if (!hasConsented) {
+            showAiEthicsConsentDialog()
+        }
+    }
+
+    private fun showAiEthicsConsentDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("🤖 Google 責任あるAI倫理ガイドライン及びAI機能の同意")
+            .setMessage(
+                "Serena Screen Reader は、オンデバイスAI（Gemini Nano）や機械学習を活用した空間案内・情景認識・表情認識・OCR・スマート要約機能を提供します。\n\n" +
+                "【1. Google 責任あるAI倫理原則の遵守】\n" +
+                "本アプリのAI機能は、Google の責任あるAI倫理原則 (Responsible AI Principles: https://ai.google/responsibility/principles/) に基づいて設計されています。\n\n" +
+                "【2. AI推論の特性と安全に関する免責事項】\n" +
+                "・表情認識、人物認識、物体認識、距離・位置推定などのAI機能は推論による補助情報であり、環境（暗所、逆光、カメラ角度、電波状態等）により誤認識や誤差が生じる場合があります。\n" +
+                "・横断歩道、階段、駅のホーム、道路など安全が最優先される場面では、必ず白杖や周囲の音、身体感覚による安全確認を併用してください。\n\n" +
+                "【3. 完全オンデバイス・プライバシー保護】\n" +
+                "AI画像解析や音声認識はすべて端末内（オンデバイス）で完結し、カメラ映像や個人データが外部サーバーに送信・収集されることはありません。\n\n" +
+                "上記ガイドラインおよび利用規約に同意して利用を開始しますか？"
+            )
+            .setPositiveButton("同意して利用する") { dialog, _ ->
+                prefs.edit().putBoolean(KEY_AI_ETHICS_CONSENT, true).apply()
+                Toast.makeText(this, "AI倫理ガイドライン及び免責事項に同意しました", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNeutralButton("Google AI倫理原則を確認") { _, _ ->
+                try {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ai.google/responsibility/principles/"))
+                    startActivity(browserIntent)
+                } catch (_: Exception) {
+                    Toast.makeText(this, "ブラウザを開けませんでした", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("同意しない") { dialog, _ ->
+                prefs.edit().putBoolean(KEY_AI_ETHICS_CONSENT, false).apply()
+                Toast.makeText(this, "AI支援機能の精度と安全確認に十分ご注意ください", Toast.LENGTH_LONG).show()
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    companion object {
+        const val KEY_AI_ETHICS_CONSENT = "key_ai_ethics_consent_agreed"
     }
 
     private fun showTelemetryConsentDialog() {

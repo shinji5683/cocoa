@@ -1,36 +1,55 @@
 # Serena Screen Reader (セレナ スクリーンリーダー) 🌸✨
 
 > **次世代の超高速・高知能・完全アクセシブルな Android スクリーンリーダー**  
-> 全盲のエンジニアと AI がゼロから共同設計した、真に寄り添うアクセシビリティ体験。
+> 全盲のエンジニア（Shinji）と AI がゼロから共同設計した、真に寄り添う最先端アクセシビリティ体験。
 
 [![Android CI](https://img.shields.io/badge/Android-11%2B%20(API%2030%2B%20~%20API%2036%2B)-brightgreen.svg)](https://developer.android.com)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Responsible AI](https://img.shields.io/badge/Google-Responsible%20AI%20Principles-orange.svg)](https://ai.google/responsibility/principles/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-purple.svg)](https://kotlinlang.org)
+[![Page Alignment](https://img.shields.io/badge/16KB%20Page%20Alignment-0x4000%20Verified-success.svg)](https://developer.android.com/guide/practices/page-sizes)
 
 ---
 
-## 🌟 Serena（セレナ）の特長
+## 🌟 Serena（セレナ）の特長・主要機能
 
-1. **⚡ 超高速リニア＆セマンティクスナビゲーション**
-   - Jetpack Compose、Android 14/15/16/17 (Canary / QPR) の動的 UI をリアルタイム解析。
-   - 画面端での「全自動オートスクロール」と「シームレスなフォーカス引き渡し」を完備。
-   - スクロール後に画面端へワープする Home/End バグを完全根絶し、画面中央の自然な可視領域を追従。
+### 1. ⚡ 超高速リニア＆セマンティクスナビゲーション
+- Jetpack Compose、Android 14/15/16/17 (Canary / QPR Beta / Stable) の動的 UI をリアルタイム解析。
+- 画面端での「全自動オートスクロール」と「シームレスなフォーカス引き渡し」を完備。
+- スクロール後に画面端へワープする問題を完全根絶し、画面中央の自然な可視領域を追従。
 
-2. **🖐️ TalkBack 100% 準拠＋拡張マルチフィンガージェスチャー**
-   - 1本指・2本指・3本指のマルチタッチジェスチャーを完全サポート。
-   - Pixel Launcher や各社ホームアプリの `snapToPage`（ページめくり）に完全適合。
-   - ロック画面（Keyguard Bouncer）での 2本指上スワイプによる即時 PIN キーパッド探索＆フォーカス。
+### 2. 🔤 点字ディスプレイ＆完全双方向点訳・墨訳エンジン (Braille Display Support)
+- **Bluetooth SPP / USB 通信**: Focus 40 Blue、Orbit Reader、BrailleSense、ブレイルメモ (BMsmart)、Seika等の主要点字ディスプレイと自動接続＆双方向通信。
+- **JBLC準拠 6点点字トランスレーター**: 墨字から点字への「点訳」および点字から日本語テキストへの「墨訳」を完全サポート。
+- **Perkins式オンスクリーン6点点字入力**: リアルタイムUnicode点字プレビュー＆墨訳候補表示付きで画面上から快適タイピング。
+- **点字キーナビゲーション**: パンキー、ジョイスティック、ルーティングキーによるフォーカス移動・実行・スクロール・戻る・ホームの直感操作。
 
-3. **👁️ リアルタイム実況 AI カメラ＆音声アシスタント**
-   - 👈 **3本指左スワイプ**: Serena AI 音声アシスタント即時起動。
-   - 👉 **3本指右スワイプ**: リアルタイム実況 AI カメラ（周囲の物体・文字・情景をリアルタイムに音声実況）即時起動。
+### 3. 💌 通知 vs 着信の完全識別＆スマート読み上げ (Smart Notifications & Calls)
+- **通話着信の最優先アナウンス**: 電話（ダイヤラー）、LINE通話、Discord、Teams、Zoom、WhatsAppなどの着信を即座に識別し、「【着信】LINE着信、〇〇さんから」と発信者を最優先アナウンス。
+- **スマート通知解析**: アプリ名（YouTube、Gmail、LINE、X、メルカリ等）、送信者名、メッセージ本文を高精度に抽出。
+- **5段階の読み上げ切り替え**:
+  1. すべて読み上げ（アプリ名・送信者・内容）
+  2. 送信者まで（内容非表示・プライバシー保護）
+  3. アプリ名のみ
+  4. 着信のみ読み上げ（通知はミュート）
+  5. すべてミュート
 
-4. **🛡️ 堅牢な Direct Boot ＆ 保護ストレージ連動**
-   - `android:directBootAware="true"` により、端末起動直後の初回アンロック前（Direct Boot モード）から完璧に音声ガイダンスが動作。
+### 4. 🖐️ TalkBack 100% 準拠＋拡張マルチフィンガージェスチャー
+- 1本指・2本指・3本指のマルチタッチジェスチャーを完全サポート。
+- Pixel Launcher や各社ホームアプリの `snapToPage`（ページめくり）に完全適合。
+- ロック画面（Keyguard Bouncer）でのTalkBack標準スワイプによる即時 PIN キーパッド探索＆フォーカス。
 
-5. **🔤 高精度フォネティック漢字詳細読みエンジン**
-   - 1文字ごとの漢字詳細読み（例：「新」＝「新聞のシン」、「治」＝「明治のジ」）を内蔵辞書で瞬時に解説。
+### 5. 👁️ リアルタイム実況 AI カメラ＆音声アシスタント
+- 👈 **3本指左スワイプ**: Serena AI 音声アシスタント即時起動。
+- 👉 **3本指右スワイプ**: リアルタイム実況 AI カメラ（周囲の物体・文字・情景をリアルタイムに音声実況）即時起動。
+- **Gemini Nano On-Device AI**: AICore連携による完全ローカル・プライバシー保護の超高速推論。
+
+### 6. 🧭 3D空間オーディオ＆コンパス案内
+- 端末の向きと方角（東西南北）に連動した左右ステレオ空間音響による直感的な方向ガイド。
+- 時計盤表現（クロックポジション）を排し、「正面」「右斜め前」「左」など身体感覚に忠実な空間案内を提供。
+
+### 7. 🛡️ 堅牢な Direct Boot ＆ 保護ストレージ連動
+- `android:directBootAware="true"` により、端末起動直後の初回アンロック前（Direct Boot モード）から完璧に音声ガイダンスが動作。
 
 ---
 
@@ -55,70 +74,34 @@
 
 ---
 
-## 🛠️ ビルド手順 (Build & Installation)
+## 🤖 責任あるAI倫理ガイドライン及び免責事項 (Responsible AI Principles)
 
-### 前提条件 (Prerequisites)
-- **OS**: Windows / macOS / Linux
-- **JDK**: Java 17 以上
-- **Android SDK**: API 34 (Android 14) または API 35 (Android 15)
-- **ADB**: Android Debug Bridge が利用可能であること
+Serena Screen Reader は、Google の「責任あるAIの推進に関する原則（Responsible AI Principles）」を尊重し、倫理的かつ安全にAI機能を設計・提供しています。
 
-### 1. リポジトリのクローン
-```bash
-git clone https://github.com/shinji5683/cocoa.git
-cd cocoa
-```
+- **Google Responsible AI Principles**: [https://ai.google/responsibility/principles/](https://ai.google/responsibility/principles/)
+- **プライバシー保護**: 画像認識、音声認識、スマート要約等のAI処理はすべて端末内（オンデバイス / Gemini Nano / ML Kit）で完結し、ユーザーデータが外部サーバーへ送信されることはありません。
+- **免責事項**: 表情認識・人物認識・物体検出・距離計測・OCR等のAI支援機能は推論による補助情報です。天候、照明、カメラアングル、通信状態等により誤認識が生じる場合があります。歩行、階段、駅ホーム、道路横断などの安全確認においては、必ず白杖や周囲の音、身体感覚による確認を併用してください。
 
-### 2. ユニットテストの実行
-```bash
-# Windows
-.\gradlew.bat testDebugUnitTest
+---
 
-# macOS / Linux
-./gradlew testDebugUnitTest
-```
+## 🛠️ フルビルド＆デプロイ手順 (Build & Deployment)
 
-### 3. デバッグ APK のビルド
-```bash
-# Windows
-.\gradlew.bat assembleDebug
-
-# macOS / Linux
-./gradlew assembleDebug
-```
-ビルドされた APK は `app/build/outputs/apk/debug/app-debug.apk` に生成されます。
-
-### 4. 実機へのインストール＆アクセシビリティ自動有効化 (PowerShell)
 ```powershell
-# 自動ビルド・インストール・サービス有効化スクリプト
+# 1. 16KBアライメント＆全ターゲット（Release APK / Debug APK / Play Store AAB）の一括フルビルド
 .\build_apk.ps1
-```
-手動でインストールおよび有効化する場合:
-```bash
-# APK のインストール
-adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-# Serena スクリーンリーダー サービスの自動有効化
+# 2. 実機へのワイヤレスADB自動インストール＆アクセシビリティ自動有効化
+adb connect <デバイスIP>:<ポート>
+adb install -r "C:\Users\shinj\Desktop\serena\app-serena-release.apk"
 adb shell settings put secure enabled_accessibility_services com.shinji.serena/.SerenaScreenReaderService
 adb shell settings put secure accessibility_enabled 1
-
-# メイン設定画面の起動
-adb shell am start -n com.shinji.serena/.MainActivity
 ```
 
 ---
 
-## 🤝 謝辞＆ライセンス帰属 (Acknowledgements & Attributions)
+## 📜 ライセンス (License)
 
-- **あやめキーボード (Ayame Keyboard / IME)**:
-  - 本スクリーンリーダーの漢字詳細読み（フォネティック読み）および IME 連携アーキテクチャは、視覚障害者向け高機能日本語入力アプリ「あやめキーボード」の思想およびオープンソース資産（MIT License）を尊重・準拠して開発されています。
-  - 心より感謝申し上げます！🌸✨
+Copyright (c) 2026 Shinji (shinji5683)
 
----
-
-## 📄 ライセンス (License)
-
-本プロジェクトは **Apache License 2.0** および **MIT License** のデュアルライセンス（互換ライセンス）のもとで公開されています。  
-詳細は [LICENSE](LICENSE) ファイルをご確認ください。
-
-Copyright (c) 2026 Shinji ([@shinji5683](https://github.com/shinji5683))
+本プロジェクトは **[Apache License, Version 2.0](LICENSE)** の下で公開されています。
+Google Android / AOSP (TalkBack) エコシステムと完全な互換性を持ち、特許保護条項を含みます。
