@@ -82,11 +82,14 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
 
-    // Google Play Services & ML Kit on-device Vision (Japanese OCR, Face & Object Detection, Barcode)
+    // Google Play Services & ML Kit on-device Vision (Japanese OCR, Face & Object Detection, Barcode, Image Labeling, Translate)
     implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
     implementation("com.google.android.gms:play-services-mlkit-face-detection:17.1.0")
     implementation("com.google.mlkit:object-detection:17.0.2")
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("com.google.mlkit:image-labeling:17.0.9")
+    implementation("com.google.mlkit:translate:17.0.3")
+    implementation("com.google.mlkit:language-id:17.0.6")
 
     // CameraX for Live Vision and Camera Capture
     implementation("androidx.camera:camera-core:1.3.4")

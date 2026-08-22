@@ -263,6 +263,14 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     .addOnSuccessListener { faces ->
                         if (faces.isNotEmpty()) {
                             val face = faces[0]
+                            val centerXRatio = face.boundingBox.centerX().toFloat() / imgWidth
+                            val dirStr = when {
+                                centerXRatio < 0.25f -> "左"
+                                centerXRatio in 0.25f..0.40f -> "左斜め前"
+                                centerXRatio in 0.40f..0.60f -> "正面"
+                                centerXRatio in 0.60f..0.75f -> "右斜め前"
+                                else -> "右"
+                            }
                             val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
                                 face = face,
                                 imageWidth = imgWidth,
@@ -270,7 +278,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 mediaImage = mediaImage,
                                 bitmap = null
                             )
-                            val desc = "正面${attrs.estimatedDistanceMeters}に、${attrs.clothingDescription}を着た${attrs.genderAndAge}がいます。${attrs.emotion.fullDescription}"
+                            val desc = "${dirStr} ${attrs.estimatedDistanceMeters}に、${attrs.clothingDescription}を着た${attrs.genderAndAge}がいます。${attrs.emotion.fullDescription}"
                             if (desc != lastSpokenText || currentTime - lastSpokenTime > 4000) {
                                 lastSpokenText = desc
                                 lastSpokenTime = currentTime

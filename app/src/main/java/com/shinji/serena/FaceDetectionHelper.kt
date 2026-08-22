@@ -2,9 +2,17 @@ package com.shinji.serena
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.util.Log
 import com.shinji.serena.ai.GeminiNanoEngine
 
+/**
+ * FaceDetectionHelper
+ *
+ * ML Kit Face Detection と Gemini Nano を活用し、
+ * カメラに映る人物の位置、推定距離、人数、表情（満面の笑顔、真剣、驚き、ウインク等）、
+ * 雰囲気を高精度にリアルタイム実況するヘルパー。
+ */
 class FaceDetectionHelper(private val context: Context) {
 
     companion object {
@@ -30,7 +38,10 @@ class FaceDetectionHelper(private val context: Context) {
         smileProbability: Float?,
         leftEyeOpenProb: Float?,
         rightEyeOpenProb: Float?,
-        centerXRatio: Float
+        centerXRatio: Float,
+        faceBoundingBox: Rect? = null,
+        previewWidth: Int = 1080,
+        previewHeight: Int = 1920
     ): String {
         if (faceCount <= 0) {
             return "人物は見当たりません。"
@@ -40,14 +51,32 @@ class FaceDetectionHelper(private val context: Context) {
         val leftEye = leftEyeOpenProb ?: 0.5f
         val rightEye = rightEyeOpenProb ?: 0.5f
 
-        val positionStr = when {
-            centerXRatio < 0.35f -> "左側"
-            centerXRatio > 0.65f -> "右側"
-            else -> "正面"
+        // 相対方向の判定 (時計盤表現は完全禁止、規約に準拠)
+        val directionStr = when {
+            centerXRatio < 0.25f -> "左"
+            centerXRatio in 0.25f..0.40f -> "左斜め前"
+            centerXRatio in 0.40f..0.60f -> "正面"
+            centerXRatio in 0.60f..0.75f -> "右斜め前"
+            else -> "右"
         }
 
+        // 推定距離の計算 (顔の枠の高さ・面積比から算出)
+        val distanceStr = if (faceBoundingBox != null && previewHeight > 0) {
+            val faceHeightRatio = faceBoundingBox.height().toFloat() / previewHeight
+            when {
+                faceHeightRatio > 0.45f -> "約50cmの至近距離"
+                faceHeightRatio in 0.30f..0.45f -> "約80cm〜1mの距離"
+                faceHeightRatio in 0.18f..0.30f -> "約1.5m〜2mの距離"
+                faceHeightRatio in 0.10f..0.18f -> "約2.5m〜3mの距離"
+                else -> "3m以上先"
+            }
+        } else {
+            ""
+        }
+
+        // 表情と雰囲気の判定
         val (expressionStr, vibeStr) = when {
-            smile >= 0.80f -> Pair("パッと明るい満面の笑み", "とても嬉しそうにしています")
+            smile >= 0.80f -> Pair("パッと明るい満面の笑顔", "とても嬉しそうにしています")
             smile in 0.50f..0.80f -> Pair("ニッコリ笑顔", "親しみやすく明るい雰囲気です")
             smile in 0.20f..0.50f -> Pair("優しい微笑み（ほほえみ）", "穏やかで安心している様子です")
             smile in 0.07f..0.20f -> Pair("穏やかでリラックスした表情", "落ち着いた雰囲気です")
@@ -66,11 +95,16 @@ class FaceDetectionHelper(private val context: Context) {
             else -> ""
         }
 
-        val details = listOf(
-            "${positionStr}に人が${faceCount}人います",
-            "表情は${expressionStr}で、${vibeStr}",
-            eyesStr
-        ).filter { it.isNotEmpty() }
+        val details = mutableListOf<String>()
+        if (distanceStr.isNotEmpty()) {
+            details.add("${directionStr} ${distanceStr}に人が${faceCount}人います")
+        } else {
+            details.add("${directionStr}に人が${faceCount}人います")
+        }
+        details.add("表情は${expressionStr}で、${vibeStr}")
+        if (eyesStr.isNotEmpty()) {
+            details.add(eyesStr)
+        }
 
         return details.joinToString("。") + "。"
     }

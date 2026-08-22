@@ -99,6 +99,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var aiAutoLabelHelper: AiAutoLabelHelper? = null
     var morningSummaryHelper: MorningSummaryHelper? = null
     var brailleController: com.shinji.serena.braille.BrailleDisplayController? = null
+    var instantTranslationHelper: com.shinji.serena.translation.InstantTranslationHelper? = null
+    var soundRecognitionHelper: com.shinji.serena.sound.SoundRecognitionHapticsHelper? = null
+    var visualAudioDescriptionHelper: com.shinji.serena.ai.VisualAudioDescriptionHelper? = null
 
     // 通話時間計測用
     var isCallActive = false
@@ -135,6 +138,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} }
             aiAutoLabelHelper = AiAutoLabelHelper(safeContext)
             morningSummaryHelper = MorningSummaryHelper(this)
+            instantTranslationHelper = com.shinji.serena.translation.InstantTranslationHelper(safeContext)
+            soundRecognitionHelper = com.shinji.serena.sound.SoundRecognitionHapticsHelper(safeContext).apply { try { start() } catch (_: Exception) {} }
+            visualAudioDescriptionHelper = com.shinji.serena.ai.VisualAudioDescriptionHelper(safeContext)
 
             // 点字ディスプレイ（Braille Display）コントローラー初期化
             brailleController = com.shinji.serena.braille.BrailleDisplayController(this, object : com.shinji.serena.braille.BrailleDisplayController.BrailleInteractionListener {
@@ -1801,6 +1807,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("💌", "通知・着信読み上げ設定 (現在: ${notificationFilterHelper?.detailLevel?.displayName ?: "すべて読み上げ"})") {
                 cycleNotificationFilterMode()
             },
+            serenaMenuItem("🌐", "外国語リアルタイム翻訳読み上げ (現在: ${instantTranslationHelper?.mode?.displayName ?: "原文＋日本語訳"})") {
+                val next = instantTranslationHelper?.cycleMode() ?: com.shinji.serena.translation.TranslationMode.ORIGINAL_THEN_TRANSLATION
+                soundHelper?.playActionDone()
+                speak("翻訳読み上げモードを ${next.displayName} に変更しました", TextToSpeech.QUEUE_FLUSH)
+            },
+            serenaMenuItem("📳", "環境音・危険音ハプティクス警告 (現在: ${if (soundRecognitionHelper?.isEnabled == true) "ON" else "OFF"})") {
+                val enabled = soundRecognitionHelper?.toggleEnabled() ?: true
+                soundHelper?.playActionDone()
+                val stateStr = if (enabled) "有効（踏切・サイレン・呼びかけを振動通知）" else "無効"
+                speak("環境音ハプティクス警告を $stateStr に変更しました", TextToSpeech.QUEUE_FLUSH)
+            },
             serenaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
                 cycleChimeStyle()
             },
@@ -3100,6 +3117,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playFocusMovePanned(normalizedX)
         speak(announcement, TextToSpeech.QUEUE_FLUSH)
 
+        // 外国語テキストのリアルタイム日本語翻訳読み上げ（原文の直後にキュー追加）
+        try {
+            instantTranslationHelper?.processTranslationIfNeeded(announcement) { translatedMsg ->
+                speak(translatedMsg, TextToSpeech.QUEUE_ADD)
+                brailleController?.displayAnnouncement(translatedMsg)
+            }
+        } catch (_: Exception) {}
+
         // 点字ディスプレイ（Braille Display）へリアルタイム出力
         try {
             brailleController?.displayNodeInfo(announcement)
@@ -3112,7 +3137,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val state = getNodeState(node)
         val pkg = node.packageName?.toString() ?: ""
 
-        // あやめキーボード (jp.yama3nomori.ayame) または IME候補バーの漢字詳細読み上げ拡張
+        // 1. テキストが空または画像・アイコンの場合、ビジュアル・オーディオ・ディスクリプション（AI情景解説）を生成
+        if (text.isEmpty() || node.className?.toString()?.contains("ImageView", ignoreCase = true) == true || role == "ボタン") {
+            val visualDesc = visualAudioDescriptionHelper?.generateDescriptionForNode(node) ?: ""
+            if (visualDesc.isNotEmpty()) {
+                text = if (text.isEmpty()) visualDesc else "$visualDesc ($text)"
+            }
+        }
+
+        // 2. あやめキーボード (jp.yama3nomori.ayame) または IME候補バーの漢字詳細読み上げ拡張
         if (pkg.contains("ayame", ignoreCase = true) || pkg.contains("markdownhelperkeyboard", ignoreCase = true)) {
             if (text.isNotEmpty() && text.length in 1..4) {
                 val detail = com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.getKanjiDetail(text)
@@ -3698,6 +3731,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         wifiConnectivityHelper = null
         batteryHelper?.stop()
         batteryHelper = null
+        soundRecognitionHelper?.stop()
+        soundRecognitionHelper = null
+        instantTranslationHelper?.close()
+        instantTranslationHelper = null
+        visualAudioDescriptionHelper = null
         brailleController?.disconnect()
         brailleController = null
         shakeDetectorHelper?.stop()
