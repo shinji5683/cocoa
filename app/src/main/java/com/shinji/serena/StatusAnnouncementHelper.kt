@@ -107,6 +107,10 @@ class StatusAnnouncementHelper(private val context: Context) {
         val carrierStr = getCarrierText()
         if (carrierStr.isNotEmpty()) parts.add(carrierStr)
 
+        // 6. OSバージョン ＆ お菓子コードネーム
+        val osStr = getOsVersionAndCodenameText()
+        if (osStr.isNotEmpty()) parts.add(osStr)
+
         val baseStatus = parts.joinToString("、")
 
         if (callback != null) {
@@ -239,6 +243,36 @@ class StatusAnnouncementHelper(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Carrier info error: ${e.message}")
             ""
+        }
+    }
+
+    /**
+     * OSバージョン ＆ お菓子コードネーム (Cinnamon Bun / Baklava / Vanilla Ice Cream等) を取得
+     */
+    fun getOsVersionAndCodenameText(): String {
+        val release = Build.VERSION.RELEASE ?: ""
+        val sdk = Build.VERSION.SDK_INT
+        val model = Build.MODEL ?: ""
+
+        val codename = when {
+            sdk >= 10000 -> "Android 17 (Cinnamon Bun シナモン・バン / Canary プレビュー API 10000)"
+            release.startsWith("17") -> "Android 17 (Cinnamon Bun シナモン・バン)"
+            sdk == 36 || release.startsWith("16") -> "Android 16 (Baklava バクラヴァ)"
+            sdk == 35 || release.startsWith("15") -> "Android 15 (Vanilla Ice Cream バニラアイスクリーム)"
+            sdk == 34 || release.startsWith("14") -> "Android 14 (Upside Down Cake アップサイドダウンケーキ)"
+            sdk == 33 || release.startsWith("13") -> "Android 13 (Tiramisu ティラミス)"
+            sdk in 31..32 || release.startsWith("12") -> "Android 12 (Snow Cone スノーコーン)"
+            sdk == 30 || release.startsWith("11") -> "Android 11 (Red Velvet Cake レッドベルベットケーキ)"
+            sdk == 29 || release.startsWith("10") -> "Android 10 (Quince Tart クインスタート)"
+            sdk == 28 || release.startsWith("9") -> "Android 9 (Pie パイ)"
+            sdk in 26..27 || release.startsWith("8") -> "Android 8 (Oreo オレオ)"
+            else -> "Android $release"
+        }
+
+        return if (model.isNotEmpty()) {
+            "OS: $codename (${model})"
+        } else {
+            "OS: $codename"
         }
     }
 }
