@@ -169,8 +169,7 @@ class SerenaGestureDispatcher(
             }
             AccessibilityService.GESTURE_2_FINGER_DOUBLE_TAP -> {
                 // 2本指ダブルタップ: 通話の応答・切断 / メディアの再生・一時停止
-                if (callMgr?.handleAnswerCallGesture() == true ||
-                    callMgr?.handleEndCallGesture() == true) {
+                if (callMgr?.handleSmartCallGesture() == true) {
                     return true
                 }
                 service.handleMagicTapAction()

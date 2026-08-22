@@ -269,7 +269,7 @@ class SerenaCallManager(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && telecomManager != null) {
                 if (isCallActive || audioManager?.mode == AudioManager.MODE_IN_CALL) {
                     if (telecomManager.endCall()) {
-                        service.speak("通話を終了します", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+                        service.speak("通話を終了しました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
                         return true
                     }
                 }
@@ -292,7 +292,7 @@ class SerenaCallManager(
                 }
             }
 
-            service.speak("通話を終了します", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            service.speak("通話を終了しました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return true
         }
 

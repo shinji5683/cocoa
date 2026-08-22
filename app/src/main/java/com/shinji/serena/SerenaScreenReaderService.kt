@@ -3239,19 +3239,30 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val isRinging = audioManager?.mode == AudioManager.MODE_RINGTONE
 
         if (isRinging) {
-            speak("電話に応答します", TextToSpeech.QUEUE_FLUSH)
+            soundHelper?.playActionDone()
+            speak("通話に応答しました", TextToSpeech.QUEUE_FLUSH)
             simulateMediaKey(KeyEvent.KEYCODE_HEADSETHOOK)
             return
         }
 
         if (isCallActive || audioManager?.mode == AudioManager.MODE_IN_CALL || audioManager?.mode == AudioManager.MODE_IN_COMMUNICATION) {
-            speak("通話を終了します", TextToSpeech.QUEUE_FLUSH)
+            soundHelper?.playActionDone()
+            speak("通話を終了しました", TextToSpeech.QUEUE_FLUSH)
             endCallDirectly()
             return
         }
 
-        speak("メディアの再生または一時停止", TextToSpeech.QUEUE_FLUSH)
-        simulateMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+        // メディアの再生・一時停止状態を厳密に判定
+        val isPlaying = audioManager?.isMusicActive == true
+        if (isPlaying) {
+            soundHelper?.playActionDone()
+            speak("メディアを一時停止しました", TextToSpeech.QUEUE_FLUSH)
+            simulateMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+        } else {
+            soundHelper?.playActionDone()
+            speak("メディアを再生しました", TextToSpeech.QUEUE_FLUSH)
+            simulateMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+        }
     }
 
     fun endCallDirectly(): Boolean {
