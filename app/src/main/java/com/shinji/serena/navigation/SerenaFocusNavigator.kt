@@ -33,13 +33,37 @@ class SerenaFocusNavigator(
     fun getAllRoots(): List<AccessibilityNodeInfo> {
         val list = mutableListOf<AccessibilityNodeInfo>()
         
-        // 1. 最優先: アクティブウィンドウのルートノード
+        // 1. service.windows から Z-Order レイヤー最前面順（降順）でルートを収集
+        try {
+            val wins = service.windows
+            if (!wins.isNullOrEmpty()) {
+                val sortedWins = wins.sortedWith(Comparator { w1, w2 ->
+                    val p1 = getWindowPriority(w1)
+                    val p2 = getWindowPriority(w2)
+                    if (p1 != p2) {
+                        p1.compareTo(p2)
+                    } else {
+                        // 同じ優先度なら手前（layer が大きい）を優先
+                        w2.layer.compareTo(w1.layer)
+                    }
+                })
+
+                for (w in sortedWins) {
+                    val r = w.root ?: continue
+                    if (list.none { it == r || it.windowId == r.windowId }) {
+                        list.add(r)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        // 2. 現在アクティブなウィンドウのルート
         val activeRoot = service.rootInActiveWindow
-        if (activeRoot != null) {
+        if (activeRoot != null && list.none { it == activeRoot || it.windowId == activeRoot.windowId }) {
             list.add(activeRoot)
         }
 
-        // 2. 現在フォーカスされているノードのルート
+        // 3. 現在フォーカスされているノードのルート
         try {
             val focusNode = service.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
                 ?: service.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
@@ -52,46 +76,38 @@ class SerenaFocusNavigator(
             }
         } catch (_: Exception) {}
 
-        // 3. windows リストからのルート探索
-        try {
-            val wins = service.windows
-            if (!wins.isNullOrEmpty()) {
-                val activeWindowId = activeRoot?.windowId ?: -1
-                val sortedWins = wins.sortedWith(Comparator { w1, w2 ->
-                    val p1 = getWindowPriority(w1, activeWindowId)
-                    val p2 = getWindowPriority(w2, activeWindowId)
-                    p1.compareTo(p2)
-                })
-
-                for (w in sortedWins) {
-                    val r = w.root ?: continue
-                    if (list.none { it == r || it.windowId == r.windowId }) {
-                        list.add(r)
-                    }
-                }
-            }
-        } catch (_: Exception) {}
-
         return list
     }
 
-    private fun getWindowPriority(w: AccessibilityWindowInfo, activeWindowId: Int): Int {
+    private fun getWindowPriority(w: AccessibilityWindowInfo): Int {
+        // 最前面オーバーレイ（Serena UI等）
         if (w.type == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
             return 0
         }
-        if (service.isKeyguardLocked()) {
-            if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM) {
+        // ロック画面またはSystemUI（Bouncer, 通知シェード, クイック設定, ナビゲーションバー）
+        val rootPkg = w.root?.packageName?.toString()?.lowercase() ?: ""
+        if (service.isKeyguardLocked() || rootPkg.contains("systemui") || rootPkg.contains("keyguard")) {
+            if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM || rootPkg.contains("systemui") || rootPkg.contains("keyguard")) {
                 return 1
             }
         }
-        if (w.id == activeWindowId || w.isFocused) {
+        // IME（ソフトウェアキーボード・PIN入力）
+        if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
             return 2
         }
-        return when (w.type) {
-            AccessibilityWindowInfo.TYPE_APPLICATION -> 3
-            AccessibilityWindowInfo.TYPE_INPUT_METHOD -> 4
-            else -> 5
+        // システムウィンドウ
+        if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM) {
+            return 3
         }
+        // フォーカス中ウィンドウまたはアクティブウィンドウ
+        if (w.isFocused || w.isActive) {
+            return 4
+        }
+        // 通常アプリケーション
+        if (w.type == AccessibilityWindowInfo.TYPE_APPLICATION) {
+            return 5
+        }
+        return 6
     }
 
     fun collectAccessibleNodes(root: AccessibilityNodeInfo? = null): List<AccessibilityNodeInfo> {
