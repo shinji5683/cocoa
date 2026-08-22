@@ -672,6 +672,81 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Real-time Multilingual Translation Settings Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/serena_card_bg">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌐 リアルタイム外国語翻訳読み上げ設定"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/serena_primary"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:id="@+id/tvTranslationTargetInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="翻訳先言語: 端末言語（日本語 / ja）へ自動適応"
+                    android:textColor="@color/status_green"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="画面上の英語・タガログ語・中国語などの外国語やアプリアイコンを検知し、端末言語へリアルタイム翻訳して読み上げます。"
+                    android:textColor="@color/serena_text_dark"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="12dp" />
+
+                <RadioGroup
+                    android:id="@+id/rgTranslationMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp">
+
+                    <RadioButton
+                        android:id="@+id/rbTransOriginalThenTrans"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="原文 ➔ 日本語訳を連続読み上げ（推奨）"
+                        android:textColor="@color/serena_text_dark"
+                        android:textSize="14sp" />
+
+                    <RadioButton
+                        android:id="@+id/rbTransOnly"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="日本語訳のみ読み上げ"
+                        android:textColor="@color/serena_text_dark"
+                        android:textSize="14sp" />
+
+                    <RadioButton
+                        android:id="@+id/rbTransOff"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="翻訳オフ（原文のみ読み上げ）"
+                        android:textColor="@color/serena_text_dark"
+                        android:textSize="14sp" />
+                </RadioGroup>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Developer & Signature Info Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

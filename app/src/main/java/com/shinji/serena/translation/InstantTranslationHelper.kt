@@ -8,22 +8,24 @@ import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
-import com.shinji.serena.SafeContextUtils.getSafeSharedPreferences
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 翻訳読み上げモード
  */
-enum class TranslationMode(val displayName: String) {
-    ORIGINAL_THEN_TRANSLATION("原文を読んだ後に日本語訳を連続読み上げ"),
-    TRANSLATION_ONLY("日本語訳のみ読み上げ"),
-    OFF("翻訳オフ (原文のみ)")
+enum class TranslationMode(val displayName: String, val shortLabel: String) {
+    ORIGINAL_THEN_TRANSLATION("原文を読んだ後に翻訳を連続読み上げ（推奨）", "原文＋翻訳"),
+    TRANSLATION_ONLY("翻訳のみ読み上げ", "翻訳のみ"),
+    OFF("翻訳オフ (原文のみ)", "オフ")
 }
 
 /**
  * InstantTranslationHelper
  *
- * 外国語（英語等）のテキストを検出した際に、オンデバイスML Kitで即座に翻訳し、
- * 「原文 ➔ 日本語訳」の順序でスムーズに連続読み上げを提供するヘルパー。
+ * 外国語（英語・タガログ語・中国語・韓国語・スペイン語等）のテキストやUIアイコンを検知し、
+ * ユーザーの端末設定言語（日本語または他言語）へオンデバイスで即座に翻訳し、
+ * 「[何語から翻訳] 翻訳：〇〇」としてスムーズに読み上げる多言語対応リアルタイム翻訳エンジン。
  */
 class InstantTranslationHelper(private val context: Context) {
 
@@ -35,10 +37,8 @@ class InstantTranslationHelper(private val context: Context) {
 
     private val prefs: SharedPreferences = com.shinji.serena.SafeContextUtils.getSafeSharedPreferences(context, PREFS_NAME)
     private val languageIdentifier = LanguageIdentification.getClient()
-    private var englishJapaneseTranslator: Translator? = null
-    private var isTranslatorReady = false
-
-    private val translationCache = mutableMapOf<String, String>()
+    private val translatorMap = ConcurrentHashMap<String, Translator>()
+    private val translationCache = ConcurrentHashMap<String, String>()
 
     var mode: TranslationMode
         get() {
@@ -53,29 +53,35 @@ class InstantTranslationHelper(private val context: Context) {
             prefs.edit().putString(KEY_TRANSLATION_MODE, value.name).apply()
         }
 
+    val targetLanguageCode: String
+        get() = Locale.getDefault().language.lowercase()
+
     init {
-        initTranslator()
+        // デフォルトで英語-日本語モデルをウォームアップ
+        getOrCreateTranslator(TranslateLanguage.ENGLISH, TranslateLanguage.JAPANESE)
     }
 
-    private fun initTranslator() {
-        try {
-            val options = TranslatorOptions.Builder()
-                .setSourceLanguage(TranslateLanguage.ENGLISH)
-                .setTargetLanguage(TranslateLanguage.JAPANESE)
-                .build()
-            val translator = Translation.getClient(options)
-            englishJapaneseTranslator = translator
-
-            translator.downloadModelIfNeeded()
-                .addOnSuccessListener {
-                    isTranslatorReady = true
-                    Log.i(TAG, "On-device English-Japanese translation model is ready.")
-                }
-                .addOnFailureListener { e ->
-                    Log.w(TAG, "Failed to download translation model: ${e.message}")
-                }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error initializing translator: ${e.message}")
+    private fun getOrCreateTranslator(sourceLang: String, targetLang: String): Translator? {
+        val key = "${sourceLang}_$targetLang"
+        return translatorMap.getOrPut(key) {
+            try {
+                val options = TranslatorOptions.Builder()
+                    .setSourceLanguage(sourceLang)
+                    .setTargetLanguage(targetLang)
+                    .build()
+                val client = Translation.getClient(options)
+                client.downloadModelIfNeeded()
+                    .addOnSuccessListener {
+                        Log.i(TAG, "Translator model $key downloaded/ready.")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.w(TAG, "Model download failed for $key: ${e.message}")
+                    }
+                client
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to create translator for $key: ${e.message}")
+                null
+            }
         }
     }
 
@@ -90,68 +96,113 @@ class InstantTranslationHelper(private val context: Context) {
      * テキストの翻訳が必要かを判定し、翻訳コールバックを実行
      */
     fun processTranslationIfNeeded(originalText: String, callback: (String) -> Unit) {
-        if (mode == TranslationMode.OFF || originalText.length < 3) {
+        if (mode == TranslationMode.OFF || originalText.trim().length < 2) {
             return
         }
 
-        // 日本語のみで構成されている場合は翻訳不要
-        if (isMostlyJapanese(originalText)) {
+        val targetLang = targetLanguageCode
+        val cleanText = originalText.trim()
+
+        // 端末言語が日本語で、対象テキストがほぼ日本語なら翻訳不要
+        if (targetLang == "ja" && isMostlyJapanese(cleanText)) {
+            return
+        }
+        // 端末言語が英語で、対象テキストがほぼラテン英字なら翻訳不要
+        if (targetLang == "en" && isMostlyLatin(cleanText)) {
             return
         }
 
         // キャッシュチェック
-        translationCache[originalText]?.let { cached ->
-            callback(formatTranslatedAnnouncement(originalText, cached))
+        translationCache["${targetLang}_$cleanText"]?.let { cached ->
+            callback(cached)
             return
         }
 
         // 言語判定
-        languageIdentifier.identifyLanguage(originalText)
-            .addOnSuccessListener { languageCode ->
-                if (languageCode != "und" && languageCode != "ja") {
-                    translateText(originalText, languageCode, callback)
+        languageIdentifier.identifyLanguage(cleanText)
+            .addOnSuccessListener { detectedLang ->
+                val sourceLang = if (detectedLang != "und") detectedLang else if (isMostlyLatin(cleanText)) "en" else "und"
+                if (sourceLang != "und" && sourceLang != targetLang) {
+                    translateText(cleanText, sourceLang, targetLang, callback)
                 }
             }
             .addOnFailureListener {
-                // フォールバック: 英字比率が高い場合は英語として翻訳試行
-                if (isMostlyLatin(originalText)) {
-                    translateText(originalText, "en", callback)
+                if (targetLang == "ja" && isMostlyLatin(cleanText)) {
+                    translateText(cleanText, "en", "ja", callback)
                 }
             }
     }
 
-    private fun translateText(originalText: String, langCode: String, callback: (String) -> Unit) {
-        val translator = englishJapaneseTranslator
-        if (translator == null || !isTranslatorReady) {
+    private fun translateText(originalText: String, sourceLang: String, targetLang: String, callback: (String) -> Unit) {
+        val mlkitSource = TranslateLanguage.fromLanguageTag(sourceLang) ?: TranslateLanguage.ENGLISH
+        val mlkitTarget = TranslateLanguage.fromLanguageTag(targetLang) ?: TranslateLanguage.JAPANESE
+
+        val translator = getOrCreateTranslator(mlkitSource, mlkitTarget)
+        if (translator == null) {
             // オフライン基本辞書フォールバック
-            val fallback = getDictionaryFallback(originalText)
+            val fallback = getDictionaryFallback(originalText, targetLang)
             if (fallback != null) {
-                translationCache[originalText] = fallback
-                callback(formatTranslatedAnnouncement(originalText, fallback))
+                val formatted = formatAnnouncement(originalText, fallback, sourceLang, targetLang)
+                translationCache["${targetLang}_$originalText"] = formatted
+                callback(formatted)
             }
             return
         }
 
         translator.translate(originalText)
             .addOnSuccessListener { translatedText ->
-                if (translatedText.isNotEmpty() && translatedText != originalText) {
-                    translationCache[originalText] = translatedText
-                    callback(formatTranslatedAnnouncement(originalText, translatedText))
+                if (translatedText.isNotEmpty() && !translatedText.equals(originalText, ignoreCase = true)) {
+                    val formatted = formatAnnouncement(originalText, translatedText, sourceLang, targetLang)
+                    translationCache["${targetLang}_$originalText"] = formatted
+                    callback(formatted)
                 }
             }
             .addOnFailureListener {
-                val fallback = getDictionaryFallback(originalText)
+                val fallback = getDictionaryFallback(originalText, targetLang)
                 if (fallback != null) {
-                    callback(formatTranslatedAnnouncement(originalText, fallback))
+                    val formatted = formatAnnouncement(originalText, fallback, sourceLang, targetLang)
+                    translationCache["${targetLang}_$originalText"] = formatted
+                    callback(formatted)
                 }
             }
     }
 
-    private fun formatTranslatedAnnouncement(original: String, translated: String): String {
+    private fun formatAnnouncement(original: String, translated: String, sourceLang: String, targetLang: String): String {
+        val sourceName = getLanguageName(sourceLang, targetLang)
         return when (mode) {
-            TranslationMode.ORIGINAL_THEN_TRANSLATION -> "日本語訳：「$translated」"
+            TranslationMode.ORIGINAL_THEN_TRANSLATION -> {
+                if (targetLang == "ja") {
+                    "（${sourceName}から翻訳）日本語訳：「$translated」"
+                } else {
+                    "(Translated from $sourceName) \"$translated\""
+                }
+            }
             TranslationMode.TRANSLATION_ONLY -> translated
             TranslationMode.OFF -> ""
+        }
+    }
+
+    private fun getLanguageName(langCode: String, targetLang: String): String {
+        return if (targetLang == "ja") {
+            when (langCode.lowercase()) {
+                "en" -> "英語"
+                "tl", "fil" -> "タガログ語"
+                "zh" -> "中国語"
+                "ko" -> "韓国語"
+                "es" -> "スペイン語"
+                "fr" -> "フランス語"
+                "de" -> "ドイツ語"
+                "it" -> "イタリア語"
+                "pt" -> "ポルトガル語"
+                "ru" -> "ロシア語"
+                "vi" -> "ベトナム語"
+                "th" -> "タイ語"
+                "id" -> "インドネシア語"
+                "ar" -> "アラビア語"
+                else -> "外国語"
+            }
+        } else {
+            Locale(langCode).getDisplayLanguage(Locale(targetLang))
         }
     }
 
@@ -162,7 +213,7 @@ class InstantTranslationHelper(private val context: Context) {
                 japaneseChars++
             }
         }
-        return japaneseChars.toFloat() / text.length > 0.4f
+        return japaneseChars.toFloat() / text.length.coerceAtLeast(1) > 0.35f
     }
 
     private fun isMostlyLatin(text: String): Boolean {
@@ -172,39 +223,57 @@ class InstantTranslationHelper(private val context: Context) {
                 latinChars++
             }
         }
-        return latinChars.toFloat() / text.length > 0.6f
+        return latinChars.toFloat() / text.length.coerceAtLeast(1) > 0.6f
     }
 
-    private fun getDictionaryFallback(text: String): String? {
+    private fun getDictionaryFallback(text: String, targetLang: String): String? {
         val lower = text.trim().lowercase()
-        return when (lower) {
-            "hello", "hi" -> "こんにちは"
-            "welcome" -> "ようこそ"
-            "settings" -> "設定"
-            "profile" -> "プロフィール"
-            "home" -> "ホーム"
-            "notifications" -> "通知"
-            "messages" -> "メッセージ"
-            "search" -> "検索"
-            "cancel" -> "キャンセル"
-            "save" -> "保存"
-            "delete" -> "削除"
-            "edit" -> "編集"
-            "share" -> "共有"
-            "subscribe" -> "チャンネル登録"
-            "subscribed" -> "登録済み"
-            "download" -> "ダウンロード"
-            "play" -> "再生"
-            "pause" -> "一時停止"
-            "next" -> "次へ"
-            "previous" -> "前へ"
-            else -> null
+        if (targetLang == "ja") {
+            return when (lower) {
+                "hello", "hi" -> "こんにちは"
+                "welcome" -> "ようこそ"
+                "settings" -> "設定"
+                "profile" -> "プロフィール"
+                "home" -> "ホーム"
+                "notifications" -> "通知"
+                "messages" -> "メッセージ"
+                "search" -> "検索"
+                "cancel" -> "キャンセル"
+                "save" -> "保存"
+                "delete" -> "削除"
+                "edit" -> "編集"
+                "share" -> "共有"
+                "subscribe" -> "チャンネル登録"
+                "subscribed" -> "登録済み"
+                "download" -> "ダウンロード"
+                "play" -> "再生"
+                "pause" -> "一時停止"
+                "next" -> "次へ"
+                "previous", "prev" -> "前へ"
+                "add to cart" -> "カートに追加"
+                "buy now" -> "今すぐ購入"
+                "sign in", "login", "log in" -> "ログイン"
+                "sign out", "logout", "log out" -> "ログアウト"
+                "close" -> "閉じる"
+                "back" -> "戻る"
+                "menu" -> "メニュー"
+                "like" -> "高評価"
+                "dislike" -> "低評価"
+                "comment", "comments" -> "コメント"
+                "camera" -> "カメラ"
+                "battery" -> "バッテリー"
+                "wifi" -> "Wi-Fi"
+                "bluetooth" -> "Bluetooth"
+                else -> null
+            }
         }
+        return null
     }
 
     fun close() {
         try {
-            englishJapaneseTranslator?.close()
+            translatorMap.values.forEach { it.close() }
+            translatorMap.clear()
             languageIdentifier.close()
         } catch (_: Exception) {}
     }

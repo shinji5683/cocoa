@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
         setupDeveloperCallSection()
         setupTestBench()
         setupTelemetrySection()
+        setupTranslationSection()
 
         checkPermissionsOnStart()
         checkTelemetryConsentOnStart()
@@ -663,6 +664,28 @@ class MainActivity : AppCompatActivity() {
             }
             .setCancelable(false)
             .show()
+    }
+
+    private fun setupTranslationSection() {
+        val helper = com.shinji.serena.translation.InstantTranslationHelper(this)
+        val targetLangName = if (helper.targetLanguageCode == "ja") "日本語 (ja)" else Locale.getDefault().displayLanguage
+        binding.tvTranslationTargetInfo.text = "翻訳先言語: $targetLangName へ自動適応"
+
+        when (helper.mode) {
+            com.shinji.serena.translation.TranslationMode.ORIGINAL_THEN_TRANSLATION -> binding.rbTransOriginalThenTrans.isChecked = true
+            com.shinji.serena.translation.TranslationMode.TRANSLATION_ONLY -> binding.rbTransOnly.isChecked = true
+            com.shinji.serena.translation.TranslationMode.OFF -> binding.rbTransOff.isChecked = true
+        }
+
+        binding.rgTranslationMode.setOnCheckedChangeListener { _, checkedId ->
+            val newMode = when (checkedId) {
+                R.id.rbTransOriginalThenTrans -> com.shinji.serena.translation.TranslationMode.ORIGINAL_THEN_TRANSLATION
+                R.id.rbTransOnly -> com.shinji.serena.translation.TranslationMode.TRANSLATION_ONLY
+                else -> com.shinji.serena.translation.TranslationMode.OFF
+            }
+            helper.mode = newMode
+            Toast.makeText(this, "リアルタイム翻訳: ${newMode.displayName}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroy() {
