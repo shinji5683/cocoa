@@ -79,13 +79,18 @@ class SerenaFocusNavigator(
         if (w.type == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
             return 0
         }
+        if (service.isKeyguardLocked()) {
+            if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM) {
+                return 1
+            }
+        }
         if (w.id == activeWindowId || w.isFocused) {
-            return 1
+            return 2
         }
         return when (w.type) {
-            AccessibilityWindowInfo.TYPE_APPLICATION -> 2
-            AccessibilityWindowInfo.TYPE_INPUT_METHOD -> 3
-            else -> 4
+            AccessibilityWindowInfo.TYPE_APPLICATION -> 3
+            AccessibilityWindowInfo.TYPE_INPUT_METHOD -> 4
+            else -> 5
         }
     }
 

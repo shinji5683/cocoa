@@ -16,6 +16,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.shinji.serena.getSafeSharedPreferences
 import java.util.Locale
 
 /**
@@ -37,7 +38,7 @@ class LocationAddressHelper(private val context: Context) {
         const val PREF_KEY_ALWAYS_INCLUDE_COUNTRY = "pref_always_include_country"
     }
 
-    private val prefs: SharedPreferences = context.getSharedPreferences("serena_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSafeSharedPreferences("serena_prefs", Context.MODE_PRIVATE)
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
     private val mainHandler = Handler(Looper.getMainLooper())
 
