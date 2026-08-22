@@ -175,12 +175,51 @@ class SerenaKeyboardView @JvmOverloads constructor(
     private var activeBrailleMask = 0
 
     private fun buildBrailleLayout() {
-        activeBrailleMask = 0
         val brailleContainer = LinearLayout(context).apply {
             orientation = VERTICAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
 
+        // 1. 点字プレビューバー (現在選択中のドットパターン ＋ 墨訳プレビュー)
+        val previewRow = LinearLayout(context).apply {
+            orientation = HORIZONTAL
+            setBackgroundColor(Color.parseColor("#1E1E1E"))
+            setPadding(12, 8, 12, 8)
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        }
+
+        val glyph = if (activeBrailleMask > 0) SerenaBrailleDecoder.getBrailleGlyph(activeBrailleMask) else "⠀"
+        val (previewChar, previewDesc) = if (activeBrailleMask > 0) {
+            val res = SerenaBrailleDecoder.decodeDots(activeBrailleMask)
+            // デコーダー状態を消費しないよう仮デコード
+            res
+        } else Pair("", "入力待機中")
+
+        val tvBrailleGlyph = TextView(context).apply {
+            text = glyph
+            textSize = 28f
+            setTextColor(Color.CYAN)
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+                setMargins(8, 0, 16, 0)
+            }
+        }
+
+        val tvPreviewText = TextView(context).apply {
+            text = if (activeBrailleMask > 0) {
+                if (previewChar.isNotEmpty()) "点字: $glyph  ->  墨訳: 「$previewChar」" else "点字: $glyph ($previewDesc)"
+            } else {
+                "6点点字入力 (点1〜点6を選択して確定)"
+            }
+            textSize = 15f
+            setTextColor(Color.WHITE)
+            layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        }
+
+        previewRow.addView(tvBrailleGlyph)
+        previewRow.addView(tvPreviewText)
+        brailleContainer.addView(previewRow)
+
+        // 2. 6点ドットグリッド (左: 点1, 点2, 点3 / 右: 点4, 点5, 点6)
         val dotsRow = LinearLayout(context).apply {
             orientation = HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
@@ -191,9 +230,9 @@ class SerenaKeyboardView @JvmOverloads constructor(
             orientation = VERTICAL
             layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(4, 4, 4, 4) }
         }
-        val btnDot1 = createBrailleDotButton("⠂ 点1", SerenaBrailleDecoder.DOT_1, "点1")
-        val btnDot2 = createBrailleDotButton("⠆ 点2", SerenaBrailleDecoder.DOT_2, "点2")
-        val btnDot3 = createBrailleDotButton("⠇ 点3", SerenaBrailleDecoder.DOT_3, "点3")
+        val btnDot1 = createBrailleDotButton("⠁ 点1", SerenaBrailleDecoder.DOT_1, "点1")
+        val btnDot2 = createBrailleDotButton("⠂ 点2", SerenaBrailleDecoder.DOT_2, "点2")
+        val btnDot3 = createBrailleDotButton("⠄ 点3", SerenaBrailleDecoder.DOT_3, "点3")
         leftCol.addView(btnDot1)
         leftCol.addView(btnDot2)
         leftCol.addView(btnDot3)
@@ -203,8 +242,8 @@ class SerenaKeyboardView @JvmOverloads constructor(
             orientation = VERTICAL
             layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(4, 4, 4, 4) }
         }
-        val btnDot4 = createBrailleDotButton("⠈ 点4", SerenaBrailleDecoder.DOT_4, "点4")
-        val btnDot5 = createBrailleDotButton("⠘ 点5 (濁音)", SerenaBrailleDecoder.DOT_5, "点5 濁音符")
+        val btnDot4 = createBrailleDotButton("⠈ 点4 (拗音)", SerenaBrailleDecoder.DOT_4, "点4 拗音符")
+        val btnDot5 = createBrailleDotButton("⠐ 点5 (濁音)", SerenaBrailleDecoder.DOT_5, "点5 濁音符")
         val btnDot6 = createBrailleDotButton("⠠ 点6 (半濁音)", SerenaBrailleDecoder.DOT_6, "点6 半濁音符")
         rightCol.addView(btnDot4)
         rightCol.addView(btnDot5)
@@ -214,12 +253,13 @@ class SerenaKeyboardView @JvmOverloads constructor(
         dotsRow.addView(rightCol)
         brailleContainer.addView(dotsRow)
 
-        // 点字確定・クリア操作行
+        // 3. 点字確定・編集操作行
         val commitRow = LinearLayout(context).apply {
             orientation = HORIZONTAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
-        val commitBtn = createKeyButton("⠶ 点字入力", "点字文字確定入力") {
+
+        val commitBtn = createKeyButton("⠶ 確定入力", "選択した点字を墨訳して入力") {
             if (activeBrailleMask > 0) {
                 val (decodedChar, speechDesc) = SerenaBrailleDecoder.decodeDots(activeBrailleMask)
                 activeBrailleMask = 0
@@ -227,6 +267,7 @@ class SerenaKeyboardView @JvmOverloads constructor(
                     for (c in decodedChar) {
                         listener?.onKeyTyped(c)
                     }
+                    soundAndHapticHelper?.announceTts("$decodedChar を入力")
                 } else if (speechDesc.isNotEmpty()) {
                     soundAndHapticHelper?.announceTts(speechDesc)
                 }
@@ -235,13 +276,36 @@ class SerenaKeyboardView @JvmOverloads constructor(
                 soundAndHapticHelper?.announceTts("点が選択されていません")
             }
         }
+
+        val spaceBtn = createKeyButton("␣ マスあけ", "スペース入力") {
+            activeBrailleMask = 0
+            SerenaBrailleDecoder.reset()
+            listener?.onSpacePressed()
+            soundAndHapticHelper?.announceTts("マスあけ")
+            rebuildLayout()
+        }
+
+        val backspaceBtn = createKeyButton("⌫ 削除", "1文字削除") {
+            if (activeBrailleMask > 0) {
+                activeBrailleMask = 0
+                soundAndHapticHelper?.announceTts("選択中の点をクリア")
+            } else {
+                listener?.onDeletePressed()
+                soundAndHapticHelper?.announceTts("1文字削除")
+            }
+            rebuildLayout()
+        }
+
         val clearDotsBtn = createKeyButton("点クリア", "選択した点をリセット") {
             activeBrailleMask = 0
             SerenaBrailleDecoder.reset()
             soundAndHapticHelper?.announceTts("点字リセット")
             rebuildLayout()
         }
+
         commitRow.addView(commitBtn)
+        commitRow.addView(spaceBtn)
+        commitRow.addView(backspaceBtn)
         commitRow.addView(clearDotsBtn)
         brailleContainer.addView(commitRow)
 
