@@ -64,7 +64,7 @@ class WifiConnectivityHelper(
                     val rawSsid = info?.ssid?.replace("\"", "")?.trim()
 
                     if (!rawSsid.isNullOrEmpty() && rawSsid != "<unknown ssid>" && rawSsid != "0x") {
-                        "Wi-Fi接続中（${rawSsid}）、${levelText}"
+                        "Wi-Fi: ${rawSsid}、${levelText}"
                     } else {
                         "Wi-Fi接続中、${levelText}"
                     }

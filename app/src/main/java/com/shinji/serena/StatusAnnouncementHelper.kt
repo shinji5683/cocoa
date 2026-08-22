@@ -174,20 +174,7 @@ class StatusAnnouncementHelper(private val context: Context) {
     }
 
     private fun getWifiText(): String {
-        return try {
-            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-            val network = cm?.activeNetwork
-            val caps = cm?.getNetworkCapabilities(network)
-
-            if (caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
-                "Wi-Fi接続中"
-            } else {
-                "Wi-Fi未接続"
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Wi-Fi info error: ${e.message}")
-            ""
-        }
+        return WifiConnectivityHelper.getWifiStatusText(context)
     }
 
     private fun getBluetoothText(): String {

@@ -101,18 +101,28 @@ class SerenaFocusNavigator(
             traverseTree(r, list)
         }
         if (service.isKeyguardLocked()) {
-            // ロック画面時はPINキーパッドとロック解除ボタンを最優先で先頭に並べ替え！通知領域は末尾へ隔離
+            // ロック画面時はPINキーパッド（1〜9, 0, 削除, 決定）を最優先で自然な順序に整列！通知領域は末尾へ隔離
             list.sortByDescending { node ->
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 val text = node.text?.toString()?.trim() ?: ""
                 val desc = node.contentDescription?.toString()?.trim() ?: ""
                 when {
-                    viewId.endsWith("key1") || desc == "1" || text == "1" -> 100
-                    viewId.contains("digit") || (viewId.contains("key") && (text.matches(Regex("[0-9]")) || desc.matches(Regex("[0-9]")))) -> 90
-                    text.matches(Regex("^[0-9]$")) || desc.matches(Regex("^[0-9]$")) -> 85
-                    viewId.contains("delete") || viewId.contains("cancel") || viewId.contains("enter") || viewId.contains("ok") || desc.contains("削除") || desc.contains("決定") -> 80
-                    viewId.contains("lock_icon") || desc.contains("ロック") || text.contains("ロック") || desc.contains("解除") -> 70
-                    viewId.contains("notification") || node.className?.contains("Notification", ignoreCase = true) == true -> -100
+                    viewId.endsWith("key1") || desc == "1" || text == "1" -> 1000
+                    viewId.endsWith("key2") || desc == "2" || text == "2" -> 990
+                    viewId.endsWith("key3") || desc == "3" || text == "3" -> 980
+                    viewId.endsWith("key4") || desc == "4" || text == "4" -> 970
+                    viewId.endsWith("key5") || desc == "5" || text == "5" -> 960
+                    viewId.endsWith("key6") || desc == "6" || text == "6" -> 950
+                    viewId.endsWith("key7") || desc == "7" || text == "7" -> 940
+                    viewId.endsWith("key8") || desc == "8" || text == "8" -> 930
+                    viewId.endsWith("key9") || desc == "9" || text == "9" -> 920
+                    viewId.endsWith("key0") || desc == "0" || text == "0" -> 910
+                    viewId.contains("delete") || desc.contains("削除") || text.contains("削除") -> 900
+                    viewId.contains("enter") || viewId.contains("ok") || desc.contains("決定") || text.contains("決定") -> 890
+                    viewId.contains("emergency") || desc.contains("緊急") || text.contains("緊急") -> 880
+                    viewId.contains("pin") || viewId.contains("password") || node.isEditable -> 870
+                    viewId.contains("lock_icon") || desc.contains("ロック") || text.contains("ロック") || desc.contains("解除") -> 700
+                    viewId.contains("notification") || node.className?.contains("Notification", ignoreCase = true) == true -> -1000
                     else -> 0
                 }
             }
@@ -121,8 +131,15 @@ class SerenaFocusNavigator(
     }
 
     private fun traverseTree(node: AccessibilityNodeInfo, list: MutableList<AccessibilityNodeInfo>) {
+        val viewId = node.viewIdResourceName?.lowercase() ?: ""
+        val isPinKeyNode = viewId.contains("systemui:id/key") || 
+                           viewId.contains("systemui:id/delete_button") ||
+                           viewId.contains("systemui:id/emergency_call_button") ||
+                           viewId.contains("pin_pad") ||
+                           viewId.contains("numpad")
+
         val isTarget = evaluator.isFocusableTarget(node)
-        val hasFocusableChildren = evaluator.hasFocusableChildren(node)
+        val hasFocusableChildren = if (isPinKeyNode && (node.isClickable || node.isFocusable)) false else evaluator.hasFocusableChildren(node)
 
         // 1. 子要素にフォーカス可能要素を持たない意味のあるノード（末端ノード/ボタン/テキスト等）なら登録
         if (isTarget && !hasFocusableChildren) {

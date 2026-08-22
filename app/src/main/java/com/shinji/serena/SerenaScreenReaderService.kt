@@ -173,6 +173,31 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     .build()
                 tts?.setAudioAttributes(audioAttributes)
             }
+            tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {
+                    if (utteranceId == "serena_startup_greeting") {
+                        isStartupGreetingSpeaking = true
+                    }
+                }
+
+                override fun onDone(utteranceId: String?) {
+                    if (utteranceId == "serena_startup_greeting") {
+                        isStartupGreetingSpeaking = false
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            flushPendingSpeechQueue()
+                        }
+                    }
+                }
+
+                override fun onError(utteranceId: String?) {
+                    if (utteranceId == "serena_startup_greeting") {
+                        isStartupGreetingSpeaking = false
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            flushPendingSpeechQueue()
+                        }
+                    }
+                }
+            })
         } catch (e: Exception) {
             Log.e(TAG, "initTts error: ${e.message}")
         }
@@ -189,25 +214,35 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             updateTtsSettings()
             isTtsReady = true
-            if (!hasSpokenStartupGreeting) {
-                hasSpokenStartupGreeting = true
-                isStartupGreetingSpeaking = true
-                val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
-                speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
-                soundHelper?.playActionDone()
-                Log.i(TAG, "TTS initialized successfully. Spoke Tagalog startup greeting.")
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    isStartupGreetingSpeaking = false
-                    flushPendingSpeechQueue()
-                }, 3000)
-            } else {
-                flushPendingSpeechQueue()
-            }
+            speakStartupGreeting()
         } else {
             Log.e(TAG, "TTS Initialization failed with status: $status")
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 if (!isTtsReady) initTts()
             }, 2000)
+        }
+    }
+
+    private fun speakStartupGreeting() {
+        if (!hasSpokenStartupGreeting && isTtsReady) {
+            hasSpokenStartupGreeting = true
+            isStartupGreetingSpeaking = true
+            val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
+            soundHelper?.playActionDone()
+            try {
+                tts?.language = detectLanguage(welcomeMsg)
+            } catch (_: Exception) {}
+            tts?.speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH, null, "serena_startup_greeting")
+            Log.i(TAG, "TTS initialized successfully. Spoke Tagalog startup greeting.")
+            // フェイルセーフ（最悪の場合でも4.5秒後にフラグを解放）
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                if (isStartupGreetingSpeaking) {
+                    isStartupGreetingSpeaking = false
+                    flushPendingSpeechQueue()
+                }
+            }, 4500)
+        } else {
+            flushPendingSpeechQueue()
         }
     }
 
@@ -246,16 +281,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         serviceInfo = info
         Log.i(TAG, "serena AccessibilityService connected with Multi-Finger & Touch Exploration flags=$flags.")
 
-        if (isTtsReady && !hasSpokenStartupGreeting) {
-            hasSpokenStartupGreeting = true
-            isStartupGreetingSpeaking = true
-            val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
-            speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH)
-            soundHelper?.playActionDone()
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                isStartupGreetingSpeaking = false
-            }, 3000)
-        }
+        speakStartupGreeting()
 
         // 再起動直後（Direct Boot）やサービス接続時の初期フォーカス自動捕捉
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -265,7 +291,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             } else {
                 navigateLinearFocus(forward = true)
             }
-        }, 3200)
+        }, 3500)
     }
 
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
@@ -3466,8 +3492,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     override fun onDestroy() {
         try {
-            speak("Paalam po, Shinji! Maraming salamat at mag-ingat ka palagi!", TextToSpeech.QUEUE_FLUSH)
-            Thread.sleep(1200)
+            val farewell = "Paalam po, Shinji! Maraming salamat at mag-ingat ka palagi!"
+            try {
+                tts?.language = detectLanguage(farewell)
+            } catch (_: Exception) {}
+            tts?.speak(farewell, TextToSpeech.QUEUE_FLUSH, null, "serena_shutdown_greeting")
+            Thread.sleep(2600)
         } catch (_: Exception) {}
         super.onDestroy()
         callManager?.release()
