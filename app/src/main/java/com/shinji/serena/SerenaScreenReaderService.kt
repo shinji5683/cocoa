@@ -727,13 +727,32 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun executeActiveCustomAction(): Boolean {
         val node = getAccessibilityFocusedNode() ?: return false
-        val actions = node.actionList.filter { it.id != AccessibilityNodeInfo.ACTION_CLICK && it.id != AccessibilityNodeInfo.ACTION_FOCUS }
-        if (actions.isNotEmpty()) {
-            return node.performAction(actions.first().id)
+        val customActions = node.actionList.filter { 
+            it.id != AccessibilityNodeInfo.ACTION_CLICK && 
+            it.id != AccessibilityNodeInfo.ACTION_FOCUS && 
+            it.id != AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS &&
+            !it.label.isNullOrEmpty()
+        }
+
+        // 0 は「デフォルト（通常のアクティベート / クリック）」
+        if (selectedCustomActionIndex <= 0) {
+            performClickOnFocusedNode()
+            return true
+        }
+
+        val actionIdx = selectedCustomActionIndex - 1
+        if (actionIdx in customActions.indices) {
+            val action = customActions[actionIdx]
+            val success = node.performAction(action.id)
+            if (success) {
+                soundHelper?.playActionDone()
+                speak("${action.label} を実行しました", TextToSpeech.QUEUE_FLUSH)
+                return true
+            }
         }
         return false
     }
-    private var selectedCustomActionIndex = -1
+    private var selectedCustomActionIndex = 0
     private var charOffsetInFocusedNode = -1
     private var lastCharNavText = ""
 
@@ -1403,18 +1422,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             it.id != AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS &&
             !it.label.isNullOrEmpty()
         }
-        if (customActions.isEmpty()) {
-            speak("利用可能なカスタムアクションはありません", TextToSpeech.QUEUE_FLUSH)
+        val totalCount = 1 + customActions.size
+        if (totalCount <= 1) {
+            selectedCustomActionIndex = 0
+            speak("デフォルト。ダブルタップで有効化します", TextToSpeech.QUEUE_FLUSH)
             return
         }
         selectedCustomActionIndex = if (forward) {
-            (selectedCustomActionIndex + 1) % customActions.size
+            (selectedCustomActionIndex + 1) % totalCount
         } else {
-            if (selectedCustomActionIndex - 1 < 0) customActions.size - 1 else selectedCustomActionIndex - 1
+            if (selectedCustomActionIndex - 1 < 0) totalCount - 1 else selectedCustomActionIndex - 1
         }
-        val action = customActions[selectedCustomActionIndex]
         soundHelper?.playFocusMove()
-        speak("アクション: ${action.label}。実行するにはダブルタップします", TextToSpeech.QUEUE_FLUSH)
+        if (selectedCustomActionIndex == 0) {
+            speak("デフォルト。ダブルタップで有効化します", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            val action = customActions[selectedCustomActionIndex - 1]
+            speak("アクション: ${action.label}。実行するにはダブルタップします", TextToSpeech.QUEUE_FLUSH)
+        }
     }
 
     private fun isLinkNode(node: AccessibilityNodeInfo): Boolean {
@@ -1602,17 +1627,19 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return
         }
 
-        // 0. カスタムアクションモード時の選択アクション実行
-        if (currentGranularity == GranularityMode.ACTIONS && selectedCustomActionIndex >= 0) {
+        // 0. カスタムアクションモード時の選択アクション実行（インデックス0はデフォルトクリック）
+        if (currentGranularity == GranularityMode.ACTIONS && selectedCustomActionIndex > 0) {
             val customActions = focusedNode.actionList.filter { 
                 it.id != AccessibilityNodeInfo.ACTION_CLICK && 
                 it.id != AccessibilityNodeInfo.ACTION_FOCUS && 
                 it.id != AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS &&
                 !it.label.isNullOrEmpty()
             }
-            if (selectedCustomActionIndex < customActions.size) {
-                val action = customActions[selectedCustomActionIndex]
+            val actionIdx = selectedCustomActionIndex - 1
+            if (actionIdx in customActions.indices) {
+                val action = customActions[actionIdx]
                 if (focusedNode.performAction(action.id)) {
+                    soundHelper?.playActionDone()
                     speak("${action.label} を実行しました", TextToSpeech.QUEUE_FLUSH)
                     return
                 }
@@ -2846,6 +2873,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
             AccessibilityEvent.TYPE_VIEW_SELECTED -> {
                 val node = event.source ?: return
+                selectedCustomActionIndex = 0
                 lastFocusTimeMs = System.currentTimeMillis()
                 lastHoveredNode = node
                 soundHelper?.playFocusMove()
