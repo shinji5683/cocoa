@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.os.SystemClock
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import com.shinji.serena.GranularityMode
 import com.shinji.serena.SerenaScreenReaderService
 
 /**
@@ -73,7 +74,11 @@ class SerenaGestureDispatcher(
                         return true
                     }
                 }
-                if (service.executeActiveCustomAction()) return true
+                
+                // カスタムアクション粒度モード時のみカスタムアクションを実行
+                if (service.getCurrentGranularity() == GranularityMode.ACTIONS) {
+                    if (service.executeActiveCustomAction()) return true
+                }
 
                 val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
                 if (focusNode != null) {
@@ -109,7 +114,7 @@ class SerenaGestureDispatcher(
                         return true
                     }
 
-                    // 4. 物理座標タップジェスチャーの発行（Compose/カスタム描画/ゲーム/Webビュー等でも1発で確実に反応！）
+                    // 4. 物理座標タップジェスチャーの発行（Compose/YouTube Music/カスタム描画/ゲーム/Webビュー等でも1発で確実に反応！）
                     service.clickNodeByGesture(focusNode)
                     service.soundHelper?.playClick()
                     service.speak(announceText, TextToSpeech.QUEUE_FLUSH)

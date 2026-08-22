@@ -669,6 +669,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return true
     }
 
+    fun getCurrentGranularity(): GranularityMode = currentGranularity
+
     fun executeActiveCustomAction(): Boolean {
         val node = getAccessibilityFocusedNode() ?: return false
         val actions = node.actionList.filter { it.id != AccessibilityNodeInfo.ACTION_CLICK && it.id != AccessibilityNodeInfo.ACTION_FOCUS }
