@@ -245,11 +245,15 @@ class SerenaFocusNavigator(
         }
 
         if (forward && targetIndex >= nodes.size) {
+            val oldFocus = currentFocus
             service.scrollPageForward {
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
-                    val targetNode = newNodes[0]
-                    lastFocusedNodeIndex = 0
+                    // スクロール後に新しく可視領域に入った項目を優先探索
+                    val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
+                        ?: newNodes.firstOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
+                        ?: newNodes[0]
+                    lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
                     setFocusAndShowOnScreen(targetNode)
                     service.announceNode(targetNode)
                 } else {
@@ -258,12 +262,14 @@ class SerenaFocusNavigator(
             }
             return
         } else if (!forward && targetIndex < 0) {
+            val oldFocus = currentFocus
             service.scrollPageBackward {
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
-                    val targetIdx = newNodes.size - 1
-                    val targetNode = newNodes[targetIdx]
-                    lastFocusedNodeIndex = targetIdx
+                    val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
+                        ?: newNodes.lastOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
+                        ?: newNodes[newNodes.size - 1]
+                    lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
                     setFocusAndShowOnScreen(targetNode)
                     service.announceNode(targetNode)
                 } else {

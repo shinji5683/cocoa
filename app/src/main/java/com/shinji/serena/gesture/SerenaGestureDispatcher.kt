@@ -55,6 +55,10 @@ class SerenaGestureDispatcher(
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP -> {
+                if (service.isKeyguardLocked()) {
+                    service.unlockKeyguardOrShowBouncer()
+                    return true
+                }
                 // 1本指上フリック: 読み上げコントロール（粒度: 文字/単語/行/見出し等）に合わせて前へ移動
                 service.focusPrevious()
                 return true
@@ -83,6 +87,14 @@ class SerenaGestureDispatcher(
                 val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
                 if (focusNode != null) {
                     val rawText = service.getNodeText(focusNode)
+                    val viewId = focusNode.viewIdResourceName?.lowercase() ?: ""
+                    val isLockElement = viewId.contains("lock_icon") || viewId.contains("keyguard") ||
+                            rawText.contains("ロック") || rawText.contains("解除")
+                    if (service.isKeyguardLocked() && isLockElement) {
+                        service.unlockKeyguardOrShowBouncer()
+                        return true
+                    }
+
                     val cleanText = rawText.replace(Regex("[\\p{So}\\p{Cn}\\p{Cs}\\p{Extended_Pictographic}\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u26FF\u2700-\u27BF]"), "").replace(Regex("\\s+"), " ").trim()
                     val announceText = if (cleanText.isNotEmpty()) "$cleanText を実行" else "実行"
 
