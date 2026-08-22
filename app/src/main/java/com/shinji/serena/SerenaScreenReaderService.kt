@@ -132,7 +132,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             wifiConnectivityHelper = WifiConnectivityHelper(this).apply { try { startMonitoring() } catch (_: Exception) {} }
             batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} }
-            aiAutoLabelHelper = AiAutoLabelHelper()
+            aiAutoLabelHelper = AiAutoLabelHelper(safeContext)
             morningSummaryHelper = MorningSummaryHelper(this)
 
             shakeDetectorHelper = ShakeDetectorHelper(safeContext) {
