@@ -1611,7 +1611,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         clickNodeByGesture(focusedNode)
     }
 
-    private fun clickNodeByGesture(node: AccessibilityNodeInfo) {
+    fun clickNodeByGesture(node: AccessibilityNodeInfo) {
         val rect = android.graphics.Rect()
         node.getBoundsInScreen(rect)
         if (rect.isEmpty || rect.width() <= 0 || rect.height() <= 0) return
@@ -1625,11 +1625,19 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 50)
         val gesture = android.accessibilityservice.GestureDescription.Builder().addStroke(stroke).build()
 
+        isInternalGestureDispatching = true
         dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
-                val label = getNodeText(node)
-                if (label.isNotEmpty()) speak("$label をタップ実行", TextToSpeech.QUEUE_FLUSH)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    isInternalGestureDispatching = false
+                }, 150)
+            }
+            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCancelled(gestureDescription)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    isInternalGestureDispatching = false
+                }, 150)
             }
         }, null)
     }
@@ -3041,7 +3049,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         return null
     }
 
-    private fun getNodeText(node: AccessibilityNodeInfo): String {
+    fun getNodeText(node: AccessibilityNodeInfo): String {
         try {
             // 1. ノード自体の direct text
             var text = node.contentDescription?.toString()?.trim()

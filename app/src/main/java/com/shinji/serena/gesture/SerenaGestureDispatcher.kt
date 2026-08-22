@@ -74,57 +74,46 @@ class SerenaGestureDispatcher(
                     }
                 }
                 if (service.executeActiveCustomAction()) return true
-                val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
 
+                val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
                 if (focusNode != null) {
-                    // 1. ノード直接のクリック試行 (PINボタン、一般ボタン等)
-                    if (focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
+                    val rawText = service.getNodeText(focusNode)
+                    val cleanText = rawText.replace(Regex("[\\p{So}\\p{Cn}\\p{Cs}\\p{Extended_Pictographic}\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u26FF\u2700-\u27BF]"), "").replace(Regex("\\s+"), " ").trim()
+                    val announceText = if (cleanText.isNotEmpty()) "$cleanText を実行" else "実行"
+
+                    // 1. 直近ノードの ACTION_CLICK
+                    val directSuccess = focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+                    if (directSuccess) {
                         service.soundHelper?.playClick()
+                        service.speak(announceText, TextToSpeech.QUEUE_FLUSH)
                         return true
                     }
 
-                    // 2. 親祖先ノードを遡ってクリック試行
+                    // 2. 親・祖先ノードの ACTION_CLICK 探索
                     var parent = focusNode.parent
                     while (parent != null) {
-                        if (parent.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
-                            service.soundHelper?.playClick()
-                            return true
+                        if (parent.isClickable || parent.isCheckable) {
+                            if (parent.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
+                                service.soundHelper?.playClick()
+                                service.speak(announceText, TextToSpeech.QUEUE_FLUSH)
+                                return true
+                            }
                         }
                         parent = parent.parent
                     }
 
-                    // 3. 画面上の中心座標を取得して物理タップジェスチャーをエミュレート
-                    val rect = android.graphics.Rect()
-                    focusNode.getBoundsInScreen(rect)
-                    val x = rect.centerX().toFloat()
-                    val y = rect.centerY().toFloat()
-
-                    if (rect.width() > 0 && rect.height() > 0) {
-                        val path = android.graphics.Path().apply {
-                            moveTo(x, y)
-                        }
-                        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 50)
-                        val gesture = android.accessibilityservice.GestureDescription.Builder()
-                            .addStroke(stroke)
-                            .build()
-                        service.isInternalGestureDispatching = true
-                        service.dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
-                            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
-                                super.onCompleted(gestureDescription)
-                                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                                    service.isInternalGestureDispatching = false
-                                }, 150)
-                            }
-                            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
-                                super.onCancelled(gestureDescription)
-                                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                                    service.isInternalGestureDispatching = false
-                                }, 150)
-                            }
-                        }, null)
+                    // 3. ACTION_SELECT
+                    if (focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SELECT)) {
                         service.soundHelper?.playClick()
+                        service.speak(announceText, TextToSpeech.QUEUE_FLUSH)
                         return true
                     }
+
+                    // 4. 物理座標タップジェスチャーの発行（Compose/カスタム描画/ゲーム/Webビュー等でも1発で確実に反応！）
+                    service.clickNodeByGesture(focusNode)
+                    service.soundHelper?.playClick()
+                    service.speak(announceText, TextToSpeech.QUEUE_FLUSH)
+                    return true
                 }
 
                 // ロック画面でフォーカス対象がない/クリック不能な場所をダブルタップした時のみ解除スワイプを発動
