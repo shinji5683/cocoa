@@ -235,9 +235,17 @@ class SerenaGestureDispatcher(
                 service.cycleGranularity(forward = true)
                 return true
             }
-            AccessibilityService.GESTURE_3_FINGER_SWIPE_LEFT,
+            AccessibilityService.GESTURE_3_FINGER_SWIPE_LEFT -> {
+                // 3本指左フリック: Serena AI Voice アシスタントを即時起動！
+                service.soundHelper?.playActionDone()
+                service.speak("AIボイスアシスタントを起動します", TextToSpeech.QUEUE_FLUSH)
+                service.launchAiAssistant()
+                return true
+            }
             AccessibilityService.GESTURE_3_FINGER_SWIPE_RIGHT -> {
-                return false
+                // 3本指右フリック: リアルタイムカメラAI実況を即時起動！
+                service.launchRealtimeLiveSceneCommentary()
+                return true
             }
 
             else -> {
