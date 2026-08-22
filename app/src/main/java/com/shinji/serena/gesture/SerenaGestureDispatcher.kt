@@ -149,13 +149,19 @@ class SerenaGestureDispatcher(
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP_AND_LEFT -> {
-                service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
+                service.dismissActiveMenu()
+                service.soundHelper?.playClick()
                 service.speak("ホーム画面", TextToSpeech.QUEUE_FLUSH)
+                service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_DOWN_AND_LEFT -> {
-                service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+                if (service.dismissActiveMenu()) {
+                    return true
+                }
+                service.soundHelper?.playClick()
                 service.speak("戻る", TextToSpeech.QUEUE_FLUSH)
+                service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP_AND_RIGHT,

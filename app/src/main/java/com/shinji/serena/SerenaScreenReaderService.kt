@@ -1584,11 +1584,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }, null)
     }
 
+    fun dismissActiveMenu(): Boolean {
+        val menu = activeMenuDialog
+        if (menu != null && menu.isShowing) {
+            activeMenuDialog = null
+            try {
+                menu.dismiss()
+            } catch (_: Exception) {}
+            soundHelper?.playActionDone()
+            speak("セレナメニューを閉じました", TextToSpeech.QUEUE_FLUSH)
+            return true
+        }
+        return false
+    }
+
     fun triggerSerenaMenu() {
         showNormalSerenaMenu()
     }
 
     fun showNormalSerenaMenu(node: AccessibilityNodeInfo? = null) {
+        if (dismissActiveMenu()) {
+            return
+        }
         val snapshotRoot = try { rootInActiveWindow } catch (e: Exception) { null }
         val snapshotFocused = node ?: getAccessibilityFocusedNode()
         soundHelper?.playMenuOpen()
