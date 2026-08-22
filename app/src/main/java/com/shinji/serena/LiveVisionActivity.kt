@@ -480,16 +480,18 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
             }
             else -> {
-                // LIVE 実況モード (Gemini Nano 統合解析: 照度 + 表情・服装・詳細年代 + OCR)
+                // LIVE リアルタイムAI環境実況モード (Gemini Nano + Face Detection + Object/Labeling + Japanese OCR)
                 faceDetector.process(image)
                     .addOnSuccessListener { faces ->
                         val persons = faces.map { face ->
                             val box = face.boundingBox
                             val centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1)
                             val pos = when {
-                                centerX < 0.35f -> "左側"
-                                centerX > 0.65f -> "右側"
-                                else -> "正面"
+                                centerX < 0.25f -> "左"
+                                centerX in 0.25f..0.40f -> "左斜め前"
+                                centerX in 0.40f..0.60f -> "正面"
+                                centerX in 0.60f..0.75f -> "右斜め前"
+                                else -> "右"
                             }
                             val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
                                 face = face,
@@ -505,7 +507,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 genderAndAge = attrs.genderAndAge,
                                 clothingColor = attrs.clothingDescription,
                                 pantsColor = "ボトムス",
-                                expression = attrs.emotion.category,
+                                expression = "${attrs.emotion.category}（${attrs.emotion.fullDescription}）",
                                 emotionalMeaning = attrs.emotion.emotionalVibe,
                                 isLookingAtCamera = attrs.emotion.gazeAndHeadPose.contains("こちらを見ています")
                             )
@@ -523,15 +525,20 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                                 val finalAnnouncement = if (sceneSummary.isNotEmpty()) {
                                     sceneSummary
+                                } else if (persons.isNotEmpty()) {
+                                    val p = persons[0]
+                                    "${p.position} ${p.distanceMeters}に${p.genderAndAge}がいます。表情は${p.expression}。"
+                                } else if (recognizedTexts.isNotEmpty()) {
+                                    "文字を検出: ${recognizedTexts.take(2).joinToString("、")}"
                                 } else {
-                                    "${brightnessLevel}。周囲を確認中…"
+                                    "${brightnessLevel}。前方クリアです。周囲を確認中…"
                                 }
 
-                                if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 5000)) {
+                                if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 4000)) {
                                     lastSpokenText = finalAnnouncement
                                     lastSpokenTime = currentTime
                                     runOnUiThread {
-                                        tvStatus.text = "🌐 実況: $finalAnnouncement"
+                                        tvStatus.text = "🌐 リアルタイム実況: $finalAnnouncement"
                                     }
                                     speak(finalAnnouncement, TextToSpeech.QUEUE_FLUSH)
                                 }
