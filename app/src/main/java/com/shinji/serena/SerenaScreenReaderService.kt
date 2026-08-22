@@ -679,7 +679,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
     private var selectedCustomActionIndex = -1
     private var charOffsetInFocusedNode = -1
-    private var lastFocusedNodeHash = 0
+    private var lastCharNavText = ""
 
     fun focusNext() {
         when (currentGranularity) {
@@ -711,7 +711,32 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun handleDefaultGranularityNext() {
         try {
-            val focused = getAccessibilityFocusedNode()
+            // 0. Serenaメニュー表示中の場合: 現在選択中メニュー項目のテキストを確実に文字送り！
+            val menu = activeMenuDialog
+            if (menu != null && menu.isShowing) {
+                val menuText = menu.getCurrentItemText()
+                if (menuText.isNotEmpty()) {
+                    if (menuText != lastCharNavText) {
+                        lastCharNavText = menuText
+                        charOffsetInFocusedNode = -1
+                    }
+                    charOffsetInFocusedNode++
+                    if (charOffsetInFocusedNode < menuText.length) {
+                        val targetChar = menuText[charOffsetInFocusedNode]
+                        val phonetic = com.shinji.serena.ime.SerenaPhoneticEngine.getPhoneticReading(targetChar)
+                        soundHelper?.playFocusMove()
+                        speak(phonetic, TextToSpeech.QUEUE_FLUSH)
+                        return
+                    } else {
+                        charOffsetInFocusedNode = -1
+                        lastCharNavText = ""
+                        menu.navigateMenuNext()
+                        return
+                    }
+                }
+            }
+
+            val focused = getAccessibilityFocusedNode() ?: lastHoveredNode
             if (focused == null) {
                 navigateLinearFocus(forward = true)
                 return
@@ -743,9 +768,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             // 3. 通常の場所: 1文字ずつフォネティック詳細送り
             val text = getNodeText(focused)
             if (text.isNotEmpty()) {
-                val currentHash = focused.hashCode()
-                if (currentHash != lastFocusedNodeHash) {
-                    lastFocusedNodeHash = currentHash
+                if (text != lastCharNavText) {
+                    lastCharNavText = text
                     charOffsetInFocusedNode = -1
                 }
 
@@ -758,6 +782,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     return
                 } else {
                     charOffsetInFocusedNode = -1
+                    lastCharNavText = ""
                     navigateLinearFocus(forward = true)
                     return
                 }
@@ -771,7 +796,32 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun handleDefaultGranularityPrevious() {
         try {
-            val focused = getAccessibilityFocusedNode()
+            // 0. Serenaメニュー表示中の場合: 現在選択中メニュー項目のテキストを確実に文字戻し！
+            val menu = activeMenuDialog
+            if (menu != null && menu.isShowing) {
+                val menuText = menu.getCurrentItemText()
+                if (menuText.isNotEmpty()) {
+                    if (menuText != lastCharNavText) {
+                        lastCharNavText = menuText
+                        charOffsetInFocusedNode = menuText.length
+                    }
+                    charOffsetInFocusedNode--
+                    if (charOffsetInFocusedNode >= 0) {
+                        val targetChar = menuText[charOffsetInFocusedNode]
+                        val phonetic = com.shinji.serena.ime.SerenaPhoneticEngine.getPhoneticReading(targetChar)
+                        soundHelper?.playFocusMove()
+                        speak(phonetic, TextToSpeech.QUEUE_FLUSH)
+                        return
+                    } else {
+                        charOffsetInFocusedNode = -1
+                        lastCharNavText = ""
+                        menu.navigateMenuPrev()
+                        return
+                    }
+                }
+            }
+
+            val focused = getAccessibilityFocusedNode() ?: lastHoveredNode
             if (focused == null) {
                 navigateLinearFocus(forward = false)
                 return
@@ -803,9 +853,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             // 3. 通常の場所: 1文字ずつフォネティック詳細戻り
             val text = getNodeText(focused)
             if (text.isNotEmpty()) {
-                val currentHash = focused.hashCode()
-                if (currentHash != lastFocusedNodeHash) {
-                    lastFocusedNodeHash = currentHash
+                if (text != lastCharNavText) {
+                    lastCharNavText = text
                     charOffsetInFocusedNode = text.length
                 }
 
@@ -818,6 +867,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     return
                 } else {
                     charOffsetInFocusedNode = -1
+                    lastCharNavText = ""
                     navigateLinearFocus(forward = false)
                     return
                 }

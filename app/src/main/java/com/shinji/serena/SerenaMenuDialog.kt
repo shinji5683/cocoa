@@ -177,6 +177,16 @@ class serenaMenuDialog(
         }
     }
 
+    fun getCurrentItemText(): String {
+        return if (currentIndex in items.indices) {
+            val item = items[currentIndex]
+            val cleanTitle = item.title.stripMenuEmojis()
+            "${currentIndex + 1}番目、${cleanTitle}"
+        } else {
+            "閉じる ボタン"
+        }
+    }
+
     private fun focusAndAnnounceIndex(index: Int, initial: Boolean = false) {
         val targetView = itemViews.getOrNull(index) ?: return
         val service = SerenaScreenReaderService.instance ?: return
