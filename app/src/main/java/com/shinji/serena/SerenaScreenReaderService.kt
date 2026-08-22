@@ -1210,10 +1210,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun unlockKeyguardOrShowBouncer(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastUnlockTime < 1000L) return false
+        if (now - lastUnlockTime < 600L) return false
         lastUnlockTime = now
 
-        soundHelper?.playFocusMove()
+        soundHelper?.playActionDone()
+        speak("ロックを解除しています", TextToSpeech.QUEUE_FLUSH)
 
         // 1. Accessibility Action 解除（画面内の通知シェードやロック解除アクションを直接発火）
         performGlobalAction(AccessibilityService.GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
@@ -1228,21 +1229,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 2. 指紋センサー/中央ロックアイコンを完全に避けた2本指パラレル高速上スワイプ（X1: 30%, X2: 70%, Y: 72% -> 12%, 120ms）
+        // 2. Google TalkBack準拠の確実な上スワイプジェスチャー（Y: 85% -> 12%, 280ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
         val p1 = android.graphics.Path().apply {
-            moveTo(width * 0.30f, height * 0.72f)
-            lineTo(width * 0.30f, height * 0.12f)
+            moveTo(width * 0.35f, height * 0.85f)
+            lineTo(width * 0.35f, height * 0.12f)
         }
         val p2 = android.graphics.Path().apply {
-            moveTo(width * 0.70f, height * 0.72f)
-            lineTo(width * 0.70f, height * 0.12f)
+            moveTo(width * 0.65f, height * 0.85f)
+            lineTo(width * 0.65f, height * 0.12f)
         }
-        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 120)
-        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 120)
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 280)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 280)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke1)
             .addStroke(stroke2)
@@ -1254,18 +1255,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
-                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 400)
+                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 300)
+                autoFocusPinKeypadIfPresent()
             }
             override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCancelled(gestureDescription)
-                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 400)
+                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 300)
             }
         }, mainHandler)
 
-        // 3. バウンサー展開後のPINキー「1」即時オートフォーカス（多段ポーリング）
+        // 3. バウンサー展開後のPINキー・入力欄への多段オートフォーカス
         mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 150)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 350)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 650)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 400)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 800)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 1300)
         return dispatched
     }
 
