@@ -98,6 +98,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     var aiAutoLabelHelper: AiAutoLabelHelper? = null
     var morningSummaryHelper: MorningSummaryHelper? = null
+    var brailleController: com.shinji.serena.braille.BrailleDisplayController? = null
 
     // 通話時間計測用
     var isCallActive = false
@@ -134,6 +135,53 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} }
             aiAutoLabelHelper = AiAutoLabelHelper(safeContext)
             morningSummaryHelper = MorningSummaryHelper(this)
+
+            // 点字ディスプレイ（Braille Display）コントローラー初期化
+            brailleController = com.shinji.serena.braille.BrailleDisplayController(this, object : com.shinji.serena.braille.BrailleDisplayController.BrailleInteractionListener {
+                override fun onBrailleCommand(command: com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand, routingIndex: Int) {
+                    when (command) {
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.NAVIGATE_NEXT -> navigateLinearFocus(forward = true)
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.NAVIGATE_PREVIOUS -> navigateLinearFocus(forward = false)
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.NAVIGATE_UP -> cycleGranularity(forward = false)
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.NAVIGATE_DOWN -> cycleGranularity(forward = true)
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.PERFORM_CLICK -> performActivateCurrentFocus()
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.PERFORM_LONG_CLICK -> {
+                            val node = getAccessibilityFocusedNode() ?: lastHoveredNode
+                            node?.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK)
+                            soundHelper?.playClick()
+                        }
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.ACTION_BACK -> performGlobalAction(GLOBAL_ACTION_BACK)
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.ACTION_HOME -> performGlobalAction(GLOBAL_ACTION_HOME)
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.ACTION_MENU -> showNormalSerenaMenu()
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.ACTION_NOTIFICATIONS -> performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.SCROLL_FORWARD -> scrollVerticalForward()
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.SCROLL_BACKWARD -> scrollVerticalBackward()
+                        com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand.ROUTING_CLICK -> performActivateCurrentFocus()
+                        else -> {}
+                    }
+                }
+
+                override fun onBrailleConnectionStateChanged(connected: Boolean, deviceName: String) {
+                    if (connected) {
+                        soundHelper?.playActionDone()
+                        speak("点字ディスプレイ $deviceName に接続しました", TextToSpeech.QUEUE_FLUSH)
+                    } else {
+                        soundHelper?.playScroll()
+                        if (deviceName.isNotEmpty()) {
+                            speak("点字ディスプレイ $deviceName が切断されました", TextToSpeech.QUEUE_FLUSH)
+                        }
+                    }
+                }
+
+                override fun onBrailleKeyInput(dots: Int) {
+                    soundHelper?.playClick()
+                }
+            }).apply {
+                try {
+                    // ペアリング済みの点字ディスプレイがあれば自動接続を試行
+                    connectToPairedBrailleDevice()
+                } catch (_: Exception) {}
+            }
 
             shakeDetectorHelper = ShakeDetectorHelper(safeContext) {
                 announceFullStatus()
@@ -1614,6 +1662,47 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         clickNodeByGesture(focusedNode)
     }
 
+    fun performActivateCurrentFocus(): Boolean {
+        val menu = activeMenuDialog
+        if (menu != null && menu.isShowing) {
+            if (menu.performCurrentItemClick()) {
+                soundHelper?.playClick()
+                return true
+            }
+        }
+
+        val focusNode = getAccessibilityFocusedNode() ?: lastHoveredNode ?: return false
+        val rawText = getNodeText(focusNode)
+        val cleanText = rawText.replace(Regex("[\\p{So}\\p{Cn}\\p{Cs}\\p{Extended_Pictographic}\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u26FF\u2700-\u27BF]"), "").replace(Regex("\\s+"), " ").trim()
+        val announceText = if (cleanText.isNotEmpty()) "$cleanText を実行" else "実行"
+
+        // 1. 直近ノードの ACTION_CLICK
+        if (focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
+            soundHelper?.playClick()
+            speak(announceText, TextToSpeech.QUEUE_FLUSH)
+            return true
+        }
+
+        // 2. 親ノードの ACTION_CLICK
+        var parent = focusNode.parent
+        while (parent != null) {
+            if (parent.isClickable || parent.isCheckable) {
+                if (parent.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
+                    soundHelper?.playClick()
+                    speak(announceText, TextToSpeech.QUEUE_FLUSH)
+                    return true
+                }
+            }
+            parent = parent.parent
+        }
+
+        // 3. 物理座標ジェスチャークリック
+        clickNodeByGesture(focusNode)
+        soundHelper?.playClick()
+        speak(announceText, TextToSpeech.QUEUE_FLUSH)
+        return true
+    }
+
     fun clickNodeByGesture(node: AccessibilityNodeInfo) {
         val rect = android.graphics.Rect()
         node.getBoundsInScreen(rect)
@@ -3005,6 +3094,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastSpokenTime = currentTime
         soundHelper?.playFocusMovePanned(normalizedX)
         speak(announcement, TextToSpeech.QUEUE_FLUSH)
+
+        // 点字ディスプレイ（Braille Display）へリアルタイム出力
+        try {
+            brailleController?.displayNodeInfo(announcement)
+        } catch (_: Exception) {}
     }
 
     private fun buildNodeAnnouncement(node: AccessibilityNodeInfo): String {
@@ -3599,6 +3693,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         wifiConnectivityHelper = null
         batteryHelper?.stop()
         batteryHelper = null
+        brailleController?.disconnect()
+        brailleController = null
         shakeDetectorHelper?.stop()
         stopSpeech()
         unregisterTimeTickReceiver()
