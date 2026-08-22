@@ -44,7 +44,7 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
     }
 
     var isEnabled: Boolean
-        get() = prefs.getBoolean(KEY_ENABLED, true)
+        get() = prefs.getBoolean(KEY_ENABLED, false)
         set(value) {
             prefs.edit().putBoolean(KEY_ENABLED, value).apply()
             if (value) start() else stop()

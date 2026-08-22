@@ -545,6 +545,19 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     override fun onDestroy() {
+        try {
+            val endMsg = when (mode) {
+                "OCR" -> "文字読み取りカメラを終了しました。"
+                "FACE" -> "表情・人物認識カメラを終了しました。"
+                "INDOOR" -> "インドア空間ナビを終了しました。"
+                "FOOD_EXPIRATION" -> "食品スキャナーを終了しました。"
+                "WALK_TRANSIT" -> "歩行ナビを終了しました。"
+                "BARCODE_DOC" -> "バーコードスキャナーを終了しました。"
+                else -> "リアルタイムカメラ実況を終了しました。"
+            }
+            SerenaScreenReaderService.instance?.speak("🌸 $endMsg", TextToSpeech.QUEUE_FLUSH)
+        } catch (_: Exception) {}
+
         super.onDestroy()
         try {
             tts?.stop()
