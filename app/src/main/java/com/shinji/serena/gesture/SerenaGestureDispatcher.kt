@@ -186,7 +186,7 @@ class SerenaGestureDispatcher(
             AccessibilityService.GESTURE_2_FINGER_SWIPE_UP -> {
                 if (service.isKeyguardLocked()) {
                     service.dismissKeyguardViaOs()
-                    return false
+                    return true
                 }
                 // 2本指上フリック: 次へ縦スクロール
                 service.scrollVerticalForward()

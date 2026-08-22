@@ -2619,22 +2619,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> {
-                val node = lastHoveredNode
-                if (node != null && isKeyboardOrPinKeyNode(node)) {
-                    val isRecentFocus = (System.currentTimeMillis() - lastFocusTimeMs) < 2500
-                    if (isRecentFocus) {
-                        soundHelper?.playClick()
-                        val text = getNodeText(node)
-                        if (text.isNotEmpty()) {
-                            speak("$text 入力", TextToSpeech.QUEUE_FLUSH)
-                        }
-                        node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                        clickNodeByGesture(node)
-                    }
-                }
-            }
-
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
                 soundHelper?.playClick()
                 val node = event.source
@@ -3353,13 +3337,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 3. PINテンキー（「1」ボタン）へのフォーカス移動
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            autoFocusPinKeypadIfPresent()
-        }, 250)
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            autoFocusPinKeypadIfPresent()
-        }, 600)
+        // 3. 上スワイプで確実にPIN画面（bouncer）を表示
+        unlockKeyguardOrShowBouncer()
     }
 
     private fun registerTimeTickReceiver() {
