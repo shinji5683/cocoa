@@ -24,3 +24,9 @@ build_output.txt
 *.txt
 scratch/
 vt_response.html
+# Local JDK for Gradle build
+jdk-21/
+*.zip
+
+# Local memo for modules list
+tools/modules.json
