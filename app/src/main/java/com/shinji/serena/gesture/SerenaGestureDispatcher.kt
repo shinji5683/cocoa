@@ -121,11 +121,6 @@ class SerenaGestureDispatcher(
                     return true
                 }
 
-                // ロック画面でフォーカス対象がない/クリック不能な場所をダブルタップした時のみ解除スワイプを発動
-                if (service.isKeyguardLocked()) {
-                    return service.unlockKeyguardOrShowBouncer()
-                }
-
                 return false
             }
             AccessibilityService.GESTURE_DOUBLE_TAP_AND_HOLD -> {

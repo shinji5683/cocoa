@@ -3486,12 +3486,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     Intent.ACTION_TIME_TICK -> checkHourlyChime()
                     Intent.ACTION_SCREEN_OFF -> {
                         soundHelper?.playClick()
-                        speak("画面をロックしました", TextToSpeech.QUEUE_FLUSH)
+                        speak("画面がロックされました", TextToSpeech.QUEUE_FLUSH)
                     }
                     Intent.ACTION_SCREEN_ON -> {
                         if (isKeyguardLocked()) {
                             soundHelper?.playFocusMove()
-                            speak("ロック画面です。2本指で上にスワイプしてロックを解除します。", TextToSpeech.QUEUE_FLUSH)
+                            speak("ロック画面です。2本指で上にスワイプして解除してください。", TextToSpeech.QUEUE_FLUSH)
                         }
                     }
                     Intent.ACTION_USER_PRESENT -> {
