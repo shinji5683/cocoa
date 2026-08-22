@@ -85,13 +85,14 @@ class GeminiNanoEngine(private val context: Context) {
     }
 
     data class PersonAnalysisDetail(
-        val position: String,          // 例: "正面", "左側", "右奥"
+        val position: String,          // 例: "正面", "左", "右斜め前"
         val distanceMeters: String,    // 例: "すぐ近く（約50cm）", "約1.5m", "約3m"
         val genderAndAge: String,      // 例: "若い女性", "大人の男性", "女性", "男性"
         val clothingColor: String,     // 例: "白い服", "黒い服", "青系の服"
         val pantsColor: String,        // 例: "黒いズボン", "ジーンズ"
-        val expression: String,        // 例: "満面の明るい笑顔", "穏やかな微笑み", "真剣な表情", "少し暗めの落ち着いた表情"
-        val emotionalMeaning: String,  // 例: "とても楽しそうに喜んでいる様子", "安心している雰囲気", "深く考え事をしている様子"
+        val expression: String,        // 例: "満面の笑顔", "穏やかな微笑み", "真剣な表情"
+        val emotionalMeaning: String,  // 例: "とても嬉しそうに楽しんでいる様子", "安心している雰囲気"
+        val gazeAndPose: String,       // 例: "まっすぐこちらを見ています", "目をつぶってリラックスしています", "首をかしげています"
         val isLookingAtCamera: Boolean
     )
 
@@ -113,22 +114,23 @@ class GeminiNanoEngine(private val context: Context) {
         if (persons.isNotEmpty()) {
             if (persons.size == 1) {
                 val p = persons[0]
-                val clothesDesc = if (p.clothingColor.isNotEmpty()) "${p.clothingColor}を着た" else ""
+                val clothesDesc = if (p.clothingColor.isNotEmpty() && p.clothingColor != "服") "${p.clothingColor}を着た" else ""
                 val personNoun = if (p.genderAndAge.isNotEmpty()) p.genderAndAge else "人"
                 val distDesc = if (p.distanceMeters.isNotEmpty()) "（${p.distanceMeters}）" else ""
                 sb.append("${p.position}${distDesc}に、${clothesDesc}${personNoun}が1人います。")
-                sb.append("表情は${p.expression}で、${p.emotionalMeaning}です。")
-                if (p.isLookingAtCamera) {
-                    sb.append("視線はこちらを向いています。")
+                if (p.gazeAndPose.isNotEmpty()) {
+                    sb.append("${p.gazeAndPose}。")
                 }
+                sb.append("表情は${p.expression}で、${p.emotionalMeaning}です。")
             } else {
                 sb.append("人物が${persons.size}人います。")
                 persons.take(3).forEachIndexed { idx, p ->
                     val numStr = "${idx + 1}人目は"
                     val personNoun = if (p.genderAndAge.isNotEmpty()) p.genderAndAge else "人"
                     val distDesc = if (p.distanceMeters.isNotEmpty()) "（${p.distanceMeters}）" else ""
-                    val clothesDesc = if (p.clothingColor.isNotEmpty()) "${p.clothingColor}で、" else ""
-                    sb.append("${numStr}${p.position}${distDesc}の${personNoun}、${clothesDesc}表情は${p.expression}（${p.emotionalMeaning}）。")
+                    val clothesDesc = if (p.clothingColor.isNotEmpty() && p.clothingColor != "服") "${p.clothingColor}で、" else ""
+                    val gazePart = if (p.gazeAndPose.isNotEmpty()) "${p.gazeAndPose}、" else ""
+                    sb.append("${numStr}${p.position}${distDesc}の${personNoun}、${clothesDesc}${gazePart}表情は${p.expression}（${p.emotionalMeaning}）。")
                 }
             }
         } else {

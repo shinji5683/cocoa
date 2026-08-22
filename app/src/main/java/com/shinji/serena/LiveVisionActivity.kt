@@ -507,8 +507,9 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 genderAndAge = attrs.genderAndAge,
                                 clothingColor = attrs.clothingDescription,
                                 pantsColor = "ボトムス",
-                                expression = "${attrs.emotion.category}（${attrs.emotion.fullDescription}）",
+                                expression = attrs.emotion.category,
                                 emotionalMeaning = attrs.emotion.emotionalVibe,
+                                gazeAndPose = attrs.emotion.gazeAndHeadPose,
                                 isLookingAtCamera = attrs.emotion.gazeAndHeadPose.contains("こちらを見ています")
                             )
                         }
@@ -527,7 +528,8 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     sceneSummary
                                 } else if (persons.isNotEmpty()) {
                                     val p = persons[0]
-                                    "${p.position} ${p.distanceMeters}に${p.genderAndAge}がいます。表情は${p.expression}。"
+                                    val clothesPart = if (p.clothingColor.isNotEmpty() && p.clothingColor != "服") "${p.clothingColor}を着た" else ""
+                                    "${p.position}（${p.distanceMeters}）に、${clothesPart}${p.genderAndAge}が1人います。${p.gazeAndPose}。表情は${p.expression}で、${p.emotionalMeaning}です。"
                                 } else if (recognizedTexts.isNotEmpty()) {
                                     "文字を検出: ${recognizedTexts.take(2).joinToString("、")}"
                                 } else {

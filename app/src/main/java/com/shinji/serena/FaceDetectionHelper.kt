@@ -76,23 +76,24 @@ class FaceDetectionHelper(private val context: Context) {
 
         // 表情と雰囲気の判定
         val (expressionStr, vibeStr) = when {
-            smile >= 0.80f -> Pair("パッと明るい満面の笑顔", "とても嬉しそうにしています")
+            smile >= 0.80f -> Pair("満面の笑顔", "とても嬉しそうにしています")
             smile in 0.50f..0.80f -> Pair("ニッコリ笑顔", "親しみやすく明るい雰囲気です")
-            smile in 0.20f..0.50f -> Pair("優しい微笑み（ほほえみ）", "穏やかで安心している様子です")
+            smile in 0.20f..0.50f -> Pair("優しい微笑み", "穏やかで安心している様子です")
             smile in 0.07f..0.20f -> Pair("穏やかでリラックスした表情", "落ち着いた雰囲気です")
             else -> {
-                if (leftEye > 0.85f && rightEye > 0.85f) Pair("目を丸くした驚きの表情", "興味深そうにこちらを見ています")
-                else if (leftEye < 0.30f && rightEye < 0.30f) Pair("目を細めた安らぎの表情", "落ち着いてリラックスしています")
+                if (leftEye > 0.85f && rightEye > 0.85f) Pair("目を丸くした表情", "興味深そうにこちらを見ています")
+                else if (leftEye < 0.30f && rightEye < 0.30f) Pair("安らぎの表情", "落ち着いてリラックスしています")
                 else Pair("真剣で落ち着いた表情", "真面目にこちらに注目しています")
             }
         }
 
+        // 顔の状態・目・視線
         val eyesStr = when {
-            leftEye < 0.20f && rightEye < 0.20f -> "目を閉じています"
+            leftEye < 0.20f && rightEye < 0.20f -> "目をつぶってリラックスしています"
             leftEye > 0.60f && rightEye < 0.20f -> "右目でウインクしています😉"
             rightEye > 0.60f && leftEye < 0.20f -> "左目でウインクしています😉"
             leftEye > 0.40f && rightEye > 0.40f -> "まっすぐこちらを見ています"
-            else -> ""
+            else -> "リラックスした目元です"
         }
 
         val details = mutableListOf<String>()
@@ -101,10 +102,8 @@ class FaceDetectionHelper(private val context: Context) {
         } else {
             details.add("${directionStr}に人が${faceCount}人います")
         }
-        details.add("表情は${expressionStr}で、${vibeStr}")
-        if (eyesStr.isNotEmpty()) {
-            details.add(eyesStr)
-        }
+        details.add(eyesStr)
+        details.add("表情は${expressionStr}で、${vibeStr}です")
 
         return details.joinToString("。") + "。"
     }

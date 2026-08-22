@@ -61,9 +61,9 @@ object AiVisionFeatureHelper {
         val eulerY = face.headEulerAngleY // 左右（正が右向き、負が左向き）
         val eulerZ = face.headEulerAngleZ // 首の傾き
 
-        // 視線・ポーズ判定
+        // 視線・顔の向き・ポーズ判定（どんな顔でどうなっているか）
         val gazeStr = when {
-            leftEye < 0.20f && rightEye < 0.20f -> "目を閉じています"
+            leftEye < 0.20f && rightEye < 0.20f -> "目をつぶってリラックスしています"
             leftEye > 0.60f && rightEye < 0.20f -> "右目でウインクしています😉"
             rightEye > 0.60f && leftEye < 0.20f -> "左目でウインクしています😉"
             eulerY > 20f -> "顔を右に向けています"
@@ -77,13 +77,13 @@ object AiVisionFeatureHelper {
         // 感情カテゴリとニュアンス判定
         val (emotionCategory, emotionalVibe) = when {
             smile >= 0.80f -> {
-                Pair("パッと明るい満面の笑み", "とても嬉しそうに楽しんでいる様子です！")
+                Pair("満面の笑顔", "とても嬉しそうに楽しんでいる様子です")
             }
             smile in 0.50f..0.80f -> {
                 Pair("ニッコリ笑顔", "親しみやすく明るい雰囲気です")
             }
             smile in 0.20f..0.50f -> {
-                Pair("優しい微笑み（ほほえみ）", "穏やかで安心している様子です")
+                Pair("優しい微笑み", "穏やかで安心している様子です")
             }
             smile in 0.07f..0.20f -> {
                 Pair("穏やかでリラックスした表情", "落ち着いた雰囲気です")
@@ -95,7 +95,7 @@ object AiVisionFeatureHelper {
                         Pair("目を丸くした表情", "少し驚いたような、興味津々な様子です")
                     }
                     leftEye < 0.30f && rightEye < 0.30f -> {
-                        Pair("目を細めた安らぎの表情", "落ち着いてリラックスしています")
+                        Pair("安らぎの表情", "落ち着いてリラックスしています")
                     }
                     else -> {
                         Pair("真剣で落ち着いた表情", "真面目にこちらに注目しています")
@@ -104,7 +104,8 @@ object AiVisionFeatureHelper {
             }
         }
 
-        val fullDesc = "${emotionCategory}で、${emotionalVibe}。${gazeStr}"
+        // 自然な日本語（重複完全ゼロ）
+        val fullDesc = "${gazeStr}。表情は${emotionCategory}で、${emotionalVibe}。"
         val emotionDetail = DetailedEmotion(
             category = emotionCategory,
             emotionalVibe = emotionalVibe,
