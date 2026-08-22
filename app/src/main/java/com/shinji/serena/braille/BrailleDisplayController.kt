@@ -78,6 +78,18 @@ class BrailleDisplayController(
     }
 
     /**
+     * システムアナウンス・通知・着信情報を点字ディスプレイに即時表示
+     */
+    fun displayAnnouncement(text: String) {
+        if (text.isEmpty()) return
+        currentDisplayText = text
+        val brailleBytes = JapaneseBrailleTranslator.textToBrailleBytes(text)
+        val formattedBuffer = protocolHandler.formatDisplayBuffer(brailleBytes, -1)
+        currentBrailleBuffer = formattedBuffer
+        sendBrailleBufferToDevice(formattedBuffer)
+    }
+
+    /**
      * 生の点字セルバイト列をディスプレイへ送信
      */
     @Synchronized

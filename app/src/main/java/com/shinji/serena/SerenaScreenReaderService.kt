@@ -1762,7 +1762,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val curtainLabel = if (screenCurtainHelper?.isCurtainEnabled == true) "🌑 スクリーンカーテンを解除" else "🌑 スクリーンカーテン (画面非表示・節電)"
         val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
         val modeLabel = if (isTalkBackMode) "🔄 モード切替 (現在: TalkBack互換モード)" else "🔄 モード切替 (現在: serenaオリジナルモード)"
-        val filterName = notificationFilterHelper?.currentMode?.displayName ?: "自動"
+        val filterName = notificationFilterHelper?.detailLevel?.displayName ?: "すべて読み上げ"
         val items = listOf(
             serenaMenuItem("💡", "画面スマート要約 (画面の全体構造・項目数・詳細解説)") {
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -1798,7 +1798,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("📋", "クリップボード履歴 (過去のコピー)") {
                 showClipboardHistoryDialog(null)
             },
-            serenaMenuItem("💌", "通知フィルター (現在: $filterName)") {
+            serenaMenuItem("💌", "通知・着信読み上げ設定 (現在: ${notificationFilterHelper?.detailLevel?.displayName ?: "すべて読み上げ"})") {
                 cycleNotificationFilterMode()
             },
             serenaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
@@ -2070,9 +2070,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun cycleNotificationFilterMode() {
-        val mode = notificationFilterHelper?.cycleFilterMode()
+        val level = notificationFilterHelper?.cycleDetailLevel()
         soundHelper?.playActionDone()
-        speak("通知フィルター: ${mode?.displayName}", TextToSpeech.QUEUE_FLUSH)
+        speak("通知・着信読み上げ: ${level?.displayName}", TextToSpeech.QUEUE_FLUSH)
     }
 
     fun announceFullStatus() {
@@ -2751,13 +2751,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         when (event.eventType) {
             AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED -> {
-                val notificationText = event.text.joinToString(" ").trim()
-                if (notificationText.isNotEmpty()) {
-                    if (notificationFilterHelper?.shouldAnnounce(pkgName, notificationText) == true) {
-                        val summary = notificationFilterHelper?.formatSmartNotificationSummary(pkgName, "", notificationText)
-                            ?: "通知: $notificationText"
-                        speak(summary, TextToSpeech.QUEUE_ADD)
+                val result = notificationFilterHelper?.analyzeEvent(event)
+                if (result != null && result.shouldAnnounce) {
+                    if (result.isIncomingCall) {
+                        soundHelper?.playFocusMove()
+                        speak("【着信】" + result.formattedAnnouncement, TextToSpeech.QUEUE_FLUSH)
+                    } else {
+                        soundHelper?.playScroll()
+                        speak(result.formattedAnnouncement, TextToSpeech.QUEUE_ADD)
                     }
+
+                    // 点字ディスプレイにも通知/着信テキストをリアルタイム出力
+                    brailleController?.displayAnnouncement(result.formattedAnnouncement)
                 }
             }
 

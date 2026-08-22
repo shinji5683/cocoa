@@ -1,50 +1,187 @@
 package com.shinji.serena
 
+import android.app.Notification
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.view.accessibility.AccessibilityEvent
 
-enum class NotificationFilterMode(val displayName: String) {
-    ALL("すべての通知を読み上げ"),
-    IMPORTANT_ONLY("重要通知のみ (電話・メッセージ優先)"),
-    SILENT_SUMMARY("通知読み上げオフ (静音要約)")
+/**
+ * 読み上げ詳細レベル
+ */
+enum class NotificationReadDetailLevel(val displayName: String) {
+    FULL("すべて読み上げ（アプリ名・送信者・内容）"),
+    SENDER_ONLY("送信者まで（内容非表示・プライバシー保護）"),
+    APP_NAME_ONLY("アプリ名のみ"),
+    CALL_ONLY("着信のみ読み上げ（通知はミュート）"),
+    MUTED("通知・着信すべてミュート")
 }
 
-class SmartNotificationFilterHelper(context: Context) {
+/**
+ * 通知・着信の解析結果
+ */
+data class NotificationAnalysisResult(
+    val isIncomingCall: Boolean,       // 着信かどうか
+    val appDisplayName: String,        // アプリ名（LINE、電話、Gmail等）
+    val senderOrTitle: String,         // 発信者名・送信者名・タイトル
+    val contentBody: String,           // 通知本文・メッセージ内容
+    val formattedAnnouncement: String, // 最終読み上げテキスト
+    val shouldAnnounce: Boolean        // 読み上げるべきか
+)
+
+/**
+ * SmartNotificationFilterHelper
+ *
+ * 通知と着信を完全に区別し、「何の通知/着信か」「誰からか」「内容」を高精度に解析して読み上げるヘルパー。
+ * ユーザーが読み上げ詳細レベル（FULL, SENDER_ONLY, APP_NAME_ONLY, CALL_ONLY, MUTED）を自由に切り替え可能。
+ */
+class SmartNotificationFilterHelper(private val context: Context) {
 
     companion object {
         private const val PREFS_NAME = "serena_notification_filter_prefs"
-        private const val KEY_FILTER_MODE = "notification_filter_mode"
+        private const val KEY_DETAIL_LEVEL = "notification_read_detail_level"
+        private const val KEY_ANNOUNCE_CALLS = "notification_announce_calls"
+        private const val KEY_FILTER_NOISE = "notification_filter_noise"
     }
 
     private val prefs: SharedPreferences = context.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    var currentMode: NotificationFilterMode
+    var detailLevel: NotificationReadDetailLevel
         get() {
-            val name = prefs.getString(KEY_FILTER_MODE, null) ?: return NotificationFilterMode.IMPORTANT_ONLY
+            val name = prefs.getString(KEY_DETAIL_LEVEL, null) ?: return NotificationReadDetailLevel.FULL
             return try {
-                NotificationFilterMode.valueOf(name)
-            } catch (e: Exception) {
-                NotificationFilterMode.IMPORTANT_ONLY
+                NotificationReadDetailLevel.valueOf(name)
+            } catch (_: Exception) {
+                NotificationReadDetailLevel.FULL
             }
         }
         set(value) {
-            prefs.edit().putString(KEY_FILTER_MODE, value.name).apply()
+            prefs.edit().putString(KEY_DETAIL_LEVEL, value.name).apply()
         }
 
-    fun cycleFilterMode(): NotificationFilterMode {
-        val modes = NotificationFilterMode.values()
-        val nextIndex = (currentMode.ordinal + 1) % modes.size
-        currentMode = modes[nextIndex]
-        return currentMode
+    var isAnnounceCallsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_ANNOUNCE_CALLS, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_ANNOUNCE_CALLS, value).apply()
+        }
+
+    var isNoiseFilterEnabled: Boolean
+        get() = prefs.getBoolean(KEY_FILTER_NOISE, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_FILTER_NOISE, value).apply()
+        }
+
+    fun cycleDetailLevel(): NotificationReadDetailLevel {
+        val levels = NotificationReadDetailLevel.values()
+        val nextIndex = (detailLevel.ordinal + 1) % levels.size
+        detailLevel = levels[nextIndex]
+        return detailLevel
     }
 
-    fun shouldAnnounce(packageName: String, text: String): Boolean {
-        val textLower = text.lowercase()
-        val pkgLower = packageName.lowercase()
+    /**
+     * AccessibilityEvent (TYPE_NOTIFICATION_STATE_CHANGED) から通知/着信を詳細解析
+     */
+    fun analyzeEvent(event: AccessibilityEvent): NotificationAnalysisResult? {
+        val pkgName = event.packageName?.toString() ?: ""
+        val parcelable = event.parcelableData
+        var title = ""
+        var text = ""
+        var category = ""
+        var isCall = false
 
-        // 1. Android OSの重複システム充電通知（「このデバイスをUSBで充電しています」等）を完全除外！
-        // SerenaのBatteryStateHelperが高精度に充電速度・残量をアナウンスするため、OS通知は不要。
-        val isSystemChargingNoise = (pkgLower == "android" || pkgLower.contains("systemui")) && (
+        if (parcelable is Notification) {
+            category = parcelable.category ?: ""
+            val extras = parcelable.extras
+            if (extras != null) {
+                title = extractCharSequence(extras, Notification.EXTRA_TITLE)
+                text = extractCharSequence(extras, Notification.EXTRA_TEXT)
+
+                val bigText = extractCharSequence(extras, Notification.EXTRA_BIG_TEXT)
+                if (bigText.isNotEmpty()) {
+                    text = bigText
+                }
+
+                val subText = extractCharSequence(extras, Notification.EXTRA_SUB_TEXT)
+                if (title.isEmpty() && subText.isNotEmpty()) {
+                    title = subText
+                }
+            }
+
+            // カテゴリ判定 (CATEGORY_CALL)
+            if (category == Notification.CATEGORY_CALL) {
+                isCall = true
+            }
+        }
+
+        // フォールバック: event.text
+        if (text.isEmpty() && event.text.isNotEmpty()) {
+            val combined = event.text.joinToString(" ").trim()
+            if (title.isEmpty()) {
+                text = combined
+            } else {
+                text = combined
+            }
+        }
+
+        val pkgLower = pkgName.lowercase()
+        val textLower = text.lowercase()
+        val titleLower = title.lowercase()
+
+        // アプリ名・キーワードから着信判定
+        val isCallKeyword = textLower.contains("着信") || titleLower.contains("着信") ||
+                textLower.contains("通話中") || titleLower.contains("通話中") ||
+                textLower.contains("呼出") || titleLower.contains("呼出") ||
+                textLower.contains("incoming call") || titleLower.contains("incoming call")
+
+        val isPhoneApp = pkgLower.contains("dialer") || pkgLower.contains("incallui") || pkgLower.contains("phone") || pkgLower.contains("telecom")
+
+        if (isCallKeyword || (isPhoneApp && (category == Notification.CATEGORY_CALL || textLower.contains("電話") || isCall))) {
+            isCall = true
+        }
+
+        // ノイズ通知（OS充電通知、宣伝など）のフィルタリング
+        if (isNoiseFilterEnabled && isSystemOrAdNoise(pkgLower, titleLower, textLower)) {
+            return null
+        }
+
+        val appDisplayName = getAppFriendlyName(pkgName)
+
+        // 読み上げ要否の判定
+        val currentLevel = detailLevel
+        if (currentLevel == NotificationReadDetailLevel.MUTED) {
+            return NotificationAnalysisResult(isCall, appDisplayName, title, text, "", false)
+        }
+
+        if (currentLevel == NotificationReadDetailLevel.CALL_ONLY && !isCall) {
+            return NotificationAnalysisResult(false, appDisplayName, title, text, "", false)
+        }
+
+        // 読み上げテキストの構築
+        val announcement = buildAnnouncementText(isCall, appDisplayName, title, text, currentLevel)
+
+        return NotificationAnalysisResult(
+            isIncomingCall = isCall,
+            appDisplayName = appDisplayName,
+            senderOrTitle = title,
+            contentBody = text,
+            formattedAnnouncement = announcement,
+            shouldAnnounce = announcement.isNotEmpty()
+        )
+    }
+
+    private fun extractCharSequence(bundle: Bundle, key: String): String {
+        return try {
+            bundle.getCharSequence(key)?.toString()?.trim() ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    private fun isSystemOrAdNoise(pkgLower: String, titleLower: String, textLower: String): Boolean {
+        // システム充電・USB通知の除外
+        val isSystemCharging = (pkgLower == "android" || pkgLower.contains("systemui")) && (
                 textLower.contains("usbで充電") ||
                 textLower.contains("充電しています") ||
                 textLower.contains("充電中") ||
@@ -52,88 +189,101 @@ class SmartNotificationFilterHelper(context: Context) {
                 textLower.contains("usb を接続") ||
                 textLower.contains("usb 接続")
         )
-        if (isSystemChargingNoise) return false
+        if (isSystemCharging) return true
 
-        val mode = currentMode
-        if (mode == NotificationFilterMode.SILENT_SUMMARY) return false
-        if (mode == NotificationFilterMode.ALL) return true
-
-        val isMessagingOrCallApp = pkgLower.contains("dialer") ||
-                pkgLower.contains("incallui") ||
-                pkgLower.contains("phone") ||
-                pkgLower.contains("line") ||
-                pkgLower.contains("whatsapp") ||
-                pkgLower.contains("skype") ||
-                pkgLower.contains("teams") ||
-                pkgLower.contains("zoom") ||
-                pkgLower.contains("orca") ||
-                pkgLower.contains("kakao") ||
-                pkgLower.contains("telegram") ||
-                pkgLower.contains("sms") ||
-                pkgLower.contains("message") ||
-                pkgLower.contains("gmail") ||
-                pkgLower.contains("mail")
-
-        val isImportantKeyword = textLower.contains("着信") ||
-                textLower.contains("通話") ||
-                textLower.contains("電話") ||
-                textLower.contains("緊急") ||
-                textLower.contains("警報") ||
-                textLower.contains("コード") ||
-                textLower.contains("認証")
-
-        val isAdOrGameNoise = textLower.contains("イベント開催") ||
+        // 宣伝・ガチャ・クーポン通知の除外
+        val isAdNoise = textLower.contains("イベント開催") ||
                 textLower.contains("ガチャ") ||
                 textLower.contains("ログインボーナス") ||
                 textLower.contains("セール") ||
                 textLower.contains("クーポン") ||
-                textLower.contains("お得な情報")
+                textLower.contains("お得な情報") ||
+                titleLower.contains("セール")
 
-        if (isAdOrGameNoise && !isImportantKeyword) return false
+        val isImportant = textLower.contains("着信") || textLower.contains("緊急") ||
+                textLower.contains("認証") || textLower.contains("コード")
 
-        return isMessagingOrCallApp || isImportantKeyword
+        return isAdNoise && !isImportant
     }
 
-    /**
-     * 長文通知・メッセージを要約して自然な日本語でアナウンス
-     */
-    fun formatSmartNotificationSummary(packageName: String, title: String, text: String): String {
-        val cleanTitle = title.trim()
-        val cleanText = text.trim()
+    private fun getAppFriendlyName(packageName: String): String {
         val pkgLower = packageName.lowercase()
-
-        val appName = when {
+        return when {
+            pkgLower.contains("dialer") || pkgLower.contains("phone") || pkgLower.contains("incallui") -> "電話"
             pkgLower.contains("line") -> "LINE"
             pkgLower.contains("whatsapp") -> "WhatsApp"
-            pkgLower.contains("gmail") || pkgLower.contains("mail") -> "メール"
-            pkgLower.contains("sms") || pkgLower.contains("message") -> "SMSメッセージ"
             pkgLower.contains("discord") -> "Discord"
+            pkgLower.contains("gmail") || pkgLower.contains("mail") -> "Gmail"
+            pkgLower.contains("sms") || pkgLower.contains("message") || pkgLower.contains("mms") -> "メッセージ"
             pkgLower.contains("twitter") || pkgLower.contains("x.android") -> "X"
+            pkgLower.contains("instagram") -> "Instagram"
             pkgLower.contains("teams") -> "Teams"
             pkgLower.contains("slack") -> "Slack"
-            pkgLower.contains("dialer") || pkgLower.contains("phone") -> "お電話"
-            else -> "通知"
+            pkgLower.contains("zoom") -> "Zoom"
+            pkgLower.contains("skype") -> "Skype"
+            pkgLower.contains("calendar") -> "カレンダー"
+            pkgLower.contains("clock") || pkgLower.contains("deskclock") -> "アラーム"
+            else -> {
+                try {
+                    val pm = context.packageManager
+                    val appInfo = pm.getApplicationInfo(packageName, 0)
+                    pm.getApplicationLabel(appInfo).toString()
+                } catch (_: Exception) {
+                    "アプリ"
+                }
+            }
+        }
+    }
+
+    private fun buildAnnouncementText(
+        isCall: Boolean,
+        appDisplayName: String,
+        title: String,
+        text: String,
+        level: NotificationReadDetailLevel
+    ): String {
+        val cleanTitle = title.trim()
+        val cleanText = text.trim()
+
+        // 1. 着信の場合
+        if (isCall) {
+            val callerName = if (cleanTitle.isNotEmpty()) cleanTitle else if (cleanText.isNotEmpty()) cleanText else "不明な発信者"
+            return when (level) {
+                NotificationReadDetailLevel.APP_NAME_ONLY -> "${appDisplayName}の着信です"
+                else -> "${appDisplayName}着信、${callerName}さんから"
+            }
         }
 
-        if (cleanTitle.isEmpty() && cleanText.isEmpty()) {
-            return "${appName}の新しい通知があります。"
-        }
-
-        // 短いメッセージならそのまま、長いメッセージは先頭要約
-        val bodySummary = if (cleanText.length > 50) {
-            cleanText.substring(0, 48) + "、以下省略"
+        // 2. 一般通知の場合
+        val bodySummary = if (cleanText.length > 60) {
+            cleanText.substring(0, 58) + "、以下省略"
         } else {
             cleanText
         }
 
-        return if (cleanTitle.isNotEmpty() && bodySummary.isNotEmpty()) {
-            "${cleanTitle}さんから${appName}：「${bodySummary}」"
-        } else if (cleanTitle.isNotEmpty()) {
-            "${appName}：${cleanTitle}"
-        } else {
-            "${appName}：${bodySummary}"
+        return when (level) {
+            NotificationReadDetailLevel.APP_NAME_ONLY -> {
+                "${appDisplayName}の通知"
+            }
+            NotificationReadDetailLevel.SENDER_ONLY -> {
+                if (cleanTitle.isNotEmpty()) {
+                    "${appDisplayName}、${cleanTitle}さんから"
+                } else {
+                    "${appDisplayName}の新しい通知"
+                }
+            }
+            NotificationReadDetailLevel.FULL -> {
+                if (cleanTitle.isNotEmpty() && bodySummary.isNotEmpty()) {
+                    "${appDisplayName}、${cleanTitle}さんから「${bodySummary}」"
+                } else if (cleanTitle.isNotEmpty()) {
+                    "${appDisplayName}、${cleanTitle}"
+                } else if (bodySummary.isNotEmpty()) {
+                    "${appDisplayName}、「${bodySummary}」"
+                } else {
+                    "${appDisplayName}の通知があります"
+                }
+            }
+            else -> ""
         }
     }
 }
-
-
