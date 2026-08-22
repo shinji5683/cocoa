@@ -1050,9 +1050,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun autoFocusPinKeypadIfPresent(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastPinFocusTimeMs < 1500L) return false
+        if (now - lastPinFocusTimeMs < 800L) return false
 
-        val root = rootInActiveWindow ?: return false
+        val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         val pinButtons = mutableListOf<AccessibilityNodeInfo>()
 
         fun findPinNodes(node: AccessibilityNodeInfo?) {
@@ -1061,14 +1061,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val text = node.text?.toString()?.trim() ?: ""
             val desc = node.contentDescription?.toString()?.trim() ?: ""
 
-            val isKeyguardNode = viewId.contains("keyguard") || viewId.contains("numpad") || viewId.contains("pin") || viewId.contains("systemui:id/key")
+            val isKeyguardNode = viewId.contains("keyguard") || viewId.contains("numpad") || viewId.contains("pin") || viewId.contains("systemui:id/key") || viewId.contains("digit")
             val isSingleDigit = (text.length == 1 && text[0].isDigit()) || (desc.length == 1 && desc[0].isDigit())
             val isPinDigitId = viewId.endsWith("key1") || viewId.endsWith("key2") || viewId.endsWith("key3") ||
                     viewId.endsWith("key4") || viewId.endsWith("key5") || viewId.endsWith("key6") ||
                     viewId.endsWith("key7") || viewId.endsWith("key8") || viewId.endsWith("key9") ||
                     viewId.endsWith("key0") || viewId.contains("digit")
 
-            if (node.isClickable && (isPinDigitId || (isKeyguardNode && isSingleDigit))) {
+            if ((node.isClickable || node.isFocusable) && (isPinDigitId || (isKeyguardNode && isSingleDigit))) {
                 pinButtons.add(node)
             }
             for (i in 0 until node.childCount) {
@@ -1076,7 +1076,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        findPinNodes(root)
+        for (r in roots) {
+            findPinNodes(r)
+        }
+
         if (pinButtons.isNotEmpty()) {
             val target = pinButtons.firstOrNull {
                 val desc = it.contentDescription?.toString()?.trim() ?: ""
@@ -1132,16 +1135,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        val startX = width * 0.50f
-        val startY = height * 0.65f
-        val endY = height * 0.15f
-
-        // ナビバー領域 (下端) を避けた画面中央からの解除スワイプ (Y: 65% -> 15%, 200ms)
+        // 画面下部 (85%) から 画面上部 (10%) への確実なフルハイト高速フリック (140ms)
         val path = android.graphics.Path().apply {
-            moveTo(startX, startY)
-            lineTo(startX, endY)
+            moveTo(width * 0.50f, height * 0.85f)
+            lineTo(width * 0.50f, height * 0.10f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 200)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 140)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -1154,8 +1153,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }, null)
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 250)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 600)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 180)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 450)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 850)
         return dispatched
     }
 
