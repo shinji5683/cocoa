@@ -1101,11 +1101,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private var lastPinFocusTimeMs = 0L
 
-    fun autoFocusPinKeypadIfPresent(): Boolean {
+    fun autoFocusPinKeypadIfPresent(force: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastPinFocusTimeMs < 800L) return false
+        if (!force && now - lastPinFocusTimeMs < 400L) return false
 
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
+        if (roots.isEmpty()) return false
 
         // 1. 最優先: PIN入力欄 (pinEntry / passwordEntry / EditText)
         for (r in roots) {
@@ -1140,13 +1141,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val desc = node.contentDescription?.toString()?.trim() ?: ""
 
             val isKeyguardNode = viewId.contains("keyguard") || viewId.contains("numpad") || viewId.contains("pin") || viewId.contains("systemui:id/key") || viewId.contains("digit")
-            val isSingleDigit = (text.length == 1 && text[0].isDigit()) || (desc.length == 1 && desc[0].isDigit())
+            val isSingleDigit = (text.length == 1 && text[0].isDigit()) || (desc.length == 1 && desc[0].isDigit()) ||
+                    text.matches(Regex("^[0-9]$")) || desc.matches(Regex("^[0-9](?:[,、\\s].*)?$"))
             val isPinDigitId = viewId.endsWith("key1") || viewId.endsWith("key2") || viewId.endsWith("key3") ||
                     viewId.endsWith("key4") || viewId.endsWith("key5") || viewId.endsWith("key6") ||
                     viewId.endsWith("key7") || viewId.endsWith("key8") || viewId.endsWith("key9") ||
-                    viewId.endsWith("key0") || viewId.contains("digit")
+                    viewId.endsWith("key0") || viewId.contains("digit") || viewId.contains("pin_button")
 
-            if ((node.isClickable || node.isFocusable) && (isPinDigitId || (isKeyguardNode && isSingleDigit))) {
+            if ((node.isClickable || node.isFocusable || node.isCheckable) && (isPinDigitId || (isKeyguardNode && isSingleDigit) || isSingleDigit)) {
                 pinButtons.add(node)
             }
             for (i in 0 until node.childCount) {
@@ -1163,7 +1165,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val desc = it.contentDescription?.toString()?.trim() ?: ""
                 val text = it.text?.toString()?.trim() ?: ""
                 val viewId = it.viewIdResourceName?.lowercase() ?: ""
-                desc == "1" || text == "1" || viewId.endsWith("key1") || viewId.endsWith("digit1")
+                desc == "1" || text == "1" || desc.startsWith("1") || text.startsWith("1") ||
+                        viewId.endsWith("key1") || viewId.endsWith("digit1")
             } ?: pinButtons.first()
 
             lastPinFocusTimeMs = now
@@ -1217,8 +1220,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         speak("ロックを解除しています", TextToSpeech.QUEUE_FLUSH)
 
         // KeyguardDismissActivity を起動して OS の requestDismissKeyguard() を呼ぶ
-        // dispatchGesture() はセキュリティ制限でロック画面上では動作しないため、
-        // Activity 経由で OS に PIN バウンサーの表示を正式にリクエストする（TalkBack と同じパターン）
         try {
             val intent = android.content.Intent(this, KeyguardDismissActivity::class.java)
             intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
@@ -1231,10 +1232,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         // バウンサー展開後のPINキー・入力欄への多段オートフォーカス
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 500)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 1000)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 1800)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 2500)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 300)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 600)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1000)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1600)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 2400)
         return true
     }
 

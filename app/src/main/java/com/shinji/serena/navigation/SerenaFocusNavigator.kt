@@ -106,19 +106,23 @@ class SerenaFocusNavigator(
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 val text = node.text?.toString()?.trim() ?: ""
                 val desc = node.contentDescription?.toString()?.trim() ?: ""
+                fun isDigit(d: String): Boolean =
+                    viewId.endsWith("key$d") || viewId.endsWith("digit$d") || desc == d || text == d ||
+                    desc.startsWith(d) || text.startsWith(d)
+
                 when {
                     viewId.contains("pinentry") || viewId.contains("passwordentry") || (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard"))) -> 1020
-                    viewId.endsWith("key1") || desc == "1" || text == "1" -> 1000
-                    viewId.endsWith("key2") || desc == "2" || text == "2" -> 990
-                    viewId.endsWith("key3") || desc == "3" || text == "3" -> 980
-                    viewId.endsWith("key4") || desc == "4" || text == "4" -> 970
-                    viewId.endsWith("key5") || desc == "5" || text == "5" -> 960
-                    viewId.endsWith("key6") || desc == "6" || text == "6" -> 950
-                    viewId.endsWith("key7") || desc == "7" || text == "7" -> 940
-                    viewId.endsWith("key8") || desc == "8" || text == "8" -> 930
-                    viewId.endsWith("key9") || desc == "9" || text == "9" -> 920
+                    isDigit("1") -> 1000
+                    isDigit("2") -> 990
+                    isDigit("3") -> 980
+                    isDigit("4") -> 970
+                    isDigit("5") -> 960
+                    isDigit("6") -> 950
+                    isDigit("7") -> 940
+                    isDigit("8") -> 930
+                    isDigit("9") -> 920
                     viewId.contains("delete") || desc.contains("削除") || text.contains("削除") -> 915
-                    viewId.endsWith("key0") || desc == "0" || text == "0" -> 910
+                    isDigit("0") -> 910
                     viewId.contains("enter") || viewId.contains("ok") || desc.contains("決定") || text.contains("決定") -> 900
                     viewId.contains("emergency") || desc.contains("緊急") || text.contains("緊急") -> 880
                     node.isEditable -> 870
