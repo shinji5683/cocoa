@@ -10,23 +10,35 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.speech.tts.TextToSpeech
 import android.util.Log
-import com.shinji.serena.SafeContextUtils.getSafeSharedPreferences
+import com.shinji.serena.SerenaScreenReaderService
 import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
+ * 環境音・危険音・呼びかけ検知の5段階詳細度
+ */
+enum class SoundAlertDetailLevel(val displayName: String, val spokenLabel: String) {
+    ULTRA_DETAILED("1. 超詳細（音響・材質・人物声解析＋バイブ）", "超詳細実況モード"),
+    STANDARD("2. 標準（危険音＋呼びかけ音声＋バイブ）", "標準モード"),
+    DANGER_VOICE_ONLY("3. 危険音音声＋バイブ（踏切・サイレン・クラクション）", "危険音音声モード"),
+    HAPTIC_ONLY("4. バイブレーションのみ（音声なし）", "バイブのみモード"),
+    DISABLED("5. 無効（オフ）", "オフ")
+}
+
+/**
  * SoundRecognitionHapticsHelper
  *
- * 周囲の環境音・危険音（踏切、サイレン、クラクション、インターホン、呼びかけ声）を
- * リアルタイムに検知し、専用のハプティクス（振動パターン）でユーザーへ即座に警告するヘルパー。
+ * 周囲の環境音・危険音・呼びかけ声・衝撃音・材質をリアルタイムに音響解析し、
+ * 専用のハプティクス（振動パターン）と自然な音声アナウンスを提供するヘルパー。
  */
 class SoundRecognitionHapticsHelper(private val context: Context) {
 
     companion object {
         private const val TAG = "SoundRecognitionHaptics"
         private const val PREFS_NAME = "serena_sound_recognition_prefs"
-        private const val KEY_ENABLED = "sound_recognition_enabled"
+        private const val KEY_DETAIL_LEVEL = "sound_alert_detail_level"
         private const val SAMPLE_RATE = 16000
     }
 
@@ -43,16 +55,28 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
         context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
-    var isEnabled: Boolean
-        get() = prefs.getBoolean(KEY_ENABLED, false)
+    var detailLevel: SoundAlertDetailLevel
+        get() {
+            val name = prefs.getString(KEY_DETAIL_LEVEL, SoundAlertDetailLevel.DISABLED.name)
+            return try {
+                SoundAlertDetailLevel.valueOf(name ?: SoundAlertDetailLevel.DISABLED.name)
+            } catch (_: Exception) {
+                SoundAlertDetailLevel.DISABLED
+            }
+        }
         set(value) {
-            prefs.edit().putBoolean(KEY_ENABLED, value).apply()
-            if (value) start() else stop()
+            prefs.edit().putString(KEY_DETAIL_LEVEL, value.name).apply()
+            if (value != SoundAlertDetailLevel.DISABLED) start() else stop()
         }
 
-    fun toggleEnabled(): Boolean {
-        isEnabled = !isEnabled
-        return isEnabled
+    val isEnabled: Boolean
+        get() = detailLevel != SoundAlertDetailLevel.DISABLED
+
+    fun cycleDetailLevel(): SoundAlertDetailLevel {
+        val levels = SoundAlertDetailLevel.values()
+        val nextIndex = (detailLevel.ordinal + 1) % levels.size
+        detailLevel = levels[nextIndex]
+        return detailLevel
     }
 
     @SuppressLint("MissingPermission")
@@ -90,7 +114,7 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
                 start()
             }
 
-            Log.i(TAG, "SoundRecognitionHaptics started.")
+            Log.i(TAG, "SoundRecognitionHaptics started with level: ${detailLevel.name}")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start sound recognition: ${e.message}")
             isRecording = false
@@ -118,7 +142,10 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
             if (readSize > 0) {
                 // RMS音量計算
                 var sum = 0.0
+                var peak = 0
                 for (i in 0 until readSize) {
+                    val absVal = abs(audioBuffer[i].toInt())
+                    if (absVal > peak) peak = absVal
                     sum += (audioBuffer[i] * audioBuffer[i]).toDouble()
                 }
                 val rms = sqrt(sum / readSize)
@@ -133,21 +160,58 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
                 val estimatedFreq = (zeroCrossings * SAMPLE_RATE) / (2.0 * readSize)
 
                 val now = System.currentTimeMillis()
-                if (now - lastAlertTime > 2500) {
-                    // 1. 踏切警報音 / 高音アラーム検知 (700Hz〜1000Hz前後の高音大音量)
-                    if (rms > 4000 && estimatedFreq in 650.0..1100.0) {
+                if (now - lastAlertTime > 3000) {
+                    // 1. 踏切警報音 / 高音アラーム検知 (700Hz〜1100Hz前後の高音大音量)
+                    if (rms > 5000 && estimatedFreq in 680.0..1150.0) {
                         lastAlertTime = now
-                        vibrateCrossingAlarm()
+                        handleDetectedSound(
+                            vibrate = { vibrateCrossingAlarm() },
+                            spokenMsg = "踏切の警報音を検知しました。周囲にご注意ください。",
+                            isDanger = true
+                        )
                     }
-                    // 2. クラクション / サイレン検知 (大音量 2000Hz〜3500Hz)
-                    else if (rms > 6000 && estimatedFreq in 1500.0..3800.0) {
+                    // 2. クラクション / 緊急サイレン検知 (大音量 1500Hz〜3800Hz)
+                    else if (rms > 7000 && estimatedFreq in 1500.0..3800.0) {
                         lastAlertTime = now
-                        vibrateSirenOrHorn()
+                        handleDetectedSound(
+                            vibrate = { vibrateSirenOrHorn() },
+                            spokenMsg = "緊急サイレンまたはクラクションを検知しました。",
+                            isDanger = true
+                        )
                     }
-                    // 3. 近くでの大きな呼びかけ声検知 (低〜中周波の大音量)
-                    else if (rms > 7500 && estimatedFreq in 200.0..600.0) {
+                    // 3. 衝撃音・衝突音（壁、ドア、ガラス、金属、電柱など）
+                    else if (peak > 18000 && rms < 5000) {
                         lastAlertTime = now
-                        vibrateCallingVoice()
+                        val materialDesc = when {
+                            estimatedFreq > 2500.0 -> "金属またはガラスのような硬い衝撃音"
+                            estimatedFreq in 800.0..2500.0 -> "木製ドアや家具、壁への衝突音"
+                            else -> "鈍い打撃音または床への衝撃"
+                        }
+                        if (detailLevel == SoundAlertDetailLevel.ULTRA_DETAILED) {
+                            handleDetectedSound(
+                                vibrate = { vibrateCollision() },
+                                spokenMsg = "${materialDesc}を検知しました。",
+                                isDanger = false
+                            )
+                        }
+                    }
+                    // 4. 人の声・呼びかけ検知 (低〜中周波の大音量)
+                    else if (rms > 8500 && estimatedFreq in 150.0..700.0) {
+                        lastAlertTime = now
+                        val voiceGender = if (estimatedFreq < 280.0) "男性の声" else "女性または高い声"
+                        val voiceMsg = if (detailLevel == SoundAlertDetailLevel.ULTRA_DETAILED) {
+                            "${voiceGender}で呼びかけがありました。"
+                        } else {
+                            "近くで人の呼びかけ声を検知しました。"
+                        }
+
+                        if (detailLevel == SoundAlertDetailLevel.ULTRA_DETAILED || detailLevel == SoundAlertDetailLevel.STANDARD) {
+                            handleDetectedSound(
+                                vibrate = { vibrateCallingVoice() },
+                                spokenMsg = voiceMsg,
+                                isDanger = false
+                            )
+                        }
                     }
                 }
             }
@@ -160,8 +224,34 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
         }
     }
 
+    private fun handleDetectedSound(vibrate: () -> Unit, spokenMsg: String, isDanger: Boolean) {
+        when (detailLevel) {
+            SoundAlertDetailLevel.DISABLED -> return
+            SoundAlertDetailLevel.HAPTIC_ONLY -> {
+                vibrate.invoke()
+            }
+            SoundAlertDetailLevel.DANGER_VOICE_ONLY -> {
+                if (isDanger) {
+                    vibrate.invoke()
+                    speakAnnouncement(spokenMsg)
+                }
+            }
+            SoundAlertDetailLevel.STANDARD -> {
+                vibrate.invoke()
+                speakAnnouncement(spokenMsg)
+            }
+            SoundAlertDetailLevel.ULTRA_DETAILED -> {
+                vibrate.invoke()
+                speakAnnouncement(spokenMsg)
+            }
+        }
+    }
+
+    private fun speakAnnouncement(msg: String) {
+        SerenaScreenReaderService.instance?.speak(msg, TextToSpeech.QUEUE_ADD)
+    }
+
     private fun vibrateCrossingAlarm() {
-        // 踏切警報：カン、カン、カンの2連パルス振動
         val timings = longArrayOf(0, 150, 100, 150)
         val amplitudes = intArrayOf(0, 255, 0, 255)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -173,7 +263,6 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
     }
 
     private fun vibrateSirenOrHorn() {
-        // クラクション/サイレン：ブーッという強い長振動
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator?.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.DEFAULT_AMPLITUDE))
         } else {
@@ -183,7 +272,6 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
     }
 
     private fun vibrateCallingVoice() {
-        // 呼びかけ：トントンという2回ノック振動
         val timings = longArrayOf(0, 80, 80, 80)
         val amplitudes = intArrayOf(0, 200, 0, 200)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -191,6 +279,15 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
         } else {
             @Suppress("DEPRECATION")
             vibrator?.vibrate(timings, -1)
+        }
+    }
+
+    private fun vibrateCollision() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(VibrationEffect.createOneShot(180, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(180)
         }
     }
 }

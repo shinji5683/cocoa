@@ -1812,11 +1812,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 soundHelper?.playActionDone()
                 speak("翻訳読み上げモードを ${next.displayName} に変更しました", TextToSpeech.QUEUE_FLUSH)
             },
-            serenaMenuItem("📳", "環境音・危険音ハプティクス警告 (現在: ${if (soundRecognitionHelper?.isEnabled == true) "ON" else "OFF"})") {
-                val enabled = soundRecognitionHelper?.toggleEnabled() ?: true
+            serenaMenuItem("📳", "環境音・危険音・呼びかけ検知 (現在: ${soundRecognitionHelper?.detailLevel?.spokenLabel ?: "オフ"})") {
+                val nextLevel = soundRecognitionHelper?.cycleDetailLevel() ?: com.shinji.serena.sound.SoundAlertDetailLevel.DISABLED
                 soundHelper?.playActionDone()
-                val stateStr = if (enabled) "有効（踏切・サイレン・呼びかけを振動通知）" else "無効"
-                speak("環境音ハプティクス警告を $stateStr に変更しました", TextToSpeech.QUEUE_FLUSH)
+                speak("環境音・危険音検知を ${nextLevel.displayName} に変更しました", TextToSpeech.QUEUE_FLUSH)
             },
             serenaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
                 cycleChimeStyle()
