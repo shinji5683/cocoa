@@ -55,10 +55,6 @@ class SerenaGestureDispatcher(
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP -> {
-                if (service.isKeyguardLocked()) {
-                    service.unlockKeyguardOrShowBouncer()
-                    return true
-                }
                 // 1本指上フリック: 読み上げコントロール（粒度: 文字/単語/行/見出し等）に合わせて前へ移動
                 service.focusPrevious()
                 return true

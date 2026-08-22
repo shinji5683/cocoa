@@ -1605,7 +1605,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val b2 = android.graphics.Rect()
         node1.getBoundsInScreen(b1)
         node2.getBoundsInScreen(b2)
-        return b1 == b2 && getNodeText(node1) == getNodeText(node2)
+        if (b1 != b2) return false
+        val c1 = node1.className?.toString() ?: ""
+        val c2 = node2.className?.toString() ?: ""
+        val id1 = node1.viewIdResourceName ?: ""
+        val id2 = node2.viewIdResourceName ?: ""
+        return c1 == c2 && id1 == id2
     }
 
     private fun collectAccessibleNodes(root: AccessibilityNodeInfo? = null): List<AccessibilityNodeInfo> {
