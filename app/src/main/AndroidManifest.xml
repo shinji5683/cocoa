@@ -82,16 +82,6 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Serena" />
 
-        <activity
-            android:name=".KeyguardDismissActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:taskAffinity=""
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
         <service
             android:name=".SerenaScreenReaderService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

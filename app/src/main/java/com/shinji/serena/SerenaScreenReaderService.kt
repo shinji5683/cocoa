@@ -1219,25 +1219,55 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playActionDone()
         speak("ロックを解除しています", TextToSpeech.QUEUE_FLUSH)
 
-        // KeyguardDismissActivity を起動して OS の requestDismissKeyguard() を呼ぶ
-        try {
-            val intent = android.content.Intent(this, KeyguardDismissActivity::class.java)
-            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
-                    android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to start KeyguardDismissActivity", e)
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+        // 1. Accessibility Action 解除（ルートノードおよびロックアイコンへ ACTION_DISMISS / ACTION_CLICK を発火）
+        val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
+        for (r in roots) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                r.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
+            }
+            val lockIcons = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")
+            for (icon in lockIcons) {
+                icon.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
         }
 
-        // バウンサー展開後のPINキー・入力欄への多段オートフォーカス
-        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 300)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 600)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1000)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1600)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 2400)
-        return true
+        // 2. Google TalkBack完全準拠の縦スワイプジェスチャー（中央下 50%, 80% -> 中央上 50%, 15%, 280ms）
+        val displayMetrics = resources.displayMetrics
+        val width = displayMetrics.widthPixels.toFloat()
+        val height = displayMetrics.heightPixels.toFloat()
+
+        val p = android.graphics.Path().apply {
+            moveTo(width * 0.50f, height * 0.80f)
+            lineTo(width * 0.50f, height * 0.15f)
+        }
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 280)
+        val gesture = android.accessibilityservice.GestureDescription.Builder()
+            .addStroke(stroke)
+            .build()
+
+        isInternalGestureDispatching = true
+
+        val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCompleted(gestureDescription)
+                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 300)
+                autoFocusPinKeypadIfPresent(force = true)
+            }
+            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCancelled(gestureDescription)
+                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 300)
+            }
+        }, mainHandler)
+
+        // 3. バウンサー展開後のPINキー・入力欄への多段オートフォーカス
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 150)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 400)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 800)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1400)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 2200)
+        return dispatched
     }
 
     private fun performPhysical2FingerScroll(forward: Boolean, horizontal: Boolean) {
@@ -2682,11 +2712,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 val className = node.className?.toString() ?: ""
 
+                // 画面全体の背景暗転枠（ScrimView等）で子要素を持つコンテナのみスキップ
                 if (isKeyguardLocked() || pkg.contains("systemui") || pkg.contains("keyguard")) {
-                    if (viewId.contains("scrim") || viewId.contains("notification_stack_scroller") ||
-                        viewId.contains("keyguard_carrier_text") || viewId.contains("keyguard_status_view") ||
-                        viewId.contains("keyguard_clock") ||
-                        className.contains("ScrimView", ignoreCase = true) ||
+                    if (viewId.contains("scrim") || className.contains("ScrimView", ignoreCase = true) ||
                         className.contains("NotificationPanelView", ignoreCase = true) ||
                         className.contains("NotificationShade", ignoreCase = true) ||
                         className.contains("KeyguardRootView", ignoreCase = true)
