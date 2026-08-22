@@ -1131,31 +1131,53 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun unlockKeyguardOrShowBouncer(): Boolean {
+        soundHelper?.playFocusMove()
+
+        // 1. Accessibility Action 解除（画面内の通知シェードやロック解除アクションを直接発火）
+        performGlobalAction(AccessibilityService.GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+        val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
+        for (r in roots) {
+            val lockIcons = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")
+            for (icon in lockIcons) {
+                icon.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    icon.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
+                }
+            }
+        }
+
+        // 2. 指紋センサー/中央ロックアイコンを完全に避けた2本指パラレル高速上スワイプ（X1: 30%, X2: 70%, Y: 72% -> 12%, 120ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
-        // 画面下部 (85%) から 画面上部 (10%) への確実なフルハイト高速フリック (140ms)
-        val path = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.85f)
-            lineTo(width * 0.50f, height * 0.10f)
+        val p1 = android.graphics.Path().apply {
+            moveTo(width * 0.30f, height * 0.72f)
+            lineTo(width * 0.30f, height * 0.12f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 140)
+        val p2 = android.graphics.Path().apply {
+            moveTo(width * 0.70f, height * 0.72f)
+            lineTo(width * 0.70f, height * 0.12f)
+        }
+        val stroke1 = android.accessibilityservice.GestureDescription.StrokeDescription(p1, 0, 120)
+        val stroke2 = android.accessibilityservice.GestureDescription.StrokeDescription(p2, 0, 120)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(stroke)
+            .addStroke(stroke1)
+            .addStroke(stroke2)
             .build()
 
-        soundHelper?.playFocusMove()
         val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
             }
         }, null)
 
+        // 3. バウンサー展開後のPINキー「1」即時オートフォーカス（多段ポーリング）
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 180)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 450)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 850)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 100)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 250)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 500)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent() }, 800)
         return dispatched
     }
 
