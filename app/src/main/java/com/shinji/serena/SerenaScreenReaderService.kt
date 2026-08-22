@@ -3314,22 +3314,32 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun inferLabelFromViewId(viewId: String?): String {
         if (viewId.isNullOrEmpty()) return ""
         val name = viewId.substringAfterLast(":id/").lowercase()
-        return when (name) {
-            "key0", "button0" -> "0"
-            "key1", "button1" -> "1"
-            "key2", "button2" -> "2"
-            "key3", "button3" -> "3"
-            "key4", "button4" -> "4"
-            "key5", "button5" -> "5"
-            "key6", "button6" -> "6"
-            "key7", "button7" -> "7"
-            "key8", "button8" -> "8"
-            "key9", "button9" -> "9"
-            "delete_button", "backspace", "btn_delete" -> "1文字削除"
-            "emergency_call_button", "emergency" -> "緊急通報"
-            "cancel_button", "btn_cancel" -> "キャンセル"
-            "enter_button", "btn_ok", "btn_done" -> "決定"
-            "search_button" -> "検索"
+        return when {
+            name.contains("expand_button") || name.contains("chevron") || name == "expand" -> "展開"
+            name.contains("collapse_button") || name == "collapse" -> "折りたたみ"
+            name.contains("clear_all") || name.contains("btn_clear_all") || name.contains("dismiss_all") -> "すべて消去"
+            name.contains("settings_button") || name == "settings_gear" || name == "quick_settings" -> "クイック設定"
+            name.contains("power_button") || name == "power" -> "電源メニュー"
+            name.contains("edit_button") || name == "btn_edit" -> "タイル編集"
+            name.contains("media_play") || name.contains("action_play") -> "再生"
+            name.contains("media_pause") || name.contains("action_pause") -> "一時停止"
+            name.contains("media_prev") || name.contains("action_prev") -> "前の曲"
+            name.contains("media_next") || name.contains("action_next") -> "次の曲"
+            name == "key0" || name == "button0" -> "0"
+            name == "key1" || name == "button1" -> "1"
+            name == "key2" || name == "button2" -> "2"
+            name == "key3" || name == "button3" -> "3"
+            name == "key4" || name == "button4" -> "4"
+            name == "key5" || name == "button5" -> "5"
+            name == "key6" || name == "button6" -> "6"
+            name == "key7" || name == "button7" -> "7"
+            name == "key8" || name == "button8" -> "8"
+            name == "key9" || name == "button9" -> "9"
+            name.contains("delete_button") || name.contains("backspace") || name.contains("btn_delete") -> "1文字削除"
+            name.contains("emergency_call_button") || name.contains("emergency") -> "緊急通報"
+            name.contains("cancel_button") || name.contains("btn_cancel") -> "キャンセル"
+            name.contains("enter_button") || name.contains("btn_ok") || name.contains("btn_done") -> "決定"
+            name.contains("search_button") || name == "search" -> "検索"
             else -> ""
         }
     }
@@ -3337,7 +3347,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun getNodeRole(node: AccessibilityNodeInfo): String {
         val target = findCheckableOrSwitchNode(node) ?: node
         val className = target.className?.toString() ?: ""
+        val viewId = node.viewIdResourceName?.lowercase() ?: ""
+        val hasExpand = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_EXPAND.id }
+        } else false
+        val hasCollapse = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_COLLAPSE.id }
+        } else false
+
         return when {
+            hasExpand || viewId.contains("expand_button") || viewId.contains("chevron") -> "展開ボタン"
+            hasCollapse || viewId.contains("collapse_button") -> "折りたたみボタン"
             className.contains("Switch", ignoreCase = true) || className.contains("ToggleButton", ignoreCase = true) -> "スイッチ"
             className.contains("CheckBox", ignoreCase = true) -> "チェックボックス"
             className.contains("RadioButton", ignoreCase = true) -> "ラジオボタン"
@@ -3374,6 +3394,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val isCheckBox = className.contains("CheckBox", ignoreCase = true)
         val isRadio = className.contains("RadioButton", ignoreCase = true)
 
+        // 1. 開閉・展開状態の判定（通知シェード、クイック設定、アコーディオンなど）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            val hasExpandAction = node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_EXPAND.id }
+            val hasCollapseAction = node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_COLLAPSE.id }
+            if (hasExpandAction) {
+                states.add("折りたたまれています")
+            } else if (hasCollapseAction) {
+                states.add("展開されています")
+            }
+        }
+
+        // 2. チェック・スイッチ状態判定
         if (target.isCheckable || isSwitch || isCheckBox || isRadio) {
             if (isSwitch) {
                 states.add(if (target.isChecked) "オン" else "オフ")
@@ -3388,9 +3420,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (node.isSelected && !states.contains("選択中")) {
             states.add("選択中")
         }
-        if (!node.isEnabled || !target.isEnabled) {
+
+        // 3. 有効/無効の判定（クリック可能・展開可能な要素に対して誤って「無効」と言わないよう防御）
+        val isInteractive = node.isClickable || node.isCheckable || target.isClickable || target.isCheckable
+        if (!node.isEnabled && !target.isEnabled && !isInteractive) {
             states.add("無効")
         }
+
         return states.joinToString(" ")
     }
 
