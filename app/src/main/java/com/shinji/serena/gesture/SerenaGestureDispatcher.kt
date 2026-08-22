@@ -54,11 +54,13 @@ class SerenaGestureDispatcher(
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP -> {
-                service.navigateLinearFocus(forward = false)
+                // 1本指上フリック: 読み上げコントロール（粒度: 文字/単語/行/見出し等）に合わせて前へ移動
+                service.focusPrevious()
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_DOWN -> {
-                service.navigateLinearFocus(forward = true)
+                // 1本指下フリック: 読み上げコントロール（粒度: 文字/単語/行/見出し等）に合わせて次へ移動
+                service.focusNext()
                 return true
             }
 
