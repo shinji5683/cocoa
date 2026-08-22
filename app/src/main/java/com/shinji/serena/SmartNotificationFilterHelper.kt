@@ -206,33 +206,84 @@ class SmartNotificationFilterHelper(private val context: Context) {
         return isAdNoise && !isImportant
     }
 
+    private val appLabelCache = mutableMapOf<String, String>()
+
     private fun getAppFriendlyName(packageName: String): String {
+        if (packageName.isEmpty()) return "通知"
+
+        // キャッシュチェック
+        appLabelCache[packageName]?.let { return it }
+
         val pkgLower = packageName.lowercase()
-        return when {
-            pkgLower.contains("dialer") || pkgLower.contains("phone") || pkgLower.contains("incallui") -> "電話"
+
+        // 1. 主要アプリの即時マッピング辞書
+        val knownName = when {
+            pkgLower.contains("youtube.music") -> "YouTube Music"
+            pkgLower.contains("youtube") -> "YouTube"
+            pkgLower.contains("gmail") || pkgLower == "com.google.android.gm" || (pkgLower.contains("android") && pkgLower.contains(".gm")) -> "Gmail"
             pkgLower.contains("line") -> "LINE"
             pkgLower.contains("whatsapp") -> "WhatsApp"
             pkgLower.contains("discord") -> "Discord"
-            pkgLower.contains("gmail") || pkgLower.contains("mail") -> "Gmail"
-            pkgLower.contains("sms") || pkgLower.contains("message") || pkgLower.contains("mms") -> "メッセージ"
             pkgLower.contains("twitter") || pkgLower.contains("x.android") -> "X"
             pkgLower.contains("instagram") -> "Instagram"
+            pkgLower.contains("facebook.orca") || pkgLower.contains("messenger") -> "Messenger"
+            pkgLower.contains("facebook") -> "Facebook"
+            pkgLower.contains("tiktok") -> "TikTok"
             pkgLower.contains("teams") -> "Teams"
             pkgLower.contains("slack") -> "Slack"
             pkgLower.contains("zoom") -> "Zoom"
             pkgLower.contains("skype") -> "Skype"
+            pkgLower.contains("chrome") -> "Chrome"
+            pkgLower.contains("vending") || pkgLower.contains("play.store") -> "Google Playストア"
+            pkgLower.contains("maps") -> "Googleマップ"
+            pkgLower.contains("photos") -> "Googleフォト"
             pkgLower.contains("calendar") -> "カレンダー"
-            pkgLower.contains("clock") || pkgLower.contains("deskclock") -> "アラーム"
-            else -> {
-                try {
-                    val pm = context.packageManager
-                    val appInfo = pm.getApplicationInfo(packageName, 0)
-                    pm.getApplicationLabel(appInfo).toString()
-                } catch (_: Exception) {
-                    "アプリ"
-                }
-            }
+            pkgLower.contains("clock") || pkgLower.contains("deskclock") -> "時計・アラーム"
+            pkgLower.contains("dialer") || pkgLower.contains("phone") || pkgLower.contains("incallui") || pkgLower.contains("telecom") -> "電話"
+            pkgLower.contains("sms") || pkgLower.contains("messaging") || pkgLower.contains("mms") -> "メッセージ"
+            pkgLower.contains("spotify") -> "Spotify"
+            pkgLower.contains("paypay") -> "PayPay"
+            pkgLower.contains("mercari") -> "メルカリ"
+            pkgLower.contains("amazon") -> "Amazon"
+            pkgLower.contains("rakuten") -> "楽天"
+            pkgLower.contains("yahoo") -> "Yahoo"
+            pkgLower.contains("googlequicksearchbox") -> "Google"
+            pkgLower.contains("settings") -> "設定"
+            pkgLower.contains("systemui") -> "システム"
+            else -> null
         }
+
+        if (knownName != null) {
+            appLabelCache[packageName] = knownName
+            return knownName
+        }
+
+        // 2. PackageManager からアプリの正確な表示名を取得
+        try {
+            val pm = context.packageManager
+            val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getApplicationInfo(packageName, 0)
+            }
+            val label = pm.getApplicationLabel(appInfo).toString().trim()
+            if (label.isNotEmpty() && !label.equals("null", ignoreCase = true)) {
+                appLabelCache[packageName] = label
+                return label
+            }
+        } catch (_: Exception) {}
+
+        // 3. パッケージ名から末尾の識別名を美しく抽出（例: com.example.myawesomeapp -> Myawesomeapp）
+        val lastSegment = packageName.split(".").lastOrNull { it.isNotEmpty() }
+        val fallbackName = if (!lastSegment.isNullOrBlank() && lastSegment.length >= 2) {
+            lastSegment.replaceFirstChar { it.uppercase() }
+        } else {
+            "通知"
+        }
+
+        appLabelCache[packageName] = fallbackName
+        return fallbackName
     }
 
     private fun buildAnnouncementText(
