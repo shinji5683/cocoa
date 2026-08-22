@@ -101,12 +101,13 @@ class SerenaFocusNavigator(
             traverseTree(r, list)
         }
         if (service.isKeyguardLocked()) {
-            // ロック画面時はPINキーパッド（1〜9, 0, 削除, 決定）を最優先で自然な順序に整列！通知領域は末尾へ隔離
+            // ロック画面時はPIN入力欄を最優先(1020)、続けてPINキーパッド（1〜9, 削除, 0, 決定）を自然な順序に整列！通知領域は末尾へ隔離
             list.sortByDescending { node ->
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 val text = node.text?.toString()?.trim() ?: ""
                 val desc = node.contentDescription?.toString()?.trim() ?: ""
                 when {
+                    viewId.contains("pinentry") || viewId.contains("passwordentry") || (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard"))) -> 1020
                     viewId.endsWith("key1") || desc == "1" || text == "1" -> 1000
                     viewId.endsWith("key2") || desc == "2" || text == "2" -> 990
                     viewId.endsWith("key3") || desc == "3" || text == "3" -> 980
@@ -116,11 +117,11 @@ class SerenaFocusNavigator(
                     viewId.endsWith("key7") || desc == "7" || text == "7" -> 940
                     viewId.endsWith("key8") || desc == "8" || text == "8" -> 930
                     viewId.endsWith("key9") || desc == "9" || text == "9" -> 920
+                    viewId.contains("delete") || desc.contains("削除") || text.contains("削除") -> 915
                     viewId.endsWith("key0") || desc == "0" || text == "0" -> 910
-                    viewId.contains("delete") || desc.contains("削除") || text.contains("削除") -> 900
-                    viewId.contains("enter") || viewId.contains("ok") || desc.contains("決定") || text.contains("決定") -> 890
+                    viewId.contains("enter") || viewId.contains("ok") || desc.contains("決定") || text.contains("決定") -> 900
                     viewId.contains("emergency") || desc.contains("緊急") || text.contains("緊急") -> 880
-                    viewId.contains("pin") || viewId.contains("password") || node.isEditable -> 870
+                    node.isEditable -> 870
                     viewId.contains("lock_icon") || desc.contains("ロック") || text.contains("ロック") || desc.contains("解除") -> 700
                     viewId.contains("notification") || node.className?.contains("Notification", ignoreCase = true) == true -> -1000
                     else -> 0
@@ -135,6 +136,8 @@ class SerenaFocusNavigator(
         val isPinKeyNode = viewId.contains("systemui:id/key") || 
                            viewId.contains("systemui:id/delete_button") ||
                            viewId.contains("systemui:id/emergency_call_button") ||
+                           viewId.contains("systemui:id/pinentry") ||
+                           viewId.contains("systemui:id/passwordentry") ||
                            viewId.contains("pin_pad") ||
                            viewId.contains("numpad")
 

@@ -1054,6 +1054,31 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (now - lastPinFocusTimeMs < 800L) return false
 
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
+
+        // 1. 最優先: PIN入力欄 (pinEntry / passwordEntry / EditText)
+        for (r in roots) {
+            val pinFields = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/pinEntry")
+            if (pinFields.isNotEmpty()) {
+                val target = pinFields[0]
+                lastPinFocusTimeMs = now
+                target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                lastHoveredNode = target
+                soundHelper?.playFocusMove()
+                announceNode(target)
+                return true
+            }
+            val pwdFields = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/passwordEntry")
+            if (pwdFields.isNotEmpty()) {
+                val target = pwdFields[0]
+                lastPinFocusTimeMs = now
+                target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                lastHoveredNode = target
+                soundHelper?.playFocusMove()
+                announceNode(target)
+                return true
+            }
+        }
+
         val pinButtons = mutableListOf<AccessibilityNodeInfo>()
 
         fun findPinNodes(node: AccessibilityNodeInfo?) {
