@@ -294,24 +294,29 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }, 3500)
     }
 
+    @Volatile var isInternalGestureDispatching = false
+
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
+        if (isInternalGestureDispatching) {
+            Log.d(TAG, "onGesture ignored: internal gesture dispatch in progress.")
+            return false
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val gestureId = gestureEvent.gestureId
             Log.i(TAG, "onGesture(AccessibilityGestureEvent) received: $gestureId")
-            if (handleGestureId(gestureId)) {
-                return true
-            }
+            return gestureDispatcher?.onGesture(gestureId) ?: handleGestureId(gestureId)
         }
         return false
     }
 
     @Deprecated("Deprecated in API 30+")
     override fun onGesture(gestureId: Int): Boolean {
-        Log.i(TAG, "onGesture(Int) received: $gestureId")
-        if (handleGestureId(gestureId)) {
-            return true
+        if (isInternalGestureDispatching) {
+            Log.d(TAG, "onGesture(Int) ignored: internal gesture dispatch in progress.")
+            return false
         }
-        return false
+        Log.i(TAG, "onGesture(Int) received: $gestureId")
+        return gestureDispatcher?.onGesture(gestureId) ?: handleGestureId(gestureId)
     }
 
     private var lastUnlockTime = 0L
@@ -676,7 +681,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var charOffsetInFocusedNode = -1
     private var lastFocusedNodeHash = 0
 
-    private fun focusNext() {
+    fun focusNext() {
         when (currentGranularity) {
             GranularityMode.ACTIONS -> navigateCustomActions(forward = true)
             GranularityMode.HEADINGS -> navigateFilteredFocus(forward = true) { it.isHeading || getNodeRole(it) == "見出し" }
@@ -690,7 +695,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    private fun focusPrevious() {
+    fun focusPrevious() {
         when (currentGranularity) {
             GranularityMode.ACTIONS -> navigateCustomActions(forward = false)
             GranularityMode.HEADINGS -> navigateFilteredFocus(forward = false) { it.isHeading || getNodeRole(it) == "見出し" }
@@ -959,7 +964,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollVerticalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 650) return true
+        if (now - lastScrollTime < 500) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
@@ -978,7 +983,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         if (success) {
             soundHelper?.playFocusMove()
-            speak("次へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
@@ -986,20 +990,19 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                     announceNode(target)
                 }
-            }, 300)
+            }, 250)
             return true
         }
 
         // 物理2本指縦スワイプフォールバック
         soundHelper?.playFocusMove()
-        speak("次へスクロール", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = true, horizontal = false)
         return true
     }
 
     fun scrollVerticalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 650) return true
+        if (now - lastScrollTime < 500) return true
         lastScrollTime = now
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
@@ -1018,7 +1021,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         if (success) {
             soundHelper?.playFocusMove()
-            speak("前へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
@@ -1026,13 +1028,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                     announceNode(target)
                 }
-            }, 300)
+            }, 250)
             return true
         }
 
         // 物理2本指縦スワイプフォールバック
         soundHelper?.playFocusMove()
-        speak("前へスクロール", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = false, horizontal = false)
         return true
     }
@@ -1218,9 +1219,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 .addStroke(s2)
                 .build()
 
+            isInternalGestureDispatching = true
             dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
                 override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                     super.onCompleted(gestureDescription)
+                    mainHandler.postDelayed({ isInternalGestureDispatching = false }, 350)
                     mainHandler.postDelayed({
                         val newNodes = collectAccessibleNodes()
                         val target = findBestVisibleNodeAfterScroll(newNodes, forward = forward, horizontal = horizontal)
@@ -1232,6 +1235,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
                 override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                     super.onCancelled(gestureDescription)
+                    mainHandler.postDelayed({ isInternalGestureDispatching = false }, 350)
                     mainHandler.postDelayed({
                         val newNodes = collectAccessibleNodes()
                         val target = findBestVisibleNodeAfterScroll(newNodes, forward = forward, horizontal = horizontal)
@@ -1892,46 +1896,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun unlockKeyguardSwipe() {
-        val now = System.currentTimeMillis()
-        if (now - lastUnlockTime < 1000) return
-        lastUnlockTime = now
-
-        soundHelper?.playActionDone()
-        speak("ロック解除中", TextToSpeech.QUEUE_FLUSH)
-
-        val displayMetrics = resources.displayMetrics
-        val width = displayMetrics.widthPixels.toFloat()
-        val height = displayMetrics.heightPixels.toFloat()
-
-        // Android標準ロック画面（Keyguard）用の中央高速上スワイプ（画面下部 0.85f から 上部 0.10f、140ms）
-        val pathCenter = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.85f)
-            lineTo(width * 0.50f, height * 0.10f)
-        }
-        val strokeCenter = android.accessibilityservice.GestureDescription.StrokeDescription(pathCenter, 0, 140)
-        val gesture = android.accessibilityservice.GestureDescription.Builder()
-            .addStroke(strokeCenter)
-            .build()
-
-        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        
-        fun pollPinFocus(retriesLeft: Int) {
-            val found = focusPinEntryField()
-            if (!found && retriesLeft > 0) {
-                mainHandler.postDelayed({ pollPinFocus(retriesLeft - 1) }, 300)
-            }
-        }
-
-        dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
-            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
-                super.onCompleted(gestureDescription)
-                mainHandler.postDelayed({ pollPinFocus(5) }, 250)
-            }
-            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
-                super.onCancelled(gestureDescription)
-                mainHandler.postDelayed({ pollPinFocus(5) }, 250)
-            }
-        }, mainHandler)
+        unlockKeyguardOrShowBouncer()
     }
 
     private fun focusPinEntryField(): Boolean {

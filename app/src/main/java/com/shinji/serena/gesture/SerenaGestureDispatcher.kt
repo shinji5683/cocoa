@@ -22,6 +22,10 @@ class SerenaGestureDispatcher(
     private var lastGestureTime = 0L
 
     fun onGesture(gestureId: Int): Boolean {
+        if (service.isInternalGestureDispatching) {
+            Log.d(TAG, "Gesture $gestureId ignored: internal gesture dispatch in progress.")
+            return false
+        }
         val now = SystemClock.uptimeMillis()
         if (gestureId == lastGestureId && (now - lastGestureTime) < GESTURE_DEBOUNCE_MS) {
             Log.d(TAG, "Gesture $gestureId debounced.")
@@ -50,13 +54,11 @@ class SerenaGestureDispatcher(
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP -> {
-                if (service.handleVerticalSwipe(up = true)) return true
-                navigator?.navigateLinearFocus(forward = false)
+                service.focusPrevious()
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_DOWN -> {
-                if (service.handleVerticalSwipe(up = false)) return true
-                navigator?.navigateLinearFocus(forward = true)
+                service.focusNext()
                 return true
             }
 
@@ -103,7 +105,21 @@ class SerenaGestureDispatcher(
                         val gesture = android.accessibilityservice.GestureDescription.Builder()
                             .addStroke(stroke)
                             .build()
-                        service.dispatchGesture(gesture, null, null)
+                        service.isInternalGestureDispatching = true
+                        service.dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+                            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                                super.onCompleted(gestureDescription)
+                                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                    service.isInternalGestureDispatching = false
+                                }, 150)
+                            }
+                            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                                super.onCancelled(gestureDescription)
+                                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                    service.isInternalGestureDispatching = false
+                                }, 150)
+                            }
+                        }, null)
                         service.soundHelper?.playClick()
                         return true
                     }
@@ -185,7 +201,7 @@ class SerenaGestureDispatcher(
             }
             AccessibilityService.GESTURE_2_FINGER_SWIPE_UP -> {
                 if (service.isKeyguardLocked()) {
-                    service.dismissKeyguardViaOs()
+                    service.unlockKeyguardOrShowBouncer()
                     return true
                 }
                 // 2本指上フリック: 次へ縦スクロール
