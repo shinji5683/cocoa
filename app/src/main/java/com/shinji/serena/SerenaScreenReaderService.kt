@@ -1344,13 +1344,35 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         // 1. 透過Activity経由でOSへ KeyguardManager.requestDismissKeyguard を直撃発火（最確実）
         try {
             val intent = android.content.Intent(this, SerenaUnlockActivity::class.java).apply {
+                action = "com.shinji.serena.ACTION_UNLOCK_KEYGUARD"
                 addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                         android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or
                          android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION or
                          android.content.Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             }
-            startActivity(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                val options = android.app.ActivityOptions.makeBasic().apply {
+                    setPendingIntentBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                }
+                startActivity(intent, options.toBundle())
+            } else {
+                startActivity(intent)
+            }
         } catch (e: Exception) {
             Log.w(TAG, "SerenaUnlockActivity start failed: ${e.message}")
+            try {
+                val pi = android.app.PendingIntent.getActivity(
+                    this, 0,
+                    android.content.Intent(this, SerenaUnlockActivity::class.java).apply {
+                        action = "com.shinji.serena.ACTION_UNLOCK_KEYGUARD"
+                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    },
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                )
+                pi.send()
+            } catch (pie: Exception) {
+                Log.w(TAG, "PendingIntent launch fallback error: ${pie.message}")
+            }
         }
 
         // 2. OS標準 Global Action による通知シェード・キーガード解除要求

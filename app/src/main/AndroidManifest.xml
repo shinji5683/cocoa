@@ -107,13 +107,20 @@
 
         <activity
             android:name=".SerenaUnlockActivity"
-            android:exported="false"
+            android:exported="true"
+            android:launchMode="singleInstance"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:excludeFromRecents="true"
             android:noHistory="true"
-            android:directBootAware="true" />
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="com.shinji.serena.ACTION_UNLOCK_KEYGUARD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".SerenaScreenReaderService"
