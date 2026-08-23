@@ -207,16 +207,67 @@ class OsmValhallaNavigationHelper(
 
     private fun fetchPedestrianRoute(startLat: Double, startLon: Double, destLat: Double, destLon: Double) {
         try {
-            // OSRM / Valhalla 公開徒歩ルーティング API
-            val urlStr = "https://routing.openstreetmap.de/routed-foot/route/v1/foot/$startLon,$startLat;$destLon,$destLat?overview=full&steps=true&geometries=geojson"
-            val url = URL(urlStr)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = 6000
-            conn.readTimeout = 6000
-            conn.setRequestProperty("User-Agent", "SerenaScreenReader/1.0 (Android Accessibility)")
+            // 1. 最新 Valhalla v3.4 Pedestrian Routing API (歩行者・段差・安全歩道最適化)
+            val valhallaJson = JSONObject().apply {
+                put("locations", org.json.JSONArray().apply {
+                    put(JSONObject().apply { put("lat", startLat); put("lon", startLon) })
+                    put(JSONObject().apply { put("lat", destLat); put("lon", destLon) })
+                })
+                put("costing", "pedestrian")
+                put("costing_options", JSONObject().apply {
+                    put("pedestrian", JSONObject().apply {
+                        put("use_hills", 0.1)
+                        put("use_ferry", 0.0)
+                        put("use_living_streets", 1.0)
+                        put("service_penalty", 0.0)
+                        put("max_hiking_difficulty", 1)
+                        put("step_penalty", 0.0)
+                    })
+                })
+                put("directions_options", JSONObject().apply {
+                    put("language", "ja-JP")
+                    put("units", "kilometers")
+                })
+            }
 
-            if (conn.responseCode == 200) {
-                val response = BufferedReader(InputStreamReader(conn.inputStream)).readText()
+            var routeFetched = false
+
+            // Primary: Valhalla v3.4 API
+            try {
+                val valhallaUrl = URL("https://valhalla1.openstreetmap.de/route")
+                val conn = valhallaUrl.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.connectTimeout = 6000
+                conn.readTimeout = 6000
+                conn.doOutput = true
+                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                conn.setRequestProperty("User-Agent", "SerenaScreenReader/1.0 (Android Accessibility; Valhalla-v3.4)")
+
+                val os = conn.outputStream
+                os.write(valhallaJson.toString().toByteArray(Charsets.UTF_8))
+                os.flush()
+                os.close()
+
+                if (conn.responseCode == 200) {
+                    val response = BufferedReader(InputStreamReader(conn.inputStream, Charsets.UTF_8)).readText()
+                    parseValhallaRouteJson(response)
+                    routeFetched = true
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Valhalla primary API failed, falling back to OSRM: ${e.message}")
+            }
+
+            if (routeFetched) return
+
+            // Fallback: OSRM / OpenStreetMap Foot Routing API
+            val fallbackUrl = "https://routing.openstreetmap.de/routed-foot/route/v1/foot/$startLon,$startLat;$destLon,$destLat?overview=full&steps=true&geometries=geojson"
+            val connFallback = URL(fallbackUrl).openConnection() as HttpURLConnection
+            connFallback.connectTimeout = 6000
+            connFallback.readTimeout = 6000
+            connFallback.setRequestProperty("User-Agent", "SerenaScreenReader/1.0 (Android Accessibility)")
+
+            if (connFallback.responseCode == 200) {
+                val response = BufferedReader(InputStreamReader(connFallback.inputStream, Charsets.UTF_8)).readText()
                 parseRouteJson(response)
             } else {
                 mainHandler.post {
@@ -228,6 +279,79 @@ class OsmValhallaNavigationHelper(
             mainHandler.post {
                 speakCallback("ルート計算に失敗しました。電波の良い場所でお試しください。")
             }
+        }
+    }
+
+    private fun parseValhallaRouteJson(jsonStr: String) {
+        val root = JSONObject(jsonStr)
+        val trip = root.optJSONObject("trip") ?: run {
+            mainHandler.post { speakCallback("歩行者ルートが見つかりませんでした。") }
+            return
+        }
+
+        val summary = trip.optJSONObject("summary")
+        val totalLengthKm = summary?.optDouble("length", 0.0) ?: 0.0
+        val totalDistanceMeters = totalLengthKm * 1000.0
+        val totalTimeSeconds = summary?.optDouble("time", 0.0) ?: 0.0
+        val totalMinutes = ceil(totalTimeSeconds / 60.0).toInt().coerceAtLeast(1)
+
+        val legs = trip.optJSONArray("legs") ?: return
+        val parsedManeuvers = mutableListOf<NavManeuver>()
+
+        for (l in 0 until legs.length()) {
+            val leg = legs.getJSONObject(l)
+            val maneuversArr = leg.optJSONArray("maneuvers") ?: continue
+            for (m in 0 until maneuversArr.length()) {
+                val manObj = maneuversArr.getJSONObject(m)
+                val instruction = manObj.optString("instruction", "").trim()
+                val streetNames = manObj.optJSONArray("street_names")
+                val streetName = if (streetNames != null && streetNames.length() > 0) streetNames.getString(0) else "道なり"
+                val lengthKm = manObj.optDouble("length", 0.0)
+                val distM = lengthKm * 1000.0
+                val lat = manObj.optDouble("lat", destinationLat)
+                val lon = manObj.optDouble("lon", destinationLon)
+
+                val manTypeInt = manObj.optInt("type", 0)
+                val mType = when (manTypeInt) {
+                    1, 2, 3 -> ManeuverType.START
+                    4, 5 -> ManeuverType.DESTINATION
+                    6, 7, 8 -> ManeuverType.SLIGHT_RIGHT
+                    9, 10, 11 -> ManeuverType.RIGHT
+                    12, 13 -> ManeuverType.SHARP_RIGHT
+                    14 -> ManeuverType.UTURN
+                    15, 16 -> ManeuverType.SHARP_LEFT
+                    17, 18, 19 -> ManeuverType.LEFT
+                    20, 21, 22 -> ManeuverType.SLIGHT_LEFT
+                    else -> ManeuverType.STRAIGHT
+                }
+
+                parsedManeuvers.add(NavManeuver(instruction, streetName, distM, mType, lat, lon))
+            }
+        }
+
+        if (parsedManeuvers.isEmpty()) {
+            mainHandler.post { speakCallback("ルート案内データが空でした。") }
+            return
+        }
+
+        maneuvers.clear()
+        maneuvers.addAll(parsedManeuvers)
+        currentManeuverIndex = 0
+        lastSpokenManeuverIndex = -1
+        isNavigating = true
+
+        startLocationUpdates()
+
+        mainHandler.post {
+            val distText = if (totalDistanceMeters >= 1000) {
+                String.format("%.1fキロメートル", totalDistanceMeters / 1000.0)
+            } else {
+                "${totalDistanceMeters.toInt()}メートル"
+            }
+            soundAndHapticHelper?.playActionDone()
+            val startMsg = "${destinationName} への最新Valhalla歩行者ルートが見つかりました。総距離およそ ${distText}、徒歩 約${totalMinutes}分です。ナビゲーションを開始します。"
+            speakCallback(startMsg)
+            announceCurrentStep(true)
         }
     }
 
