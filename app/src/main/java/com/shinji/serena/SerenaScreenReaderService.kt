@@ -995,19 +995,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun findBestVisibleNodeAfterScroll(nodes: List<AccessibilityNodeInfo>, forward: Boolean, horizontal: Boolean): AccessibilityNodeInfo? {
         if (nodes.isEmpty()) return null
-        val currentFocus = getAccessibilityFocusedNode()
         val dm = resources.displayMetrics
         val screenW = dm.widthPixels
         val screenH = dm.heightPixels
 
-        if (currentFocus != null) {
-            val focusRect = android.graphics.Rect()
-            currentFocus.getBoundsInScreen(focusRect)
-            // スクロール後も現在フォーカス中の要素が画面中央可視域に残っていれば、フォーカスを動かさない！
-            if (focusRect.top >= (screenH * 0.12f).toInt() && focusRect.bottom <= (screenH * 0.88f).toInt() &&
-                focusRect.left >= 0 && focusRect.right <= screenW &&
-                focusRect.width() > 0 && focusRect.height() > 0) {
-                return null
+        // 縦スクロールの場合のみ、現在フォーカス中の要素がまだ画面内にあれば維持
+        if (!horizontal) {
+            val currentFocus = getAccessibilityFocusedNode()
+            if (currentFocus != null) {
+                val focusRect = android.graphics.Rect()
+                currentFocus.getBoundsInScreen(focusRect)
+                if (focusRect.top >= (screenH * 0.15f).toInt() && focusRect.bottom <= (screenH * 0.85f).toInt() &&
+                    focusRect.left >= 0 && focusRect.right <= screenW &&
+                    focusRect.width() > 0 && focusRect.height() > 0) {
+                    return null
+                }
             }
         }
 
@@ -1017,20 +1019,31 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val text = getNodeText(node)
             rect.width() > 0 && rect.height() > 0 &&
             rect.left >= 0 && rect.right <= screenW &&
-            rect.top >= (screenH * 0.08f).toInt() && rect.bottom <= (screenH * 0.92f).toInt() &&
+            rect.top >= (screenH * 0.05f).toInt() && rect.bottom <= (screenH * 0.95f).toInt() &&
             !text.contains("最近の項目はありません", ignoreCase = true)
         }
 
         if (visibleNodes.isEmpty()) return null
 
         if (horizontal) {
-            // 横スクロール（ページめくり）時は、新しいページの左上（一番最初のアプリ・項目）を最優先！
-            return visibleNodes.minWithOrNull(Comparator { n1, n2 ->
+            // ホーム画面/ランチャー等のページめくり時:
+            // 画面上部〜中央のメインワークスペース内のアプリアイコン（ドック領域・ステータスバー等を除外）を最優先！
+            val workspaceNodes = visibleNodes.filter { node ->
+                val r = android.graphics.Rect()
+                node.getBoundsInScreen(r)
+                r.top >= (screenH * 0.08f).toInt() && r.bottom <= (screenH * 0.82f).toInt() &&
+                (node.isClickable || node.isFocusable || !node.text.isNullOrEmpty() || !node.contentDescription.isNullOrEmpty())
+            }
+
+            val candidates = if (workspaceNodes.isNotEmpty()) workspaceNodes else visibleNodes
+
+            // ページの左上（一番最初のアプリ・項目）を最優先！
+            return candidates.minWithOrNull(Comparator { n1, n2 ->
                 val r1 = android.graphics.Rect()
                 val r2 = android.graphics.Rect()
                 n1.getBoundsInScreen(r1)
                 n2.getBoundsInScreen(r2)
-                if (kotlin.math.abs(r1.top - r2.top) > 50) {
+                if (kotlin.math.abs(r1.top - r2.top) > 60) {
                     r1.top.compareTo(r2.top)
                 } else {
                     r1.left.compareTo(r2.left)
@@ -1073,7 +1086,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = true)
                 if (target != null) {
-                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
+                    focusNavigator?.setFocusAndShowOnScreen(target)
                     announceNode(target)
                 }
             }, 300)
@@ -1109,7 +1123,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = true)
                 if (target != null) {
-                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
+                    focusNavigator?.setFocusAndShowOnScreen(target)
                     announceNode(target)
                 }
             }, 300)
@@ -1471,7 +1486,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         val newNodes = collectAccessibleNodes()
                         val target = findBestVisibleNodeAfterScroll(newNodes, forward = forward, horizontal = horizontal)
                         if (target != null) {
-                            target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                            focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
+                            focusNavigator?.setFocusAndShowOnScreen(target)
                             announceNode(target)
                         }
                     }, 250)
@@ -1483,7 +1499,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         val newNodes = collectAccessibleNodes()
                         val target = findBestVisibleNodeAfterScroll(newNodes, forward = forward, horizontal = horizontal)
                         if (target != null) {
-                            target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                            focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
+                            focusNavigator?.setFocusAndShowOnScreen(target)
                             announceNode(target)
                         }
                     }, 250)

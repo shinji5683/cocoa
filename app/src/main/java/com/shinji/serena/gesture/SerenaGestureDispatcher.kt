@@ -90,13 +90,25 @@ class SerenaGestureDispatcher(
 
                 val focusNode = service.getAccessibilityFocusedNode() ?: service.lastHoveredNode
                 if (focusNode != null) {
+                    val isPinOrKeyboard = service.isKeyboardOrPinKeyNode(focusNode)
                     val rawText = service.getNodeText(focusNode)
                     val viewId = focusNode.viewIdResourceName?.lowercase() ?: ""
-                    val isLockElement = viewId.contains("lock_icon") || viewId.contains("keyguard") ||
-                            viewId.contains("lockscreen") || viewId.contains("element:lockscreen") ||
-                            rawText.contains("ロック") || rawText.contains("解除")
+                    val isLockElement = !isPinOrKeyboard && (
+                            viewId.contains("lock_icon") || viewId.contains("element:lockscreen") ||
+                            rawText.contains("ロック解除") || rawText.contains("スワイプしてロック解除")
+                    )
                     if (service.isKeyguardLocked() && isLockElement) {
                         service.unlockKeyguardOrShowBouncer()
+                        return true
+                    }
+
+                    if (isPinOrKeyboard) {
+                        // PIN数字キー・キーボードキーの場合: 直近クリックまたは物理座標クリックを発行
+                        val clicked = focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+                        if (!clicked) {
+                            service.clickNodeByGesture(focusNode)
+                        }
+                        service.soundHelper?.playClick()
                         return true
                     }
 

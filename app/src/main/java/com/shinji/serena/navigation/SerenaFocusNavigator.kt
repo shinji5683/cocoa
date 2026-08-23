@@ -24,7 +24,6 @@ class SerenaFocusNavigator(
 
     private val mainHandler = Handler(Looper.getMainLooper())
     var lastFocusedNodeIndex: Int = -1
-        private set
 
     fun resetIndex() {
         lastFocusedNodeIndex = -1
