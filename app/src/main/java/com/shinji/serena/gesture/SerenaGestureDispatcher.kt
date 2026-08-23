@@ -85,6 +85,7 @@ class SerenaGestureDispatcher(
                     val rawText = service.getNodeText(focusNode)
                     val viewId = focusNode.viewIdResourceName?.lowercase() ?: ""
                     val isLockElement = viewId.contains("lock_icon") || viewId.contains("keyguard") ||
+                            viewId.contains("lockscreen") || viewId.contains("element:lockscreen") ||
                             rawText.contains("ロック") || rawText.contains("解除")
                     if (service.isKeyguardLocked() && isLockElement) {
                         service.unlockKeyguardOrShowBouncer()

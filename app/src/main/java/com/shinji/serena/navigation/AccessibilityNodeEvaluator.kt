@@ -91,10 +91,17 @@ class AccessibilityNodeEvaluator {
                     className.contains("EditText", ignoreCase = true) ||
                     viewId.contains("pinentry") || viewId.contains("passwordentry") ||
                     viewId.contains("pin_entry") || viewId.contains("password_entry") ||
-                    viewId.contains("lockpassword") ||
+                    viewId.contains("lockpassword") || viewId.contains("pin_code") ||
+                    viewId.contains("element:pin") || viewId.contains("element:bouncer") ||
+                    node.contentDescription?.contains("PIN", ignoreCase = true) == true ||
                     ((viewId.contains("pin") || viewId.contains("password")) && (pkgName.contains("systemui") || pkgName.contains("keyguard")))
 
             if (isPinOrPassField) {
+                return true
+            }
+
+            // ロック画面全体枠 (element:lockscreen / lock_icon) はダブルタップでPIN入力画面を開くための重要ターゲットとして許可
+            if (viewId.contains("element:lockscreen") || viewId.contains("lock_icon")) {
                 return true
             }
 
@@ -112,7 +119,7 @@ class AccessibilityNodeEvaluator {
 
             // SystemUI / ロック画面 / Bouncer の枠コンテナは完全スキップ（中身のPIN入力欄・PIN数字キー・時計等にのみフォーカスを許可）
             if (pkgName.contains("systemui", ignoreCase = true) || pkgName.contains("keyguard", ignoreCase = true)) {
-                if (node.childCount > 0 && !isPinOrPassField) {
+                if (node.childCount > 0 && !isPinOrPassField && !viewId.contains("element:lockscreen")) {
                     if (viewId.contains("scrim") || className.contains("ScrimView", ignoreCase = true) ||
                         className.contains("NotificationPanelView", ignoreCase = true) ||
                         className.contains("NotificationShade", ignoreCase = true) ||
@@ -120,6 +127,8 @@ class AccessibilityNodeEvaluator {
                         className.contains("KeyguardSecurityContainer", ignoreCase = true) ||
                         className.contains("KeyguardBouncerView", ignoreCase = true) ||
                         className.contains("KeyguardHostView", ignoreCase = true) ||
+                        viewId.contains("scene_window_root") ||
+                        viewId.contains("scene_container_root") ||
                         viewId.contains("keyguard_security_container") ||
                         viewId.contains("keyguard_bouncer") ||
                         viewId.contains("pin_pad") ||

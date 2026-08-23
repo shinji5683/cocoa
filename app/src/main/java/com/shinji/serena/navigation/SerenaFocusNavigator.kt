@@ -125,17 +125,20 @@ class SerenaFocusNavigator(
                 val desc = node.contentDescription?.toString()?.trim() ?: ""
                 fun isDigit(d: String): Boolean =
                     viewId.endsWith("key$d") || viewId.endsWith("digit$d") || desc == d || text == d ||
-                    desc.startsWith(d) || text.startsWith(d)
+                    desc.startsWith(d) || text.startsWith(d) || viewId.contains("element:pin_key_$d")
 
                 val isPinOrPass = node.isPassword || className.contains("PasswordTextView", ignoreCase = true) ||
                         viewId.contains("pinentry") || viewId.contains("passwordentry") ||
                         viewId.contains("pin_entry") || viewId.contains("password_entry") ||
-                        viewId.contains("lockpassword") ||
+                        viewId.contains("lockpassword") || viewId.contains("pin_code") ||
+                        viewId.contains("element:pin") || viewId.contains("element:bouncer") ||
+                        desc.contains("PIN", ignoreCase = true) || desc.contains("パスワード") ||
+                        text.contains("PIN", ignoreCase = true) ||
                         (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
 
                 when {
                     isPinOrPass -> 1050
-                    viewId.contains("message_area") || viewId.contains("bouncer_message") || viewId.contains("keyguard_message") -> 1040
+                    viewId.contains("message_area") || viewId.contains("bouncer_message") || viewId.contains("keyguard_message") || viewId.contains("element:bouncer_message") -> 1040
                     isDigit("1") -> 1000
                     isDigit("2") -> 990
                     isDigit("3") -> 980
@@ -147,10 +150,10 @@ class SerenaFocusNavigator(
                     isDigit("9") -> 920
                     viewId.contains("delete") || desc.contains("削除") || text.contains("削除") -> 915
                     isDigit("0") -> 910
-                    viewId.contains("enter") || viewId.contains("ok") || desc.contains("決定") || text.contains("決定") -> 900
+                    viewId.contains("enter") || viewId.contains("ok") || desc.contains("決定") || text.contains("決定") || desc.contains("確定") -> 900
                     viewId.contains("emergency") || desc.contains("緊急") || text.contains("緊急") -> 880
                     node.isEditable -> 870
-                    viewId.contains("lock_icon") || desc.contains("ロック") || text.contains("ロック") || desc.contains("解除") -> 700
+                    viewId.contains("lockscreen") || viewId.contains("lock_icon") || desc.contains("ロック") || text.contains("ロック") || desc.contains("解除") -> 700
                     viewId.contains("notification") || node.className?.contains("Notification", ignoreCase = true) == true -> -1000
                     else -> 0
                 }
@@ -165,12 +168,15 @@ class SerenaFocusNavigator(
         val isPinOrPassField = node.isPassword || className.contains("PasswordTextView", ignoreCase = true) ||
                                viewId.contains("pinentry") || viewId.contains("passwordentry") ||
                                viewId.contains("pin_entry") || viewId.contains("password_entry") ||
-                               viewId.contains("lockpassword") || viewId.contains("pin_view")
+                               viewId.contains("lockpassword") || viewId.contains("pin_view") ||
+                               viewId.contains("pin_code") || viewId.contains("element:pin") ||
+                               node.contentDescription?.contains("PIN", ignoreCase = true) == true
 
         val isPinKeyNode = isPinOrPassField ||
                            viewId.contains("systemui:id/key") || 
                            viewId.contains("systemui:id/delete_button") ||
                            viewId.contains("systemui:id/emergency_call_button") ||
+                           viewId.contains("element:pin_key") ||
                            viewId.contains("pin_pad") ||
                            viewId.contains("numpad")
 

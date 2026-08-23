@@ -1201,15 +1201,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (!currentWindows.isNullOrEmpty()) {
             val hasKeyguardWindow = currentWindows.any {
                 it.type == 4 /* TYPE_KEYGUARD */ || 
-                (it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM && it.root?.packageName?.toString()?.contains("keyguard") == true)
+                (it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM &&
+                    (it.root?.packageName?.toString()?.contains("keyguard") == true ||
+                     it.root?.packageName?.toString()?.contains("systemui") == true))
             }
             if (hasKeyguardWindow) return true
         }
 
         val root = rootInActiveWindow
         val rootPkg = root?.packageName?.toString()?.lowercase() ?: ""
-        if (rootPkg.contains("keyguard") || (rootPkg.contains("systemui") && root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")?.isNotEmpty() == true)) {
-            return true
+        if (rootPkg.contains("keyguard") || rootPkg.contains("systemui")) {
+            val viewId = root?.viewIdResourceName?.lowercase() ?: ""
+            if (viewId.contains("scene_window_root") || viewId.contains("lockscreen") ||
+                viewId.contains("bouncer") || viewId.contains("lock_icon") ||
+                root?.findAccessibilityNodeInfosByViewId("element:lockscreen")?.isNotEmpty() == true ||
+                root?.findAccessibilityNodeInfosByViewId("element:bouncer")?.isNotEmpty() == true ||
+                root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")?.isNotEmpty() == true
+            ) {
+                return true
+            }
         }
         return false
     }
@@ -1227,20 +1237,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         var pinInputField: AccessibilityNodeInfo? = null
         var pinMessageArea: AccessibilityNodeInfo? = null
         var firstPinDigitKey: AccessibilityNodeInfo? = null
+        var lockscreenTarget: AccessibilityNodeInfo? = null
 
         fun scanKeyguardNodes(node: AccessibilityNodeInfo?) {
             if (node == null) return
             val viewId = node.viewIdResourceName?.lowercase() ?: ""
             val className = node.className?.toString()?.lowercase() ?: ""
+            val desc = node.contentDescription?.toString() ?: ""
+            val text = node.text?.toString() ?: ""
 
-            // 1. 最優先: PIN/パスワード入力欄そのもの (PasswordTextView / pinEntry / passwordEntry / lockPassword / EditText)
+            // 1. 最優先: PIN/パスワード入力欄そのもの (PasswordTextView / pinEntry / passwordEntry / lockPassword / element:pin_code_field / EditText / isPassword)
             if (pinInputField == null) {
                 val isPinOrPass = node.isPassword ||
                         className.contains("passwordtextview") ||
                         viewId.contains("pinentry") || viewId.contains("passwordentry") ||
                         viewId.contains("lockpassword") || viewId.contains("pin_entry") ||
                         viewId.contains("password_entry") || viewId.contains("pin_field") ||
-                        viewId.contains("pin_view") ||
+                        viewId.contains("pin_code") || viewId.contains("pin_view") ||
+                        viewId.contains("element:pin") ||
+                        (desc.contains("PIN", ignoreCase = true) && (node.isFocusable || node.isClickable || node.isPassword)) ||
                         (className.contains("edittext") && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard") || node.isPassword)) ||
                         (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
 
@@ -1250,10 +1265,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            // 2. 次点: PINメッセージエリア (keyguard_message_area / bouncer_message)
+            // 2. 次点: PINメッセージエリア (keyguard_message_area / bouncer_message / element:bouncer)
             if (pinMessageArea == null) {
                 if (viewId.contains("keyguard_message_area") || viewId.contains("bouncer_message") ||
-                    viewId.contains("message_area")
+                    viewId.contains("message_area") || viewId.contains("element:bouncer_message") ||
+                    desc.contains("PINを入力") || desc.contains("再起動後") || text.contains("PINを入力") || text.contains("再起動後")
                 ) {
                     pinMessageArea = node
                 }
@@ -1261,8 +1277,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             // 3. 数字キー「1」または「0」（フォールバック用）
             if (firstPinDigitKey == null) {
-                if (viewId.endsWith("key1") || viewId.endsWith("digit1") || viewId.endsWith("key0")) {
+                if (viewId.endsWith("key1") || viewId.endsWith("digit1") || viewId.endsWith("key0") ||
+                    viewId.contains("element:pin_key_1") || viewId.contains("element:pin_key_0") ||
+                    desc == "1" || text == "1"
+                ) {
                     firstPinDigitKey = node
+                }
+            }
+
+            // 4. ロック画面そのもの (element:lockscreen)
+            if (lockscreenTarget == null) {
+                if (viewId.contains("element:lockscreen") || viewId.contains("lock_icon")) {
+                    lockscreenTarget = node
                 }
             }
 
@@ -1280,7 +1306,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val target = pinInputField ?: pinMessageArea ?: firstPinDigitKey
         if (target != null) {
             lastPinFocusTimeMs = now
-            target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+            val focused = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+            if (!focused) {
+                try {
+                    target.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id)
+                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                } catch (_: Exception) {}
+            }
             lastHoveredNode = target
             soundHelper?.playFocusMove()
             announceNode(target)
@@ -1299,7 +1331,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val pkg = node.packageName?.toString()?.lowercase() ?: ""
         val className = node.className?.toString() ?: ""
 
-        // 1. PIN keypad buttons on Lock Screen
+        // 1. PIN keypad buttons on Lock Screen (Compose element:pin_key_*, standard keyguard digit buttons)
         val isPinDigitId = viewId.contains("digit") || viewId.contains("pin_key") ||
                 viewId.endsWith("key1") || viewId.endsWith("key2") || viewId.endsWith("key3") ||
                 viewId.endsWith("key4") || viewId.endsWith("key5") || viewId.endsWith("key6") ||
@@ -1312,7 +1344,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 (desc.length == 1 && !desc.all { it.isWhitespace() })
 
         val isKeyguardKey = (isKeyguardLocked() || pkg.contains("systemui") || pkg.contains("keyguard")) &&
-                (isPinDigitId || (node.isClickable && (isSingleCharOrDigit || desc.contains("削除") || desc.contains("決定"))))
+                (isPinDigitId || (node.isClickable && (isSingleCharOrDigit || desc.contains("削除") || desc.contains("決定") || desc.contains("確定"))))
 
         // 2. Soft Keyboard / IME keys (Gboard, Serena Keyboard, etc.)
         val isImeKey = (pkg.contains("inputmethod") || pkg.contains("latin") || pkg.contains("gboard") ||
@@ -1333,7 +1365,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
-        // 1. Google TalkBack 完全準拠: OS標準 Global Action による通知シェード消去 ＆ ホーム/バウンサー呼び出し
+        // 1. Google TalkBack 完全準拠: OS標準 Global Action による通知シェード消去
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
@@ -1342,28 +1374,41 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             Log.w(TAG, "Global action dismiss notification shade: ${e.message}")
         }
 
-        // 2. ロック画面ルートノードおよびロックアイコンへの ACTION_DISMISS / ACTION_CLICK 発行
+        // 2. ロック画面ルートノードおよびCompose element:lockscreenへの ACTION_DISMISS / ACTION_CLICK 発行
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
-        for (r in roots) {
+        fun dismissNodeRecursively(node: AccessibilityNodeInfo?) {
+            if (node == null) return
+            val viewId = node.viewIdResourceName ?: ""
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                r.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
+                if (node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id }) {
+                    node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
+                }
             }
-            val lockIcons = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")
-            for (icon in lockIcons) {
-                icon.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            if (viewId.contains("lockscreen") || viewId.contains("lock_icon") || viewId.contains("keyguard")) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
+                }
+                node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
+            for (i in 0 until node.childCount) {
+                dismissNodeRecursively(node.getChild(i))
             }
         }
 
-        // 3. Google TalkBack v17完全準拠の超高速縦スワイプドラッグ（中央 50%, 78% -> 中央 50%, 15%, 110ms）
+        for (r in roots) {
+            dismissNodeRecursively(r)
+        }
+
+        // 3. Google TalkBack 完全準拠の超高速縦スワイプドラッグ（中央 50%, 85% -> 中央 50%, 10%, 80ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
         val p = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.78f)
-            lineTo(width * 0.50f, height * 0.15f)
+            moveTo(width * 0.50f, height * 0.85f)
+            lineTo(width * 0.50f, height * 0.10f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 110)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 80)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -1387,7 +1432,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 120)
         mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 250)
         mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 500)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1000)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 800)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1200)
         return dispatched
     }
 
