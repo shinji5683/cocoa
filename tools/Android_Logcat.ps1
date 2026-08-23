@@ -70,6 +70,7 @@ $processInfo = New-Object System.Diagnostics.ProcessStartInfo
 $processInfo.FileName = "adb"
 $processInfo.Arguments = "-s $selectedDevice logcat -v time $logFilterArgs"
 $processInfo.RedirectStandardOutput = $true
+$processInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
 $processInfo.UseShellExecute = $false
 $processInfo.CreateNoWindow = $true
 
