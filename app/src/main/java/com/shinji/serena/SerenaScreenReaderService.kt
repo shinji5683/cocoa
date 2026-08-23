@@ -2945,12 +2945,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
 
                 if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
-                    // SystemUI / ロック画面 / Bouncer のウィンドウ検知
-                    if (windowTitle.isNotEmpty()) {
-                        speak("ウィンドウ: $windowTitle", TextToSpeech.QUEUE_FLUSH)
-                    } else if (className.contains("Bouncer", ignoreCase = true) || className.contains("Keyguard", ignoreCase = true)) {
-                        speak("ウィンドウ: 画面ロック解除", TextToSpeech.QUEUE_FLUSH)
-                    }
+                    // SystemUI / ロック画面 / Bouncer のウィンドウ検知時は、無駄なウィンドウ名単体読み上げを抑止しPIN入力欄に直撃！
                     autoFocusPinKeypadIfPresent(force = true)
                 } else if (windowTitle.isNotEmpty() && !isCallActive) {
                     speak("画面: $windowTitle", TextToSpeech.QUEUE_FLUSH)
