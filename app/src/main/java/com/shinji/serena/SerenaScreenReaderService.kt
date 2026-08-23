@@ -1226,19 +1226,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         // Google TalkBack AccessibilityFocusMonitor 準拠: PIN入力欄・PINエリアそのものを最優先捕捉
         var pinInputField: AccessibilityNodeInfo? = null
         var pinMessageArea: AccessibilityNodeInfo? = null
+        var firstPinDigitKey: AccessibilityNodeInfo? = null
 
         fun scanKeyguardNodes(node: AccessibilityNodeInfo?) {
             if (node == null) return
             val viewId = node.viewIdResourceName?.lowercase() ?: ""
             val className = node.className?.toString()?.lowercase() ?: ""
 
-            // 1. 最優先: PIN/パスワード入力欄そのもの (pinEntry / passwordEntry / lockPasswordView / EditText)
+            // 1. 最優先: PIN/パスワード入力欄そのもの (PasswordTextView / pinEntry / passwordEntry / lockPassword / EditText)
             if (pinInputField == null) {
-                if (viewId.contains("pinentry") || viewId.contains("passwordentry") ||
-                    viewId.contains("lockpasswordview") ||
-                    (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard"))) ||
-                    (className.contains("edittext") && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
-                ) {
+                val isPinOrPass = node.isPassword ||
+                        className.contains("passwordtextview") ||
+                        viewId.contains("pinentry") || viewId.contains("passwordentry") ||
+                        viewId.contains("lockpassword") || viewId.contains("pin_entry") ||
+                        viewId.contains("password_entry") || viewId.contains("pin_field") ||
+                        viewId.contains("pin_view") ||
+                        (className.contains("edittext") && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard") || node.isPassword)) ||
+                        (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
+
+                if (isPinOrPass) {
                     pinInputField = node
                     return
                 }
@@ -1247,9 +1253,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             // 2. 次点: PINメッセージエリア (keyguard_message_area / bouncer_message)
             if (pinMessageArea == null) {
                 if (viewId.contains("keyguard_message_area") || viewId.contains("bouncer_message") ||
-                    viewId.contains("keyguard_pin_view")
+                    viewId.contains("message_area")
                 ) {
                     pinMessageArea = node
+                }
+            }
+
+            // 3. 数字キー「1」または「0」（フォールバック用）
+            if (firstPinDigitKey == null) {
+                if (viewId.endsWith("key1") || viewId.endsWith("digit1") || viewId.endsWith("key0")) {
+                    firstPinDigitKey = node
                 }
             }
 
@@ -1264,7 +1277,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             if (pinInputField != null) break
         }
 
-        val target = pinInputField ?: pinMessageArea
+        val target = pinInputField ?: pinMessageArea ?: firstPinDigitKey
         if (target != null) {
             lastPinFocusTimeMs = now
             target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
@@ -2181,64 +2194,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun focusPinEntryField(): Boolean {
-        val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
-        for (r in roots) {
-            val pinNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/pinEntry")
-            if (pinNodes.isNotEmpty()) {
-                val node = pinNodes[0]
-                node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                soundHelper?.playFocusMove()
-                announceNode(node)
-                return true
-            }
-            val passwordNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/passwordEntry")
-            if (passwordNodes.isNotEmpty()) {
-                val node = passwordNodes[0]
-                node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                soundHelper?.playFocusMove()
-                announceNode(node)
-                return true
-            }
-            for (digit in 1..9) {
-                val keyNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/key$digit")
-                if (keyNodes.isNotEmpty()) {
-                    val keyNode = keyNodes[0]
-                    keyNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                    soundHelper?.playFocusMove()
-                    announceNode(keyNode)
-                    return true
-                }
-            }
-            val zeroNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/key0")
-            if (zeroNodes.isNotEmpty()) {
-                val zeroNode = zeroNodes[0]
-                zeroNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                soundHelper?.playFocusMove()
-                announceNode(zeroNode)
-                return true
-            }
-            val bouncerNodes = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/keyguard_bouncer")
-            if (bouncerNodes.isNotEmpty()) {
-                val accessibleChildren = collectAccessibleNodes(bouncerNodes[0])
-                if (accessibleChildren.isNotEmpty()) {
-                    val target = accessibleChildren.firstOrNull { it.isEditable || it.className?.contains("EditText") == true } ?: accessibleChildren.first()
-                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                    soundHelper?.playFocusMove()
-                    announceNode(target)
-                    return true
-                }
-            }
-            val editTexts = mutableListOf<AccessibilityNodeInfo>()
-            findNodesByClass(r, "EditText", editTexts)
-            if (editTexts.isNotEmpty()) {
-                val node = editTexts[0]
-                node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                soundHelper?.playFocusMove()
-                announceNode(node)
-                return true
-            }
-        }
-        return false
+        return autoFocusPinKeypadIfPresent(force = true)
     }
 
     private fun findNodesByClass(node: AccessibilityNodeInfo, targetClass: String, outList: MutableList<AccessibilityNodeInfo>) {
@@ -3418,6 +3374,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             name.contains("media_pause") || name.contains("action_pause") -> "一時停止"
             name.contains("media_prev") || name.contains("action_prev") -> "前の曲"
             name.contains("media_next") || name.contains("action_next") -> "次の曲"
+            name.contains("pinentry") || name.contains("pin_entry") || name.contains("pin_field") || name.contains("keyguard_pin") || name.contains("pin_view") -> "PIN入力欄"
+            name.contains("passwordentry") || name.contains("password_entry") || name.contains("lockpassword") || name.contains("keyguard_password") -> "パスワード入力欄"
             name == "key0" || name == "button0" -> "0"
             name == "key1" || name == "button1" -> "1"
             name == "key2" || name == "button2" -> "2"
@@ -3448,6 +3406,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_COLLAPSE.id }
         } else false
 
+        val isPin = viewId.contains("pin") || className.contains("pin", ignoreCase = true) ||
+                className.contains("PasswordTextView", ignoreCase = true)
+        val isPass = isPin || node.isPassword || className.contains("PasswordTextView", ignoreCase = true) ||
+                viewId.contains("password") || viewId.contains("lockpassword")
+
         return when {
             hasExpand || viewId.contains("expand_button") || viewId.contains("chevron") -> "展開ボタン"
             hasCollapse || viewId.contains("collapse_button") -> "折りたたみボタン"
@@ -3455,13 +3418,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             className.contains("CheckBox", ignoreCase = true) -> "チェックボックス"
             className.contains("RadioButton", ignoreCase = true) -> "ラジオボタン"
             className.contains("Button", ignoreCase = true) -> "ボタン"
+            node.isPassword || isPass || className.contains("PasswordTextView", ignoreCase = true) ||
             className.contains("EditText", ignoreCase = true) || node.isEditable -> {
                 val inputType = node.inputType
-                val isPass = node.isPassword || (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD ||
-                        (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD ||
-                        (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_NUMBER && (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
-                
                 when {
+                    isPin -> "PIN入力欄"
                     isPass -> "パスワード入力欄"
                     (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_NUMBER -> "数字入力欄"
                     (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_PHONE -> "電話番号入力欄"
@@ -3762,6 +3723,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         if (isKeyguardLocked()) {
                             soundHelper?.playFocusMove()
                             speak("ロック画面です。2本指で上にスワイプして解除してください。", TextToSpeech.QUEUE_FLUSH)
+                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                autoFocusPinKeypadIfPresent(force = true)
+                            }, 250)
                         }
                     }
                     Intent.ACTION_USER_PRESENT -> {

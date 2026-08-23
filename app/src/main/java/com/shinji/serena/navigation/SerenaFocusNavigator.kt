@@ -117,17 +117,25 @@ class SerenaFocusNavigator(
             traverseTree(r, list)
         }
         if (service.isKeyguardLocked()) {
-            // ロック画面時はPIN入力欄を最優先(1020)、続けてPINキーパッド（1〜9, 削除, 0, 決定）を自然な順序に整列！通知領域は末尾へ隔離
+            // ロック画面時はPIN/パスワード入力欄を最優先(1050)、メッセージ(1040)、続けてPINキーパッド（1〜9, 削除, 0, 決定）を自然な順序に整列！通知領域は末尾へ隔離
             list.sortByDescending { node ->
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
+                val className = node.className?.toString() ?: ""
                 val text = node.text?.toString()?.trim() ?: ""
                 val desc = node.contentDescription?.toString()?.trim() ?: ""
                 fun isDigit(d: String): Boolean =
                     viewId.endsWith("key$d") || viewId.endsWith("digit$d") || desc == d || text == d ||
                     desc.startsWith(d) || text.startsWith(d)
 
+                val isPinOrPass = node.isPassword || className.contains("PasswordTextView", ignoreCase = true) ||
+                        viewId.contains("pinentry") || viewId.contains("passwordentry") ||
+                        viewId.contains("pin_entry") || viewId.contains("password_entry") ||
+                        viewId.contains("lockpassword") ||
+                        (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
+
                 when {
-                    viewId.contains("pinentry") || viewId.contains("passwordentry") || (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard"))) -> 1020
+                    isPinOrPass -> 1050
+                    viewId.contains("message_area") || viewId.contains("bouncer_message") || viewId.contains("keyguard_message") -> 1040
                     isDigit("1") -> 1000
                     isDigit("2") -> 990
                     isDigit("3") -> 980
@@ -153,18 +161,23 @@ class SerenaFocusNavigator(
 
     private fun traverseTree(node: AccessibilityNodeInfo, list: MutableList<AccessibilityNodeInfo>) {
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
-        val isPinKeyNode = viewId.contains("systemui:id/key") || 
+        val className = node.className?.toString() ?: ""
+        val isPinOrPassField = node.isPassword || className.contains("PasswordTextView", ignoreCase = true) ||
+                               viewId.contains("pinentry") || viewId.contains("passwordentry") ||
+                               viewId.contains("pin_entry") || viewId.contains("password_entry") ||
+                               viewId.contains("lockpassword") || viewId.contains("pin_view")
+
+        val isPinKeyNode = isPinOrPassField ||
+                           viewId.contains("systemui:id/key") || 
                            viewId.contains("systemui:id/delete_button") ||
                            viewId.contains("systemui:id/emergency_call_button") ||
-                           viewId.contains("systemui:id/pinentry") ||
-                           viewId.contains("systemui:id/passwordentry") ||
                            viewId.contains("pin_pad") ||
                            viewId.contains("numpad")
 
         val isTarget = evaluator.isFocusableTarget(node)
-        val hasFocusableChildren = if (isPinKeyNode && (node.isClickable || node.isFocusable)) false else evaluator.hasFocusableChildren(node)
+        val hasFocusableChildren = if (isPinKeyNode) false else evaluator.hasFocusableChildren(node)
 
-        // 1. 子要素にフォーカス可能要素を持たない意味のあるノード（末端ノード/ボタン/テキスト等）なら登録
+        // 1. 子要素にフォーカス可能要素を持たない意味のあるノード（末端ノード/ボタン/テキスト/PIN入力欄等）なら登録
         if (isTarget && !hasFocusableChildren) {
             if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
                 list.add(node)

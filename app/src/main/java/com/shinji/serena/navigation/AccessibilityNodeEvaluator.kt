@@ -34,6 +34,18 @@ class AccessibilityNodeEvaluator {
 
         val className = node.className?.toString() ?: ""
         val pkgName = node.packageName?.toString() ?: ""
+        val viewId = node.viewIdResourceName?.lowercase() ?: ""
+
+        // PIN / パスワード入力欄 (PasswordTextView, EditText, pinEntry, lockPassword等) はコンテナ判定から除外
+        if (node.isPassword || node.isEditable ||
+            className.contains("PasswordTextView", ignoreCase = true) ||
+            className.contains("EditText", ignoreCase = true) ||
+            viewId.contains("pinentry") || viewId.contains("passwordentry") ||
+            viewId.contains("pin_entry") || viewId.contains("password_entry") ||
+            viewId.contains("lockpassword")
+        ) {
+            return false
+        }
 
         // Pixel Launcher / ホーム画面アプリの背景透明枠コンテナを完全スキップ
         if (pkgName.contains("launcher", ignoreCase = true)) {
@@ -71,6 +83,20 @@ class AccessibilityNodeEvaluator {
         try {
             val className = node.className?.toString() ?: ""
             val pkgName = node.packageName?.toString() ?: ""
+            val viewId = node.viewIdResourceName?.lowercase() ?: ""
+
+            // 0. 最重要: PIN / パスワード入力欄・PINキーパッドは 100% 確実にフォーカス対象として即時許可！
+            val isPinOrPassField = node.isPassword || node.isEditable ||
+                    className.contains("PasswordTextView", ignoreCase = true) ||
+                    className.contains("EditText", ignoreCase = true) ||
+                    viewId.contains("pinentry") || viewId.contains("passwordentry") ||
+                    viewId.contains("pin_entry") || viewId.contains("password_entry") ||
+                    viewId.contains("lockpassword") ||
+                    ((viewId.contains("pin") || viewId.contains("password")) && (pkgName.contains("systemui") || pkgName.contains("keyguard")))
+
+            if (isPinOrPassField) {
+                return true
+            }
 
             if (pkgName.contains("launcher", ignoreCase = true)) {
                 if (className.contains("CellLayout", ignoreCase = true) ||
@@ -86,9 +112,7 @@ class AccessibilityNodeEvaluator {
 
             // SystemUI / ロック画面 / Bouncer の枠コンテナは完全スキップ（中身のPIN入力欄・PIN数字キー・時計等にのみフォーカスを許可）
             if (pkgName.contains("systemui", ignoreCase = true) || pkgName.contains("keyguard", ignoreCase = true)) {
-                val viewId = node.viewIdResourceName?.lowercase() ?: ""
-                val className = node.className?.toString() ?: ""
-                if (node.childCount > 0 && !viewId.contains("pinentry") && !viewId.contains("passwordentry") && !className.contains("EditText", ignoreCase = true)) {
+                if (node.childCount > 0 && !isPinOrPassField) {
                     if (viewId.contains("scrim") || className.contains("ScrimView", ignoreCase = true) ||
                         className.contains("NotificationPanelView", ignoreCase = true) ||
                         className.contains("NotificationShade", ignoreCase = true) ||
@@ -96,8 +120,6 @@ class AccessibilityNodeEvaluator {
                         className.contains("KeyguardSecurityContainer", ignoreCase = true) ||
                         className.contains("KeyguardBouncerView", ignoreCase = true) ||
                         className.contains("KeyguardHostView", ignoreCase = true) ||
-                        className.contains("KeyguardPINView", ignoreCase = true) ||
-                        className.contains("KeyguardPasswordView", ignoreCase = true) ||
                         viewId.contains("keyguard_security_container") ||
                         viewId.contains("keyguard_bouncer") ||
                         viewId.contains("pin_pad") ||
@@ -273,13 +295,24 @@ class AccessibilityNodeEvaluator {
                 return text
             }
 
-            // 2. labeledBy
+            // 2. PIN / パスワード入力欄の安全な案内
+            val viewId = node.viewIdResourceName?.lowercase() ?: ""
+            val isPassOrPin = node.isPassword || className.contains("PasswordTextView", ignoreCase = true) ||
+                    viewId.contains("pinentry") || viewId.contains("passwordentry") ||
+                    viewId.contains("pin_entry") || viewId.contains("password_entry") ||
+                    viewId.contains("lockpassword")
+
+            // 3. labeledBy
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                 val labeledBy = node.labeledBy
                 if (labeledBy != null) {
                     val labelText = labeledBy.contentDescription?.toString()?.trim() ?: labeledBy.text?.toString()?.trim() ?: ""
                     if (labelText.isNotEmpty()) return labelText
                 }
+            }
+
+            if (isPassOrPin) {
+                return "未入力"
             }
 
             // 3. 子要素テキストの安全な収集（直下および1階層下まで、最大5件）
