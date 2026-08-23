@@ -39,5 +39,8 @@
     - 「真後ろ」 (Directly behind)
     - 「左斜め後ろ」 (Back left)
     - 「左」 (Left)
-    - 「左斜め前」 (Front left)
     - 例: 「正面 30m先に横断歩道」「右斜め前 50m先にコンビニ」「左 100m先に駅の入口」
+- Real-Device Autonomous Piloting & Continuous Bug Verification Policy (実機操縦権委譲・自律バグ検証の鉄則):
+  - Shinjiさん has granted full authorization to autonomously pilot, test, and manipulate connected Android test devices via ADB for debugging and verification purposes until reported bugs are 100% resolved.
+  - Safe Piloting Guard: Always ensure zero data loss (never wipe or destroy personal user data).
+  - Autonomous Verification Cycle: Whenever a bug is reported or suspected, autonomously simulate operations (screen on/off, swipes, focus navigation, bouncer trigger, tap events), inspect UI hierarchies via `uiautomator dump` and `logcat`, iterate on fixes, deploy, and verify on device until the bug is completely resolved and verified.

@@ -281,13 +281,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (!hasSpokenStartupGreeting && isTtsReady) {
             hasSpokenStartupGreeting = true
             isStartupGreetingSpeaking = true
-            val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
+            val welcomeMsg = "Shinjiさん、セレナの準備が完了しました！"
             soundHelper?.playActionDone()
             try {
-                tts?.language = detectLanguage(welcomeMsg)
+                tts?.language = Locale.JAPANESE
             } catch (_: Exception) {}
             tts?.speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH, null, "serena_startup_greeting")
-            Log.i(TAG, "TTS initialized successfully. Spoke Tagalog startup greeting.")
+            Log.i(TAG, "TTS initialized successfully. Spoke startup greeting.")
             // フェイルセーフ（最悪の場合でも4.5秒後にフラグを解放）
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 if (isStartupGreetingSpeaking) {
@@ -454,10 +454,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             // 2本指上フリック (25): ロック画面時はロック解除 / アプリ内は次へ縦スクロール
             25 -> {
-                val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
-                val isKeyguard = km?.isKeyguardLocked == true
-                if (isKeyguard) {
-                    unlockKeyguardSwipe()
+                if (isKeyguardLocked()) {
+                    unlockKeyguardOrShowBouncer()
                     return true
                 } else {
                     return scrollVerticalForward()
@@ -2899,6 +2897,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+                if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
+                    autoFocusPinKeypadIfPresent(force = false)
+                }
+            }
+
             AccessibilityEvent.TYPE_VIEW_HOVER_ENTER -> {
                 val node = event.source ?: return
                 val pkg = node.packageName?.toString() ?: ""
@@ -3623,7 +3627,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return Locale.JAPANESE
 
-        if (trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF].*"))) {
+        // 日本語（ひらがな・カタカナ・漢字）または数字・記号のみの場合は常に日本語！
+        if (trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF].*")) ||
+            trimmed.matches(Regex("^[0-9\\s\\p{Punct}]+$"))
+        ) {
             return Locale.JAPANESE
         }
 
@@ -3641,10 +3648,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             if (availability >= TextToSpeech.LANG_AVAILABLE) {
                 return tagalogLocale
             }
+            return Locale.JAPANESE
+        }
+
+        // 英字アルファベットを含む場合のみ英語、それ以外はデフォルト日本語
+        if (trimmed.matches(Regex(".*[a-zA-Z].*"))) {
             return Locale.ENGLISH
         }
 
-        return Locale.ENGLISH
+        return Locale.JAPANESE
     }
 
     private var isSpeechPaused = false
