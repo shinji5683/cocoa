@@ -34,6 +34,12 @@ When launched, you can choose from the following 3 modes:
 ### 🛠️ Built With
 This utility tool was created using AI technology and PowerShell 7.x.
 
+### 👥 Author
+Created by `stomato463-crypto`
+
+### 📄 License
+This tool is proprietary. Usage is strictly limited to authorized members and contributors of the Cocoa Project. Unauthorized distribution, copying, or modification is prohibited.
+
 ---
 
 ## 🇯🇵 日本語ガイド
@@ -65,3 +71,9 @@ powershell -File .\run_logcat.ps1
 ## 作成に使用したもの
 
 このツールは、AIテクノロジー、およびPowerShell7Xを使用して作成されています。
+
+## 👥 作成者
+`stomato463-crypto`
+
+## 📄 ライセンス
+このツールは非公開（プロプライエタリ）です。使用および改変は、ココアプロジェクト（Cocoa Project）の公認メンバーおよび開発関係者のみに制限されています。関係者以外への無断配布・転載・コピーは固く禁止されています。
