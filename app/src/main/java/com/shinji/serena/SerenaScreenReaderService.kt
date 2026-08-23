@@ -259,6 +259,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private var hasSpokenStartupGreeting = false
     private var isStartupGreetingSpeaking = false
+    private var wasKeyguardLocked = true
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
@@ -1233,7 +1234,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun autoFocusPinKeypadIfPresent(force: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
-        if (!force && now - lastPinFocusTimeMs < 300L) return false
+        if (!force && now - lastPinFocusTimeMs < 1000L) return false
+
+        val currentFocus = getAccessibilityFocusedNode()
+        if (currentFocus != null && !force) {
+            return false
+        }
 
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         if (roots.isEmpty()) return false
@@ -1241,8 +1247,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         // Google TalkBack AccessibilityFocusMonitor 準拠: PIN入力欄・PINエリアそのものを最優先捕捉
         var pinInputField: AccessibilityNodeInfo? = null
         var pinMessageArea: AccessibilityNodeInfo? = null
-        var firstPinDigitKey: AccessibilityNodeInfo? = null
-        var lockscreenTarget: AccessibilityNodeInfo? = null
 
         fun scanKeyguardNodes(node: AccessibilityNodeInfo?) {
             if (node == null) return
@@ -1280,23 +1284,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            // 3. 数字キー「1」または「0」（フォールバック用）
-            if (firstPinDigitKey == null) {
-                if (viewId.endsWith("key1") || viewId.endsWith("digit1") || viewId.endsWith("key0") ||
-                    viewId.contains("element:pin_key_1") || viewId.contains("element:pin_key_0") ||
-                    desc == "1" || text == "1"
-                ) {
-                    firstPinDigitKey = node
-                }
-            }
-
-            // 4. ロック画面そのもの (element:lockscreen)
-            if (lockscreenTarget == null) {
-                if (viewId.contains("element:lockscreen") || viewId.contains("lock_icon")) {
-                    lockscreenTarget = node
-                }
-            }
-
             for (i in 0 until node.childCount) {
                 scanKeyguardNodes(node.getChild(i))
                 if (pinInputField != null) return
@@ -1308,7 +1295,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             if (pinInputField != null) break
         }
 
-        val target = pinInputField ?: pinMessageArea ?: firstPinDigitKey
+        val target = pinInputField ?: pinMessageArea
         if (target != null) {
             lastPinFocusTimeMs = now
             val focused = target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
@@ -1433,13 +1420,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }, mainHandler)
 
-        // 4. バウンサー展開後のPIN入力欄そのものへの多段高速オートフォーカス
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 80)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 180)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 320)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 550)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 900)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1300)
+        // 4. バウンサー展開後のPIN入力欄へのフォーカス
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = false) }, 350)
         return dispatched
     }
 
@@ -2853,21 +2835,26 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
-                // ウィンドウ構造変化（ロック画面/バウンサー/通知シェード/SystemUI等の遷移を即座にトラッキング）
-                val currentWindows = try { windows } catch (_: Exception) { null }
-                if (!currentWindows.isNullOrEmpty()) {
-                    val topWindow = currentWindows.maxByOrNull { it.layer }
-                    val topRoot = topWindow?.root
-                    val topPkg = topRoot?.packageName?.toString() ?: ""
-
-                    // ロック画面またはバウンサー（PIN入力画面）が出現した時の即時オートフォーカス
-                    if (isKeyguardLocked() || topPkg.contains("systemui") || topPkg.contains("keyguard")) {
-                        autoFocusPinKeypadIfPresent(force = false)
-                    }
+                val currentlyLocked = isKeyguardLocked()
+                if (wasKeyguardLocked && !currentlyLocked) {
+                    wasKeyguardLocked = false
+                    soundHelper?.playActionDone()
+                    speak("ロックを解除しました", TextToSpeech.QUEUE_FLUSH)
+                } else if (currentlyLocked) {
+                    wasKeyguardLocked = true
                 }
             }
 
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                val currentlyLocked = isKeyguardLocked()
+                if (wasKeyguardLocked && !currentlyLocked) {
+                    wasKeyguardLocked = false
+                    soundHelper?.playActionDone()
+                    speak("ロックを解除しました", TextToSpeech.QUEUE_FLUSH)
+                } else if (currentlyLocked) {
+                    wasKeyguardLocked = true
+                }
+
                 // セレナメニューダイアログ表示中の場合、OSがウィンドウ内の全項目テキストを結合して送ってくるため全読みを抑制！
                 if (activeMenuDialog != null) {
                     return
@@ -2898,17 +2885,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
 
                 if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
-                    // SystemUI / ロック画面 / Bouncer のウィンドウ検知時は、無駄なウィンドウ名単体読み上げを抑止しPIN入力欄に直撃！
-                    autoFocusPinKeypadIfPresent(force = true)
+                    // SystemUI / ロック画面 / Bouncer のウィンドウ検知時は、未フォーカス時のみPIN入力欄を捕捉
+                    autoFocusPinKeypadIfPresent(force = false)
                 } else if (windowTitle.isNotEmpty() && !isCallActive) {
                     speak("画面: $windowTitle", TextToSpeech.QUEUE_FLUSH)
                 }
             }
 
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
-                    autoFocusPinKeypadIfPresent(force = false)
-                }
+                // コンテンツ動的更新時はフォーカス奪取を行わない（誤爆・ループ防止）
             }
 
             AccessibilityEvent.TYPE_VIEW_HOVER_ENTER -> {
