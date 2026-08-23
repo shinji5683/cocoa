@@ -1397,16 +1397,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             dismissNodeRecursively(r)
         }
 
-        // 3. Google TalkBack 完全準拠の超高速縦スワイプドラッグ（中央 50%, 85% -> 中央 50%, 10%, 80ms）
+        // 3. Google TalkBack 完全準拠の縦スワイプドラッグ（中央 50%, 85% -> 中央 50%, 12%, 240ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
         val p = android.graphics.Path().apply {
             moveTo(width * 0.50f, height * 0.85f)
-            lineTo(width * 0.50f, height * 0.10f)
+            lineTo(width * 0.50f, height * 0.12f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 80)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 240)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -1426,12 +1426,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }, mainHandler)
 
         // 4. バウンサー展開後のPIN入力欄そのものへの多段高速オートフォーカス
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 50)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 120)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 250)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 500)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 800)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1200)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 80)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 180)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 320)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 550)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 900)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1300)
         return dispatched
     }
 
