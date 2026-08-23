@@ -1223,50 +1223,37 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         if (roots.isEmpty()) return false
 
-        // 1. 全ノード深さ優先探索で PIN/パスワード入力欄 (EditText / pinEntry / passwordEntry) を最優先捕捉
+        // 1. 全ノード深さ優先探索で PIN/パスワード入力欄そのもの (pinEntry / passwordEntry / lockPasswordView / EditText) を最優先捕捉
         var pinTargetNode: AccessibilityNodeInfo? = null
-        val pinButtons = mutableListOf<AccessibilityNodeInfo>()
 
-        fun scanKeyguardTree(node: AccessibilityNodeInfo?) {
+        fun scanPinFieldTree(node: AccessibilityNodeInfo?) {
             if (node == null) return
             val viewId = node.viewIdResourceName?.lowercase() ?: ""
             val className = node.className?.toString()?.lowercase() ?: ""
-            val text = node.text?.toString()?.trim() ?: ""
-            val desc = node.contentDescription?.toString()?.trim() ?: ""
 
-            // A. PIN/パスワード入力欄そのもの (pinEntry / passwordEntry / EditText)
+            // PIN/パスワード入力欄そのもの (pinEntry / passwordEntry / EditText / lockPasswordView / keyguard_message_area)
             if (pinTargetNode == null && (
                 viewId.contains("pinentry") || viewId.contains("passwordentry") ||
-                viewId.contains("lockpasswordview") || (className.contains("edittext") && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
+                viewId.contains("lockpasswordview") || viewId.contains("keyguard_pin_view") ||
+                viewId.contains("keyguard_message_area") ||
+                (className.contains("edittext") && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
             )) {
                 pinTargetNode = node
                 return
             }
 
-            // B. 数字キーパッド (1〜9, 0)
-            val isSingleDigit = (text.length == 1 && text[0].isDigit()) || (desc.length == 1 && desc[0].isDigit()) ||
-                    text.matches(Regex("^[0-9]$")) || desc.matches(Regex("^[0-9](?:[,、\\s].*)?$"))
-            val isPinDigitId = viewId.contains("key1") || viewId.contains("key2") || viewId.contains("key3") ||
-                    viewId.contains("key4") || viewId.contains("key5") || viewId.contains("key6") ||
-                    viewId.contains("key7") || viewId.contains("key8") || viewId.contains("key9") ||
-                    viewId.contains("key0") || viewId.contains("digit") || viewId.contains("pin_button")
-
-            if ((node.isClickable || node.isFocusable || node.isCheckable) && (isPinDigitId || isSingleDigit)) {
-                pinButtons.add(node)
-            }
-
             for (i in 0 until node.childCount) {
-                scanKeyguardTree(node.getChild(i))
+                scanPinFieldTree(node.getChild(i))
                 if (pinTargetNode != null) return
             }
         }
 
         for (r in roots) {
-            scanKeyguardTree(r)
+            scanPinFieldTree(r)
             if (pinTargetNode != null) break
         }
 
-        // 入力欄が見つかった場合、最優先でフォーカス＆アナウンス！
+        // PIN入力欄・PINエリアが見つかった場合、ダイレクトにフォーカス＆アナウンス！
         if (pinTargetNode != null) {
             val target = pinTargetNode!!
             lastPinFocusTimeMs = now
@@ -1278,24 +1265,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 入力欄が不可視（直接数字を押すタイプ）の場合は数字の「1」キーへフォーカス！
-        if (pinButtons.isNotEmpty()) {
-            val target = pinButtons.firstOrNull {
-                val desc = it.contentDescription?.toString()?.trim() ?: ""
-                val text = it.text?.toString()?.trim() ?: ""
-                val viewId = it.viewIdResourceName?.lowercase() ?: ""
-                desc == "1" || text == "1" || desc.startsWith("1") || text.startsWith("1") ||
-                        viewId.endsWith("key1") || viewId.endsWith("digit1")
-            } ?: pinButtons.first()
-
-            lastPinFocusTimeMs = now
-            target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-            lastHoveredNode = target
-            soundHelper?.playFocusMove()
-            announceNode(target)
-            Log.i(TAG, "autoFocusPinKeypadIfPresent: successfully focused PIN button ${target.viewIdResourceName}")
-            return true
-        }
         return false
     }
 
