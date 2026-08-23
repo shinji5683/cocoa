@@ -20,9 +20,14 @@ class SoundAndHapticHelper(private val context: Context) {
 
     init {
         try {
-            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+            // Android 14/15/16/17 AudioHardening / バックグラウンドミュートを完全回避するため STREAM_ACCESSIBILITY を使用！
+            toneGenerator = ToneGenerator(AudioManager.STREAM_ACCESSIBILITY, 100)
         } catch (e: Exception) {
-            Log.e(TAG, "ToneGenerator init failed: ${e.message}")
+            try {
+                toneGenerator = ToneGenerator(AudioManager.STREAM_SYSTEM, 100)
+            } catch (ex: Exception) {
+                Log.e(TAG, "ToneGenerator init failed: ${ex.message}")
+            }
         }
 
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

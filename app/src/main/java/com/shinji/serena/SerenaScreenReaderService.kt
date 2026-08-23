@@ -320,7 +320,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         super.onServiceConnected()
         val info = serviceInfo ?: AccessibilityServiceInfo()
         info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
-        info.feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN
+        info.feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK
         info.notificationTimeout = 0
         var flags = info.flags or
                 AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
@@ -334,6 +334,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
             flags = flags or AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flags = flags or AccessibilityServiceInfo.FLAG_INPUT_METHOD_EDITOR
         }
         info.flags = flags
         serviceInfo = info
