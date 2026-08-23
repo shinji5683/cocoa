@@ -3,13 +3,13 @@ Write-Host "--- Android Logcat Tool ---" -ForegroundColor Cyan
 
 # 1. 接続されているデバイス一覧を取得
 $devices = @(adb devices | Select-String -Pattern "device$" | ForEach-Object {
-    $parts = $_.Line -split "\t"
-    $devType = "USB"
-    if ($parts[0] -like "*_tcp" -or $parts[0] -like "*:*") {
-        $devType = "WiFi"
-    }
-    New-Object PSObject -Property @{ Id = $parts[0]; Type = $devType }
-})
+        $parts = $_.Line -split "\t"
+        $devType = "USB"
+        if ($parts[0] -like "*_tcp" -or $parts[0] -like "*:*") {
+            $devType = "WiFi"
+        }
+        New-Object PSObject -Property @{ Id = $parts[0]; Type = $devType }
+    })
 
 if ($devices.Count -eq 0) {
     Write-Host "No connected devices found. Please connect a device via USB or WiFi." -ForegroundColor Red
@@ -20,7 +20,8 @@ $selectedDevice = $null
 if ($devices.Count -eq 1) {
     $selectedDevice = $devices[0].Id
     Write-Host "Automatically selected only connected device: $selectedDevice ($($devices[0].Type))" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "Multiple devices detected. Please select one:" -ForegroundColor Yellow
     for ($i = 0; $i -lt $devices.Count; $i++) {
         Write-Host "[$($i + 1)] ID: $($devices[$i].Id) ($($devices[$i].Type))"
@@ -51,11 +52,13 @@ $logFilterArgs = @()
 if ($modeChoice -eq "1") {
     $modeName = "DefaultMode"
     $logFilterArgs = @("SerenaScreenReader:D", "SerenaGestureDispatcher:D", "*:S")
-} elseif ($modeChoice -eq "2") {
+}
+elseif ($modeChoice -eq "2") {
     $modeName = "ErrorMode"
     $logFilterArgs = @("*:E")
     $filterPattern = "serena"
-} else {
+}
+else {
     $modeName = "FullMode"
     $logFilterArgs = @()
     $filterPattern = "serena"
@@ -85,7 +88,7 @@ try {
     $process.Start() | Out-Null
     while (-not $process.HasExited) {
         $line = $process.StandardOutput.ReadLine()
-        if ($line -ne $null) {
+        if ($null -ne $line) {
             if ([string]::IsNullOrEmpty($filterPattern) -or $line -imatch $filterPattern) {
                 Write-Host $line
                 $logLines.Add($line)
@@ -94,7 +97,8 @@ try {
             Start-Sleep -Milliseconds 10
         }
     }
-} finally {
+}
+finally {
     # Ctrl+Cで中断された際も、確実にここに突入してプロセスをクリーンアップします
     if ($process -and -not $process.HasExited) {
         $process.Kill()
@@ -109,7 +113,9 @@ try {
         }
         Write-Host "Log cat session stopped." -ForegroundColor Yellow
         Write-Host "Logs successfully saved: [ $fileName ] (Total lines: $($logLines.Count))" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "`nLog cat session stopped. No logs were captured." -ForegroundColor Yellow
     }
 }
+
