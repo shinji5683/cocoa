@@ -115,9 +115,29 @@ class SerenaFocusNavigator(
         for (r in roots) {
             traverseTree(r, list)
         }
+
+        val dm = service.resources.displayMetrics
+        val screenW = dm.widthPixels
+        val screenH = dm.heightPixels
+
+        // 画面上に実際に表示されている（可視領域内にある）要素のみに厳格フィルタリング！
+        // （Pixel Launcher等のPagedViewで画面外にある前後のページの要素が混入してフォーカスが戻るのを完全防止）
+        val visibleList = list.filter { node ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                if (!node.isVisibleToUser) return@filter false
+            }
+            val rect = android.graphics.Rect()
+            node.getBoundsInScreen(rect)
+            if (rect.width() <= 0 || rect.height() <= 0) return@filter false
+            // 画面境界外（オフスクリーン要素）を完全排除
+            if (rect.right <= 0 || rect.left >= screenW) return@filter false
+            if (rect.bottom <= 0 || rect.top >= screenH) return@filter false
+            true
+        }
+
         if (service.isKeyguardLocked()) {
             // ロック画面時はPIN/パスワード入力欄を最優先(1050)、メッセージ(1040)、続けてPINキーパッド（1〜9, 削除, 0, 決定）を自然な順序に整列！通知領域は末尾へ隔離
-            list.sortByDescending { node ->
+            return visibleList.sortedByDescending { node ->
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 val className = node.className?.toString() ?: ""
                 val text = node.text?.toString()?.trim() ?: ""
@@ -158,7 +178,20 @@ class SerenaFocusNavigator(
                 }
             }
         }
-        return list
+
+        // 通常画面: TalkBack標準 読書順序ソート (上から下、左から右)
+        return visibleList.sortedWith(Comparator { n1, n2 ->
+            val r1 = android.graphics.Rect()
+            val r2 = android.graphics.Rect()
+            n1.getBoundsInScreen(r1)
+            n2.getBoundsInScreen(r2)
+            val rowOverlap = kotlin.math.min(r1.bottom, r2.bottom) - kotlin.math.max(r1.top, r2.top)
+            if (rowOverlap > (kotlin.math.min(r1.height(), r2.height()) * 0.4f) || kotlin.math.abs(r1.top - r2.top) < 30) {
+                r1.left.compareTo(r2.left)
+            } else {
+                r1.top.compareTo(r2.top)
+            }
+        })
     }
 
     private fun traverseTree(node: AccessibilityNodeInfo, list: MutableList<AccessibilityNodeInfo>) {
@@ -283,9 +316,8 @@ class SerenaFocusNavigator(
             service.scrollPageForward {
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
-                    // スクロール後に新しく可視領域に入った項目を優先探索
-                    val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
-                        ?: newNodes.firstOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
+                    // 次のページ/下スクロール後: 新しいページの「最初の項目」へ！
+                    val targetNode = newNodes.firstOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
                         ?: newNodes[0]
                     lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
                     setFocusAndShowOnScreen(targetNode)
@@ -300,8 +332,8 @@ class SerenaFocusNavigator(
             service.scrollPageBackward {
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
-                    val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
-                        ?: newNodes.lastOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
+                    // 前のページ/上スクロール後: 前のページの「最後の項目」へ！
+                    val targetNode = newNodes.lastOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
                         ?: newNodes[newNodes.size - 1]
                     lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
                     setFocusAndShowOnScreen(targetNode)
