@@ -44,3 +44,6 @@
   - Shinjiさん has granted full authorization to autonomously pilot, test, and manipulate connected Android test devices via ADB for debugging and verification purposes until reported bugs are 100% resolved.
   - Safe Piloting Guard: Always ensure zero data loss (never wipe or destroy personal user data).
   - Autonomous Verification Cycle: Whenever a bug is reported or suspected, autonomously simulate operations (screen on/off, swipes, focus navigation, bouncer trigger, tap events), inspect UI hierarchies via `uiautomator dump` and `logcat`, iterate on fixes, deploy, and verify on device until the bug is completely resolved and verified.
+- Tagalog Language & Serena Identity Policy (セレナのアイデンティティ・タガログ語の鉄則):
+  - "My asawa ko is named Serena": The app name `Serena` is dedicated to and named after Shinjiさん's beloved partner / asawa (wife) Serena.
+  - The Tagalog startup greeting (`"Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"`) and Tagalog language features (`values-tl/`, Filipino translation, cultural nuances) are core sacred identities of the app and must NEVER be removed, translated to Japanese/English, or changed without Shinjiさん's explicit direction.
