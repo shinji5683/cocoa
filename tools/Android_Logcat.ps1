@@ -53,15 +53,14 @@ $logFilterArgs = @()
 
 if ($modeChoice -eq "1") {
     $modeName = "DefaultMode"
-    # logcatのタグフィルタ引数
     $logFilterArgs = @("SerenaScreenReader:D", "SerenaGestureDispatcher:D", "*:S")
 } elseif ($modeChoice -eq "2") {
     $modeName = "ErrorMode"
-    $logFilterArgs = @("*:E") # 全体のエラーを対象にするが、後段で serena で絞る
+    $logFilterArgs = @("*:E")
     $filterPattern = "serena"
 } else {
     $modeName = "FullMode"
-    $logFilterArgs = @() # 全てのログを出力し、後段で serena で絞る
+    $logFilterArgs = @()
     $filterPattern = "serena"
 }
 
@@ -70,7 +69,6 @@ $logLines = [System.Collections.Generic.List[string]]::new()
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $fileName = "${modeName}_${timestamp}.log"
 
-# プロセス開始情報設定
 $processInfo = New-Object System.Diagnostics.ProcessStartInfo
 $processInfo.FileName = "adb"
 $processInfo.Arguments = "-s $selectedDevice logcat -v time $logFilterArgs"
@@ -85,13 +83,11 @@ Write-Host "`n--- Starting ADB Logcat in [$modeName] ---" -ForegroundColor Cyan
 Write-Host "Press [Ctrl+C] to stop and automatically save logs to a file." -ForegroundColor Yellow
 Write-Host "--------------------------------------------------------"
 
-# Ctrl+Cをスクリプトでハンドルする設定
 [console]::TreatControlCAsInput = $true
 
 try {
     $process.Start() | Out-Null
     while (-not $process.HasExited) {
-        # Ctrl+Cの入力チェック（リダイレクト環境でのエラー防止付き）
         $ctrlCPressed = $false
         try {
             if ([console]::KeyAvailable) {
@@ -101,7 +97,7 @@ try {
                 }
             }
         } catch {
-            # 入力リダイレクト環境の場合は無視しますにょろ
+            # リダイレクト環境対策
         }
         
         if ($ctrlCPressed) {
@@ -110,7 +106,6 @@ try {
         
         $line = $process.StandardOutput.ReadLine()
         if ($line -ne $null) {
-            # パターンフィルタリングが必要な場合
             if ([string]::IsNullOrEmpty($filterPattern) -or $line -imatch $filterPattern) {
                 Write-Host $line
                 $logLines.Add($line)
@@ -120,23 +115,16 @@ try {
         }
     }
 } finally {
-    # プロセスの終了処理
     if ($process -and -not $process.HasExited) {
         $process.Kill()
     }
     
-    # ログファイルの保存（同期的書き込みの保証）
     if ($logLines.Count -gt 0) {
         Write-Host "`nSaving logs to disk... Please wait." -ForegroundColor Yellow
-        
-        # Out-Fileで同期書き込み。完了を待つためにパイプを明示的に抜ける
         $logLines | Out-File -FilePath $fileName -Encoding utf8
-        
-        # ディスク書き込みが100%完了したことを確認するための確認用スリープ
         while (-not (Test-Path $fileName)) {
             Start-Sleep -Milliseconds 50
         }
-        
         Write-Host "Log cat session stopped." -ForegroundColor Yellow
         Write-Host "Logs successfully saved: [ $fileName ] (Total lines: $($logLines.Count))" -ForegroundColor Green
     } else {

@@ -1,0 +1,3 @@
+# Force scripts to always checkout with CRLF line endings for Windows PowerShell 5.1 parser compatibility
+tools/Android_Logcat.ps1 text eol=crlf
+run_logcat.ps1 text eol=crlf
