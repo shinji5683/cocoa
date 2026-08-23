@@ -25,18 +25,21 @@ class SerenaUnlockActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ロック画面上に表示し、画面を点灯させるフラグを適用
+        // ロック画面上に表示し、画面を点灯させつつ、フォーカスやタッチを一切奪わないように設定
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
-        } else {
-            @Suppress("DEPRECATION")
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-            )
         }
+        @Suppress("DEPRECATION")
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        )
 
         requestBouncer()
     }
@@ -54,39 +57,30 @@ class SerenaUnlockActivity : Activity() {
                     super.onDismissError()
                     Log.w(TAG, "Keyguard dismiss error")
                     SerenaScreenReaderService.instance?.autoFocusPinKeypadIfPresent(force = true)
-                    finish()
+                    finishAndRemoveTask()
                 }
 
                 override fun onDismissSucceeded() {
                     super.onDismissSucceeded()
                     Log.i(TAG, "Keyguard dismiss succeeded")
-                    finish()
+                    finishAndRemoveTask()
                 }
 
                 override fun onDismissCancelled() {
                     super.onDismissCancelled()
                     Log.d(TAG, "Keyguard dismiss cancelled")
                     SerenaScreenReaderService.instance?.autoFocusPinKeypadIfPresent(force = true)
-                    finish()
+                    finishAndRemoveTask()
                 }
             })
-        } else {
-            finish()
         }
 
-        // 即座にPINフィールドへのフォーカスを要求
+        // Bouncer要求を発行したら直ちにActivityを終了してウィンドウを消滅させる（フォーカスを奪わせない！）
         window.decorView.postDelayed({
             SerenaScreenReaderService.instance?.autoFocusPinKeypadIfPresent(force = true)
-        }, 80)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Bouncer展開後にActivityが残り続けないよう速やかに閉じる
-        window.decorView.postDelayed({
             if (!isFinishing) {
-                finish()
+                finishAndRemoveTask()
             }
-        }, 1500)
+        }, 50)
     }
 }
