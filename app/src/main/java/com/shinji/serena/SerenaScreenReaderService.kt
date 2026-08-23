@@ -1317,7 +1317,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
-        // 1. Accessibility Action 解除（ルートノードおよびロックアイコンへ ACTION_DISMISS / ACTION_CLICK を発火）
+        // 1. OS標準 KeyguardManager / Global Action によるロック解除要求
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+            }
+            val km = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // KeyguardManager による安全な解除リクエスト
+                val activity = (this as? android.app.Activity)
+                if (activity != null) {
+                    km?.requestDismissKeyguard(activity, null)
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Global action dismiss keyguard note: ${e.message}")
+        }
+
+        // 2. Accessibility Action 解除（ルートノードおよびロックアイコンへ ACTION_DISMISS / ACTION_CLICK を発火）
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         for (r in roots) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -1329,16 +1346,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 2. Google TalkBack完全準拠の縦スワイプジェスチャー（中央下 50%, 80% -> 中央上 50%, 15%, 280ms）
+        // 3. Google TalkBack & CSR完全準拠の縦スワイプドラッグ（中央下 50%, 92% -> 中央上 50%, 8%, 240ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
         val p = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.80f)
-            lineTo(width * 0.50f, height * 0.15f)
+            moveTo(width * 0.50f, height * 0.92f)
+            lineTo(width * 0.50f, height * 0.08f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 280)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 240)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -1348,21 +1365,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
-                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 300)
+                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 250)
                 autoFocusPinKeypadIfPresent(force = true)
             }
             override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCancelled(gestureDescription)
-                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 300)
+                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 250)
             }
         }, mainHandler)
 
-        // 3. バウンサー展開後のPINキー・入力欄への多段オートフォーカス
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 150)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 400)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 800)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1400)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 2200)
+        // 4. バウンサー展開後のPINキー・入力欄への多段オートフォーカス
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 100)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 300)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 600)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1000)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1800)
         return dispatched
     }
 
@@ -2832,6 +2849,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
+                // ウィンドウ構造変化（ロック画面/バウンサー/通知シェード/SystemUI等の遷移を即座にトラッキング）
+                val currentWindows = try { windows } catch (_: Exception) { null }
+                if (!currentWindows.isNullOrEmpty()) {
+                    val topWindow = currentWindows.maxByOrNull { it.layer }
+                    val topRoot = topWindow?.root
+                    val topPkg = topRoot?.packageName?.toString() ?: ""
+
+                    // ロック画面またはバウンサー（PIN入力画面）が出現した時の即時オートフォーカス
+                    if (isKeyguardLocked() || topPkg.contains("systemui") || topPkg.contains("keyguard")) {
+                        autoFocusPinKeypadIfPresent(force = false)
+                    }
+                }
+            }
+
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 // セレナメニューダイアログ表示中の場合、OSがウィンドウ内の全項目テキストを結合して送ってくるため全読みを抑制！
                 if (activeMenuDialog != null) {
@@ -2845,6 +2877,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
                 val windowTitle = event.contentDescription?.toString()
                     ?: event.text.joinToString(" ").trim()
+                val className = event.className?.toString() ?: ""
 
                 val suggestedGranularity = appProfileHelper?.getSuggestedGranularity(pkgName)
                 if (suggestedGranularity != null && suggestedGranularity != currentGranularity) {
@@ -2861,7 +2894,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
-                if (windowTitle.isNotEmpty() && !isCallActive && !isKeyguardLocked()) {
+                if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
+                    // SystemUI / ロック画面 / Bouncer のウィンドウ検知
+                    if (windowTitle.isNotEmpty()) {
+                        speak("ウィンドウ: $windowTitle", TextToSpeech.QUEUE_FLUSH)
+                    } else if (className.contains("Bouncer", ignoreCase = true) || className.contains("Keyguard", ignoreCase = true)) {
+                        speak("ウィンドウ: 画面ロック解除", TextToSpeech.QUEUE_FLUSH)
+                    }
+                    autoFocusPinKeypadIfPresent(force = true)
+                } else if (windowTitle.isNotEmpty() && !isCallActive) {
                     speak("画面: $windowTitle", TextToSpeech.QUEUE_FLUSH)
                 }
             }
