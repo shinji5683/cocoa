@@ -1223,27 +1223,31 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         if (roots.isEmpty()) return false
 
-        // 1. 最優先: PIN入力欄 (pinEntry / passwordEntry / EditText)
+        // 1. 最優先: PIN入力欄・パスワード入力欄そのもの (pinEntry / passwordEntry / keyguard_pin_view / EditText)
+        val pinFieldIds = listOf(
+            "com.android.systemui:id/pinEntry",
+            "com.android.systemui:id/passwordEntry",
+            "com.android.systemui:id/keyguard_pin_view",
+            "com.android.systemui:id/keyguard_password_view",
+            "com.android.systemui:id/keyguard_security_container",
+            "com.android.systemui:id/lockPasswordView",
+            "com.android.systemui:id/keyguard_message_area",
+            "com.android.systemui:id/pin_pad"
+        )
+
         for (r in roots) {
-            val pinFields = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/pinEntry")
-            if (pinFields.isNotEmpty()) {
-                val target = pinFields[0]
-                lastPinFocusTimeMs = now
-                target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                lastHoveredNode = target
-                soundHelper?.playFocusMove()
-                announceNode(target)
-                return true
-            }
-            val pwdFields = r.findAccessibilityNodeInfosByViewId("com.android.systemui:id/passwordEntry")
-            if (pwdFields.isNotEmpty()) {
-                val target = pwdFields[0]
-                lastPinFocusTimeMs = now
-                target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
-                lastHoveredNode = target
-                soundHelper?.playFocusMove()
-                announceNode(target)
-                return true
+            for (id in pinFieldIds) {
+                val fields = r.findAccessibilityNodeInfosByViewId(id)
+                if (fields.isNotEmpty()) {
+                    val target = fields[0]
+                    lastPinFocusTimeMs = now
+                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    lastHoveredNode = target
+                    soundHelper?.playFocusMove()
+                    announceNode(target)
+                    Log.i(TAG, "autoFocusPinKeypadIfPresent: successfully focused PIN field $id")
+                    return true
+                }
             }
         }
 
