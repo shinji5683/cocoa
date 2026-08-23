@@ -16,11 +16,13 @@ class SerenaGestureDispatcher(
 ) {
     companion object {
         private const val TAG = "SerenaGestureDispatcher"
-        private const val GESTURE_DEBOUNCE_MS = 50L
+        private const val GESTURE_DEBOUNCE_MS = 180L
+        private const val CLICK_DEBOUNCE_MS = 250L
     }
 
     private var lastGestureId = -1
     private var lastGestureTime = 0L
+    private var lastClickTime = 0L
 
     fun onGesture(gestureId: Int): Boolean {
         if (service.isInternalGestureDispatching) {
@@ -67,6 +69,12 @@ class SerenaGestureDispatcher(
 
             // 1本指ダブルタップ & 長押し (クリック決定)
             AccessibilityService.GESTURE_DOUBLE_TAP -> {
+                val clickNow = SystemClock.uptimeMillis()
+                if (clickNow - lastClickTime < CLICK_DEBOUNCE_MS) {
+                    Log.d(TAG, "Double tap click debounced.")
+                    return true
+                }
+                lastClickTime = clickNow
                 val menu = service.activeMenuDialog
                 if (menu != null && menu.isShowing) {
                     if (menu.performCurrentItemClick()) {

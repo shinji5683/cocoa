@@ -375,6 +375,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     @Deprecated("Deprecated in API 30+")
     override fun onGesture(gestureId: Int): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // API 30+ (Android 11/12/13/14/15/16) では onGesture(AccessibilityGestureEvent) で処理済みのため二重実行を完全防止
+            return false
+        }
         if (isInternalGestureDispatching) {
             Log.d(TAG, "onGesture(Int) ignored: internal gesture dispatch in progress.")
             return false
