@@ -8,10 +8,7 @@ $devices = @(adb devices | Select-String -Pattern "device$" | ForEach-Object {
     if ($parts[0] -like "*_tcp" -or $parts[0] -like "*:*") {
         $devType = "WiFi"
     }
-    New-Object PSObject -Property @{
-        Id = $parts[0]
-        Type = $devType
-    }
+    New-Object PSObject -Property @{ Id = $parts[0]; Type = $devType }
 })
 
 if ($devices.Count -eq 0) {
@@ -83,27 +80,9 @@ Write-Host "`n--- Starting ADB Logcat in [$modeName] ---" -ForegroundColor Cyan
 Write-Host "Press [Ctrl+C] to stop and automatically save logs to a file." -ForegroundColor Yellow
 Write-Host "--------------------------------------------------------"
 
-[console]::TreatControlCAsInput = $true
-
 try {
     $process.Start() | Out-Null
     while (-not $process.HasExited) {
-        $ctrlCPressed = $false
-        try {
-            if ([console]::KeyAvailable) {
-                $key = [console]::ReadKey($true)
-                if ($key.Modifiers -eq [System.ConsoleModifiers]::Control -and $key.Key -eq [System.ConsoleKey]::C) {
-                    $ctrlCPressed = $true
-                }
-            }
-        } catch {
-            # リダイレクト環境対策
-        }
-        
-        if ($ctrlCPressed) {
-            break
-        }
-        
         $line = $process.StandardOutput.ReadLine()
         if ($line -ne $null) {
             if ([string]::IsNullOrEmpty($filterPattern) -or $line -imatch $filterPattern) {
@@ -115,10 +94,12 @@ try {
         }
     }
 } finally {
+    # Ctrl+Cで中断された際も、確実にここに突入してプロセスをクリーンアップします
     if ($process -and -not $process.HasExited) {
         $process.Kill()
     }
     
+    # ログファイルの保存（同期的書き込みの保証）
     if ($logLines.Count -gt 0) {
         Write-Host "`nSaving logs to disk... Please wait." -ForegroundColor Yellow
         $logLines | Out-File -FilePath $fileName -Encoding utf8
