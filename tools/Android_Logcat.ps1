@@ -2,7 +2,7 @@
 Write-Host "--- Android Logcat Tool ---" -ForegroundColor Cyan
 
 # 1. 接続されているデバイス一覧を取得
-$devices = adb devices | Select-String -Pattern "device$" | ForEach-Object {
+$devices = @(adb devices | Select-String -Pattern "device$" | ForEach-Object {
     $parts = $_.Line -split "\t"
     $devType = "USB"
     if ($parts[0] -like "*_tcp" -or $parts[0] -like "*:*") {
@@ -12,7 +12,7 @@ $devices = adb devices | Select-String -Pattern "device$" | ForEach-Object {
         Id = $parts[0]
         Type = $devType
     }
-}
+})
 
 if ($devices.Count -eq 0) {
     Write-Host "No connected devices found. Please connect a device via USB or WiFi." -ForegroundColor Red
