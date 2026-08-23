@@ -281,13 +281,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (!hasSpokenStartupGreeting && isTtsReady) {
             hasSpokenStartupGreeting = true
             isStartupGreetingSpeaking = true
-            val welcomeMsg = "Shinjiさん、セレナの準備が完了しました！"
+            val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
             soundHelper?.playActionDone()
             try {
-                tts?.language = Locale.JAPANESE
+                tts?.language = detectLanguage(welcomeMsg)
             } catch (_: Exception) {}
             tts?.speak(welcomeMsg, TextToSpeech.QUEUE_FLUSH, null, "serena_startup_greeting")
-            Log.i(TAG, "TTS initialized successfully. Spoke startup greeting.")
+            Log.i(TAG, "TTS initialized successfully. Spoke Tagalog startup greeting.")
             // フェイルセーフ（最悪の場合でも4.5秒後にフラグを解放）
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 if (isStartupGreetingSpeaking) {
