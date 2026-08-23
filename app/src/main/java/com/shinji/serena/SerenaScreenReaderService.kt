@@ -338,9 +338,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             flags = flags or AccessibilityServiceInfo.FLAG_INPUT_METHOD_EDITOR
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_2_FINGER_PASSTHROUGH
+        }
         info.flags = flags
         serviceInfo = info
-        Log.i(TAG, "serena AccessibilityService connected with full Interactive Windows & Multi-Finger flags=$flags.")
+        Log.i(TAG, "serena AccessibilityService connected with full Interactive Windows, Multi-Finger & 2-Finger Passthrough flags=$flags.")
 
         speakStartupGreeting()
 
@@ -1376,17 +1379,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         fun dismissNodeRecursively(node: AccessibilityNodeInfo?) {
             if (node == null) return
-            val viewId = node.viewIdResourceName ?: ""
+            val viewId = node.viewIdResourceName?.lowercase() ?: ""
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                 if (node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id }) {
                     node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
                 }
             }
-            if (viewId.contains("lockscreen") || viewId.contains("lock_icon") || viewId.contains("keyguard")) {
+            if (viewId.contains("lockscreen") || viewId.contains("lock_icon") || viewId.contains("keyguard") || viewId.contains("scene_container") || viewId.contains("scene_window")) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS.id)
                 }
                 node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
             }
             for (i in 0 until node.childCount) {
                 dismissNodeRecursively(node.getChild(i))
