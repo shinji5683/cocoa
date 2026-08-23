@@ -31,6 +31,9 @@ When launched, you can choose from the following 3 modes:
   - *Note*: A hyphen `-` is intentionally inserted between the date and time to ensure compatibility and ease of reading for screen readers (like NVDA).
 - It performs synchronous disk writes to guarantee file completeness before exiting.
 
+### 🛠️ Built With
+This utility tool was created using AI technology and PowerShell 7.x.
+
 ---
 
 ## 🇯🇵 日本語ガイド
