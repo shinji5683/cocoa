@@ -1340,7 +1340,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
             val km = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // KeyguardManager による安全な解除リクエスト
                 val activity = (this as? android.app.Activity)
                 if (activity != null) {
                     km?.requestDismissKeyguard(activity, null)
@@ -1362,16 +1361,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 3. Google TalkBack & CSR完全準拠の縦スワイプドラッグ（中央下 50%, 92% -> 中央上 50%, 8%, 240ms）
+        // 3. Google TalkBack v17完全準拠の超高速縦スワイプドラッグ（中央下 50%, 85% -> 中央上 50%, 12%, 120ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
         val p = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.92f)
-            lineTo(width * 0.50f, height * 0.08f)
+            moveTo(width * 0.50f, height * 0.85f)
+            lineTo(width * 0.50f, height * 0.12f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 240)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 120)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -1381,21 +1380,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
             override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCompleted(gestureDescription)
-                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 250)
+                isInternalGestureDispatching = false
                 autoFocusPinKeypadIfPresent(force = true)
             }
             override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                 super.onCancelled(gestureDescription)
-                mainHandler.postDelayed({ isInternalGestureDispatching = false }, 250)
+                isInternalGestureDispatching = false
             }
         }, mainHandler)
 
-        // 4. バウンサー展開後のPINキー・入力欄への多段オートフォーカス
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 100)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 300)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 600)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1000)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1800)
+        // 4. バウンサー展開後のPINキー・入力欄への多段高速オートフォーカス
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 80)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 200)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 450)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 800)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1500)
         return dispatched
     }
 
