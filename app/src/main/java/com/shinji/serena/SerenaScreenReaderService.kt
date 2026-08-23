@@ -1218,50 +1218,60 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun autoFocusPinKeypadIfPresent(force: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
-        if (!force && now - lastPinFocusTimeMs < 400L) return false
+        if (!force && now - lastPinFocusTimeMs < 300L) return false
 
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         if (roots.isEmpty()) return false
 
-        // 1. 全ノード深さ優先探索で PIN/パスワード入力欄そのもの (pinEntry / passwordEntry / lockPasswordView / EditText) を最優先捕捉
-        var pinTargetNode: AccessibilityNodeInfo? = null
+        // Google TalkBack AccessibilityFocusMonitor 準拠: PIN入力欄・PINエリアそのものを最優先捕捉
+        var pinInputField: AccessibilityNodeInfo? = null
+        var pinMessageArea: AccessibilityNodeInfo? = null
 
-        fun scanPinFieldTree(node: AccessibilityNodeInfo?) {
+        fun scanKeyguardNodes(node: AccessibilityNodeInfo?) {
             if (node == null) return
             val viewId = node.viewIdResourceName?.lowercase() ?: ""
             val className = node.className?.toString()?.lowercase() ?: ""
 
-            // PIN/パスワード入力欄そのもの (pinEntry / passwordEntry / EditText / lockPasswordView / keyguard_message_area)
-            if (pinTargetNode == null && (
-                viewId.contains("pinentry") || viewId.contains("passwordentry") ||
-                viewId.contains("lockpasswordview") || viewId.contains("keyguard_pin_view") ||
-                viewId.contains("keyguard_message_area") ||
-                (className.contains("edittext") && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
-            )) {
-                pinTargetNode = node
-                return
+            // 1. 最優先: PIN/パスワード入力欄そのもの (pinEntry / passwordEntry / lockPasswordView / EditText)
+            if (pinInputField == null) {
+                if (viewId.contains("pinentry") || viewId.contains("passwordentry") ||
+                    viewId.contains("lockpasswordview") ||
+                    (node.isEditable && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard"))) ||
+                    (className.contains("edittext") && (viewId.contains("pin") || viewId.contains("password") || viewId.contains("keyguard")))
+                ) {
+                    pinInputField = node
+                    return
+                }
+            }
+
+            // 2. 次点: PINメッセージエリア (keyguard_message_area / bouncer_message)
+            if (pinMessageArea == null) {
+                if (viewId.contains("keyguard_message_area") || viewId.contains("bouncer_message") ||
+                    viewId.contains("keyguard_pin_view")
+                ) {
+                    pinMessageArea = node
+                }
             }
 
             for (i in 0 until node.childCount) {
-                scanPinFieldTree(node.getChild(i))
-                if (pinTargetNode != null) return
+                scanKeyguardNodes(node.getChild(i))
+                if (pinInputField != null) return
             }
         }
 
         for (r in roots) {
-            scanPinFieldTree(r)
-            if (pinTargetNode != null) break
+            scanKeyguardNodes(r)
+            if (pinInputField != null) break
         }
 
-        // PIN入力欄・PINエリアが見つかった場合、ダイレクトにフォーカス＆アナウンス！
-        if (pinTargetNode != null) {
-            val target = pinTargetNode!!
+        val target = pinInputField ?: pinMessageArea
+        if (target != null) {
             lastPinFocusTimeMs = now
             target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
             lastHoveredNode = target
             soundHelper?.playFocusMove()
             announceNode(target)
-            Log.i(TAG, "autoFocusPinKeypadIfPresent: successfully focused PIN field ${target.viewIdResourceName}")
+            Log.i(TAG, "autoFocusPinKeypadIfPresent: successfully focused PIN target ${target.viewIdResourceName}")
             return true
         }
 
