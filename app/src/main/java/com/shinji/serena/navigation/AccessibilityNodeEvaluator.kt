@@ -84,16 +84,27 @@ class AccessibilityNodeEvaluator {
                 }
             }
 
-            // SystemUI / ロック画面の画面全体スクリム暗転背景枠のみスキップ（中身の時計・日付・通知・PINキー等は正常にフォーカス）
+            // SystemUI / ロック画面 / Bouncer の枠コンテナは完全スキップ（中身のPIN入力欄・PIN数字キー・時計等にのみフォーカスを許可）
             if (pkgName.contains("systemui", ignoreCase = true) || pkgName.contains("keyguard", ignoreCase = true)) {
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 val className = node.className?.toString() ?: ""
-                if (viewId.contains("scrim") || className.contains("ScrimView", ignoreCase = true) ||
-                    className.contains("NotificationPanelView", ignoreCase = true) ||
-                    className.contains("NotificationShade", ignoreCase = true) ||
-                    className.contains("KeyguardRootView", ignoreCase = true)
-                ) {
-                    if (node.childCount > 0) {
+                if (node.childCount > 0 && !viewId.contains("pinentry") && !viewId.contains("passwordentry") && !className.contains("EditText", ignoreCase = true)) {
+                    if (viewId.contains("scrim") || className.contains("ScrimView", ignoreCase = true) ||
+                        className.contains("NotificationPanelView", ignoreCase = true) ||
+                        className.contains("NotificationShade", ignoreCase = true) ||
+                        className.contains("KeyguardRootView", ignoreCase = true) ||
+                        className.contains("KeyguardSecurityContainer", ignoreCase = true) ||
+                        className.contains("KeyguardBouncerView", ignoreCase = true) ||
+                        className.contains("KeyguardHostView", ignoreCase = true) ||
+                        className.contains("KeyguardPINView", ignoreCase = true) ||
+                        className.contains("KeyguardPasswordView", ignoreCase = true) ||
+                        viewId.contains("keyguard_security_container") ||
+                        viewId.contains("keyguard_bouncer") ||
+                        viewId.contains("pin_pad") ||
+                        viewId.contains("container") ||
+                        className.contains("FrameLayout", ignoreCase = true) ||
+                        className.contains("ViewGroup", ignoreCase = true)
+                    ) {
                         return false
                     }
                 }
