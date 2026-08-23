@@ -326,14 +326,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
                 AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                 AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
-                AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+                AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
+                AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_FINGERPRINT_GESTURES
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
             flags = flags or AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
         }
         info.flags = flags
         serviceInfo = info
-        Log.i(TAG, "serena AccessibilityService connected with Multi-Finger & Touch Exploration flags=$flags.")
+        Log.i(TAG, "serena AccessibilityService connected with full Interactive Windows & Multi-Finger flags=$flags.")
 
         speakStartupGreeting()
 
@@ -3189,6 +3193,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    private var lastFocusedWindowId: Int = -1
+
     fun announceNode(node: AccessibilityNodeInfo) {
         val announcement = buildNodeAnnouncement(node)
         if (announcement.isBlank()) return
@@ -3227,6 +3233,34 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val role = getNodeRole(node)
         val state = getNodeState(node)
         val pkg = node.packageName?.toString() ?: ""
+        val currentWinId = node.windowId
+
+        val parts = mutableListOf<String>()
+
+        // 0. ウィンドウ遷移検知 (ウィンドウが切り替わった時にウィンドウ名やSystemUIを先頭でアナウンス)
+        if (currentWinId != lastFocusedWindowId && currentWinId != -1) {
+            lastFocusedWindowId = currentWinId
+            val win = try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    node.window ?: windows?.find { it.id == currentWinId }
+                } else null
+            } catch (_: Exception) { null }
+
+            val winTitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                win?.title?.toString()?.trim() ?: ""
+            } else ""
+
+            val winType = win?.type ?: -1
+            val winName = when {
+                winTitle.isNotEmpty() -> winTitle
+                pkg.contains("systemui", ignoreCase = true) || winType == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM -> "SystemUI"
+                winType == 4 /* TYPE_KEYGUARD */ || isKeyguardLocked() -> "画面ロック"
+                else -> ""
+            }
+            if (winName.isNotEmpty()) {
+                parts.add("ウィンドウ $winName")
+            }
+        }
 
         // 1. テキストが空または画像・アイコンの場合、ビジュアル・オーディオ・ディスクリプション（AI情景解説）を生成
         if (text.isEmpty() || node.className?.toString()?.contains("ImageView", ignoreCase = true) == true || role == "ボタン") {
@@ -3246,7 +3280,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        val parts = mutableListOf<String>()
         if (text.isNotEmpty()) parts.add(text)
         if (role.isNotEmpty()) parts.add(role)
         if (state.isNotEmpty()) parts.add(state)
