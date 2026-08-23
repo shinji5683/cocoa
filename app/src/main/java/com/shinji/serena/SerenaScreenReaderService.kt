@@ -1341,50 +1341,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
-        // 1. 透過Activity経由でOSへ KeyguardManager.requestDismissKeyguard を直撃発火（最確実）
-        try {
-            val intent = android.content.Intent(this, SerenaUnlockActivity::class.java).apply {
-                action = "com.shinji.serena.ACTION_UNLOCK_KEYGUARD"
-                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
-                         android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                         android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION or
-                         android.content.Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                val options = android.app.ActivityOptions.makeBasic().apply {
-                    setPendingIntentBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
-                }
-                startActivity(intent, options.toBundle())
-            } else {
-                startActivity(intent)
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "SerenaUnlockActivity start failed: ${e.message}")
-            try {
-                val pi = android.app.PendingIntent.getActivity(
-                    this, 0,
-                    android.content.Intent(this, SerenaUnlockActivity::class.java).apply {
-                        action = "com.shinji.serena.ACTION_UNLOCK_KEYGUARD"
-                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                    },
-                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
-                )
-                pi.send()
-            } catch (pie: Exception) {
-                Log.w(TAG, "PendingIntent launch fallback error: ${pie.message}")
-            }
-        }
-
-        // 2. OS標準 Global Action による通知シェード・キーガード解除要求
+        // 1. Google TalkBack 完全準拠: OS標準 Global Action による通知シェード消去 ＆ ホーム/バウンサー呼び出し
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Global action dismiss keyguard note: ${e.message}")
+            Log.w(TAG, "Global action dismiss notification shade: ${e.message}")
         }
 
-        // 3. Accessibility Action 解除（ルートノードおよびロックアイコンへ ACTION_DISMISS / ACTION_CLICK を発火）
+        // 2. ロック画面ルートノードおよびロックアイコンへの ACTION_DISMISS / ACTION_CLICK 発行
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         for (r in roots) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -1396,16 +1362,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 4. ナビゲーションバー保護領域を完全回避した画面中央ドラッグ（中央 50%, 70% -> 中央 50%, 18%, 140ms）
+        // 3. Google TalkBack v17完全準拠の超高速縦スワイプドラッグ（中央 50%, 78% -> 中央 50%, 15%, 110ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
         val p = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.70f)
-            lineTo(width * 0.50f, height * 0.18f)
+            moveTo(width * 0.50f, height * 0.78f)
+            lineTo(width * 0.50f, height * 0.15f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 140)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 110)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -1424,12 +1390,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }, mainHandler)
 
-        // 5. バウンサー展開後のPIN入力欄そのものへの多段高速オートフォーカス
+        // 4. バウンサー展開後のPIN入力欄そのものへの多段高速オートフォーカス
         mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 50)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 150)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 350)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 700)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1400)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 120)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 250)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 500)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1000)
         return dispatched
     }
 
