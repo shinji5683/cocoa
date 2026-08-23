@@ -1192,11 +1192,23 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun isKeyguardLocked(): Boolean {
         val km = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
-        if (km?.isKeyguardLocked != true && km?.isDeviceLocked != true) return false
-        val root = rootInActiveWindow ?: return true
-        val rootPkg = root.packageName?.toString()?.lowercase() ?: ""
-        if (rootPkg.contains("launcher") || rootPkg.contains("trebuchet") || rootPkg.contains("home")) return false
-        return true
+        if (km?.isKeyguardLocked == true || km?.isDeviceLocked == true) return true
+
+        val currentWindows = try { windows } catch (_: Exception) { null }
+        if (!currentWindows.isNullOrEmpty()) {
+            val hasKeyguardWindow = currentWindows.any {
+                it.type == 4 /* TYPE_KEYGUARD */ || 
+                (it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM && it.root?.packageName?.toString()?.contains("keyguard") == true)
+            }
+            if (hasKeyguardWindow) return true
+        }
+
+        val root = rootInActiveWindow
+        val rootPkg = root?.packageName?.toString()?.lowercase() ?: ""
+        if (rootPkg.contains("keyguard") || (rootPkg.contains("systemui") && root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")?.isNotEmpty() == true)) {
+            return true
+        }
+        return false
     }
 
     private var lastPinFocusTimeMs = 0L
