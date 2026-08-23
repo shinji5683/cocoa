@@ -1332,7 +1332,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun unlockKeyguardOrShowBouncer(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastUnlockTime < 600L) return false
+        if (now - lastUnlockTime < 500L) return false
         lastUnlockTime = now
 
         soundHelper?.playActionDone()
@@ -1340,23 +1340,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
-        // 1. OS標準 KeyguardManager / Global Action によるロック解除要求
+        // 1. 透過Activity経由でOSへ KeyguardManager.requestDismissKeyguard を直撃発火（最確実）
+        try {
+            val intent = android.content.Intent(this, SerenaUnlockActivity::class.java).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                         android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                         android.content.Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.w(TAG, "SerenaUnlockActivity start failed: ${e.message}")
+        }
+
+        // 2. OS標準 Global Action による通知シェード・キーガード解除要求
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
-            }
-            val km = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val activity = (this as? android.app.Activity)
-                if (activity != null) {
-                    km?.requestDismissKeyguard(activity, null)
-                }
             }
         } catch (e: Exception) {
             Log.w(TAG, "Global action dismiss keyguard note: ${e.message}")
         }
 
-        // 2. Accessibility Action 解除（ルートノードおよびロックアイコンへ ACTION_DISMISS / ACTION_CLICK を発火）
+        // 3. Accessibility Action 解除（ルートノードおよびロックアイコンへ ACTION_DISMISS / ACTION_CLICK を発火）
         val roots = focusNavigator?.getAllRoots() ?: listOfNotNull(rootInActiveWindow)
         for (r in roots) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -1368,16 +1373,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 3. Google TalkBack v17完全準拠の超高速縦スワイプドラッグ（中央下 50%, 85% -> 中央上 50%, 12%, 120ms）
+        // 4. ナビゲーションバー保護領域を完全回避した画面中央ドラッグ（中央 50%, 70% -> 中央 50%, 18%, 140ms）
         val displayMetrics = resources.displayMetrics
         val width = displayMetrics.widthPixels.toFloat()
         val height = displayMetrics.heightPixels.toFloat()
 
         val p = android.graphics.Path().apply {
-            moveTo(width * 0.50f, height * 0.85f)
-            lineTo(width * 0.50f, height * 0.12f)
+            moveTo(width * 0.50f, height * 0.70f)
+            lineTo(width * 0.50f, height * 0.18f)
         }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 120)
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 140)
         val gesture = android.accessibilityservice.GestureDescription.Builder()
             .addStroke(stroke)
             .build()
@@ -1396,12 +1401,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }, mainHandler)
 
-        // 4. バウンサー展開後のPINキー・入力欄への多段高速オートフォーカス
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 80)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 200)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 450)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 800)
-        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1500)
+        // 5. バウンサー展開後のPIN入力欄そのものへの多段高速オートフォーカス
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 50)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 150)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 350)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 700)
+        mainHandler.postDelayed({ autoFocusPinKeypadIfPresent(force = true) }, 1400)
         return dispatched
     }
 

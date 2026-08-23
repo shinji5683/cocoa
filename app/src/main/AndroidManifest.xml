@@ -98,6 +98,16 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Serena" />
 
+        <activity
+            android:name=".SerenaUnlockActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:directBootAware="true" />
+
         <service
             android:name=".SerenaScreenReaderService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
