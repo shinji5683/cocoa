@@ -2,7 +2,7 @@
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeAllMask"
     android:accessibilityFeedbackType="feedbackAllMask"
-    android:accessibilityFlags="flagDefault|flagRetrieveInteractiveWindows|flagIncludeNotImportantViews|flagReportViewIds|flagRequestTouchExplorationMode|flagRequestMultiFingerGestures|flagRequestFingerprintGestures|flagRequestFilterKeyEvents|flagSendMotionEvents"
+    android:accessibilityFlags="flagDefault|flagRetrieveInteractiveWindows|flagIncludeNotImportantViews|flagReportViewIds|flagRequestTouchExplorationMode|flagRequestMultiFingerGestures|flagRequestFingerprintGestures|flagRequestFilterKeyEvents"
     android:canPerformGestures="true"
     android:canRequestTouchExplorationMode="true"
     android:canRetrieveWindowContent="true"
@@ -10,4 +10,6 @@
     android:canRequestFingerprintGestures="true"
     android:description="@string/accessibility_service_description"
     android:notificationTimeout="0"
+    android:interactiveUiTimeout="0"
+    android:nonInteractiveUiTimeout="0"
     android:settingsActivity="com.shinji.serena.MainActivity" />
