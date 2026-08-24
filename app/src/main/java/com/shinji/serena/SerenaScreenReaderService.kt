@@ -1220,31 +1220,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun isKeyguardLocked(): Boolean {
         val km = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
-        if (km?.isKeyguardLocked == true || km?.isDeviceLocked == true) return true
+        if (km != null) {
+            return km.isKeyguardLocked || km.isDeviceLocked
+        }
 
         val currentWindows = try { windows } catch (_: Exception) { null }
         if (!currentWindows.isNullOrEmpty()) {
-            val hasKeyguardWindow = currentWindows.any {
-                it.type == 4 /* TYPE_KEYGUARD */ || 
-                (it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM &&
-                    (it.root?.packageName?.toString()?.contains("keyguard") == true ||
-                     it.root?.packageName?.toString()?.contains("systemui") == true))
-            }
+            val hasKeyguardWindow = currentWindows.any { it.type == 4 /* TYPE_KEYGUARD */ }
             if (hasKeyguardWindow) return true
         }
 
         val root = rootInActiveWindow
         val rootPkg = root?.packageName?.toString()?.lowercase() ?: ""
-        if (rootPkg.contains("keyguard") || rootPkg.contains("systemui")) {
-            val viewId = root?.viewIdResourceName?.lowercase() ?: ""
-            if (viewId.contains("scene_window_root") || viewId.contains("lockscreen") ||
-                viewId.contains("bouncer") || viewId.contains("lock_icon") ||
-                root?.findAccessibilityNodeInfosByViewId("element:lockscreen")?.isNotEmpty() == true ||
-                root?.findAccessibilityNodeInfosByViewId("element:bouncer")?.isNotEmpty() == true ||
-                root?.findAccessibilityNodeInfosByViewId("com.android.systemui:id/lock_icon")?.isNotEmpty() == true
-            ) {
-                return true
-            }
+        if (rootPkg.contains("keyguard")) {
+            return true
         }
         return false
     }

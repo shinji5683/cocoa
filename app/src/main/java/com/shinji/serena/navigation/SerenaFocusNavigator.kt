@@ -83,27 +83,25 @@ class SerenaFocusNavigator(
         if (w.type == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
             return 0
         }
-        // ロック画面またはSystemUI（Bouncer, 通知シェード, クイック設定, ナビゲーションバー）
+        // ロック画面（キーガード・Bouncer）
         val rootPkg = w.root?.packageName?.toString()?.lowercase() ?: ""
-        if (service.isKeyguardLocked() || rootPkg.contains("systemui") || rootPkg.contains("keyguard")) {
-            if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM || rootPkg.contains("systemui") || rootPkg.contains("keyguard")) {
-                return 1
-            }
+        if (service.isKeyguardLocked() && (w.type == 4 /* TYPE_KEYGUARD */ || rootPkg.contains("keyguard"))) {
+            return 1
         }
-        // IME（ソフトウェアキーボード・PIN入力）
-        if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
+        // フォーカス中ウィンドウまたはアクティブウィンドウ（現在操作中のメインアプリ画面）
+        if (w.isFocused || w.isActive) {
             return 2
         }
-        // システムウィンドウ
-        if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM) {
+        // IME（ソフトウェアキーボード）
+        if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
             return 3
-        }
-        // フォーカス中ウィンドウまたはアクティブウィンドウ
-        if (w.isFocused || w.isActive) {
-            return 4
         }
         // 通常アプリケーション
         if (w.type == AccessibilityWindowInfo.TYPE_APPLICATION) {
+            return 4
+        }
+        // システムウィンドウ（ステータスバー・ナビゲーションバー）
+        if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM || rootPkg.contains("systemui")) {
             return 5
         }
         return 6
