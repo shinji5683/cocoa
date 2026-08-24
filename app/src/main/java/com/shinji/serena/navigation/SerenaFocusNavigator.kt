@@ -501,6 +501,7 @@ class SerenaFocusNavigator(
     }
 
     fun performHorizontalScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
+        val stdScrollAction = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         val pageAction = if (forward) {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
         } else {
@@ -512,22 +513,26 @@ class SerenaFocusNavigator(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else -1
         }
 
+        // 1. 標準スクロールアクションを最優先実行（ページ順序を100%正当保証）
+        if (node.actionList.any { it.id == stdScrollAction } && node.performAction(stdScrollAction)) return true
         if (node.actionList.any { it.id == pageAction } && node.performAction(pageAction)) return true
         if (scrollAction != -1 && node.actionList.any { it.id == scrollAction } && node.performAction(scrollAction)) return true
+
+        if (node.performAction(stdScrollAction)) return true
         if (node.performAction(pageAction)) return true
         if (scrollAction != -1 && node.performAction(scrollAction)) return true
 
-        // 親ノードやルートへのフォールバック（水平ページアクションのみ厳密実行）
+        // 親ノードやルートへのフォールバック
         var parent = node.parent
         while (parent != null) {
-            if (parent.performAction(pageAction) || (scrollAction != -1 && parent.performAction(scrollAction))) {
+            if (parent.performAction(stdScrollAction) || parent.performAction(pageAction) || (scrollAction != -1 && parent.performAction(scrollAction))) {
                 return true
             }
             parent = parent.parent
         }
 
         val root = service.rootInActiveWindow
-        if (root != null && (root.performAction(pageAction) || (scrollAction != -1 && root.performAction(scrollAction)))) {
+        if (root != null && (root.performAction(stdScrollAction) || root.performAction(pageAction) || (scrollAction != -1 && root.performAction(scrollAction)))) {
             return true
         }
 
