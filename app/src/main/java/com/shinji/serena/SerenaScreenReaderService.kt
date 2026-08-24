@@ -999,27 +999,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val screenW = dm.widthPixels
         val screenH = dm.heightPixels
 
-        // 縦スクロールの場合のみ、現在フォーカス中の要素がまだ画面内にあれば維持
-        if (!horizontal) {
-            val currentFocus = getAccessibilityFocusedNode()
-            if (currentFocus != null) {
-                val focusRect = android.graphics.Rect()
-                currentFocus.getBoundsInScreen(focusRect)
-                if (focusRect.top >= (screenH * 0.15f).toInt() && focusRect.bottom <= (screenH * 0.85f).toInt() &&
-                    focusRect.left >= 0 && focusRect.right <= screenW &&
-                    focusRect.width() > 0 && focusRect.height() > 0) {
-                    return null
-                }
-            }
-        }
-
         val visibleNodes = nodes.filter { node ->
             val rect = android.graphics.Rect()
             node.getBoundsInScreen(rect)
             val text = getNodeText(node)
             rect.width() > 0 && rect.height() > 0 &&
             rect.left >= 0 && rect.right <= screenW &&
-            rect.top >= (screenH * 0.05f).toInt() && rect.bottom <= (screenH * 0.95f).toInt() &&
+            rect.top >= (screenH * 0.04f).toInt() && rect.bottom <= (screenH * 0.96f).toInt() &&
             !text.contains("最近の項目はありません", ignoreCase = true)
         }
 
@@ -1037,8 +1023,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             val candidates = if (workspaceNodes.isNotEmpty()) workspaceNodes else visibleNodes
 
-            // ページの左上（一番最初のアプリ・項目）を最優先！
-            return candidates.minWithOrNull(Comparator { n1, n2 ->
+            val comparator = Comparator<AccessibilityNodeInfo> { n1, n2 ->
                 val r1 = android.graphics.Rect()
                 val r2 = android.graphics.Rect()
                 n1.getBoundsInScreen(r1)
@@ -1048,19 +1033,36 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 } else {
                     r1.left.compareTo(r2.left)
                 }
-            })
-        }
+            }
 
-        val centerX = screenW / 2
-        val centerY = screenH / 2
+            // forward=true (次のページへ進む): ページの最初の項目（一番左上）へ！
+            // forward=false (前のページへ戻る): ページの最後の項目（一番右下）へ！
+            return if (forward) {
+                candidates.minWithOrNull(comparator)
+            } else {
+                candidates.maxWithOrNull(comparator)
+            }
+        } else {
+            // 縦スクロール時:
+            // forward=true (下へスクロール/次へ進む): 画面上部の最初の項目へ！
+            // forward=false (上へスクロール/前へ戻る): 画面下部の最後の項目へ！
+            val comparator = Comparator<AccessibilityNodeInfo> { n1, n2 ->
+                val r1 = android.graphics.Rect()
+                val r2 = android.graphics.Rect()
+                n1.getBoundsInScreen(r1)
+                n2.getBoundsInScreen(r2)
+                if (kotlin.math.abs(r1.top - r2.top) > 30) {
+                    r1.top.compareTo(r2.top)
+                } else {
+                    r1.left.compareTo(r2.left)
+                }
+            }
 
-        // 縦スクロール時は画面中央に最も近い要素を選択
-        return visibleNodes.minByOrNull { node ->
-            val r = android.graphics.Rect()
-            node.getBoundsInScreen(r)
-            val dx = (r.centerX() - centerX).toLong()
-            val dy = (r.centerY() - centerY).toLong()
-            dx * dx + dy * dy
+            return if (forward) {
+                visibleNodes.minWithOrNull(comparator)
+            } else {
+                visibleNodes.maxWithOrNull(comparator)
+            }
         }
     }
 
@@ -1163,7 +1165,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
                 if (target != null) {
-                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
+                    focusNavigator?.setFocusAndShowOnScreen(target)
                     announceNode(target)
                 }
             }, 250)
@@ -1201,7 +1204,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
                 if (target != null) {
-                    target.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                    focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
+                    focusNavigator?.setFocusAndShowOnScreen(target)
                     announceNode(target)
                 }
             }, 250)

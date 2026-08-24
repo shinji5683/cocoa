@@ -300,16 +300,23 @@ class AccessibilityNodeEvaluator {
                 return if (cleanTitle.isNotEmpty()) "$cleanTitle スライダー $pct%" else "スライダー $pct%"
             }
 
-            if (!text.isNullOrEmpty()) {
-                return text
-            }
-
-            // 2. PIN / パスワード入力欄の安全な案内
+            // 2. PIN / パスワード入力欄の徹底した安全性保護（平文PIN/パスワードの漏洩を完全防止）
             val viewId = node.viewIdResourceName?.lowercase() ?: ""
             val isPassOrPin = node.isPassword || className.contains("PasswordTextView", ignoreCase = true) ||
                     viewId.contains("pinentry") || viewId.contains("passwordentry") ||
                     viewId.contains("pin_entry") || viewId.contains("password_entry") ||
-                    viewId.contains("lockpassword")
+                    viewId.contains("lockpassword") || viewId.contains("pin_code") ||
+                    viewId.contains("element:pin") ||
+                    (node.isEditable && (viewId.contains("pin") || viewId.contains("password")))
+
+            if (isPassOrPin) {
+                val len = text?.length ?: 0
+                return if (len > 0) "黒丸 ${len}文字" else "未入力"
+            }
+
+            if (!text.isNullOrEmpty()) {
+                return text
+            }
 
             // 3. labeledBy
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -320,11 +327,7 @@ class AccessibilityNodeEvaluator {
                 }
             }
 
-            if (isPassOrPin) {
-                return "未入力"
-            }
-
-            // 3. 子要素テキストの安全な収集（直下および1階層下まで、最大5件）
+            // 4. 子要素テキストの安全な収集（直下および1階層下まで、最大8件）
             if (node.childCount > 0) {
                 val childTexts = mutableListOf<String>()
                 for (i in 0 until node.childCount.coerceAtMost(8)) {
