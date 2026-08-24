@@ -1090,7 +1090,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (target != null) {
                     focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
                     focusNavigator?.setFocusAndShowOnScreen(target)
-                    announceNode(target)
+                    announceNode(target, TextToSpeech.QUEUE_ADD)
                 }
             }, 300)
             return true
@@ -1098,7 +1098,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         // 物理2本指スワイプフォールバック (TalkBack完全互換: 指が離れた直後にメインスレッドで物理ドラッグ実行)
         soundHelper?.playFocusMove()
-        speak("次のページ", TextToSpeech.QUEUE_FLUSH)
+        speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = true, horizontal = true)
         return true
     }
@@ -1127,7 +1127,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (target != null) {
                     focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
                     focusNavigator?.setFocusAndShowOnScreen(target)
-                    announceNode(target)
+                    announceNode(target, TextToSpeech.QUEUE_ADD)
                 }
             }, 300)
             return true
@@ -1135,7 +1135,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         // 物理2本指スワイプフォールバック (TalkBack完全互換)
         soundHelper?.playFocusMove()
-        speak("前のページ", TextToSpeech.QUEUE_FLUSH)
+        speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = false, horizontal = true)
         return true
     }
@@ -1161,13 +1161,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         if (success) {
             soundHelper?.playFocusMove()
+            speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
                 if (target != null) {
                     focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
                     focusNavigator?.setFocusAndShowOnScreen(target)
-                    announceNode(target)
+                    announceNode(target, TextToSpeech.QUEUE_ADD)
                 }
             }, 250)
             return true
@@ -1175,6 +1176,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         // 物理2本指縦スワイプフォールバック
         soundHelper?.playFocusMove()
+        speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = true, horizontal = false)
         return true
     }
@@ -1200,13 +1202,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         if (success) {
             soundHelper?.playFocusMove()
+            speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
                 if (target != null) {
                     focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
                     focusNavigator?.setFocusAndShowOnScreen(target)
-                    announceNode(target)
+                    announceNode(target, TextToSpeech.QUEUE_ADD)
                 }
             }, 250)
             return true
@@ -1214,6 +1217,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         // 物理2本指縦スワイプフォールバック
         soundHelper?.playFocusMove()
+        speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = false, horizontal = false)
         return true
     }
@@ -1481,7 +1485,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         if (target != null) {
                             focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
                             focusNavigator?.setFocusAndShowOnScreen(target)
-                            announceNode(target)
+                            announceNode(target, TextToSpeech.QUEUE_ADD)
                         }
                     }, 250)
                 }
@@ -1494,7 +1498,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         if (target != null) {
                             focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(newNodes, target) ?: 0
                             focusNavigator?.setFocusAndShowOnScreen(target)
-                            announceNode(target)
+                            announceNode(target, TextToSpeech.QUEUE_ADD)
                         }
                     }, 250)
                 }
@@ -3190,7 +3194,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private var lastFocusedWindowId: Int = -1
 
-    fun announceNode(node: AccessibilityNodeInfo) {
+    fun announceNode(node: AccessibilityNodeInfo, queueMode: Int = TextToSpeech.QUEUE_FLUSH) {
         val announcement = buildNodeAnnouncement(node)
         if (announcement.isBlank()) return
 
@@ -3207,7 +3211,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastSpokenText = announcement
         lastSpokenTime = currentTime
         soundHelper?.playFocusMovePanned(normalizedX)
-        speak(announcement, TextToSpeech.QUEUE_FLUSH)
+        speak(announcement, queueMode)
 
         // 外国語テキストのリアルタイム日本語翻訳読み上げ（原文の直後にキュー追加）
         try {

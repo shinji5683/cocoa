@@ -327,35 +327,42 @@ class AccessibilityNodeEvaluator {
                 }
             }
 
-            // 4. 子要素テキストの安全な収集（直下および1階層下まで、最大8件）
+            // 4. Jetpack Compose & 階層UI: 子要素テキストの再帰的収集（直下および2階層下まで）
             if (node.childCount > 0) {
                 val childTexts = mutableListOf<String>()
-                for (i in 0 until node.childCount.coerceAtMost(8)) {
+                for (i in 0 until node.childCount.coerceAtMost(10)) {
                     val child = node.getChild(i) ?: continue
-                    if (!child.isVisibleToUser) continue
                     val ct = child.contentDescription?.toString()?.trim() ?: child.text?.toString()?.trim()
                     if (!ct.isNullOrEmpty() && !childTexts.contains(ct)) {
                         childTexts.add(ct)
-                    } else if (child.childCount > 0) {
-                        for (j in 0 until child.childCount.coerceAtMost(4)) {
+                    }
+                    if (child.childCount > 0) {
+                        for (j in 0 until child.childCount.coerceAtMost(6)) {
                             val gc = child.getChild(j) ?: continue
-                            if (!gc.isVisibleToUser) continue
                             val gct = gc.contentDescription?.toString()?.trim() ?: gc.text?.toString()?.trim()
                             if (!gct.isNullOrEmpty() && !childTexts.contains(gct)) {
                                 childTexts.add(gct)
                             }
                         }
                     }
-                    if (childTexts.size >= 4) break
+                    if (childTexts.size >= 6) break
                 }
                 if (childTexts.isNotEmpty()) {
                     return childTexts.joinToString(" ")
                 }
             }
 
-            // 4. スイッチやチェックボックス単体でラベルがない場合、同一親行内の兄弟ノードからラベルを探索
+            // 5. Jetpack Compose 親コンテナからのラベル継承（自身が空のComposeサブ要素の場合）
+            val parent = node.parent
+            if (parent != null) {
+                val parentText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
+                if (!parentText.isNullOrEmpty() && !parentText.contains("android", ignoreCase = true)) {
+                    return parentText
+                }
+            }
+
+            // 6. スイッチやチェックボックス単体でラベルがない場合、同一親行内の兄弟ノードからラベルを探索
             if (isSwitchOrToggle(node) || isCheckableOrCompound(node)) {
-                val parent = node.parent
                 if (parent != null && parent.childCount in 2..8) {
                     val siblingTexts = mutableListOf<String>()
                     val parentDirectText = parent.contentDescription?.toString()?.trim() ?: parent.text?.toString()?.trim()
@@ -376,7 +383,7 @@ class AccessibilityNodeEvaluator {
                 }
             }
 
-            // 5. 特定のキー・ボタンIDからの推定
+            // 7. 特定のキー・ボタンIDからの推定
             val inferred = inferLabelFromViewId(node.viewIdResourceName)
             if (inferred.isNotEmpty()) {
                 return inferred
