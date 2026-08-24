@@ -31,23 +31,43 @@ class SerenaFocusNavigator(
 
     fun getAllRoots(): List<AccessibilityNodeInfo> {
         val list = mutableListOf<AccessibilityNodeInfo>()
-        
-        // 1. service.windows から Z-Order レイヤー最前面順（降順）でルートを収集
+
+        // 1. ロック画面中ならキーガード/Bouncerウィンドウを取得
+        if (service.isKeyguardLocked()) {
+            try {
+                val wins = service.windows
+                val keyguardWin = wins?.find { it.type == 4 /* TYPE_KEYGUARD */ || it.root?.packageName?.toString()?.contains("keyguard") == true }
+                val r = keyguardWin?.root ?: service.rootInActiveWindow
+                if (r != null) return listOf(r)
+            } catch (_: Exception) {}
+            val root = service.rootInActiveWindow
+            return if (root != null) listOf(root) else emptyList()
+        }
+
+        // 2. 通常時: アクティブウィンドウ（設定アプリ、ホーム画面等）を最優先！
+        val activeRoot = service.rootInActiveWindow
+        val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
+        val isSystemUiActive = activePkg.contains("systemui")
+
+        if (activeRoot != null) {
+            list.add(activeRoot)
+        }
+
         try {
             val wins = service.windows
             if (!wins.isNullOrEmpty()) {
-                val sortedWins = wins.sortedWith(Comparator { w1, w2 ->
-                    val p1 = getWindowPriority(w1)
-                    val p2 = getWindowPriority(w2)
-                    if (p1 != p2) {
-                        p1.compareTo(p2)
-                    } else {
-                        // 同じ優先度なら手前（layer が大きい）を優先
-                        w2.layer.compareTo(w1.layer)
+                // 通知シェード展開中以外は TYPE_SYSTEM（ステータスバー・ナビバー）を完全隔離し、アプリ内フォーカスを保護！
+                val targetWins = wins.filter { w ->
+                    when (w.type) {
+                        AccessibilityWindowInfo.TYPE_APPLICATION,
+                        AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,
+                        AccessibilityWindowInfo.TYPE_INPUT_METHOD -> true
+                        AccessibilityWindowInfo.TYPE_SYSTEM -> isSystemUiActive
+                        else -> false
                     }
-                })
+                }.sortedBy { getWindowPriority(it) }
 
-                for (w in sortedWins) {
+                for (w in targetWins) {
                     val r = w.root ?: continue
                     if (list.none { it == r || it.windowId == r.windowId }) {
                         list.add(r)
@@ -56,24 +76,9 @@ class SerenaFocusNavigator(
             }
         } catch (_: Exception) {}
 
-        // 2. 現在アクティブなウィンドウのルート
-        val activeRoot = service.rootInActiveWindow
-        if (activeRoot != null && list.none { it == activeRoot || it.windowId == activeRoot.windowId }) {
+        if (list.isEmpty() && activeRoot != null) {
             list.add(activeRoot)
         }
-
-        // 3. 現在フォーカスされているノードのルート
-        try {
-            val focusNode = service.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
-                ?: service.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-            var p = focusNode
-            while (p?.parent != null) {
-                p = p.parent
-            }
-            if (p != null && list.none { it == p || it.windowId == p.windowId }) {
-                list.add(p)
-            }
-        } catch (_: Exception) {}
 
         return list
     }
@@ -83,28 +88,23 @@ class SerenaFocusNavigator(
         if (w.type == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
             return 0
         }
-        // ロック画面（キーガード・Bouncer）
-        val rootPkg = w.root?.packageName?.toString()?.lowercase() ?: ""
-        if (service.isKeyguardLocked() && (w.type == 4 /* TYPE_KEYGUARD */ || rootPkg.contains("keyguard"))) {
-            return 1
-        }
         // フォーカス中ウィンドウまたはアクティブウィンドウ（現在操作中のメインアプリ画面）
         if (w.isFocused || w.isActive) {
-            return 2
+            return 1
         }
         // IME（ソフトウェアキーボード）
         if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
-            return 3
+            return 2
         }
         // 通常アプリケーション
         if (w.type == AccessibilityWindowInfo.TYPE_APPLICATION) {
-            return 4
+            return 3
         }
         // システムウィンドウ（ステータスバー・ナビゲーションバー）
-        if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM || rootPkg.contains("systemui")) {
-            return 5
+        if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM) {
+            return 4
         }
-        return 6
+        return 5
     }
 
     fun collectAccessibleNodes(root: AccessibilityNodeInfo? = null): List<AccessibilityNodeInfo> {
