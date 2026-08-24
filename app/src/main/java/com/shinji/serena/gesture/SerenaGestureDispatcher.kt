@@ -209,32 +209,22 @@ class SerenaGestureDispatcher(
                 service.toggleSpeechMute()
                 return true
             }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT, 28 -> {
-                // 2本指右フリック: 前のページへ（横スクロール）
-                Log.i(TAG, "GESTURE_2_FINGER_SWIPE_RIGHT (28) -> scrollHorizontalBackward")
-                service.scrollHorizontalBackward()
-                return true
-            }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT, 27 -> {
-                // 2本指左フリック: 次のページへ（横スクロール）
-                Log.i(TAG, "GESTURE_2_FINGER_SWIPE_LEFT (27) -> scrollHorizontalForward")
-                service.scrollHorizontalForward()
-                return true
-            }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN, 26 -> {
-                // 2本指下フリック: 前へ縦スクロール（上にスクロール / 通知シェード）
-                Log.i(TAG, "GESTURE_2_FINGER_SWIPE_DOWN (26) -> scrollVerticalBackward")
-                service.scrollVerticalBackward()
-                return true
-            }
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT, 27,
             AccessibilityService.GESTURE_2_FINGER_SWIPE_UP, 25 -> {
                 if (service.isKeyguardLocked()) {
                     service.unlockKeyguardOrShowBouncer()
                     return true
                 }
-                // 2本指上フリック: 次へ縦スクロール（下にスクロール / アプリ一覧）
-                Log.i(TAG, "GESTURE_2_FINGER_SWIPE_UP (25) -> scrollVerticalForward")
-                service.scrollVerticalForward()
+                // 2本指左フリック / 上フリック: 次のページへ（横スクロール進む ＋ 先頭アイテム音声ガイド）
+                Log.i(TAG, "2-Finger swipe ($gestureId) -> scrollHorizontalForward (次のページへ)")
+                service.scrollHorizontalForward()
+                return true
+            }
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT, 28,
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN, 26 -> {
+                // 2本指右フリック / 下フリック: 前のページへ（横スクロール戻る ＋ 先頭アイテム音声ガイド）
+                Log.i(TAG, "2-Finger swipe ($gestureId) -> scrollHorizontalBackward (前のページへ)")
+                service.scrollHorizontalBackward()
                 return true
             }
 

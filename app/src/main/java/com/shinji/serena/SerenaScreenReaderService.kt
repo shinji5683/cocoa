@@ -455,26 +455,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 toggleSpeechMute()
                 return true
             }
-            // 2本指右フリック (28): 前のページへ（横スクロール戻る）
-            28 -> {
-                return scrollHorizontalBackward()
-            }
-            // 2本指左フリック (27): 次のページへ（横スクロール進む）
-            27 -> {
-                return scrollHorizontalForward()
-            }
-            // 2本指下フリック (26): 前へ縦スクロール（上にスクロールして前の内容を表示）
-            26 -> {
-                return scrollVerticalBackward()
-            }
-            // 2本指上フリック (25): ロック画面時はロック解除 / アプリ内は次へ縦スクロール
-            25 -> {
+            // 2本指左フリック (27) / 上フリック (25): 次のページへ（横スクロール進む ＋ 先頭アイテム音声ガイド）
+            27, 25 -> {
                 if (isKeyguardLocked()) {
                     unlockKeyguardOrShowBouncer()
                     return true
-                } else {
-                    return scrollVerticalForward()
                 }
+                return scrollHorizontalForward()
+            }
+            // 2本指右フリック (28) / 下フリック (26): 前のページへ（横スクロール戻る ＋ 先頭アイテム音声ガイド）
+            28, 26 -> {
+                return scrollHorizontalBackward()
             }
 
             // 3本指シングルタップ (22 / GESTURE_3_FINGER_SINGLE_TAP): Serena メニューを開く！
