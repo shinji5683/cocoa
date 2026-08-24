@@ -219,39 +219,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun initTts(context: Context = this) {
         try {
             tts?.shutdown()
+            isTtsReady = false
             tts = TextToSpeech(this, this)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                val audioAttributes = android.media.AudioAttributes.Builder()
-                    .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
-                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build()
-                tts?.setAudioAttributes(audioAttributes)
-            }
-            tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) {
-                    if (utteranceId == "serena_startup_greeting") {
-                        isStartupGreetingSpeaking = true
-                    }
-                }
-
-                override fun onDone(utteranceId: String?) {
-                    if (utteranceId == "serena_startup_greeting") {
-                        isStartupGreetingSpeaking = false
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            flushPendingSpeechQueue()
-                        }
-                    }
-                }
-
-                override fun onError(utteranceId: String?) {
-                    if (utteranceId == "serena_startup_greeting") {
-                        isStartupGreetingSpeaking = false
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            flushPendingSpeechQueue()
-                        }
-                    }
-                }
-            })
         } catch (e: Exception) {
             Log.e(TAG, "initTts error: ${e.message}")
         }
@@ -263,13 +232,51 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            val result = tts?.setLanguage(Locale.JAPANESE)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                tts?.language = Locale.getDefault()
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    val audioAttributes = android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                    tts?.setAudioAttributes(audioAttributes)
+                }
+                tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        if (utteranceId == "serena_startup_greeting") {
+                            isStartupGreetingSpeaking = true
+                        }
+                    }
+
+                    override fun onDone(utteranceId: String?) {
+                        if (utteranceId == "serena_startup_greeting") {
+                            isStartupGreetingSpeaking = false
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                flushPendingSpeechQueue()
+                            }
+                        }
+                    }
+
+                    override fun onError(utteranceId: String?) {
+                        if (utteranceId == "serena_startup_greeting") {
+                            isStartupGreetingSpeaking = false
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                flushPendingSpeechQueue()
+                            }
+                        }
+                    }
+                })
+
+                val result = tts?.setLanguage(Locale.JAPANESE)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    tts?.language = Locale.getDefault()
+                }
+                updateTtsSettings()
+                isTtsReady = true
+                speakStartupGreeting()
+            } catch (e: Exception) {
+                Log.e(TAG, "onInit configuration error: ${e.message}")
+                isTtsReady = true
             }
-            updateTtsSettings()
-            isTtsReady = true
-            speakStartupGreeting()
         } else {
             Log.e(TAG, "TTS Initialization failed with status: $status")
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -3782,9 +3789,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         } catch (_: Exception) {}
 
         val utteranceId = "serenaUtterance_${System.currentTimeMillis()}"
-        val result = tts?.speak(processedText, effectiveQueueMode, null, utteranceId)
+        val params = android.os.Bundle().apply {
+            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+        }
+        val result = tts?.speak(processedText, effectiveQueueMode, params, utteranceId)
         if (result == TextToSpeech.ERROR) {
             Log.e(TAG, "TTS speak returned ERROR for text: $processedText")
+            tts?.speak(processedText, effectiveQueueMode, null, utteranceId)
         }
     }
 
