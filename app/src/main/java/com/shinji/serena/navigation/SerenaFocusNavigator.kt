@@ -342,7 +342,8 @@ class SerenaFocusNavigator(
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
                     // 次のページ: 新しいページの最初のワークスペース項目（Dating等）へ！
-                    val targetNode = newNodes.firstOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
+                    val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = true)
+                        ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
                         ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) }
                         ?: newNodes[0]
                     lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
@@ -359,7 +360,8 @@ class SerenaFocusNavigator(
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
                     // 前のページ: 前のページの最後のワークスペース項目（YouTube等）へ！
-                    val targetNode = newNodes.lastOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
+                    val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = true)
+                        ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
                         ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) }
                         ?: newNodes[newNodes.size - 1]
                     lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)

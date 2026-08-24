@@ -594,54 +594,44 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollPageForward(onComplete: (() -> Unit)? = null) {
         soundHelper?.playScroll(isForward = true)
-        val activeRoot = rootInActiveWindow
-        val pkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
-        val isLauncher = pkg.contains("launcher")
+        speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
 
-        if (isLauncher) {
-            performHorizontalSwipeGesture(swipeLeft = true, onComplete = onComplete)
+        val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
+        if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = true) == true) {
+            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 350) }
             return
         }
 
         val verticalNode = focusNavigator?.findScrollableNode(forward = true)
         if (verticalNode != null && focusNavigator?.performScroll(verticalNode, forward = true) == true) {
-            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 250) }
+            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 300) }
             return
         }
 
-        val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
-        if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = true) == true) {
-            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 250) }
-            return
-        }
-
-        performSwipeGesture(swipeUp = true, onComplete = onComplete)
+        // 物理2本指スワイプフォールバック
+        performPhysical2FingerScroll(forward = true, horizontal = true)
+        onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 400) }
     }
 
     fun scrollPageBackward(onComplete: (() -> Unit)? = null) {
         soundHelper?.playScroll(isForward = false)
-        val activeRoot = rootInActiveWindow
-        val pkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
-        val isLauncher = pkg.contains("launcher")
+        speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
 
-        if (isLauncher) {
-            performHorizontalSwipeGesture(swipeLeft = false, onComplete = onComplete)
+        val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
+        if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = false) == true) {
+            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 350) }
             return
         }
 
         val verticalNode = focusNavigator?.findScrollableNode(forward = false)
         if (verticalNode != null && focusNavigator?.performScroll(verticalNode, forward = false) == true) {
-            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 250) }
+            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 300) }
             return
         }
 
-        val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
-        if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = false) == true) {
-            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 250) }
-            return
-        }
-
-        performSwipeGesture(swipeUp = false, onComplete = onComplete)
+        // 物理2本指スワイプフォールバック
+        performPhysical2FingerScroll(forward = false, horizontal = true)
+        onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 400) }
     }
 
     private fun performSwipeGesture(swipeUp: Boolean, onComplete: (() -> Unit)? = null) {
