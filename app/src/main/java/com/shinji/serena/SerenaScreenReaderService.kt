@@ -3674,13 +3674,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return Locale.JAPANESE
 
+        // 1. 日本語（ひらがな・カタカナ・漢字・全角記号）が1文字でも含まれていれば絶対に日本語！
+        if (trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF\\u3000-\\u303F].*"))) {
+            return Locale.JAPANESE
+        }
+
+        // 2. タガログ語判定（単語単位・決まり文句で厳密マッチ）
         val lower = trimmed.lowercase()
-        val tagalogKeywords = listOf(
-            "kamusta", "salamat", "magandang", "mga", "ako", "ikaw", "kayo", "po", "opo",
-            "hindi", "oo", "maraming", "mabuhay", "pala", "naman", "talaga", "kasi", "ang",
-            "sa", "ng", "na", "ba", "pa", "rin", "din", "walang", "may", "meron", "handa"
+        val tagalogDistinctPhrases = listOf(
+            "magandang araw", "handa na si serena", "mabuhay", "maraming salamat", "kumusta", "kamusta"
         )
-        val isTagalog = tagalogKeywords.any { lower.contains(it) }
+        val tagalogWords = setOf(
+            "kamusta", "kumusta", "salamat", "magandang", "mabuhay", "asawa", "handa", "walang", "opo"
+        )
+        val tokens = lower.split(Regex("[^a-zA-Z]+")).filter { it.isNotEmpty() }
+        val isTagalog = tagalogDistinctPhrases.any { lower.contains(it) } || tokens.any { tagalogWords.contains(it) }
 
         if (isTagalog) {
             val tagalogLocale = Locale.Builder().setLanguage("fil").setRegion("PH").build()
@@ -3691,12 +3699,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return Locale.JAPANESE
         }
 
-        // 日本語（ひらがな・カタカナ・漢字）が含まれる場合は絶対に日本語！
-        if (trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF].*"))) {
-            return Locale.JAPANESE
-        }
-
-        // 日本語を含まず、完全に英語の単語のみで構成されている場合のみ英語
+        // 3. 英語判定（日本語を含まず、アルファベットの英単語で構成されている場合）
         if (trimmed.matches(Regex("^[a-zA-Z0-9\\s\\p{Punct}]+$")) && trimmed.any { it.isLetter() }) {
             val englishLocale = Locale.ENGLISH
             val availability = tts?.isLanguageAvailable(englishLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
