@@ -1134,23 +1134,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastScrollTime = now
 
         soundHelper?.playScroll(isForward = true)
-        speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+
+        val activeRoot = rootInActiveWindow
+        val pkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
+        val isLauncher = pkg.contains("launcher")
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
-        val success = if (scrollNode != null) {
-            focusNavigator?.performScroll(scrollNode, forward = true) == true
-        } else {
-            val root = rootInActiveWindow
-            val focused = getAccessibilityFocusedNode() ?: root
-            val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.id
-            } else {
-                AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
-            }
-            focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
-        }
-
-        if (success) {
+        if (scrollNode != null && focusNavigator?.performScroll(scrollNode, forward = true) == true) {
+            speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
@@ -1163,7 +1154,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 物理2本指縦スワイプフォールバック
+        // ホーム画面で下スクロール（2本指上スワイプ）された場合はアプリ一覧ドロワーを展開
+        if (isLauncher && !isAllAppsOpen()) {
+            speak("アプリ一覧を開きます", TextToSpeech.QUEUE_FLUSH)
+            performOpenAllAppsGesture()
+            return true
+        }
+
+        speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = true, horizontal = false)
         return true
     }
@@ -1174,23 +1172,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastScrollTime = now
 
         soundHelper?.playScroll(isForward = false)
-        speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+
+        val activeRoot = rootInActiveWindow
+        val pkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
+        val isLauncher = pkg.contains("launcher")
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
-        val success = if (scrollNode != null) {
-            focusNavigator?.performScroll(scrollNode, forward = false) == true
-        } else {
-            val root = rootInActiveWindow
-            val focused = getAccessibilityFocusedNode() ?: root
-            val actionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.id
-            } else {
-                AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
-            }
-            focused?.performAction(actionId) == true || focused?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
-        }
-
-        if (success) {
+        if (scrollNode != null && focusNavigator?.performScroll(scrollNode, forward = false) == true) {
+            speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
@@ -1203,9 +1192,48 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 物理2本指縦スワイプフォールバック
+        // ホーム画面で上スクロール（2本指下スワイプ）された場合は通知シェードを展開
+        if (isLauncher && !isAllAppsOpen()) {
+            speak("通知を開きます", TextToSpeech.QUEUE_FLUSH)
+            performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+            return true
+        }
+
+        speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = false, horizontal = false)
         return true
+    }
+
+    private fun isAllAppsOpen(): Boolean {
+        val root = rootInActiveWindow ?: return false
+        val allApps = root.findAccessibilityNodeInfosByViewId("com.google.android.apps.nexuslauncher:id/apps_list_view")
+            .ifEmpty { root.findAccessibilityNodeInfosByViewId("com.android.launcher3:id/apps_list_view") }
+        return allApps.isNotEmpty()
+    }
+
+    private fun performOpenAllAppsGesture() {
+        val dm = resources.displayMetrics
+        val w = dm.widthPixels.toFloat()
+        val h = dm.heightPixels.toFloat()
+        val path = android.graphics.Path().apply {
+            moveTo(w * 0.5f, h * 0.85f)
+            lineTo(w * 0.5f, h * 0.25f)
+        }
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 250)
+        val gesture = android.accessibilityservice.GestureDescription.Builder().addStroke(stroke).build()
+        dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCompleted(gestureDescription)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    val newNodes = collectAccessibleNodes()
+                    val target = newNodes.firstOrNull { it.isClickable || !it.text.isNullOrEmpty() }
+                    if (target != null) {
+                        focusNavigator?.setFocusAndShowOnScreen(target)
+                        announceNode(target, TextToSpeech.QUEUE_ADD)
+                    }
+                }, 350)
+            }
+        }, null)
     }
 
     fun isKeyguardLocked(): Boolean {
@@ -2927,11 +2955,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             AccessibilityEvent.TYPE_VIEW_SELECTED -> {
                 val node = event.source ?: return
                 selectedCustomActionIndex = 0
-                lastFocusTimeMs = System.currentTimeMillis()
+                val now = System.currentTimeMillis()
+                lastFocusTimeMs = now
                 lastHoveredNode = node
                 soundHelper?.playFocusMove()
                 if (isTtsReady) {
-                    announceNode(node)
+                    val queueMode = if (now - lastScrollTime < 900) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
+                    announceNode(node, queueMode)
                 }
             }
 
