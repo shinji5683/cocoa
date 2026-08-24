@@ -1212,18 +1212,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun performOpenAllAppsGesture() {
-        val dm = resources.displayMetrics
-        val w = dm.widthPixels.toFloat()
-        val h = dm.heightPixels.toFloat()
-        val path = android.graphics.Path().apply {
-            moveTo(w * 0.5f, h * 0.85f)
-            lineTo(w * 0.5f, h * 0.25f)
-        }
-        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 250)
-        val gesture = android.accessibilityservice.GestureDescription.Builder().addStroke(stroke).build()
-        dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
-            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
-                super.onCompleted(gestureDescription)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (performGlobalAction(14 /* AccessibilityService.GLOBAL_ACTION_ACCESSIBILITY_ALL_APPS */)) {
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     val newNodes = collectAccessibleNodes()
                     val target = newNodes.firstOrNull { it.isClickable || !it.text.isNullOrEmpty() }
@@ -1232,6 +1222,36 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         announceNode(target, TextToSpeech.QUEUE_ADD)
                     }
                 }, 350)
+                return
+            }
+        }
+
+        val dm = resources.displayMetrics
+        val w = dm.widthPixels.toFloat()
+        val h = dm.heightPixels.toFloat()
+        val path = android.graphics.Path().apply {
+            moveTo(w * 0.5f, h * 0.90f)
+            lineTo(w * 0.5f, h * 0.20f)
+        }
+        val stroke = android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 200)
+        val gesture = android.accessibilityservice.GestureDescription.Builder().addStroke(stroke).build()
+        isInternalGestureDispatching = true
+        dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+            override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCompleted(gestureDescription)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    isInternalGestureDispatching = false
+                    val newNodes = collectAccessibleNodes()
+                    val target = newNodes.firstOrNull { it.isClickable || !it.text.isNullOrEmpty() }
+                    if (target != null) {
+                        focusNavigator?.setFocusAndShowOnScreen(target)
+                        announceNode(target, TextToSpeech.QUEUE_ADD)
+                    }
+                }, 350)
+            }
+            override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
+                super.onCancelled(gestureDescription)
+                isInternalGestureDispatching = false
             }
         }, null)
     }
@@ -2941,12 +2961,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
-                lastFocusTimeMs = System.currentTimeMillis()
+                val now = System.currentTimeMillis()
+                lastFocusTimeMs = now
                 lastHoveredNode = node
                 soundHelper?.playFocusMove()
                 node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                 if (isTtsReady) {
-                    announceNode(node)
+                    val queueMode = if (now - lastScrollTime < 900) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
+                    announceNode(node, queueMode)
                 }
             }
 
