@@ -3465,10 +3465,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             name.contains("settings_button") || name == "settings_gear" || name == "quick_settings" -> "クイック設定"
             name.contains("power_button") || name == "power" -> "電源メニュー"
             name.contains("edit_button") || name == "btn_edit" -> "タイル編集"
-            name.contains("media_play") || name.contains("action_play") -> "再生"
-            name.contains("media_pause") || name.contains("action_pause") -> "一時停止"
-            name.contains("media_prev") || name.contains("action_prev") -> "前の曲"
-            name.contains("media_next") || name.contains("action_next") -> "次の曲"
+            name.contains("media_play") || name == "action_play" -> "再生"
+            name.contains("media_pause") || name == "action_pause" -> "一時停止"
+            name.contains("media_prev") || name == "action_prev" -> "前の曲"
+            name.contains("media_next") || name == "action_next" -> "次の曲"
             name.contains("pinentry") || name.contains("pin_entry") || name.contains("pin_field") || name.contains("keyguard_pin") || name.contains("pin_view") -> "PIN入力欄"
             name.contains("passwordentry") || name.contains("password_entry") || name.contains("lockpassword") || name.contains("keyguard_password") -> "パスワード入力欄"
             name == "key0" || name == "button0" -> "0"
@@ -3672,18 +3672,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return Locale.JAPANESE
 
-        // 日本語（ひらがな・カタカナ・漢字）または数字・記号のみの場合は常に日本語！
-        if (trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF].*")) ||
-            trimmed.matches(Regex("^[0-9\\s\\p{Punct}]+$"))
-        ) {
-            return Locale.JAPANESE
-        }
-
         val lower = trimmed.lowercase()
         val tagalogKeywords = listOf(
             "kamusta", "salamat", "magandang", "mga", "ako", "ikaw", "kayo", "po", "opo",
             "hindi", "oo", "maraming", "mabuhay", "pala", "naman", "talaga", "kasi", "ang",
-            "sa", "ng", "na", "ba", "pa", "rin", "din", "walang", "may", "meron"
+            "sa", "ng", "na", "ba", "pa", "rin", "din", "walang", "may", "meron", "handa"
         )
         val isTagalog = tagalogKeywords.any { lower.contains(it) }
 
@@ -3696,9 +3689,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return Locale.JAPANESE
         }
 
-        // 英字アルファベットを含む場合のみ英語、それ以外はデフォルト日本語
-        if (trimmed.matches(Regex(".*[a-zA-Z].*"))) {
-            return Locale.ENGLISH
+        // 日本語（ひらがな・カタカナ・漢字）が含まれる場合は絶対に日本語！
+        if (trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF].*"))) {
+            return Locale.JAPANESE
+        }
+
+        // 日本語を含まず、完全に英語の単語のみで構成されている場合のみ英語
+        if (trimmed.matches(Regex("^[a-zA-Z0-9\\s\\p{Punct}]+$")) && trimmed.any { it.isLetter() }) {
+            val englishLocale = Locale.ENGLISH
+            val availability = tts?.isLanguageAvailable(englishLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (availability >= TextToSpeech.LANG_AVAILABLE) {
+                return englishLocale
+            }
         }
 
         return Locale.JAPANESE
@@ -3750,7 +3752,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_ADD) {
+    fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_FLUSH) {
         if (text.isBlank() || isMuted) return
         val effectiveQueueMode = if (isStartupGreetingSpeaking && !text.startsWith("Magandang araw")) {
             TextToSpeech.QUEUE_ADD
@@ -3779,7 +3781,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
         } catch (_: Exception) {}
 
-        tts?.speak(processedText, effectiveQueueMode, null, "serenaUtterance_${System.currentTimeMillis()}")
+        val utteranceId = "serenaUtterance_${System.currentTimeMillis()}"
+        val result = tts?.speak(processedText, effectiveQueueMode, null, utteranceId)
+        if (result == TextToSpeech.ERROR) {
+            Log.e(TAG, "TTS speak returned ERROR for text: $processedText")
+        }
     }
 
     fun toggleSpeechPauseResume() {
