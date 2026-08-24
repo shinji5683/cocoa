@@ -442,20 +442,7 @@ class SerenaFocusNavigator(
     }
 
     fun findHorizontalScrollableNode(forward: Boolean): AccessibilityNodeInfo? {
-        val roots = getAllRoots()
-        
-        // 1. Pixel Launcher / Launcher3 の Workspace 直接高速探索
-        for (r in roots) {
-            val pkg = r.packageName?.toString() ?: ""
-            val wsById = r.findAccessibilityNodeInfosByViewId("$pkg:id/workspace")
-            if (wsById.isNotEmpty()) return wsById[0]
-            val genericWs = r.findAccessibilityNodeInfosByViewId("com.google.android.apps.nexuslauncher:id/workspace")
-            if (genericWs.isNotEmpty()) return genericWs[0]
-            val launcher3Ws = r.findAccessibilityNodeInfosByViewId("com.android.launcher3:id/workspace")
-            if (launcher3Ws.isNotEmpty()) return launcher3Ws[0]
-        }
-
-        // 2. フォーカスノードの祖先階層探索
+        // 1. フォーカスノードの祖先階層探索 (現在操作中のアプリ・コンテナを最優先！)
         val focusNode = service.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
             ?: service.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
             ?: service.getAccessibilityFocusedNode()
@@ -465,17 +452,31 @@ class SerenaFocusNavigator(
             current = current.parent
         }
 
+        // 2. アクティブウィンドウの直接探索 (Pixel Launcher / アプリ等)
+        val activeRoot = service.rootInActiveWindow
+        if (activeRoot != null) {
+            val pkg = activeRoot.packageName?.toString() ?: ""
+            if (pkg.contains("launcher")) {
+                val wsById = activeRoot.findAccessibilityNodeInfosByViewId("$pkg:id/workspace")
+                if (wsById.isNotEmpty()) return wsById[0]
+                val genericWs = activeRoot.findAccessibilityNodeInfosByViewId("com.google.android.apps.nexuslauncher:id/workspace")
+                if (genericWs.isNotEmpty()) return genericWs[0]
+                val launcher3Ws = activeRoot.findAccessibilityNodeInfosByViewId("com.android.launcher3:id/workspace")
+                if (launcher3Ws.isNotEmpty()) return launcher3Ws[0]
+            }
+            val directNode = findFirstHorizontalScrollableChild(activeRoot, forward)
+            if (directNode != null) return directNode
+            if (canScrollHorizontal(activeRoot, forward)) return activeRoot
+        }
+
         // 3. 全ウィンドウツリー探索
+        val roots = getAllRoots()
         for (root in roots) {
             val directNode = findFirstHorizontalScrollableChild(root, forward)
             if (directNode != null) return directNode
             if (canScrollHorizontal(root, forward)) return root
         }
 
-        val activeRoot = service.rootInActiveWindow
-        if (activeRoot != null) {
-            if (canScrollHorizontal(activeRoot, forward)) return activeRoot
-        }
         return null
     }
 

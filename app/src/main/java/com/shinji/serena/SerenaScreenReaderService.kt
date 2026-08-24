@@ -1058,8 +1058,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun scrollHorizontalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 650) return true
+        if (now - lastScrollTime < 300) return true
         lastScrollTime = now
+
+        soundHelper?.playScroll(isForward = true)
+        speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
         Log.i(TAG, "scrollHorizontalForward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
@@ -1072,8 +1075,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
 
         if (success) {
-            soundHelper?.playFocusMove()
-            speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = true)
@@ -1082,21 +1083,22 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     focusNavigator?.setFocusAndShowOnScreen(target)
                     announceNode(target, TextToSpeech.QUEUE_ADD)
                 }
-            }, 300)
+            }, 350)
             return true
         }
 
         // 物理2本指スワイプフォールバック (TalkBack完全互換: 指が離れた直後にメインスレッドで物理ドラッグ実行)
-        soundHelper?.playFocusMove()
-        speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = true, horizontal = true)
         return true
     }
 
     fun scrollHorizontalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 650) return true
+        if (now - lastScrollTime < 300) return true
         lastScrollTime = now
+
+        soundHelper?.playScroll(isForward = false)
+        speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
         Log.i(TAG, "scrollHorizontalBackward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
@@ -1109,8 +1111,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
 
         if (success) {
-            soundHelper?.playFocusMove()
-            speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = true)
@@ -1119,21 +1119,22 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     focusNavigator?.setFocusAndShowOnScreen(target)
                     announceNode(target, TextToSpeech.QUEUE_ADD)
                 }
-            }, 300)
+            }, 350)
             return true
         }
 
         // 物理2本指スワイプフォールバック (TalkBack完全互換)
-        soundHelper?.playFocusMove()
-        speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = false, horizontal = true)
         return true
     }
 
     fun scrollVerticalForward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 500) return true
+        if (now - lastScrollTime < 300) return true
         lastScrollTime = now
+
+        soundHelper?.playScroll(isForward = true)
+        speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
         val success = if (scrollNode != null) {
@@ -1150,8 +1151,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
 
         if (success) {
-            soundHelper?.playFocusMove()
-            speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
@@ -1160,21 +1159,22 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     focusNavigator?.setFocusAndShowOnScreen(target)
                     announceNode(target, TextToSpeech.QUEUE_ADD)
                 }
-            }, 250)
+            }, 300)
             return true
         }
 
         // 物理2本指縦スワイプフォールバック
-        soundHelper?.playFocusMove()
-        speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = true, horizontal = false)
         return true
     }
 
     fun scrollVerticalBackward(): Boolean {
         val now = System.currentTimeMillis()
-        if (now - lastScrollTime < 500) return true
+        if (now - lastScrollTime < 300) return true
         lastScrollTime = now
+
+        soundHelper?.playScroll(isForward = false)
+        speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
         val success = if (scrollNode != null) {
@@ -1191,8 +1191,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
 
         if (success) {
-            soundHelper?.playFocusMove()
-            speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
@@ -1201,13 +1199,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     focusNavigator?.setFocusAndShowOnScreen(target)
                     announceNode(target, TextToSpeech.QUEUE_ADD)
                 }
-            }, 250)
+            }, 300)
             return true
         }
 
         // 物理2本指縦スワイプフォールバック
-        soundHelper?.playFocusMove()
-        speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = false, horizontal = false)
         return true
     }
