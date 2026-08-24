@@ -3779,7 +3779,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         try {
             val targetLocale = detectLanguage(processedText)
-            tts?.language = targetLocale
+            if (tts?.language?.language != targetLocale.language) {
+                tts?.language = targetLocale
+            }
             AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
         } catch (_: Exception) {}
 

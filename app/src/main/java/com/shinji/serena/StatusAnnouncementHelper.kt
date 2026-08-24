@@ -114,11 +114,11 @@ class StatusAnnouncementHelper(private val context: Context) {
         val baseStatus = parts.joinToString("、")
 
         if (callback != null) {
+            callback(baseStatus)
+            // 位置情報は非同期で取得でき次第、追加通知（ブロック完全排除）
             locationHelper.getCurrentLocationAddress { locStr ->
                 if (locStr.isNotEmpty()) {
-                    callback("$baseStatus、${locStr}")
-                } else {
-                    callback(baseStatus)
+                    SerenaScreenReaderService.instance?.speak("現在地: $locStr", android.speech.tts.TextToSpeech.QUEUE_ADD)
                 }
             }
         }
