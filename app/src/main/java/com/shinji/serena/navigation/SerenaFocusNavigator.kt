@@ -285,6 +285,29 @@ class SerenaFocusNavigator(
         }
     }
 
+    private fun isHotseatNode(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+        var p: AccessibilityNodeInfo? = node
+        var depth = 0
+        while (p != null && depth < 6) {
+            val viewId = p.viewIdResourceName?.lowercase() ?: ""
+            val cls = p.className?.toString()?.lowercase() ?: ""
+            if (viewId.contains("hotseat") || cls.contains("hotseat") || viewId.contains("search_container_hotseat") || viewId.contains("qsb") || viewId.contains("dock")) {
+                return true
+            }
+            p = p.parent
+            depth++
+        }
+        return false
+    }
+
+    private fun isWorkspaceNode(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+        val pkg = node.packageName?.toString()?.lowercase() ?: ""
+        if (!pkg.contains("launcher")) return false
+        return !isHotseatNode(node)
+    }
+
     fun navigateLinearFocus(forward: Boolean) {
         val currentFocus = service.getAccessibilityFocusedNode()
         val nodes = collectAccessibleNodes()
@@ -309,17 +332,22 @@ class SerenaFocusNavigator(
             if (currentIndex < 0) nodes.size - 1 else currentIndex - 1
         }
 
-        if (forward && targetIndex >= nodes.size) {
+        // ホーム画面のページ境界判定: ワークスペースの末尾アイコン（YouTube等）から右フリックした際、ドック（電話）に行かずに次ページへ進む！
+        val isCurrentInWorkspace = currentFocus != null && isWorkspaceNode(currentFocus)
+        val isTargetInHotseat = targetIndex in nodes.indices && isHotseatNode(nodes[targetIndex])
+
+        if (forward && (targetIndex >= nodes.size || (isCurrentInWorkspace && isTargetInHotseat))) {
             val oldFocus = currentFocus
             service.scrollPageForward {
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
-                    // 次のページ/下スクロール後: 新しいページの「最初の項目」へ！
-                    val targetNode = newNodes.firstOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
+                    // 次のページ: 新しいページの最初のワークスペース項目（Dating等）へ！
+                    val targetNode = newNodes.firstOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
+                        ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) }
                         ?: newNodes[0]
                     lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
                     setFocusAndShowOnScreen(targetNode)
-                    service.announceNode(targetNode)
+                    service.announceNode(targetNode, android.speech.tts.TextToSpeech.QUEUE_ADD)
                 } else {
                     service.soundHelper?.playLastItemEdgeSound()
                 }
@@ -330,12 +358,13 @@ class SerenaFocusNavigator(
             service.scrollPageBackward {
                 val newNodes = collectAccessibleNodes()
                 if (newNodes.isNotEmpty()) {
-                    // 前のページ/上スクロール後: 前のページの「最後の項目」へ！
-                    val targetNode = newNodes.lastOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
+                    // 前のページ: 前のページの最後のワークスペース項目（YouTube等）へ！
+                    val targetNode = newNodes.lastOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
+                        ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) }
                         ?: newNodes[newNodes.size - 1]
                     lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
                     setFocusAndShowOnScreen(targetNode)
-                    service.announceNode(targetNode)
+                    service.announceNode(targetNode, android.speech.tts.TextToSpeech.QUEUE_ADD)
                 } else {
                     service.soundHelper?.playFirstItemEdgeSound()
                 }
