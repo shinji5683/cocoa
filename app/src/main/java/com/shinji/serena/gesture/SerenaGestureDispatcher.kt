@@ -209,27 +209,31 @@ class SerenaGestureDispatcher(
                 service.toggleSpeechMute()
                 return true
             }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT -> {
-                // 2本指右フリック: 前のページへ
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT, 28 -> {
+                // 2本指右フリック: 前のページへ（横スクロール）
+                Log.i(TAG, "GESTURE_2_FINGER_SWIPE_RIGHT (28) -> scrollHorizontalBackward")
                 service.scrollHorizontalBackward()
                 return true
             }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT -> {
-                // 2本指左フリック: 次のページへ
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT, 27 -> {
+                // 2本指左フリック: 次のページへ（横スクロール）
+                Log.i(TAG, "GESTURE_2_FINGER_SWIPE_LEFT (27) -> scrollHorizontalForward")
                 service.scrollHorizontalForward()
                 return true
             }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN -> {
-                // 2本指下フリック: 前へ縦スクロール
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN, 26 -> {
+                // 2本指下フリック: 前へ縦スクロール（上にスクロール / 通知シェード）
+                Log.i(TAG, "GESTURE_2_FINGER_SWIPE_DOWN (26) -> scrollVerticalBackward")
                 service.scrollVerticalBackward()
                 return true
             }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_UP -> {
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_UP, 25 -> {
                 if (service.isKeyguardLocked()) {
                     service.unlockKeyguardOrShowBouncer()
                     return true
                 }
-                // 2本指上フリック: 次へ縦スクロール
+                // 2本指上フリック: 次へ縦スクロール（下にスクロール / アプリ一覧）
+                Log.i(TAG, "GESTURE_2_FINGER_SWIPE_UP (25) -> scrollVerticalForward")
                 service.scrollVerticalForward()
                 return true
             }
