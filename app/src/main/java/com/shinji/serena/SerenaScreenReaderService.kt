@@ -1032,13 +1032,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            // forward=true (次のページへ進む): ページの最初の項目（一番左上）へ！
-            // forward=false (前のページへ戻る): ページの最後の項目（一番右下）へ！
-            return if (forward) {
-                candidates.minWithOrNull(comparator)
-            } else {
-                candidates.maxWithOrNull(comparator)
-            }
+            // 左右ページスクロール時: 遷移先ページの先頭項目（一番左上）を常に捕捉してフォーカス＆音声ガイド！
+            return candidates.minWithOrNull(comparator)
         } else {
             // 縦スクロール時:
             // forward=true (下へスクロール/次へ進む): 画面上部の最初の項目へ！
