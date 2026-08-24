@@ -2993,7 +2993,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
                 val now = System.currentTimeMillis()
-                if (now - lastScrollEventTime < 500) return
+                if (now - lastScrollEventTime < 400) return
                 lastScrollEventTime = now
 
                 // フォーカス移動直後（800ms以内）のスクロール調整はフォーカスアナウンスを妨げないよう読み上げを抑制
@@ -3017,14 +3017,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     val pageIndex = if (toIndex > fromIndex) "${fromIndex + 1}〜${toIndex + 1} / 全${itemCount}項目" else "${fromIndex + 1} / 全${itemCount}項目"
                     speak(pageIndex, TextToSpeech.QUEUE_ADD)
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && (event.scrollDeltaY != 0 || event.scrollDeltaX != 0)) {
-                    val dirText = when {
-                        event.scrollDeltaY > 0 -> "下へスクロール"
-                        event.scrollDeltaY < 0 -> "上へスクロール"
-                        event.scrollDeltaX > 0 -> "右へスクロール"
-                        else -> "左へスクロール"
+                    val dx = event.scrollDeltaX
+                    val dy = event.scrollDeltaY
+                    val dirText = if (Math.abs(dx) >= Math.abs(dy)) {
+                        // 横スクロール（ページめくり）
+                        if (dx > 0) "次のページへ移動しました" else "前のページへ移動しました"
+                    } else {
+                        // 縦スクロール
+                        if (dy > 0) "下へスクロールしました" else "上へスクロールしました"
                     }
                     speak(dirText, TextToSpeech.QUEUE_ADD)
                 }
+
+                // スクロール後に画面内の最初の要素に自動フォーカス＆音声ガイド！
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    val nodes = collectAccessibleNodes()
+                    val target = findBestVisibleNodeAfterScroll(nodes, forward = true, horizontal = true)
+                    if (target != null && target != getAccessibilityFocusedNode()) {
+                        focusNavigator?.lastFocusedNodeIndex = focusNavigator?.findCurrentNodeIndex(nodes, target) ?: 0
+                        focusNavigator?.setFocusAndShowOnScreen(target)
+                        announceNode(target, TextToSpeech.QUEUE_ADD)
+                    }
+                }, 300)
             }
 
             AccessibilityEvent.TYPE_ANNOUNCEMENT -> {
