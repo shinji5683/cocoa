@@ -348,36 +348,58 @@ class SerenaFocusNavigator(
         val isTargetInHotseat = targetIndex in nodes.indices && isHotseatNode(nodes[targetIndex])
 
         if (forward && (targetIndex >= nodes.size || (isCurrentInWorkspace && isTargetInHotseat))) {
+            val horiz = findHorizontalScrollableNode(forward = true)
+            val vert = findScrollableNode(forward = true)
+            if (horiz == null && vert == null) {
+                // スクロール可能な要素が存在しない（画面末尾）: 端音を鳴らして最後の要素にとどまる！
+                service.soundHelper?.playLastItemEdgeSound()
+                return
+            }
+
             val oldFocus = currentFocus
-            service.scrollPageForward {
-                val newNodes = collectAccessibleNodes()
-                if (newNodes.isNotEmpty()) {
-                    // 次のページ: 新しいページの最初のワークスペース項目（Dating等）へ！
-                    val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = true)
-                        ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
-                        ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) }
-                        ?: newNodes[0]
-                    lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
-                    setFocusAndShowOnScreen(targetNode)
-                    service.announceNode(targetNode, android.speech.tts.TextToSpeech.QUEUE_ADD)
+            service.scrollPageForward { success ->
+                if (success) {
+                    val newNodes = collectAccessibleNodes()
+                    if (newNodes.isNotEmpty()) {
+                        // 次のページ: 新しいページの最初のワークスペース項目または新規要素へ！
+                        val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = true)
+                            ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
+                            ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) }
+                            ?: newNodes.firstOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
+                            ?: return@scrollPageForward
+                        lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
+                        setFocusAndShowOnScreen(targetNode)
+                        service.announceNode(targetNode, android.speech.tts.TextToSpeech.QUEUE_ADD)
+                    }
                 } else {
                     service.soundHelper?.playLastItemEdgeSound()
                 }
             }
             return
         } else if (!forward && targetIndex < 0) {
+            val horiz = findHorizontalScrollableNode(forward = false)
+            val vert = findScrollableNode(forward = false)
+            if (horiz == null && vert == null) {
+                // スクロール可能な要素が存在しない（画面先頭）: 端音を鳴らして先頭要素にとどまる！
+                service.soundHelper?.playFirstItemEdgeSound()
+                return
+            }
+
             val oldFocus = currentFocus
-            service.scrollPageBackward {
-                val newNodes = collectAccessibleNodes()
-                if (newNodes.isNotEmpty()) {
-                    // 前のページ: 前のページの最後のワークスペース項目（YouTube等）へ！
-                    val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = true)
-                        ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
-                        ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) }
-                        ?: newNodes[newNodes.size - 1]
-                    lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
-                    setFocusAndShowOnScreen(targetNode)
-                    service.announceNode(targetNode, android.speech.tts.TextToSpeech.QUEUE_ADD)
+            service.scrollPageBackward { success ->
+                if (success) {
+                    val newNodes = collectAccessibleNodes()
+                    if (newNodes.isNotEmpty()) {
+                        // 前のページ: 前のページの最後のワークスペース項目または新規要素へ！
+                        val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = true)
+                            ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
+                            ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) }
+                            ?: newNodes.lastOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
+                            ?: return@scrollPageBackward
+                        lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
+                        setFocusAndShowOnScreen(targetNode)
+                        service.announceNode(targetNode, android.speech.tts.TextToSpeech.QUEUE_ADD)
+                    }
                 } else {
                     service.soundHelper?.playFirstItemEdgeSound()
                 }

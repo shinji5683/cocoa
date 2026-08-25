@@ -591,46 +591,46 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         speak("直前の読み上げをクリップボードにコピーしました", TextToSpeech.QUEUE_FLUSH)
     }
 
-    fun scrollPageForward(onComplete: (() -> Unit)? = null) {
-        soundHelper?.playScroll(isForward = true)
-        speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
-
+    fun scrollPageForward(onComplete: ((Boolean) -> Unit)? = null) {
         val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
         if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = true) == true) {
-            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 350) }
+            soundHelper?.playScroll(isForward = true)
+            speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ it(true) }, 350) }
             return
         }
 
         val verticalNode = focusNavigator?.findScrollableNode(forward = true)
         if (verticalNode != null && focusNavigator?.performScroll(verticalNode, forward = true) == true) {
-            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 300) }
+            soundHelper?.playScroll(isForward = true)
+            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ it(true) }, 300) }
             return
         }
 
-        // 物理2本指スワイプフォールバック
-        performPhysical2FingerScroll(forward = true, horizontal = true)
-        onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 400) }
+        // スクロール可能な要素が存在しない・スクロール上限に達した場合は端音を鳴らして停止
+        soundHelper?.playLastItemEdgeSound()
+        onComplete?.let { it(false) }
     }
 
-    fun scrollPageBackward(onComplete: (() -> Unit)? = null) {
-        soundHelper?.playScroll(isForward = false)
-        speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
-
+    fun scrollPageBackward(onComplete: ((Boolean) -> Unit)? = null) {
         val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
         if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = false) == true) {
-            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 350) }
+            soundHelper?.playScroll(isForward = false)
+            speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ it(true) }, 350) }
             return
         }
 
         val verticalNode = focusNavigator?.findScrollableNode(forward = false)
         if (verticalNode != null && focusNavigator?.performScroll(verticalNode, forward = false) == true) {
-            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 300) }
+            soundHelper?.playScroll(isForward = false)
+            onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ it(true) }, 300) }
             return
         }
 
-        // 物理2本指スワイプフォールバック
-        performPhysical2FingerScroll(forward = false, horizontal = true)
-        onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(it, 400) }
+        // スクロール可能な要素が存在しない・スクロール下限に達した場合は端音を鳴らして停止
+        soundHelper?.playFirstItemEdgeSound()
+        onComplete?.let { it(false) }
     }
 
     private fun performSwipeGesture(swipeUp: Boolean, onComplete: (() -> Unit)? = null) {
@@ -2995,13 +2995,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
                 soundHelper?.playClick()
-                val node = event.source
-                if (node != null && isTtsReady) {
-                    val text = getNodeText(node)
-                    if (text.isNotEmpty()) {
-                        speak("$text をタップ", TextToSpeech.QUEUE_FLUSH)
-                    }
-                }
             }
 
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
