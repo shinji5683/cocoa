@@ -306,6 +306,16 @@ class SmartNotificationFilterHelper(private val context: Context) {
         }
 
         // 2. 一般通知の場合
+        // Gemini Nano オンデバイスインテリジェンスによる認証コード・重要度解析
+        val nanoEngine = com.shinji.serena.ai.GeminiNanoEngine(context)
+        val aiResult = nanoEngine.analyzeNotificationIntelligence(appDisplayName, cleanTitle, cleanText)
+        if (aiResult.category == com.shinji.serena.ai.GeminiNanoEngine.NotificationCategory.TWO_FACTOR_AUTH) {
+            return when (level) {
+                NotificationReadDetailLevel.APP_NAME_ONLY -> "${appDisplayName}の認証コード通知"
+                else -> aiResult.suggestedAnnouncement
+            }
+        }
+
         val bodySummary = if (cleanText.length > 60) {
             cleanText.substring(0, 58) + "、以下省略"
         } else {

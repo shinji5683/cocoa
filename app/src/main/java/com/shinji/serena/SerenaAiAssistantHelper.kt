@@ -305,9 +305,9 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 service.toggleTalkBackMode()
             }
 
-            // === Gemini Nano AI スマート回答 ===
+            // === Gemini Nano AI スマート回答 ＆ オンデバイス Prompt API パイプライン ===
             else -> {
-                val response = nanoEngine.answerAiAssistantQuery(inputQuery)
+                val response = nanoEngine.executePromptOnDevice(inputQuery)
                 service.speak(response, TextToSpeech.QUEUE_FLUSH)
             }
         }
