@@ -68,12 +68,17 @@ Copy-Item -Path "app\build\outputs\bundle\release\app-release.aab" -Destination 
 Write-Host "Serena Screen Reader 16KB Aligned APK and Play Store AAB export completed successfully."
 
 Write-Host "Attempting auto-install and auto-activation on connected ADB devices..."
+# Wi-Fi ADB デバイスへの自動再接続試行
+adb connect 192.168.0.3:43057 | Out-Null
+Start-Sleep -Milliseconds 500
+
 $deviceLines = adb devices | Select-String "\tdevice$"
 if ($deviceLines) {
     foreach ($line in $deviceLines) {
         $devId = $line.ToString().Split("`t")[0].Trim()
         Write-Host "Deploying 16KB Aligned APK to device: $devId..."
-        adb -s $devId install -r "app\build\outputs\apk\debug\app-debug.apk"
+        adb -s $devId install -r -d "app\build\outputs\apk\debug\app-debug.apk"
+        Write-Host "Auto-enabling Serena Accessibility Service on $devId..."
         adb -s $devId shell settings put secure enabled_accessibility_services com.shinji.serena/.SerenaScreenReaderService
         adb -s $devId shell settings put secure accessibility_enabled 1
         adb -s $devId shell am start -n com.shinji.serena/.MainActivity
