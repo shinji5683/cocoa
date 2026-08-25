@@ -44,24 +44,32 @@ class SerenaFocusNavigator(
             return if (root != null) listOf(root) else emptyList()
         }
 
-        // 2. 通常時: アクティブウィンドウ（設定アプリ、ホーム画面等）を最優先！
-        val activeRoot = service.rootInActiveWindow
-        val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
-        val isSystemUiActive = activePkg.contains("systemui")
-
-        if (activeRoot != null) {
-            list.add(activeRoot)
-        }
-
+        // 2. 通常時: service.windows から最前面のフォーカスウィンドウを優先取得！
         try {
             val wins = service.windows
             if (!wins.isNullOrEmpty()) {
-                // 通知シェード展開中以外は TYPE_SYSTEM（ステータスバー・ナビバー）を完全隔離し、アプリ内フォーカスを保護！
+                val activeRoot = service.rootInActiveWindow
+                val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
+                val isSystemUiActive = activePkg.contains("systemui")
+
+                // ダイアログ・モーダルウィンドウ（最前面のフォーカス中/アクティブなAPPLICATIONウィンドウ）を特定
+                val appWins = wins.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
+                val focusedAppWin = appWins.firstOrNull { it.isFocused }
+                    ?: appWins.firstOrNull { it.isActive }
+                    ?: appWins.maxByOrNull { it.layer }
+
                 val targetWins = wins.filter { w ->
                     when (w.type) {
-                        AccessibilityWindowInfo.TYPE_APPLICATION,
-                        AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,
+                        AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY -> true
                         AccessibilityWindowInfo.TYPE_INPUT_METHOD -> true
+                        AccessibilityWindowInfo.TYPE_APPLICATION -> {
+                            // モーダルダイアログ等で複数のAPPLICATIONウィンドウが存在する場合、最前面のフォーカス中ウィンドウのみを対象にする！
+                            if (appWins.size > 1 && focusedAppWin != null) {
+                                w.id == focusedAppWin.id
+                            } else {
+                                true
+                            }
+                        }
                         AccessibilityWindowInfo.TYPE_SYSTEM -> isSystemUiActive
                         else -> false
                     }
@@ -76,8 +84,11 @@ class SerenaFocusNavigator(
             }
         } catch (_: Exception) {}
 
-        if (list.isEmpty() && activeRoot != null) {
-            list.add(activeRoot)
+        if (list.isEmpty()) {
+            val activeRoot = service.rootInActiveWindow
+            if (activeRoot != null) {
+                list.add(activeRoot)
+            }
         }
 
         return list

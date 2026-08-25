@@ -2926,7 +2926,19 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
-                if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
+                val isDialog = className.contains("Dialog", ignoreCase = true) || className.contains("AlertDialog", ignoreCase = true)
+                if (isDialog) {
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        val nodes = collectAccessibleNodes()
+                        if (nodes.isNotEmpty()) {
+                            val first = nodes[0]
+                            focusNavigator?.setFocusAndShowOnScreen(first)
+                            if (isTtsReady) {
+                                announceNode(first, TextToSpeech.QUEUE_FLUSH)
+                            }
+                        }
+                    }, 250)
+                } else if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
                     // SystemUI / ロック画面 / Bouncer のウィンドウ検知時は、未フォーカス時のみPIN入力欄を捕捉
                     autoFocusPinKeypadIfPresent(force = false)
                 } else if (windowTitle.isNotEmpty() && !isCallActive) {
