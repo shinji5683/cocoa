@@ -63,27 +63,32 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        try {
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            setContentView(binding.root)
 
-        prefs = getSafeSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
+            prefs = getSafeSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
 
-        initLocalTts()
-        setupStatusSection()
-        setupSecuritySection()
-        setupPermissionsSection()
-        setupTtsControls()
-        setupHourlyChimeSection()
-        setupCallAssistantSection()
-        setupShakeSensitivitySection()
-        setupDeveloperCallSection()
-        setupTestBench()
-        setupTelemetrySection()
-        setupTranslationSection()
+            initLocalTts()
+            setupStatusSection()
+            setupSecuritySection()
+            setupPermissionsSection()
+            setupTtsControls()
+            setupHourlyChimeSection()
+            setupCallAssistantSection()
+            setupShakeSensitivitySection()
+            setupDeveloperCallSection()
+            setupTestBench()
+            setupTelemetrySection()
+            setupTranslationSection()
 
-        checkPermissionsOnStart()
-        checkTelemetryConsentOnStart()
-        handleGemmaDownloadIntent(intent)
+            checkPreviousCrashOnStart()
+            checkPermissionsOnStart()
+            checkTelemetryConsentOnStart()
+            handleGemmaDownloadIntent(intent)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error in onCreate: ${e.message}", e)
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -168,6 +173,42 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun checkPreviousCrashOnStart() {
+        try {
+            val crashReport = SerenaApp.getLastCrashReport(this)
+            if (crashReport != null) {
+                AlertDialog.Builder(this)
+                    .setTitle("⚠️ 前回の異常終了（クラッシュ）診断ログ")
+                    .setMessage(
+                        "前回の起動時またはサービス実行中に発生したエラーを記録しました。\n" +
+                        "『ログをコピー』を押して開発者Shinjiに共有することで、迅速に原因を特定・修正できます。\n\n" +
+                        crashReport.take(400) + (if (crashReport.length > 400) "\n...(以下省略)" else "")
+                    )
+                    .setPositiveButton("📋 診断ログをコピー") { _, _ ->
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        val clip = android.content.ClipData.newPlainText("Serena Crash Report", crashReport)
+                        clipboard.setPrimaryClip(clip)
+                        Toast.makeText(this, "クラッシュログをクリップボードにコピーしました！", Toast.LENGTH_LONG).show()
+                    }
+                    .setNeutralButton("📧 メール送信") { _, _ ->
+                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("mailto:")
+                            putExtra(Intent.EXTRA_EMAIL, arrayOf(BuildConfig.DEVELOPER_EMAIL))
+                            putExtra(Intent.EXTRA_SUBJECT, "【Serena クラッシュ診断ログ】")
+                            putExtra(Intent.EXTRA_TEXT, crashReport)
+                        }
+                        try {
+                            startActivity(Intent.createChooser(intent, "エラーログ送信"))
+                        } catch (_: Exception) {}
+                    }
+                    .setNegativeButton("閉じる", null)
+                    .show()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error checking crash report: ${e.message}")
+        }
+    }
+
     private fun checkSecurityStatus() {
         val securityHelper = DeviceSecurityHelper(this)
         val result = securityHelper.checkDeviceSecurity()
@@ -177,13 +218,13 @@ class MainActivity : AppCompatActivity() {
 
         when (result.status) {
             DeviceSecurityHelper.SecurityStatus.SECURE_OFFICIAL -> {
-                binding.tvSecurityStatus.setTextColor(getColor(R.color.status_green))
+                binding.tvSecurityStatus.setTextColor(ContextCompat.getColor(this, R.color.status_green))
             }
             DeviceSecurityHelper.SecurityStatus.UPDATE_RECOMMENDED -> {
-                binding.tvSecurityStatus.setTextColor(getColor(R.color.serena_secondary))
+                binding.tvSecurityStatus.setTextColor(ContextCompat.getColor(this, R.color.serena_secondary))
             }
             DeviceSecurityHelper.SecurityStatus.MODIFIED_ENVIRONMENT -> {
-                binding.tvSecurityStatus.setTextColor(getColor(R.color.status_red))
+                binding.tvSecurityStatus.setTextColor(ContextCompat.getColor(this, R.color.status_red))
             }
         }
     }
@@ -239,10 +280,10 @@ class MainActivity : AppCompatActivity() {
         val isEnabled = isAccessibilityServiceEnabled(this, SerenaScreenReaderService::class.java)
         if (isEnabled) {
             binding.tvStatus.text = getString(R.string.status_enabled)
-            binding.tvStatus.setTextColor(getColor(R.color.status_green))
+            binding.tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_green))
         } else {
             binding.tvStatus.text = getString(R.string.status_disabled)
-            binding.tvStatus.setTextColor(getColor(R.color.status_red))
+            binding.tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_red))
         }
 
         // Overlay status check
@@ -254,10 +295,10 @@ class MainActivity : AppCompatActivity() {
 
         if (canDrawOverlays) {
             binding.tvOverlayStatus.text = getString(R.string.status_perm_granted)
-            binding.tvOverlayStatus.setTextColor(getColor(R.color.status_green))
+            binding.tvOverlayStatus.setTextColor(ContextCompat.getColor(this, R.color.status_green))
         } else {
             binding.tvOverlayStatus.text = getString(R.string.status_perm_denied)
-            binding.tvOverlayStatus.setTextColor(getColor(R.color.status_red))
+            binding.tvOverlayStatus.setTextColor(ContextCompat.getColor(this, R.color.status_red))
         }
 
         // Notification permission status check
@@ -269,13 +310,11 @@ class MainActivity : AppCompatActivity() {
 
         if (notificationGranted) {
             binding.tvNotificationStatus.text = getString(R.string.status_perm_granted)
-            binding.tvNotificationStatus.setTextColor(getColor(R.color.status_green))
+            binding.tvNotificationStatus.setTextColor(ContextCompat.getColor(this, R.color.status_green))
         } else {
             binding.tvNotificationStatus.text = getString(R.string.status_perm_denied)
-            binding.tvNotificationStatus.setTextColor(getColor(R.color.status_red))
+            binding.tvNotificationStatus.setTextColor(ContextCompat.getColor(this, R.color.status_red))
         }
-
-        requestAllPermissionsAtOnce()
     }
 
     private fun requestAllPermissionsAtOnce() {
@@ -332,8 +371,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupTtsControls() {
-        val currentRate = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, 1.0f)
-        val currentPitch = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, 1.0f)
+        val currentRate = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, 1.0f).coerceIn(0.5f, 2.0f)
+        val currentPitch = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, 1.0f).coerceIn(0.5f, 2.0f)
 
         binding.sliderSpeed.value = currentRate
         binding.sliderPitch.value = currentPitch

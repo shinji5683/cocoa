@@ -65,6 +65,7 @@
         android:label="@string/accessibility_service_name" />
 
     <application
+        android:name=".SerenaApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
