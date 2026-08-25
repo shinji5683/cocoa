@@ -107,12 +107,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var isLocalTtsReady = false
+
     private fun initLocalTts() {
-        localTts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                localTts?.setLanguage(Locale.JAPANESE)
+        try {
+            localTts?.shutdown()
+            isLocalTtsReady = false
+            localTts = TextToSpeech(applicationContext) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    val langRes = localTts?.setLanguage(Locale.JAPANESE)
+                    if (langRes == TextToSpeech.LANG_MISSING_DATA || langRes == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        localTts?.language = Locale.getDefault()
+                    }
+                    val rate = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, 1.0f).coerceIn(0.5f, 2.0f)
+                    val pitch = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, 1.0f).coerceIn(0.5f, 2.0f)
+                    localTts?.setSpeechRate(rate)
+                    localTts?.setPitch(pitch)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        val audioAttributes = android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                        localTts?.setAudioAttributes(audioAttributes)
+                    }
+                    isLocalTtsReady = true
+                }
             }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "initLocalTts error: ${e.message}")
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            localTts?.stop()
+            localTts?.shutdown()
+            localTts = null
+            isLocalTtsReady = false
+        } catch (_: Exception) {}
     }
 
     override fun onResume() {
@@ -686,7 +719,7 @@ class MainActivity : AppCompatActivity() {
 
         btnPlayTts.setOnClickListener {
             if (isWelcomeTtsPlaying) {
-                localTts?.stop()
+                try { localTts?.stop() } catch (_: Exception) {}
                 if (SerenaScreenReaderService.isServiceRunning()) {
                     SerenaScreenReaderService.instance?.speak("音声ガイドを停止しました", TextToSpeech.QUEUE_FLUSH)
                 }
@@ -694,14 +727,53 @@ class MainActivity : AppCompatActivity() {
                 btnPlayTts.setBackgroundColor(ContextCompat.getColor(this, R.color.serena_accent))
                 isWelcomeTtsPlaying = false
             } else {
-                if (SerenaScreenReaderService.isServiceRunning()) {
-                    SerenaScreenReaderService.instance?.speak(welcomeGuideText, TextToSpeech.QUEUE_FLUSH)
-                } else {
-                    localTts?.speak(welcomeGuideText, TextToSpeech.QUEUE_FLUSH, null, "welcome_guide")
-                }
+                isWelcomeTtsPlaying = true
                 btnPlayTts.text = "⏹️ 音声ガイドを停止"
                 btnPlayTts.setBackgroundColor(ContextCompat.getColor(this, R.color.status_red))
-                isWelcomeTtsPlaying = true
+
+                val rate = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, 1.0f).coerceIn(0.5f, 2.0f)
+                val pitch = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, 1.0f).coerceIn(0.5f, 2.0f)
+
+                localTts?.setSpeechRate(rate)
+                localTts?.setPitch(pitch)
+
+                localTts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {}
+                    override fun onDone(utteranceId: String?) {
+                        runOnUiThread {
+                            btnPlayTts.text = "🔊 音声ガイドを聞く (TTS読み上げ)"
+                            btnPlayTts.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.serena_accent))
+                            isWelcomeTtsPlaying = false
+                        }
+                    }
+                    override fun onError(utteranceId: String?) {
+                        runOnUiThread {
+                            btnPlayTts.text = "🔊 音声ガイドを聞く (TTS読み上げ)"
+                            btnPlayTts.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.serena_accent))
+                            isWelcomeTtsPlaying = false
+                        }
+                    }
+                })
+
+                val params = Bundle().apply {
+                    putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+                }
+
+                if (SerenaScreenReaderService.isServiceRunning() && SerenaScreenReaderService.instance != null) {
+                    SerenaScreenReaderService.instance?.speak(welcomeGuideText, TextToSpeech.QUEUE_FLUSH)
+                } else if (isLocalTtsReady && localTts != null) {
+                    localTts?.speak(welcomeGuideText, TextToSpeech.QUEUE_FLUSH, params, "welcome_guide_utterance")
+                } else {
+                    localTts = TextToSpeech(applicationContext) { status ->
+                        if (status == TextToSpeech.SUCCESS) {
+                            localTts?.language = Locale.JAPANESE
+                            localTts?.setSpeechRate(rate)
+                            localTts?.setPitch(pitch)
+                            isLocalTtsReady = true
+                            localTts?.speak(welcomeGuideText, TextToSpeech.QUEUE_FLUSH, params, "welcome_guide_utterance")
+                        }
+                    }
+                }
             }
         }
 
@@ -811,12 +883,6 @@ class MainActivity : AppCompatActivity() {
             helper.mode = newMode
             Toast.makeText(this, "リアルタイム翻訳: ${newMode.displayName}", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        localTts?.shutdown()
-        localTts = null
     }
 }
 

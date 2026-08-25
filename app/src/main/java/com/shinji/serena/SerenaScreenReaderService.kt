@@ -326,6 +326,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        instance = this
         val info = serviceInfo ?: AccessibilityServiceInfo()
         info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK
