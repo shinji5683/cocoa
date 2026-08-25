@@ -124,6 +124,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnOpenAccessibility.setOnClickListener {
             showAccessibilityDisclosureDialog()
         }
+        binding.btnOpenWelcomeGuide.setOnClickListener {
+            showWelcomeDialog(isUserTriggered = true)
+        }
     }
 
     private fun showAccessibilityDisclosureDialog() {
@@ -133,7 +136,7 @@ class MainActivity : AppCompatActivity() {
                 "Serena スクリーンリーダーは、視覚障害者および操作補助を必要とする方のために以下の機能を提供します：\n\n" +
                 "・画面上の文字やボタンのリアルタイム音声読み上げ\n" +
                 "・電話やLINE等の着信相手・通話時間アナウンス\n" +
-                "・クロックポジション徒歩ナビゲーションとカメラ情景認識\n\n" +
+                "・高精度徒歩ナビゲーション（正面・右斜め前等の直感案内）とカメラ情景認識\n\n" +
                 "【プライバシー保護方針】\n" +
                 "画面の内容や入力データはすべて端末内（オンデバイス）でのみ処理され、外部サーバーへ送信・収集・共有されることは一切ありません。\n\n" +
                 "サービスを有効にするには、次の画面で「Serena」を選択してオンにしてください。"
@@ -642,7 +645,87 @@ class MainActivity : AppCompatActivity() {
         val hasConsented = prefs.getBoolean(KEY_AI_ETHICS_CONSENT, false)
         if (!hasConsented) {
             showAiEthicsConsentDialog()
+        } else {
+            checkWelcomeGuideOnStart()
         }
+    }
+
+    private fun checkWelcomeGuideOnStart() {
+        val hideWelcome = prefs.getBoolean(KEY_HIDE_WELCOME_DIALOG, false)
+        if (!hideWelcome) {
+            showWelcomeDialog(isUserTriggered = false)
+        }
+    }
+
+    private var isWelcomeTtsPlaying = false
+
+    private fun showWelcomeDialog(isUserTriggered: Boolean = false) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_welcome_serena, null)
+        val cbDontShowAgain = dialogView.findViewById<android.widget.CheckBox>(R.id.cbDontShowAgain)
+        val btnPlayTts = dialogView.findViewById<android.widget.Button>(R.id.btnPlayWelcomeTts)
+        val btnDismiss = dialogView.findViewById<android.widget.Button>(R.id.btnDismissWelcome)
+
+        cbDontShowAgain.isChecked = prefs.getBoolean(KEY_HIDE_WELCOME_DIALOG, false)
+
+        val welcomeGuideText = "Serena スクリーンリーダーへようこそ！全盲の開発者 Shinji が創り上げた、世界でいちばん優しく賢い次世代スクリーンリーダーです。" +
+                "主な特徴をご紹介します。" +
+                "1、直感的なタッチ探索とTalkBackモードの切替。" +
+                "2、着信相手や通話時間を自動で知らせるスマート通話アシスタント。" +
+                "3、毎時0分の時報チャイムと、端末を振るだけで状態がわかるシェイク通知。" +
+                "4、正面や右斜め前など直感的な表現で案内する高精度歩行ナビ。" +
+                "5、画面の外国語を自動で日本語に訳すリアルタイム翻訳と、タガログ語への対応。" +
+                "6、オンデバイスAIによる情景認識と、同音異義語も迷わない漢字の詳細な組み合わせ説明。" +
+                "Serena と一緒に、もっと自由で快適なスマートフォン体験をお楽しみください！"
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+
+        isWelcomeTtsPlaying = false
+
+        btnPlayTts.setOnClickListener {
+            if (isWelcomeTtsPlaying) {
+                localTts?.stop()
+                if (SerenaScreenReaderService.isServiceRunning()) {
+                    SerenaScreenReaderService.instance?.speak("音声ガイドを停止しました", TextToSpeech.QUEUE_FLUSH)
+                }
+                btnPlayTts.text = "🔊 音声ガイドを聞く (TTS読み上げ)"
+                btnPlayTts.setBackgroundColor(ContextCompat.getColor(this, R.color.serena_accent))
+                isWelcomeTtsPlaying = false
+            } else {
+                if (SerenaScreenReaderService.isServiceRunning()) {
+                    SerenaScreenReaderService.instance?.speak(welcomeGuideText, TextToSpeech.QUEUE_FLUSH)
+                } else {
+                    localTts?.speak(welcomeGuideText, TextToSpeech.QUEUE_FLUSH, null, "welcome_guide")
+                }
+                btnPlayTts.text = "⏹️ 音声ガイドを停止"
+                btnPlayTts.setBackgroundColor(ContextCompat.getColor(this, R.color.status_red))
+                isWelcomeTtsPlaying = true
+            }
+        }
+
+        cbDontShowAgain.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(KEY_HIDE_WELCOME_DIALOG, isChecked).apply()
+        }
+
+        btnDismiss.setOnClickListener {
+            if (isWelcomeTtsPlaying) {
+                localTts?.stop()
+                isWelcomeTtsPlaying = false
+            }
+            prefs.edit().putBoolean(KEY_HIDE_WELCOME_DIALOG, cbDontShowAgain.isChecked).apply()
+            dialog.dismiss()
+        }
+
+        dialog.setOnDismissListener {
+            if (isWelcomeTtsPlaying) {
+                localTts?.stop()
+                isWelcomeTtsPlaying = false
+            }
+        }
+
+        dialog.show()
     }
 
     private fun showAiEthicsConsentDialog() {
@@ -663,6 +746,7 @@ class MainActivity : AppCompatActivity() {
                 prefs.edit().putBoolean(KEY_AI_ETHICS_CONSENT, true).apply()
                 Toast.makeText(this, "AI倫理ガイドライン及び免責事項に同意しました", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
+                checkWelcomeGuideOnStart()
             }
             .setNeutralButton("Google AI倫理原則を確認") { _, _ ->
                 try {
@@ -676,6 +760,7 @@ class MainActivity : AppCompatActivity() {
                 prefs.edit().putBoolean(KEY_AI_ETHICS_CONSENT, false).apply()
                 Toast.makeText(this, "AI支援機能の精度と安全確認に十分ご注意ください", Toast.LENGTH_LONG).show()
                 dialog.dismiss()
+                checkWelcomeGuideOnStart()
             }
             .setCancelable(false)
             .show()
@@ -683,6 +768,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val KEY_AI_ETHICS_CONSENT = "key_ai_ethics_consent_agreed"
+        const val KEY_HIDE_WELCOME_DIALOG = "key_hide_welcome_dialog"
     }
 
     private fun showTelemetryConsentDialog() {

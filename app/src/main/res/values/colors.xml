@@ -11,5 +11,6 @@
     
     <color name="status_green">#2E7D32</color>
     <color name="status_red">#C62828</color>
+    <color name="serena_border">#E0D6CF</color>
     <color name="ic_launcher_background">#5C3A21</color>
 </resources>

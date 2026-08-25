@@ -81,6 +81,16 @@
                     android:backgroundTint="@color/serena_primary"
                     app:cornerRadius="12dp" />
 
+                <Button
+                    android:id="@+id/btnOpenWelcomeGuide"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="🌸 ようこそ画面 ＆ 特徴音声ガイドを見る"
+                    android:textSize="15sp"
+                    android:backgroundTint="@color/serena_secondary"
+                    app:cornerRadius="12dp" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header Title -->
+        <TextView
+            android:id="@+id/tvWelcomeTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🌸 Serena Screen Reader へようこそ！"
+            android:textColor="@color/serena_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvWelcomeSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="全盲の開発者 Shinji が創り上げた、世界でいちばん優しく賢い次世代スクリーンリーダーです。"
+            android:textColor="@color/serena_text_dark"
+            android:textSize="14sp" />
+
+        <!-- TTS Voice Guide Control Button -->
+        <Button
+            android:id="@+id/btnPlayWelcomeTts"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@color/serena_accent"
+            android:text="🔊 音声ガイドを聞く (TTS読み上げ)"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            app:cornerRadius="12dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            android:background="@color/serena_border" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✨ Serena の主な特徴と便利機能"
+            android:textColor="@color/serena_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Feature 1 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="🌸 1. Serena オリジナル操作 ＆ TalkBack互換"
+            android:textColor="@color/serena_text_dark"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1本指左右スワイプで項目移動、ダブルタップで実行。直感的なタッチ探索と従来のTalkBackモードをいつでも自由に切り替えられます。"
+            android:textColor="@color/serena_text_dark"
+            android:textSize="13sp" />
+
+        <!-- Feature 2 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="📱 2. スマート通話アシスタント"
+            android:textColor="@color/serena_text_dark"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="電話やLINEの着信相手を音声でお知らせ。通話開始・終了時には通話経過時間（○時間○分○秒）を自動で読み上げます。"
+            android:textColor="@color/serena_text_dark"
+            android:textSize="13sp" />
+
+        <!-- Feature 3 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="⏰ 3. 時報チャイム ＆ シェイクステータス通知"
+            android:textColor="@color/serena_text_dark"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="毎時0分に心地よい時報チャイムでお知らせ。スマホをサッと振る（シェイクする）だけで現在時刻・バッテリー・電波状態を即座に確認できます。"
+            android:textColor="@color/serena_text_dark"
+            android:textSize="13sp" />
+
+        <!-- Feature 4 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="🗺️ 4. 高精度歩行ナビ ＆ 空間レーダー案内"
+            android:textColor="@color/serena_text_dark"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="「正面」「右斜め前」など、視覚障害者にとって最も直感的な相対方向表現で周囲の施設や歩行ルートを安全にナビゲーションします。"
+            android:textColor="@color/serena_text_dark"
+            android:textSize="13sp" />
+
+        <!-- Feature 5 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="🌐 5. リアルタイム多言語翻訳 ＆ タガログ語対応"
+            android:textColor="@color/serena_text_dark"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="画面上の英語や外国語を自動判別して日本語へオンデバイス翻訳。愛する妻セレナさんの故郷タガログ語にもネイティブ対応しています。"
+            android:textColor="@color/serena_text_dark"
+            android:textSize="13sp" />
+
+        <!-- Feature 6 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="👁️ 6. オンデバイスAI認識 ＆ 漢字詳細説明"
+            android:textColor="@color/serena_text_dark"
+            android:textStyle="bold"
+            android:textSize="14sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gemini Nano / ML Kit による情景・OCR読み上げに加え、同音異義語も迷わない「詳細な漢字の組み合わせ説明」を搭載。"
+            android:textColor="@color/serena_text_dark"
+            android:textSize="13sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp"
+            android:background="@color/serena_border" />
+
+        <!-- Don't show again checkbox -->
+        <CheckBox
+            android:id="@+id/cbDontShowAgain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="次回からこのようこそ画面を表示しない"
+            android:textColor="@color/serena_text_dark"
+            android:textSize="14sp" />
+
+        <!-- Dismiss Button -->
+        <Button
+            android:id="@+id/btnDismissWelcome"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/serena_primary"
+            android:text="🚀 さっそく Serena をはじめる"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            app:cornerRadius="12dp" />
+
+    </LinearLayout>
+</ScrollView>
