@@ -356,17 +356,18 @@ class SerenaFocusNavigator(
                 return
             }
 
+            val isHorizontal = horiz != null && (isCurrentInWorkspace || vert == null)
             val oldFocus = currentFocus
             service.scrollPageForward { success ->
                 if (success) {
                     val newNodes = collectAccessibleNodes()
                     if (newNodes.isNotEmpty()) {
                         // 次のページ: 新しいページの最初のワークスペース項目または新規要素へ！
-                        val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = true)
+                        val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = isHorizontal)
                             ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
                             ?: newNodes.firstOrNull { n -> isWorkspaceNode(n) }
                             ?: newNodes.firstOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
-                            ?: return@scrollPageForward
+                            ?: newNodes[0]
                         lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
                         setFocusAndShowOnScreen(targetNode)
                         service.announceNode(targetNode, android.speech.tts.TextToSpeech.QUEUE_ADD)
@@ -385,17 +386,18 @@ class SerenaFocusNavigator(
                 return
             }
 
+            val isHorizontal = horiz != null && (isCurrentInWorkspace || vert == null)
             val oldFocus = currentFocus
             service.scrollPageBackward { success ->
                 if (success) {
                     val newNodes = collectAccessibleNodes()
                     if (newNodes.isNotEmpty()) {
                         // 前のページ: 前のページの最後のワークスペース項目または新規要素へ！
-                        val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = true)
+                        val targetNode = service.findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = isHorizontal)
                             ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) && (oldFocus == null || !evaluator.isSameNode(n, oldFocus)) }
                             ?: newNodes.lastOrNull { n -> isWorkspaceNode(n) }
                             ?: newNodes.lastOrNull { n -> oldFocus == null || !evaluator.isSameNode(n, oldFocus) }
-                            ?: return@scrollPageBackward
+                            ?: newNodes[newNodes.size - 1]
                         lastFocusedNodeIndex = findCurrentNodeIndex(newNodes, targetNode).coerceAtLeast(0)
                         setFocusAndShowOnScreen(targetNode)
                         service.announceNode(targetNode, android.speech.tts.TextToSpeech.QUEUE_ADD)
@@ -520,17 +522,17 @@ class SerenaFocusNavigator(
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id
         }
         val scrollAction = if (forward) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id else AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id else -1
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else -1
         }
-        if (node.actionList.any { it.id == pageAction || it.id == scrollAction }) return true
+        if (node.actionList.any { it.id == pageAction || (scrollAction != -1 && it.id == scrollAction) }) return true
 
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
         val className = node.className?.toString()?.lowercase() ?: ""
-        if (viewId.contains("workspace") || className.contains("workspace") || className.contains("pagedview") || className.contains("viewpager") || className.contains("horizontal")) return true
+        if (viewId.contains("workspace") || className.contains("workspace") || className.contains("pagedview") || className.contains("viewpager") || className.contains("horizontal") || className.contains("tabrow")) return true
 
-        return node.isScrollable
+        return false
     }
 
     fun performHorizontalScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {

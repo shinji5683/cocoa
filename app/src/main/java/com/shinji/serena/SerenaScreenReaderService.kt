@@ -2927,22 +2927,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
 
                 val isDialog = className.contains("Dialog", ignoreCase = true) || className.contains("AlertDialog", ignoreCase = true)
-                if (isDialog) {
+                if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
+                    // SystemUI / ロック画面 / Bouncer のウィンドウ検知時は、未フォーカス時のみPIN入力欄を捕捉
+                    autoFocusPinKeypadIfPresent(force = false)
+                } else {
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                         val nodes = collectAccessibleNodes()
                         if (nodes.isNotEmpty()) {
-                            val first = nodes[0]
-                            focusNavigator?.setFocusAndShowOnScreen(first)
-                            if (isTtsReady) {
-                                announceNode(first, TextToSpeech.QUEUE_FLUSH)
+                            val currentFocus = getAccessibilityFocusedNode()
+                            if (currentFocus == null || !nodes.any { isSameNode(it, currentFocus) }) {
+                                val first = nodes[0]
+                                focusNavigator?.setFocusAndShowOnScreen(first)
+                                if (isTtsReady) {
+                                    if (windowTitle.isNotEmpty() && !windowTitle.contains("画面") && isDialog) {
+                                        speak(windowTitle, TextToSpeech.QUEUE_FLUSH)
+                                        announceNode(first, TextToSpeech.QUEUE_ADD)
+                                    } else {
+                                        announceNode(first, TextToSpeech.QUEUE_FLUSH)
+                                    }
+                                }
                             }
                         }
-                    }, 250)
-                } else if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
-                    // SystemUI / ロック画面 / Bouncer のウィンドウ検知時は、未フォーカス時のみPIN入力欄を捕捉
-                    autoFocusPinKeypadIfPresent(force = false)
-                } else if (windowTitle.isNotEmpty() && !isCallActive) {
-                    speak("画面: $windowTitle", TextToSpeech.QUEUE_FLUSH)
+                    }, 200)
                 }
             }
 
