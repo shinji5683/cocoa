@@ -115,16 +115,16 @@ class SerenaLanguageEngine(private val context: Context) {
 
                 results.add(Pair(convertedHiragana, "ひらがな：$convertedHiragana"))
 
-                // 日本語単語・漢字変換辞書
+                // 日本語単語・漢字変換辞書 (最優先候補)
                 val japaneseDict = mapOf(
-                    "しんじ" to listOf("晋司", "新司", "慎二", "真二"),
-                    "しん" to listOf("新", "進", "晋", "真", "心", "信", "伸"),
+                    "しんじ" to listOf("伸二", "晋司", "新司", "慎二", "真二"),
+                    "しん" to listOf("伸", "新", "進", "晋", "真", "心", "信"),
                     "さきやま" to listOf("崎山", "先山"),
                     "せれな" to listOf("Serena", "セレナ"),
                     "あいえむいー" to listOf("IME", "アイエムイー"),
                     "あい" to listOf("愛", "相", "会", "合"),
                     "せい" to listOf("晴", "正", "清", "生", "成", "声"),
-                    "じ" to listOf("司", "治", "字", "時", "事", "次", "寺"),
+                    "じ" to listOf("二", "司", "治", "字", "時", "事", "次", "寺"),
                     "とうきょう" to listOf("東京"),
                     "おおがき" to listOf("大垣"),
                     "ぎふ" to listOf("岐阜"),
@@ -132,13 +132,19 @@ class SerenaLanguageEngine(private val context: Context) {
                 )
 
                 japaneseDict[convertedHiragana]?.forEach { kanji ->
-                    val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(kanji)
+                    var detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(kanji)
+                    if (detail.isEmpty() || detail == kanji) {
+                        detail = nanoEngine.explainComplexKanjiOnDevice(kanji)
+                    }
                     results.add(Pair(kanji, detail))
                 }
 
                 // 1文字ずつの詳細漢字マッチ
                 for (char in convertedHiragana) {
-                    val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(char.toString())
+                    var detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(char.toString())
+                    if (detail.isEmpty() || detail == char.toString()) {
+                        detail = nanoEngine.explainComplexKanjiOnDevice(char.toString())
+                    }
                     if (detail.isNotEmpty() && detail != char.toString()) {
                         results.add(Pair(char.toString(), detail))
                     }
