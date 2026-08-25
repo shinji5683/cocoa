@@ -76,10 +76,10 @@ android {
 }
 
 dependencies {
-    // AndroidX & Jetpack Core Latest
+    // AndroidX & Jetpack Core Latest (Preview / Bleeding-Edge Alpha/Beta Phase)
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.google.android.material:material:1.13.0-alpha09")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.activity:activity-ktx:1.10.1")
@@ -87,6 +87,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
+
+    // Jetpack Compose & Material 3 (M3) Latest Preview & Beta Phase
+    implementation("androidx.compose.material3:material3:1.3.1")
+    implementation("androidx.compose.ui:ui:1.7.8")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.7.8")
 
     // Google Play Services & ML Kit on-device Vision & NLP Latest
     implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
