@@ -57,6 +57,39 @@ class SoundAndHapticHelper(private val context: Context) {
         vibrate(12)
     }
 
+    enum class HapticTexture {
+        BUTTON,
+        IMAGE,
+        SLIDER,
+        EDIT_TEXT,
+        LINK,
+        DEFAULT
+    }
+
+    fun playHapticTexture(texture: HapticTexture) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && vibrator != null) {
+            val effect = when (texture) {
+                HapticTexture.BUTTON -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                HapticTexture.IMAGE -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+                HapticTexture.SLIDER -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+                HapticTexture.EDIT_TEXT -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+                HapticTexture.LINK -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+                HapticTexture.DEFAULT -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            }
+            vibrator?.vibrate(effect)
+        } else {
+            val duration = when (texture) {
+                HapticTexture.BUTTON -> 25L
+                HapticTexture.IMAGE -> 10L
+                HapticTexture.SLIDER -> 18L
+                HapticTexture.EDIT_TEXT -> 35L
+                HapticTexture.LINK -> 15L
+                HapticTexture.DEFAULT -> 12L
+            }
+            vibrate(duration)
+        }
+    }
+
     fun playFocusMove() {
         toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 25)
         vibrate(15)

@@ -588,9 +588,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     fun copyLastSpokenTextToClipboard() {
-        val text = lastSpokenText ?: return
-        clipboardHelper?.addClip(text)
-        speak("直前の読み上げをクリップボードにコピーしました", TextToSpeech.QUEUE_FLUSH)
+        val text = lastSpokenText ?: ""
+        if (text.isEmpty()) {
+            speak("コピーする読み上げ履歴がありません", TextToSpeech.QUEUE_FLUSH)
+            return
+        }
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("Serena", text)
+        cm?.setPrimaryClip(clip)
+        soundHelper?.playActionDone()
+        val analysis = clipboardHelper?.addClip(text) ?: "クリップボードにコピーしました"
+        speak(analysis, TextToSpeech.QUEUE_FLUSH)
     }
 
     fun scrollPageForward(onComplete: ((Boolean) -> Unit)? = null) {
@@ -1976,6 +1984,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🧠", "AI画面要約 (クイックブリーフィング)") {
                 summarizeCurrentScreen()
             },
+            serenaMenuItem("📬", "スマート通知ダイジェスト (未読・重要通知の要約)") {
+                announceNotificationDigest()
+            },
+            serenaMenuItem("📡", "3D空間オーディオ・周辺マップ＆紛失防止レーダー") {
+                toggleSurroundingRadar()
+            },
             serenaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
                 cycleChimeStyle()
             },
@@ -2297,6 +2311,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playActionDone()
         val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: "画面の情報を解析できませんでした。"
         speak(summary, TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun announceNotificationDigest() {
+        soundHelper?.playActionDone()
+        val digest = notificationFilterHelper?.buildNotificationDigest() ?: "現在、未読の重要通知はありません。"
+        speak(digest, TextToSpeech.QUEUE_FLUSH)
     }
 
     fun launchSerenaEyes(mode: String = "EYES") {

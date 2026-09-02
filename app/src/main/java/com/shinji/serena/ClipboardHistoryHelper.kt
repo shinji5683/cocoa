@@ -13,9 +13,9 @@ class ClipboardHistoryHelper(context: Context) {
 
     private val prefs: SharedPreferences = context.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun addClip(text: String) {
+    fun addClip(text: String): String? {
         val trimmed = text.trim()
-        if (trimmed.isEmpty()) return
+        if (trimmed.isEmpty()) return null
 
         val currentList = getHistory().toMutableList()
         currentList.remove(trimmed)
@@ -26,6 +26,29 @@ class ClipboardHistoryHelper(context: Context) {
         }
 
         saveList(currentList)
+        return analyzeClipType(trimmed)
+    }
+
+    fun analyzeClipType(text: String): String {
+        return when {
+            text.startsWith("http://") || text.startsWith("https://") -> {
+                val host = try {
+                    java.net.URI(text).host ?: "ウェブ"
+                } catch (_: Exception) {
+                    "ウェブ"
+                }
+                "クリップボードにURLをコピーしました。「$host」のリンクです。"
+            }
+            text.matches(Regex(".*(東京都|大阪府|京都府|北海道|.{2,3}県).*(市|区|町|村).*")) -> {
+                "クリップボードに住所をコピーしました。「$text」。ナビゲーションを開始できます。"
+            }
+            text.matches(Regex(".*0[789]0-?[0-9]{4}-?[0-9]{4}.*")) || text.matches(Regex(".*0[0-9]{1,4}-?[0-9]{1,4}-?[0-9]{4}.*")) -> {
+                "クリップボードに電話番号をコピーしました。「$text」。直接発信が可能です。"
+            }
+            else -> {
+                "クリップボードにコピーしました: $text"
+            }
+        }
     }
 
     fun getHistory(): List<String> {

@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import com.shinji.serena.SerenaScreenReaderService
+import com.shinji.serena.SoundAndHapticHelper
 
 /**
  * SerenaFocusNavigator
@@ -425,6 +426,16 @@ class SerenaFocusNavigator(
         } else {
             service.soundHelper?.playFocusMove()
         }
+
+        val className = targetNode.className?.toString() ?: ""
+        val texture = when {
+            targetNode.isClickable || className.contains("Button") -> SoundAndHapticHelper.HapticTexture.BUTTON
+            className.contains("ImageView") || className.contains("Image") -> SoundAndHapticHelper.HapticTexture.IMAGE
+            className.contains("SeekBar") || className.contains("Slider") || className.contains("ProgressBar") -> SoundAndHapticHelper.HapticTexture.SLIDER
+            targetNode.isEditable || className.contains("EditText") -> SoundAndHapticHelper.HapticTexture.EDIT_TEXT
+            else -> SoundAndHapticHelper.HapticTexture.DEFAULT
+        }
+        service.soundHelper?.playHapticTexture(texture)
 
         service.announceNode(targetNode)
     }

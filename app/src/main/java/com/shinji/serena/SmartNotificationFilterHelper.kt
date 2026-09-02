@@ -347,4 +347,25 @@ class SmartNotificationFilterHelper(private val context: Context) {
             else -> ""
         }
     }
+
+    private val recentNotifications = mutableListOf<NotificationAnalysisResult>()
+
+    fun recordNotification(result: NotificationAnalysisResult) {
+        recentNotifications.add(0, result)
+        while (recentNotifications.size > 15) {
+            recentNotifications.removeAt(recentNotifications.size - 1)
+        }
+    }
+
+    fun buildNotificationDigest(): String {
+        if (recentNotifications.isEmpty()) {
+            return "現在、未読の重要通知はありません。"
+        }
+        val count = recentNotifications.size
+        val topNotifs = recentNotifications.take(3).map {
+            val senderPart = if (it.senderOrTitle.isNotEmpty()) it.senderOrTitle else "通知"
+            "${it.appDisplayName}（$senderPart）"
+        }.joinToString("、")
+        return "通知ダイジェスト全${count}件。直近の通知: ${topNotifs}などがあります。"
+    }
 }

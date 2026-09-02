@@ -45,16 +45,15 @@ jobs:
       - name: Grant Execute Permission to Gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug & Release APKs and Play Store Bundle (.aab)
-        run: ./gradlew assembleRelease assembleDebug bundleRelease --stacktrace
+      - name: Build Debug & Release APKs
+        run: ./gradlew assembleRelease assembleDebug --stacktrace
 
       - name: Prepare Standard Named Artifacts
         run: |
           cp app/build/outputs/apk/release/app-release.apk app-serena-release.apk
           cp app/build/outputs/apk/debug/app-debug.apk app-serena-debug.apk
-          cp app/build/outputs/bundle/release/app-release.aab serena-release.aab
-          echo "Prepared artifacts:"
-          ls -lh app-serena-release.apk app-serena-debug.apk serena-release.aab
+          echo "Prepared APK artifacts:"
+          ls -lh app-serena-release.apk app-serena-debug.apk
 
       - name: Upload Workflow Artifacts
         uses: actions/upload-artifact@v4
@@ -63,7 +62,6 @@ jobs:
           path: |
             app-serena-release.apk
             app-serena-debug.apk
-            serena-release.aab
           retention-days: 14
 
       - name: Publish or Update GitHub Release
@@ -75,7 +73,7 @@ jobs:
             TARGET_TAG="$REF_NAME"
           else
             VERSION_FROM_GRADLE=$(grep 'versionName' app/build.gradle.kts | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
-            TARGET_TAG="v${VERSION_FROM_GRADLE:-1.0.0}-build-${{ github.run_number }}"
+            TARGET_TAG="v${VERSION_FROM_GRADLE:-1.1.0}-build-${{ github.run_number }}"
           fi
 
           echo "Target Release Tag: $TARGET_TAG"
@@ -85,14 +83,12 @@ jobs:
             gh release upload "$TARGET_TAG" \
               app-serena-release.apk \
               app-serena-debug.apk \
-              serena-release.aab \
               --clobber
           else
             echo "Creating new release $TARGET_TAG..."
             gh release create "$TARGET_TAG" \
               app-serena-release.apk \
               app-serena-debug.apk \
-              serena-release.aab \
               --title "Serena $TARGET_TAG" \
               --generate-notes \
               --prerelease
