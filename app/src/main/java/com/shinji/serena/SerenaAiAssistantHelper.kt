@@ -12,6 +12,7 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import com.shinji.serena.ai.GeminiNanoEngine
+import com.shinji.serena.translation.InstantTranslationHelper
 import java.util.Calendar
 
 /**
@@ -29,7 +30,30 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
     private var isListening = false
     private val nanoEngine = GeminiNanoEngine(service)
 
+    enum class AssistantMode {
+        AI_ASSISTANT,
+        VOICE_INPUT,
+        VOICE_TRANSLATION
+    }
+    private var currentMode = AssistantMode.AI_ASSISTANT
+
     fun startListening() {
+        startListeningWithMode(AssistantMode.AI_ASSISTANT, "セレナAIです。どうぞ！")
+    }
+
+    fun startVoiceInput() {
+        startListeningWithMode(AssistantMode.VOICE_INPUT, "音声入力です。どうぞ！")
+    }
+
+    fun startVoiceTranslation() {
+        val targetLangName = InstantTranslationHelper.SUPPORTED_TARGET_LANGUAGES.find {
+            it.first == service.instantTranslationHelper?.defaultTargetLanguageCode
+        }?.second ?: "英語"
+        startListeningWithMode(AssistantMode.VOICE_TRANSLATION, "音声翻訳です。${targetLangName}または指定の言語へ翻訳します。どうぞ！")
+    }
+
+    private fun startListeningWithMode(mode: AssistantMode, prompt: String) {
+        currentMode = mode
         mainHandler.post {
             try {
                 if (androidx.core.content.ContextCompat.checkSelfPermission(service, android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -46,21 +70,17 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                     return@post
                 }
 
-                // 既にリスニング中なら破棄して再初期化
                 stopListeningInternal()
-
-                // ガイド音声を再生してからマイクを開く
                 service.soundHelper?.playMenuOpen()
-                service.speak("セレナAIです。どうぞ！", TextToSpeech.QUEUE_FLUSH)
+                service.speak(prompt, TextToSpeech.QUEUE_FLUSH)
 
-                // TTS発話が終わるのを待ってからマイクを開放（マイクとTTSの干渉防止）
                 mainHandler.postDelayed({
                     startRecognizerInternal()
                 }, 1000)
 
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start AI Assistant: ${e.message}")
-                service.speak("AIアシスタントの起動に失敗しました。", TextToSpeech.QUEUE_FLUSH)
+                service.speak("音声機能の起動に失敗しました。", TextToSpeech.QUEUE_FLUSH)
             }
         }
     }
@@ -117,10 +137,14 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                     isListening = false
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     val query = matches?.firstOrNull() ?: ""
-                    Log.i(TAG, "Speech recognition result: $query")
+                    Log.i(TAG, "Speech recognition result ($currentMode): $query")
                     if (query.isNotEmpty()) {
                         service.soundHelper?.playClick()
-                        processCommand(query)
+                        when (currentMode) {
+                            AssistantMode.AI_ASSISTANT -> processCommand(query)
+                            AssistantMode.VOICE_INPUT -> processVoiceInput(query)
+                            AssistantMode.VOICE_TRANSLATION -> processVoiceTranslation(query)
+                        }
                     } else {
                         service.speak("音声を聞き取れませんでした。", TextToSpeech.QUEUE_FLUSH)
                     }
@@ -143,6 +167,81 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
         } catch (e: Exception) {
             Log.e(TAG, "Error starting speech recognizer: ${e.message}")
             service.speak("音声認識の開始エラーが発生しました。", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    private fun processVoiceInput(text: String) {
+        val root = service.rootInActiveWindow
+        val focused = service.getAccessibilityFocusedNode() ?: root?.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT)
+        var injected = false
+        if (focused != null && (focused.isEditable || focused.className?.contains("EditText", ignoreCase = true) == true)) {
+            val args = Bundle().apply {
+                putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+            }
+            injected = focused.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+        }
+        val cm = service.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("Serena Voice Input", text)
+        cm?.setPrimaryClip(clip)
+        service.soundHelper?.playActionDone()
+        if (injected) {
+            service.speak("入力しました: $text", TextToSpeech.QUEUE_FLUSH)
+        } else {
+            service.speak("クリップボードにコピーしました: $text", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    private fun processVoiceTranslation(inputQuery: String) {
+        var targetLang = service.instantTranslationHelper?.defaultTargetLanguageCode ?: "en"
+        var cleanQuery = inputQuery
+
+        when {
+            inputQuery.startsWith("英語で") -> {
+                targetLang = "en"
+                cleanQuery = inputQuery.removePrefix("英語で").trim()
+            }
+            inputQuery.startsWith("タガログ語で") || inputQuery.startsWith("フィリピノ語で") -> {
+                targetLang = "tl"
+                cleanQuery = inputQuery.removePrefix("タガログ語で").removePrefix("フィリピノ語で").trim()
+            }
+            inputQuery.startsWith("中国語で") -> {
+                targetLang = "zh"
+                cleanQuery = inputQuery.removePrefix("中国語で").trim()
+            }
+            inputQuery.startsWith("スペイン語で") -> {
+                targetLang = "es"
+                cleanQuery = inputQuery.removePrefix("スペイン語で").trim()
+            }
+            inputQuery.startsWith("韓国語で") -> {
+                targetLang = "ko"
+                cleanQuery = inputQuery.removePrefix("韓国語で").trim()
+            }
+            inputQuery.startsWith("フランス語で") -> {
+                targetLang = "fr"
+                cleanQuery = inputQuery.removePrefix("フランス語で").trim()
+            }
+            inputQuery.startsWith("日本語で") -> {
+                targetLang = "ja"
+                cleanQuery = inputQuery.removePrefix("日本語で").trim()
+            }
+        }
+
+        service.instantTranslationHelper?.translateDirectly(cleanQuery, "ja", targetLang) { translated ->
+            mainHandler.post {
+                val root = service.rootInActiveWindow
+                val focused = service.getAccessibilityFocusedNode() ?: root?.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT)
+                if (focused != null && (focused.isEditable || focused.className?.contains("EditText", ignoreCase = true) == true)) {
+                    val args = Bundle().apply {
+                        putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, translated)
+                    }
+                    focused.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+                }
+                val cm = service.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("Serena Translation", translated)
+                cm?.setPrimaryClip(clip)
+                service.soundHelper?.playActionDone()
+                service.speak("翻訳: $translated", TextToSpeech.QUEUE_FLUSH)
+            }
         }
     }
 

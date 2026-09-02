@@ -33,6 +33,17 @@ class InstantTranslationHelper(private val context: Context) {
         private const val TAG = "InstantTranslation"
         private const val PREFS_NAME = "serena_translation_prefs"
         private const val KEY_TRANSLATION_MODE = "translation_mode"
+        private const val KEY_DEFAULT_TARGET_LANG = "default_target_language"
+
+        val SUPPORTED_TARGET_LANGUAGES = listOf(
+            "en" to "英語 (English)",
+            "tl" to "タガログ語 (Tagalog / Filipino)",
+            "zh" to "中国語 (Chinese)",
+            "es" to "スペイン語 (Spanish)",
+            "ko" to "韓国語 (Korean)",
+            "fr" to "フランス語 (French)",
+            "ja" to "日本語 (Japanese)"
+        )
     }
 
     private val prefs: SharedPreferences = com.shinji.serena.SafeContextUtils.getSafeSharedPreferences(context, PREFS_NAME)
@@ -53,12 +64,42 @@ class InstantTranslationHelper(private val context: Context) {
             prefs.edit().putString(KEY_TRANSLATION_MODE, value.name).apply()
         }
 
+    var defaultTargetLanguageCode: String
+        get() = prefs.getString(KEY_DEFAULT_TARGET_LANG, "en") ?: "en"
+        set(value) {
+            prefs.edit().putString(KEY_DEFAULT_TARGET_LANG, value).apply()
+        }
+
     val targetLanguageCode: String
         get() = Locale.getDefault().language.lowercase()
 
     init {
         // デフォルトで英語-日本語モデルをウォームアップ
         getOrCreateTranslator(TranslateLanguage.ENGLISH, TranslateLanguage.JAPANESE)
+        getOrCreateTranslator(TranslateLanguage.JAPANESE, TranslateLanguage.ENGLISH)
+    }
+
+    fun cycleDefaultTargetLanguage(): Pair<String, String> {
+        val currentIndex = SUPPORTED_TARGET_LANGUAGES.indexOfFirst { it.first == defaultTargetLanguageCode }
+        val nextIndex = if (currentIndex == -1) 0 else (currentIndex + 1) % SUPPORTED_TARGET_LANGUAGES.size
+        val nextPair = SUPPORTED_TARGET_LANGUAGES[nextIndex]
+        defaultTargetLanguageCode = nextPair.first
+        return nextPair
+    }
+
+    fun translateDirectly(text: String, sourceLang: String = "ja", targetLang: String = defaultTargetLanguageCode, callback: (String) -> Unit) {
+        val translator = getOrCreateTranslator(sourceLang, targetLang)
+        if (translator == null) {
+            callback(text)
+            return
+        }
+        translator.translate(text)
+            .addOnSuccessListener { translated ->
+                callback(translated)
+            }
+            .addOnFailureListener {
+                callback(text)
+            }
     }
 
     private fun getOrCreateTranslator(sourceLang: String, targetLang: String): Translator? {

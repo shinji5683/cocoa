@@ -455,6 +455,8 @@ class SerenaKeyboardView @JvmOverloads constructor(
         return super.onInterceptTouchEvent(ev)
     }
 
+    var isLiftToType: Boolean = true
+
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event == null) return super.onTouchEvent(event)
 
@@ -479,7 +481,9 @@ class SerenaKeyboardView @JvmOverloads constructor(
                 }
             }
             MotionEvent.ACTION_UP -> {
-                currentFocusedView?.performClick()
+                if (isLiftToType) {
+                    currentFocusedView?.performClick()
+                }
                 currentFocusedView = null
             }
             MotionEvent.ACTION_CANCEL -> {

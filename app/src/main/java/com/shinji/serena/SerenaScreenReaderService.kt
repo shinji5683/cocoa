@@ -1968,10 +1968,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("💌", "通知・着信読み上げ設定 (現在: ${notificationFilterHelper?.detailLevel?.displayName ?: "すべて読み上げ"})") {
                 cycleNotificationFilterMode()
             },
-            serenaMenuItem("🌐", "外国語リアルタイム翻訳読み上げ (現在: ${instantTranslationHelper?.mode?.displayName ?: "原文＋日本語訳"})") {
-                val next = instantTranslationHelper?.cycleMode() ?: com.shinji.serena.translation.TranslationMode.ORIGINAL_THEN_TRANSLATION
-                soundHelper?.playActionDone()
-                speak("翻訳読み上げモードを ${next.displayName} に変更しました", TextToSpeech.QUEUE_FLUSH)
+            serenaMenuItem("⌨️", "キー入力方式 (現在: ${if (isKeyboardLiftToType) "指を離して入力" else "ダブルタップ入力"})") {
+                cycleKeyboardTypingMode()
+            },
+            serenaMenuItem("🎙️", "Serena 音声入力 (入力欄へ直接音声入力)") {
+                launchVoiceInput()
+            },
+            serenaMenuItem("🌏", "Serena 音声翻訳 (指定言語へ翻訳して入力/読み上げ)") {
+                launchVoiceTranslation()
+            },
+            serenaMenuItem("🌐", "リアルタイム翻訳のデフォルト言語 (現在: ${instantTranslationHelper?.defaultTargetLanguageCode?.uppercase() ?: "EN"})") {
+                cycleTranslationDefaultLanguage()
+            },
+            serenaMenuItem("🖼️", "画像・写真 AIディープエクスプレイヤー (詳細な情景解説)") {
+                explainCurrentImageOrScreen()
             },
             serenaMenuItem("📳", "環境音・危険音・呼びかけ検知 (現在: ${soundRecognitionHelper?.detailLevel?.spokenLabel ?: "オフ"})") {
                 val nextLevel = soundRecognitionHelper?.cycleDetailLevel() ?: com.shinji.serena.sound.SoundAlertDetailLevel.DISABLED
@@ -2331,6 +2341,44 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch Serena Eyes: ${e.message}")
         }
+    }
+
+    var isKeyboardLiftToType: Boolean
+        get() = prefs.getBoolean("serena_keyboard_lift_to_type", true)
+        set(value) {
+            prefs.edit().putBoolean("serena_keyboard_lift_to_type", value).apply()
+        }
+
+    fun cycleKeyboardTypingMode() {
+        isKeyboardLiftToType = !isKeyboardLiftToType
+        soundHelper?.playActionDone()
+        val modeName = if (isKeyboardLiftToType) "指を離して入力（Lift to Type）" else "ダブルタップして入力（Double Tap）"
+        speak("キー入力方式を $modeName に変更しました", TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun launchVoiceInput() {
+        soundHelper?.playActionDone()
+        assistantHelper?.startVoiceInput()
+    }
+
+    fun launchVoiceTranslation() {
+        soundHelper?.playActionDone()
+        assistantHelper?.startVoiceTranslation()
+    }
+
+    fun cycleTranslationDefaultLanguage() {
+        val nextPair = instantTranslationHelper?.cycleDefaultTargetLanguage() ?: ("en" to "英語")
+        soundHelper?.playActionDone()
+        speak("デフォルト翻訳先言語を ${nextPair.second} に変更しました", TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun explainCurrentImageOrScreen() {
+        soundHelper?.playActionDone()
+        speak("AIディープエクスプレイヤーで画像を解析中...", TextToSpeech.QUEUE_FLUSH)
+        val focused = getAccessibilityFocusedNode()
+        val text = focused?.contentDescription?.toString() ?: focused?.text?.toString() ?: ""
+        val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: "画像情報を検出できませんでした。"
+        speak("情景解説: $summary", TextToSpeech.QUEUE_FLUSH)
     }
 
     fun launchAiAssistant() {
