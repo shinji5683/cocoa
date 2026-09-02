@@ -209,22 +209,36 @@ class SerenaGestureDispatcher(
                 service.toggleSpeechMute()
                 return true
             }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT, 27,
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_UP, 25 -> {
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT, 27 -> {
                 if (service.isKeyguardLocked()) {
                     service.unlockKeyguardOrShowBouncer()
                     return true
                 }
-                // 2本指左フリック / 上フリック: 次のページへ（横スクロール進む ＋ 先頭アイテム音声ガイド）
-                Log.i(TAG, "2-Finger swipe ($gestureId) -> scrollHorizontalForward (次のページへ)")
+                // 2本指左スワイプ → 右スクロール（次のページへ）
+                Log.i(TAG, "2-Finger swipe LEFT ($gestureId) -> scrollHorizontalForward (次のページへ)")
                 service.scrollHorizontalForward()
                 return true
             }
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT, 28,
-            AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN, 26 -> {
-                // 2本指右フリック / 下フリック: 前のページへ（横スクロール戻る ＋ 先頭アイテム音声ガイド）
-                Log.i(TAG, "2-Finger swipe ($gestureId) -> scrollHorizontalBackward (前のページへ)")
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT, 28 -> {
+                if (service.isKeyguardLocked()) {
+                    service.unlockKeyguardOrShowBouncer()
+                    return true
+                }
+                // 2本指右スワイプ → 左スクロール（前のページへ）
+                Log.i(TAG, "2-Finger swipe RIGHT ($gestureId) -> scrollHorizontalBackward (前のページへ)")
                 service.scrollHorizontalBackward()
+                return true
+            }
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_UP, 25 -> {
+                // 2本指上スワイプ → 下スクロール（次の行/コンテンツへ）
+                Log.i(TAG, "2-Finger swipe UP ($gestureId) -> scrollVerticalForward (下スクロール)")
+                service.scrollVerticalForward()
+                return true
+            }
+            AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN, 26 -> {
+                // 2本指下スワイプ → 上スクロール（前の行/コンテンツへ）
+                Log.i(TAG, "2-Finger swipe DOWN ($gestureId) -> scrollVerticalBackward (上スクロール)")
+                service.scrollVerticalBackward()
                 return true
             }
 
