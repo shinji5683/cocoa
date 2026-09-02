@@ -85,7 +85,8 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "FOOD_EXPIRATION" -> "🥫 食品＆賞味期限スキャナー"
             "WALK_TRANSIT" -> "🚦 歩行・信号＆点字ブロックナビ"
             "BARCODE_DOC" -> "📄 バーコード＆書類・レシート読み取り"
-            else -> "リアルタイムAI環境実況"
+            "EYES", "LIVE" -> "👀 Serena Eyes リアルタイムAI視覚＆実況"
+            else -> "👀 Serena Eyes リアルタイムAI視覚＆実況"
         }
         tvStatus.text = "🌸 $modeTitle 起動中…"
         val startAnnounce = when (mode) {
@@ -95,7 +96,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "BARCODE_DOC" -> "バーコードおよび書類スキャナーを起動しました。商品バーコードやレシート、請求書を映してください。"
             "OCR" -> "文字読み取りカメラを起動しました。"
             "FACE" -> "表情・人物認識カメラを起動しました。"
-            else -> "リアルタイムカメラ実況を起動しました。周囲をゆっくり映してください。"
+            else -> "Serena Eyes（リアルタイムAI視覚）を起動しました。周囲をゆっくり映してください。"
         }
         speak(startAnnounce)
 

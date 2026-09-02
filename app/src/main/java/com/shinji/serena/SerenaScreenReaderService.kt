@@ -102,6 +102,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var instantTranslationHelper: com.shinji.serena.translation.InstantTranslationHelper? = null
     var soundRecognitionHelper: com.shinji.serena.sound.SoundRecognitionHapticsHelper? = null
     var visualAudioDescriptionHelper: com.shinji.serena.ai.VisualAudioDescriptionHelper? = null
+    var smartScreenSummaryEngine: com.shinji.serena.ai.SmartScreenSummaryEngine? = null
 
     // 通話時間計測用
     var isCallActive = false
@@ -141,6 +142,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             instantTranslationHelper = com.shinji.serena.translation.InstantTranslationHelper(safeContext)
             soundRecognitionHelper = com.shinji.serena.sound.SoundRecognitionHapticsHelper(safeContext).apply { try { start() } catch (_: Exception) {} }
             visualAudioDescriptionHelper = com.shinji.serena.ai.VisualAudioDescriptionHelper(safeContext)
+            smartScreenSummaryEngine = com.shinji.serena.ai.SmartScreenSummaryEngine(this)
 
             // 点字ディスプレイ（Braille Display）コントローラー初期化
             brailleController = com.shinji.serena.braille.BrailleDisplayController(this, object : com.shinji.serena.braille.BrailleDisplayController.BrailleInteractionListener {
@@ -1968,6 +1970,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 soundHelper?.playActionDone()
                 speak("環境音・危険音検知を ${nextLevel.displayName} に変更しました", TextToSpeech.QUEUE_FLUSH)
             },
+            serenaMenuItem("👀", "Serena Eyes (リアルタイムAI視覚＆実況カメラ)") {
+                launchSerenaEyes()
+            },
+            serenaMenuItem("🧠", "AI画面要約 (クイックブリーフィング)") {
+                summarizeCurrentScreen()
+            },
             serenaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
                 cycleChimeStyle()
             },
@@ -2000,18 +2008,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             },
             serenaMenuItem("📖", "漢字詳細読み上げ (現在の文字を「信じるの信」等で解説)") {
                 explainCurrentFocusedKanji()
-            },
-            serenaMenuItem("📷", "カメラ・文字読み取り (On-Device OCR)") {
-                launchCameraOcr()
-            },
-            serenaMenuItem("👤", "カメラ・表情と人物判定 (On-Device Face AI)") {
-                launchCameraFaceAnalysis()
-            },
-            serenaMenuItem("📦", "カメラ・物体と周囲の認識 (Gemini Nano On-Device AI)") {
-                launchCameraObjectAnalysis()
-            },
-            serenaMenuItem("🌐", "リアルタイム環境実況モード切替 (カメラ自動解説)") {
-                toggleLiveEnvironmentDescription()
             },
             serenaMenuItem("⚡", "読み上げ速度の変更 (トグル切り替え)") {
                 toggleSpeechRateQuick()
@@ -2297,51 +2293,41 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    fun summarizeCurrentScreen() {
+        soundHelper?.playActionDone()
+        val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: "画面の情報を解析できませんでした。"
+        speak(summary, TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun launchSerenaEyes(mode: String = "EYES") {
+        soundHelper?.playClick()
+        speak("Serena Eyes（リアルタイムAI視覚）を起動します", TextToSpeech.QUEUE_FLUSH)
+        try {
+            val intent = Intent(this, LiveVisionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("MODE", mode)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch Serena Eyes: ${e.message}")
+        }
+    }
+
     fun launchAiAssistant() {
         soundHelper?.playActionDone()
         assistantHelper?.startListening()
     }
 
     fun launchCameraOcr() {
-        soundHelper?.playClick()
-        speak("文字読み取りカメラを起動します", TextToSpeech.QUEUE_FLUSH)
-        try {
-            val intent = Intent(this, LiveVisionActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                putExtra("MODE", "OCR")
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to launch OCR: ${e.message}")
-        }
+        launchSerenaEyes("OCR")
     }
 
     fun launchCameraFaceAnalysis() {
-        soundHelper?.playClick()
-        speak("表情・人物判定カメラを起動します", TextToSpeech.QUEUE_FLUSH)
-        try {
-            val intent = Intent(this, LiveVisionActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                putExtra("MODE", "FACE")
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to launch Face: ${e.message}")
-        }
+        launchSerenaEyes("FACE")
     }
 
     fun launchCameraObjectAnalysis() {
-        soundHelper?.playClick()
-        speak("Gemini Nano AIカメラを起動します", TextToSpeech.QUEUE_FLUSH)
-        try {
-            val intent = Intent(this, LiveVisionActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                putExtra("MODE", "OBJECT")
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to launch Object: ${e.message}")
-        }
+        launchSerenaEyes("OBJECT")
     }
 
     fun launchIndoorNavigation() {
@@ -4057,46 +4043,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    private var isSummarizing = false
 
-    @Suppress("DEPRECATION")
-    fun summarizeCurrentScreen() {
-        if (isSummarizing) return
-        isSummarizing = true
-        try {
-            val root = rootInActiveWindow
-            if (root == null) {
-                speak("画面情報を取得できませんでした。", TextToSpeech.QUEUE_FLUSH)
-                return
-            }
-            val collectedText = mutableListOf<String>()
-            collectScreenTexts(root, collectedText)
-
-            if (collectedText.isEmpty()) {
-                speak("画面上に読み取れるテキストが見つかりませんでした。", TextToSpeech.QUEUE_FLUSH)
-                return
-            }
-
-            val topTexts = collectedText.take(6).joinToString("、")
-            val summary = "画面の要点要約です。現在表示されている主な要素は、${topTexts} など合計 ${collectedText.size} 件の項目があります。"
-            speak(summary, TextToSpeech.QUEUE_FLUSH)
-        } finally {
-            isSummarizing = false
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun collectScreenTexts(node: AccessibilityNodeInfo, list: MutableList<String>) {
-        val text = getNodeText(node).trim()
-        if (text.isNotEmpty() && text.length > 1 && !list.contains(text)) {
-            list.add(text)
-        }
-        for (i in 0 until node.childCount) {
-            val child = node.getChild(i) ?: continue
-            collectScreenTexts(child, list)
-            child.recycle()
-        }
-    }
 }
 
 private val AccessibilityNodeInfo.safeIsHeading: Boolean

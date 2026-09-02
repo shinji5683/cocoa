@@ -84,8 +84,21 @@ class StatusAnnouncementHelper(private val context: Context) {
         }
     }
 
+    fun getGreetingPrefix(): String {
+        val hour24 = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        return when (hour24) {
+            in 5..10 -> "Magandang umaga po, Shinji! 🌸"
+            in 11..17 -> "Magandang araw po, Shinji! ☀️"
+            in 18..22 -> "Magandang gabi po, Shinji! 🌙"
+            else -> "Magandang gabi po, Shinji! ✨ 遅くまでお疲れさまっ！"
+        }
+    }
+
     fun buildFullStatusAnnouncement(callback: ((String) -> Unit)? = null): String {
         val parts = mutableListOf<String>()
+
+        // 0. Serena Warm Tagalog Greeting
+        parts.add(getGreetingPrefix())
 
         // 1. 現在時刻
         val timeStr = getCurrentTimeText()
@@ -136,7 +149,7 @@ class StatusAnnouncementHelper(private val context: Context) {
             hour24 > 12 -> hour24 - 12
             else -> hour24
         }
-        return "ただいま ${periodStr}${hour12}時${minute}分"
+        return "${periodStr}${hour12}時${minute}分"
     }
 
     private fun getBatteryText(): String {
