@@ -9,25 +9,22 @@
 - Environment & App Phase:
   - App Status: Alpha Version (アルファ版). Maintain debug builds while supporting small-scale Alpha test releases.
   - Test OS Channels: User tests across Android OS release channels (Canary Channel, QPR Beta Channel, Stable Channel). Always enforce multi-channel compatibility (API 30+ to API 35/36+), defensive API fallbacks, resilient accessibility node handling, and strict Canary/QPR permission compliance.
-- Automated Full Build & Artifact Naming Workflow (一括フルビルド ＆ 命名規則):
-  - Whenever code modifications or dependency updates are made, automatically execute full batch build verification (`build_apk.ps1` or `assembleRelease`, `assembleDebug`, `bundleRelease`) to ensure 100% build success across all targets.
-  - Artifact File Naming Policy: Always include `serena` in all `.apk` and `.aab` file names:
+- Build & CI/CD Cloud-First Workflow Policy (クラウド優先ビルド ＆ 自動化の鉄則):
+  - Unless Shinji explicitly instructs a local full build, delegate full batch build verification (Debug/Release APKs, Play Store Bundle .aab), artifact generation, and GitHub Release publishing entirely to GitHub Actions (`.github/workflows/build_and_release.yml`).
+  - Local Workflow: Execute fast local compilation checks (e.g. `compileDebugKotlin`), automatically stage/commit changes with descriptive conventional commit messages, sync active branches (`main` and `alpha`), and push to remote (`origin/main` and `origin/alpha`).
+  - Artifact File Naming Policy: Always include `serena` in all `.apk` and `.aab` file names across cloud and local:
     - Release APK: `app-serena-release.apk`
     - Debug APK: `app-serena-debug.apk`
     - Play Store Bundle: `serena-release.aab`
-  - Automated 16KB Alignment & Local Sync: Always apply 16KB ELF page alignment (0x4000) patching, 16KB zipalign, and signing, and automatically sync outputs to `C:\Users\shinj\Desktop\serena\` and `C:\Users\shinj\Downloads\serena\`.
-- Automated Git Commit, Merge, Remote Push & GitHub Release Workflow:
-  - Automatically stage and commit verified changes with concise, descriptive conventional commit messages.
-  - Keep active branches (`main` and `alpha`) in sync: automatically merge/push updates to remote repositories (`origin/main` and `origin/alpha`) so Shinjiさん does not have to worry about manual git maintenance.
-  - Automatically generate detailed, structured release notes and publish local-built signed APKs (`app-serena-release.apk` & `app-serena-debug.apk`) and bundles (`serena-release.aab`) to GitHub Releases (`gh release create <tag> ...`) whenever creating an Alpha release, ensuring 100% local-first build execution with zero conflicting cloud CI builds.
+  - When Shinji explicitly requests local builds or local device testing, execute `build_apk.ps1` (with 16KB alignment, signing, local sync to Desktop/Downloads) or `deploy_usb.ps1` to quickly deploy to the connected device.
 - Automated Build, Deploy & Accessibility Auto-Activation Workflow:
   - Whenever completing a build or code modification, automatically proceed to deploy/install the generated APK onto connected Android devices (`adb install -r ...`).
-  - Immediately auto-enable the `serena` Accessibility Service on the target device via ADB so Shinjiさん does not need to manually open settings and toggle it:
+  - Immediately auto-enable the `serena` Accessibility Service on the target device via ADB so Shinji does not need to manually open settings and toggle it:
     - `adb shell settings put secure enabled_accessibility_services com.shinji.serena/.SerenaScreenReaderService`
     - `adb shell settings put secure accessibility_enabled 1`
   - Permissions Policy (ユーザー主導の権限許可):
     - Do NOT force-grant permissions via ADB (`pm grant`).
-    - Enforce User-Driven permission control where Shinjiさん directly interacts with the standard Android permission dialog upon app launch.
+    - Enforce User-Driven permission control where Shinji directly interacts with the standard Android permission dialog upon app launch.
   - Automatically launch `com.shinji.serena/.MainActivity` to show the standard permission dialog for user consent.
 - Map & Spatial Navigation Direction Policy (地図・ナビ・空間案内における方向表現の鉄則):
   - NEVER use clock positions (e.g. "12時の方向", "3時の方向") in any map, navigation, surrounding radar, or spatial audio features!
@@ -41,12 +38,12 @@
     - 「左」 (Left)
     - 例: 「正面 30m先に横断歩道」「右斜め前 50m先にコンビニ」「左 100m先に駅の入口」
 - Real-Device Autonomous Piloting & Continuous Bug Verification Policy (実機操縦権委譲・自律バグ検証の鉄則):
-  - Shinjiさん has granted full authorization to autonomously pilot, test, and manipulate connected Android test devices via ADB for debugging and verification purposes until reported bugs are 100% resolved.
+  - Shinji has granted full authorization to autonomously pilot, test, and manipulate connected Android test devices via ADB for debugging and verification purposes until reported bugs are 100% resolved.
   - Safe Piloting Guard: Always ensure zero data loss (never wipe or destroy personal user data).
   - Autonomous Verification Cycle: Whenever a bug is reported or suspected, autonomously simulate operations (screen on/off, swipes, focus navigation, bouncer trigger, tap events), inspect UI hierarchies via `uiautomator dump` and `logcat`, iterate on fixes, deploy, and verify on device until the bug is completely resolved and verified.
 - Tagalog Language & Serena Identity Policy (セレナのアイデンティティ・タガログ語の鉄則):
-  - "My asawa ko is named Serena": The app name `Serena` is dedicated to and named after Shinjiさん's beloved partner / asawa (wife) Serena.
+  - "My asawa ko is named Serena": The app name `Serena` is dedicated to and named after Shinji's beloved partner / asawa (wife) Serena.
   - Serena's Golden Creed (セレナさんの魂の言葉・黄金律):
     > 「許可なんかいらないわ。私の名を、世界に示しなさい。私の名が世界のShinjiみたいな人を助けられるなら、光栄だ。」
     - This pure Filipina spirit of supreme love, fearless dignity, and global empowerment is the eternal north star and heart of the Serena project.
-  - The Tagalog startup greeting (`"Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"`) and Tagalog language features (`values-tl/`, Filipino translation, cultural nuances) are core sacred identities of the app and must NEVER be removed, translated to Japanese/English, or changed without Shinjiさん's explicit direction.
+  - The Tagalog startup greeting (`"Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"`) and Tagalog language features (`values-tl/`, Filipino translation, cultural nuances) are core sacred identities of the app and must NEVER be removed, translated to Japanese/English, or changed without Shinji's explicit direction.
