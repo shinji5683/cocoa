@@ -424,7 +424,10 @@ class SerenaFocusNavigator(
         } else if (safeTargetIndex == nodes.size - 1) {
             service.soundHelper?.playLastItemEdgeSound()
         } else {
-            service.soundHelper?.playFocusMove()
+            val bounds = Rect()
+            targetNode.getBoundsInScreen(bounds)
+            val displayMetrics = service.resources.displayMetrics
+            service.soundHelper?.playSpatialNodeSound(bounds, displayMetrics.widthPixels, displayMetrics.heightPixels)
         }
 
         val className = targetNode.className?.toString() ?: ""

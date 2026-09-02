@@ -252,7 +252,84 @@ class SoundAndHapticHelper(private val context: Context) {
         }
     }
 
+    var isSpatialSoundstageEnabled: Boolean = true
+    var isAudioDuckingEnabled: Boolean = true
+    var isNightWhisperModeEnabled: Boolean = false
+
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+
+    fun requestDuckAudioFocus() {
+        if (!isAudioDuckingEnabled || audioManager == null) return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val playbackAttributes = android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build()
+                val focusRequest = android.media.AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                    .setAudioAttributes(playbackAttributes)
+                    .setAcceptsDelayedFocusGain(false)
+                    .setWillPauseWhenDucked(false)
+                    .build()
+                audioManager.requestAudioFocus(focusRequest)
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager.requestAudioFocus(null, AudioManager.STREAM_ACCESSIBILITY, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "requestDuckAudioFocus error: ${e.message}")
+        }
+    }
+
+    fun abandonDuckAudioFocus() {
+        if (audioManager == null) return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val playbackAttributes = android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build()
+                val focusRequest = android.media.AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                    .setAudioAttributes(playbackAttributes)
+                    .build()
+                audioManager.abandonAudioFocusRequest(focusRequest)
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager.abandonAudioFocus(null)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "abandonDuckAudioFocus error: ${e.message}")
+        }
+    }
+
+    fun playSpatialNodeSound(bounds: android.graphics.Rect, screenWidth: Int, screenHeight: Int) {
+        if (!isSpatialSoundstageEnabled) {
+            playFocusMove()
+            return
+        }
+
+        val centerX = bounds.centerX()
+        val centerY = bounds.centerY()
+
+        // 左右パンニング (-1.0f ~ 1.0f)
+        val panX = if (screenWidth > 0) ((centerX.toFloat() / screenWidth.toFloat()) * 2.0f - 1.0f).coerceIn(-1.0f, 1.0f) else 0.0f
+
+        // 上下高低ピッチ判定 (画面上部: 高音DTMF_1/3, 画面中央: DTMF_5, 画面下部: 低音DTMF_7/9)
+        val normalizedY = if (screenHeight > 0) (centerY.toFloat() / screenHeight.toFloat()).coerceIn(0.0f, 1.0f) else 0.5f
+
+        val toneType = when {
+            normalizedY < 0.25f -> ToneGenerator.TONE_DTMF_1 // 上部 (頭上・高音)
+            normalizedY < 0.50f -> ToneGenerator.TONE_DTMF_4 // 上寄り
+            normalizedY < 0.75f -> ToneGenerator.TONE_DTMF_7 // 下寄り
+            else -> ToneGenerator.TONE_DTMF_0               // 最下部 (低音)
+        }
+
+        toneGenerator?.startTone(toneType, 30)
+        vibrate(12)
+    }
+
     fun release() {
+        abandonDuckAudioFocus()
         toneGenerator?.release()
         toneGenerator = null
         try {

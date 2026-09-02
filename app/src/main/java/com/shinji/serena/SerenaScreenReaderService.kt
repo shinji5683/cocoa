@@ -1968,6 +1968,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("💌", "通知・着信読み上げ設定 (現在: ${notificationFilterHelper?.detailLevel?.displayName ?: "すべて読み上げ"})") {
                 cycleNotificationFilterMode()
             },
+            serenaMenuItem("🎧", "3D空間サウンドステージ (現在: ${if (soundHelper?.isSpatialSoundstageEnabled == true) "ON" else "OFF"})") {
+                toggleSpatialSoundstage()
+            },
+            serenaMenuItem("🎵", "音楽オーディオダッキング (現在: ${if (soundHelper?.isAudioDuckingEnabled == true) "ON" else "OFF"})") {
+                toggleAudioDucking()
+            },
+            serenaMenuItem("🌙", "深夜ささやきモード (現在: ${if (soundHelper?.isNightWhisperModeEnabled == true) "ON" else "OFF"})") {
+                toggleNightWhisperMode()
+            },
             serenaMenuItem("⌨️", "キー入力方式 (現在: ${if (isKeyboardLiftToType) "指を離して入力" else "ダブルタップ入力"})") {
                 cycleKeyboardTypingMode()
             },
@@ -2370,6 +2379,33 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val nextPair = instantTranslationHelper?.cycleDefaultTargetLanguage() ?: ("en" to "英語")
         soundHelper?.playActionDone()
         speak("デフォルト翻訳先言語を ${nextPair.second} に変更しました", TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun toggleSpatialSoundstage() {
+        soundHelper?.let {
+            it.isSpatialSoundstageEnabled = !it.isSpatialSoundstageEnabled
+            it.playActionDone()
+            val state = if (it.isSpatialSoundstageEnabled) "ON" else "OFF"
+            speak("3D空間サウンドステージを $state にしました", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    fun toggleAudioDucking() {
+        soundHelper?.let {
+            it.isAudioDuckingEnabled = !it.isAudioDuckingEnabled
+            it.playActionDone()
+            val state = if (it.isAudioDuckingEnabled) "ON" else "OFF"
+            speak("音楽オーディオダッキングを $state にしました", TextToSpeech.QUEUE_FLUSH)
+        }
+    }
+
+    fun toggleNightWhisperMode() {
+        soundHelper?.let {
+            it.isNightWhisperModeEnabled = !it.isNightWhisperModeEnabled
+            it.playActionDone()
+            val state = if (it.isNightWhisperModeEnabled) "ON (ソフト音声)" else "OFF (通常音声)"
+            speak("深夜ささやきモードを $state にしました", TextToSpeech.QUEUE_FLUSH)
+        }
     }
 
     fun explainCurrentImageOrScreen() {
@@ -3828,7 +3864,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_FLUSH) {
+    fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_FLUSH, pan: Float = 0.0f) {
         if (text.isBlank() || isMuted) return
         val effectiveQueueMode = if (isStartupGreetingSpeaking && !text.startsWith("Magandang araw")) {
             TextToSpeech.QUEUE_ADD
@@ -3846,6 +3882,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return
         }
 
+        soundHelper?.requestDuckAudioFocus()
+
         val processedText = emojiHelper?.translateEmojiAndKaomoji(text) ?: text
         lastSpokenText = processedText
         currentSpeakingUtterance = processedText
@@ -3861,7 +3899,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val utteranceId = "serenaUtterance_${System.currentTimeMillis()}"
         val params = android.os.Bundle().apply {
-            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+            val vol = if (soundHelper?.isNightWhisperModeEnabled == true) 0.6f else 1.0f
+            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, vol)
+            if (soundHelper?.isSpatialSoundstageEnabled == true && pan != 0.0f) {
+                putFloat(TextToSpeech.Engine.KEY_PARAM_PAN, pan.coerceIn(-1.0f, 1.0f))
+            }
         }
         val result = tts?.speak(processedText, effectiveQueueMode, params, utteranceId)
         if (result == TextToSpeech.ERROR) {
