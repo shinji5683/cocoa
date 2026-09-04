@@ -31,9 +31,10 @@
                 android:textColor="@color/serena_primary" />
 
             <TextView
+                android:id="@+id/tvAppVersion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="v1.0"
+                android:text="v1.4.0 (Alpha)"
                 android:textColor="@color/serena_secondary"
                 android:textSize="14sp"
                 android:textStyle="bold" />

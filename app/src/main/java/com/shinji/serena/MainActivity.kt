@@ -154,6 +154,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupStatusSection() {
+        binding.tvAppVersion.text = "v${BuildConfig.VERSION_NAME} (Alpha)"
         binding.btnOpenAccessibility.setOnClickListener {
             showAccessibilityDisclosureDialog()
         }
