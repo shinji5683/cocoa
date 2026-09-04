@@ -1074,8 +1074,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val success = if (scrollNode != null) {
             focusNavigator?.performHorizontalScroll(scrollNode, forward = true) == true
         } else {
-            val root = rootInActiveWindow
-            root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true
+            false
         }
 
         if (success) {
@@ -1091,7 +1090,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 物理2本指スワイプフォールバック (TalkBack完全互換: 指が離れた直後にメインスレッドで物理ドラッグ実行)
+        // 物理2本指スワイプフォールバック (TalkBack完全互換: 水平スワイプを実行)
         performPhysical2FingerScroll(forward = true, horizontal = true)
         return true
     }
@@ -1110,8 +1109,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val success = if (scrollNode != null) {
             focusNavigator?.performHorizontalScroll(scrollNode, forward = false) == true
         } else {
-            val root = rootInActiveWindow
-            root?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) == true
+            false
         }
 
         if (success) {
@@ -1127,7 +1125,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        // 物理2本指スワイプフォールバック (TalkBack完全互換)
+        // 物理2本指スワイプフォールバック (TalkBack完全互換: 水平スワイプを実行)
         performPhysical2FingerScroll(forward = false, horizontal = true)
         return true
     }
@@ -3098,8 +3096,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (now - lastScrollEventTime < 400) return
                 lastScrollEventTime = now
 
-                // フォーカス移動直後（800ms以内）のスクロール調整はフォーカスアナウンスを妨げないよう読み上げを抑制
-                if (now - lastFocusTimeMs < 800) {
+                // 手動スクロール直後（700ms以内）またはフォーカス移動直後（800ms以内）は重複読み上げを抑制
+                if (now - lastScrollTime < 700 || now - lastFocusTimeMs < 800) {
                     return
                 }
 

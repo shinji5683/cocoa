@@ -551,46 +551,47 @@ class SerenaFocusNavigator(
 
     fun performHorizontalScroll(node: AccessibilityNodeInfo, forward: Boolean): Boolean {
         // Pixel Launcher / ViewPager / Android View システムにおける水平スクロール:
-        // forward=true (次ページ/右のコンテンツへ): ACTION_SCROLL_FORWARD または ACTION_PAGE_LEFT / ACTION_SCROLL_LEFT
-        // forward=false (前ページ/左のコンテンツへ): ACTION_SCROLL_BACKWARD または ACTION_PAGE_RIGHT / ACTION_SCROLL_RIGHT
-        val stdScroll = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        // forward=true (次ページ/右のコンテンツへ): ACTION_PAGE_RIGHT または ACTION_SCROLL_RIGHT
+        // forward=false (前ページ/左のコンテンツへ): ACTION_PAGE_LEFT または ACTION_SCROLL_LEFT
         val pageAction = if (forward) {
-            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id
-        } else {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
+        } else {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id
         }
         val fallbackPageAction = if (forward) {
-            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
-        } else {
             AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_LEFT.id
+        } else {
+            AccessibilityNodeInfo.AccessibilityAction.ACTION_PAGE_RIGHT.id
         }
         val scrollAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (forward) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id else AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id
+            if (forward) AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.id else AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.id
         } else -1
 
-        // 1. 標準スクロール
-        if (node.actionList.any { it.id == stdScroll } && node.performAction(stdScroll)) return true
+        // 1. 水平専用アクションを最優先実行
         if (node.actionList.any { it.id == pageAction } && node.performAction(pageAction)) return true
         if (scrollAction != -1 && node.actionList.any { it.id == scrollAction } && node.performAction(scrollAction)) return true
         if (node.actionList.any { it.id == fallbackPageAction } && node.performAction(fallbackPageAction)) return true
 
-        if (node.performAction(stdScroll)) return true
         if (node.performAction(pageAction)) return true
         if (scrollAction != -1 && node.performAction(scrollAction)) return true
         if (node.performAction(fallbackPageAction)) return true
 
-        // 親ノードやルートへのフォールバック
-        var parent = node.parent
-        while (parent != null) {
-            if (parent.performAction(stdScroll) || parent.performAction(pageAction) || (scrollAction != -1 && parent.performAction(scrollAction)) || parent.performAction(fallbackPageAction)) {
-                return true
-            }
-            parent = parent.parent
+        // 2. 水平スクロール可能なコンテナに限定した標準スクロール
+        val isHorizontalContainer = canScrollHorizontal(node, forward)
+        val stdScroll = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
+        if (isHorizontalContainer && node.actionList.any { it.id == stdScroll }) {
+            if (node.performAction(stdScroll)) return true
         }
 
-        val root = service.rootInActiveWindow
-        if (root != null && (root.performAction(stdScroll) || root.performAction(pageAction) || (scrollAction != -1 && root.performAction(scrollAction)) || root.performAction(fallbackPageAction))) {
-            return true
+        // 3. 親ノード探索（水平コンテナのみ）
+        var parent = node.parent
+        while (parent != null) {
+            if (canScrollHorizontal(parent, forward)) {
+                if (parent.performAction(pageAction) || (scrollAction != -1 && parent.performAction(scrollAction)) || parent.performAction(fallbackPageAction) || parent.performAction(stdScroll)) {
+                    return true
+                }
+            }
+            parent = parent.parent
         }
 
         return false

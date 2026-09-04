@@ -193,8 +193,11 @@ class SpatialCompassHelper(private val context: Context) : SensorEventListener {
 
                 audioTrack.write(buffer, 0, buffer.size)
                 audioTrack.play()
-                Thread.sleep(durationMs.toLong() + 20)
-                audioTrack.release()
+                Thread.sleep(durationMs.toLong() + 120)
+                try {
+                    audioTrack.stop()
+                    audioTrack.release()
+                } catch (_: Exception) {}
             } catch (_: Exception) {}
         }.start()
     }

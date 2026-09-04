@@ -167,16 +167,16 @@ class SpatialObstacleSonarHelper(private val context: Context) : SensorEventList
                     else -> 587.33            // 遠方: D5 (穏やか)
                 }
 
-                val durationMs = if (distance < 0.6f) 45 else 70
+                val durationMs = if (distance < 0.6f) 70 else 100
                 val numSamples = (SAMPLE_RATE * (durationMs / 1000.0)).toInt()
-                val leftFactor = ((1.0f - pan) / 2.0f).coerceIn(0.05f, 0.95f)
-                val rightFactor = ((1.0f + pan) / 2.0f).coerceIn(0.05f, 0.95f)
+                val leftFactor = ((1.0f - pan) / 2.0f).coerceIn(0.08f, 0.92f)
+                val rightFactor = ((1.0f + pan) / 2.0f).coerceIn(0.08f, 0.92f)
 
                 val generatedSnd = ShortArray(numSamples * 2)
                 for (i in 0 until numSamples) {
                     val t = i.toDouble() / SAMPLE_RATE
                     val decay = 1.0 - (i.toDouble() / numSamples)
-                    val sample = (sin(2.0 * Math.PI * freq * t) * 32767 * decay * 0.7).toInt().toShort()
+                    val sample = (sin(2.0 * Math.PI * freq * t) * 32767 * decay * 0.75).toInt().toShort()
 
                     // インターリーブ・ステレオ書き込み (L, R)
                     generatedSnd[i * 2] = (sample * leftFactor).toInt().toShort()
@@ -209,7 +209,7 @@ class SpatialObstacleSonarHelper(private val context: Context) : SensorEventList
                         audioTrack.stop()
                         audioTrack.release()
                     } catch (_: Exception) {}
-                }, durationMs.toLong() + 50)
+                }, durationMs.toLong() + 150)
 
                 if (distance < 0.8f) {
                     performSonarVibration(40)
