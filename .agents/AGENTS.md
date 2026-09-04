@@ -12,6 +12,7 @@
 - Build & CI/CD Cloud-First Workflow Policy (クラウド優先ビルド ＆ 自動化の鉄則):
   - Unless Shinji explicitly instructs a local full build, delegate full batch build verification (Debug/Release APKs, Play Store Bundle .aab), artifact generation, and GitHub Release publishing entirely to GitHub Actions (`.github/workflows/build_and_release.yml`).
   - Local Workflow: Execute fast local compilation checks (e.g. `compileDebugKotlin`), automatically stage/commit changes with descriptive conventional commit messages, sync active branches (`main` and `alpha`), and push to remote (`origin/main` and `origin/alpha`).
+  - Tag & CI Release Trigger: Always ensure GitHub Actions is triggered upon feature updates / version bumps by pushing the corresponding version tag (`vX.Y.Z`) or triggering `workflow_dispatch`, and monitor GitHub Actions until the cloud build successfully passes.
   - Artifact File Naming Policy: Always include `serena` in all `.apk` and `.aab` file names across cloud and local:
     - Release APK: `app-serena-release.apk`
     - Debug APK: `app-serena-debug.apk`
