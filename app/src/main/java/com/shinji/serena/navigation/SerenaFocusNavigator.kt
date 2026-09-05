@@ -152,15 +152,17 @@ class SerenaFocusNavigator(
         // 画面上に実際に表示されている（可視領域内にある）要素のみに厳格フィルタリング！
         // （Pixel Launcher等のPagedViewで画面外にある前後のページの要素が混入してフォーカスが戻るのを完全防止）
         val visibleList = list.filter { node ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                if (!node.isVisibleToUser) return@filter false
-            }
             val rect = android.graphics.Rect()
             node.getBoundsInScreen(rect)
             if (rect.width() <= 0 || rect.height() <= 0) return@filter false
             // 画面境界外（オフスクリーン要素）を完全排除
             if (rect.right <= 0 || rect.left >= screenW) return@filter false
             if (rect.bottom <= 0 || rect.top >= screenH) return@filter false
+
+            // isVisibleToUser チェック: 画面矩形内に存在する場合、Composeやダイアログの false 誤判定を緩和
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                if (!node.isVisibleToUser && (rect.width() < 10 || rect.height() < 10)) return@filter false
+            }
             true
         }
 

@@ -34,6 +34,23 @@ class AccessibilityNodeEvaluator {
         val isActionable = node.isClickable || node.isCheckable || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && node.isScreenReaderFocusable)
         if (!isActionable) return false
 
+        // コンテナ（CardView, Layout, ViewGroup, Dialog, RecyclerView等）で、配下にインタラクティブな子要素がある場合は
+        // 自己充足コントロールとみなさず、子要素（ボタン、スイッチ等）を必ず個別に探索させる！
+        val className = node.className?.toString() ?: ""
+        if (className.contains("Layout", ignoreCase = true) ||
+            className.contains("ViewGroup", ignoreCase = true) ||
+            className.contains("CardView", ignoreCase = true) ||
+            className.contains("ScrollView", ignoreCase = true) ||
+            className.contains("ViewPager", ignoreCase = true) ||
+            className.contains("RecyclerView", ignoreCase = true) ||
+            className.contains("ListView", ignoreCase = true) ||
+            className.contains("Dialog", ignoreCase = true)
+        ) {
+            if (hasInteractiveChild(node)) {
+                return false
+            }
+        }
+
         // 有効な contentDescription または text を自身が直接持っているか判定
         val hasDirectLabel = (!node.contentDescription.isNullOrEmpty() && node.contentDescription.toString().trim().isNotEmpty()) ||
                 (!node.text.isNullOrEmpty() && node.text.toString().trim().isNotEmpty())
@@ -53,13 +70,16 @@ class AccessibilityNodeEvaluator {
         }
 
         if (hasLabel) {
-            val className = node.className?.toString() ?: ""
             // スクロールビューやページャー等の大枠コンテナ自体は除外
             if (className.contains("ScrollView", ignoreCase = true) ||
                 className.contains("ViewPager", ignoreCase = true) ||
                 className.contains("RecyclerView", ignoreCase = true) ||
                 className.contains("ListView", ignoreCase = true)
             ) {
+                return false
+            }
+            // 配下に別のアクション可能な子要素（別のアクションボタン等）を持つなら自己完結コントロールにしない
+            if (hasInteractiveChild(node)) {
                 return false
             }
             return true
@@ -219,18 +239,21 @@ class AccessibilityNodeEvaluator {
         }
     }
 
-    private fun hasInteractiveChild(node: AccessibilityNodeInfo): Boolean {
-        for (i in 0 until node.childCount.coerceAtMost(16)) {
+    fun hasInteractiveChild(node: AccessibilityNodeInfo, depth: Int = 0): Boolean {
+        if (depth > 6) return false
+        for (i in 0 until node.childCount.coerceAtMost(25)) {
             val child = node.getChild(i) ?: continue
             val childClass = child.className?.toString() ?: ""
             if (child.isClickable || child.isCheckable || child.isFocusable || isSwitchOrToggle(child) ||
                 childClass.contains("Button", ignoreCase = true) ||
                 childClass.contains("EditText", ignoreCase = true) ||
-                childClass.contains("SeekBar", ignoreCase = true)
+                childClass.contains("SeekBar", ignoreCase = true) ||
+                childClass.contains("QuickContactBadge", ignoreCase = true) ||
+                childClass.contains("Switch", ignoreCase = true)
             ) {
                 return true
             }
-            if (hasInteractiveChild(child)) {
+            if (child.childCount > 0 && hasInteractiveChild(child, depth + 1)) {
                 return true
             }
         }
@@ -259,18 +282,24 @@ class AccessibilityNodeEvaluator {
         return interactiveCount > 1
     }
 
-    fun hasFocusableChildren(node: AccessibilityNodeInfo): Boolean {
-        for (i in 0 until node.childCount.coerceAtMost(15)) {
+    fun hasFocusableChildren(node: AccessibilityNodeInfo, depth: Int = 0): Boolean {
+        if (depth > 6) return false
+        for (i in 0 until node.childCount.coerceAtMost(25)) {
             val child = node.getChild(i) ?: continue
             val rect = Rect()
             child.getBoundsInScreen(rect)
             if (!child.isVisibleToUser && (rect.isEmpty || rect.width() <= 0 || rect.height() <= 0)) continue
 
+            val childClass = child.className?.toString() ?: ""
             val childActionable = child.isClickable || child.isCheckable || child.isFocusable ||
-                    child.isLongClickable || child.safeIsHeading || isSwitchOrToggle(child) || isCheckableOrCompound(child)
+                    child.isLongClickable || child.safeIsHeading || isSwitchOrToggle(child) || isCheckableOrCompound(child) ||
+                    childClass.contains("Button", ignoreCase = true) || childClass.contains("QuickContactBadge", ignoreCase = true)
             val childDirectText = hasDirectTextOrLabel(child)
 
             if (childActionable || childDirectText) {
+                return true
+            }
+            if (child.childCount > 0 && hasFocusableChildren(child, depth + 1)) {
                 return true
             }
         }
