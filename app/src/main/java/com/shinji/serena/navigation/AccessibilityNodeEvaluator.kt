@@ -224,13 +224,18 @@ class AccessibilityNodeEvaluator {
                     return false
                 }
 
-                // 子要素にボタン等が存在しないクリック可能行（セレナメニュー項目や設定行など）は行全体を1つのターゲットとする
+                // 子要素にフォーカス可能な要素やテキストが存在する場合、コンテナ自体はターゲットとせず子要素に譲る！
+                val hasChildren = hasFocusableChildren(node)
+                if (hasChildren) {
+                    return false
+                }
+
+                // 子要素に要素が存在しないクリック可能行（セレナメニュー項目や設定行など）は行全体を1つのターゲットとする
                 if (isActionable) {
                     return true
                 }
 
-                val hasChildren = hasFocusableChildren(node)
-                return !hasChildren && hasDirect
+                return hasDirect
             }
 
             return isActionable || hasDirect

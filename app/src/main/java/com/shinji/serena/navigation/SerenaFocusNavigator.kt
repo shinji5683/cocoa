@@ -45,53 +45,48 @@ class SerenaFocusNavigator(
             return if (root != null) listOf(root) else emptyList()
         }
 
-        // 2. システム権限ダイアログ（PermissionController, PackageInstaller）を最優先検知！
+        // 2. システム権限ダイアログ（PermissionController, PackageInstaller, SafetyCenter）を最優先検知！
+        val activeRoot = service.rootInActiveWindow
+        if (activeRoot != null) {
+            val activePkg = activeRoot.packageName?.toString()?.lowercase() ?: ""
+            if (activePkg.contains("permissioncontroller") || activePkg.contains("packageinstaller") || activePkg.contains("safetycenter")) {
+                return listOf(activeRoot)
+            }
+        }
+
         try {
             val wins = service.windows
             if (!wins.isNullOrEmpty()) {
-                val permissionWin = wins.firstOrNull { w ->
-                    val pkg = w.root?.packageName?.toString()?.lowercase() ?: ""
-                    pkg.contains("permissioncontroller") || pkg.contains("packageinstaller")
-                }
-                if (permissionWin?.root != null) {
-                    return listOf(permissionWin.root!!)
+                // ウィンドウ群から権限ダイアログを検出
+                for (w in wins) {
+                    val r = w.root ?: continue
+                    val pkg = r.packageName?.toString()?.lowercase() ?: ""
+                    if (pkg.contains("permissioncontroller") || pkg.contains("packageinstaller") || pkg.contains("safetycenter")) {
+                        return listOf(r)
+                    }
                 }
 
-                val activeRoot = service.rootInActiveWindow
                 val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
-                if (activePkg.contains("permissioncontroller") || activePkg.contains("packageinstaller")) {
-                    return listOf(activeRoot)
-                }
-
                 val isSystemUiActive = activePkg.contains("systemui")
 
-                // 現在アクティブなアプリ (activePkg) に属するウィンドウ、またはアクティブ/フォーカス中のウィンドウのみを抽出！
-                val currentAppWins = wins.filter { w ->
-                    if (w.type != AccessibilityWindowInfo.TYPE_APPLICATION) return@filter false
-                    val root = w.root ?: return@filter false
-                    val pkg = root.packageName?.toString() ?: ""
-                    (activePkg.isNotEmpty() && pkg == activePkg) || w.isActive || w.isFocused
-                }
-
-                // 現在のアプリの中で、最前面レイヤーのウィンドウ（ダイアログ・ボトムシート）を特定
-                val topDialogWin = currentAppWins.maxByOrNull { it.layer }
+                // アプリウィンドウの中で最前面（最高レイヤー：ダイアログやボトムシート）を特定
+                val appWins = wins.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
+                val topDialogWin = appWins.maxByOrNull { it.layer }
 
                 val targetWins = wins.filter { w ->
                     when (w.type) {
                         AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY -> true
                         AccessibilityWindowInfo.TYPE_INPUT_METHOD -> true
                         AccessibilityWindowInfo.TYPE_APPLICATION -> {
-                            val root = w.root ?: return@filter false
-                            val pkg = root.packageName?.toString() ?: ""
-                            // 現在アクティブなアプリ以外の無関係なバックグラウンドアプリは完全除外！
-                            if (activePkg.isNotEmpty() && pkg != activePkg && !w.isActive && !w.isFocused) {
-                                return@filter false
-                            }
-                            // 同一アプリ内で複数のウィンドウがある場合（ダイアログ/ボトムシート展開時）、最前面ウィンドウを優先！
-                            if (currentAppWins.size > 1 && topDialogWin != null) {
-                                w.id == topDialogWin.id
-                            } else {
+                            // 最前面のダイアログ/シートが存在する場合はそのウィンドウを最優先！
+                            if (topDialogWin != null && w.id == topDialogWin.id) {
                                 true
+                            } else if (topDialogWin == null) {
+                                val r = w.root ?: return@filter false
+                                val pkg = r.packageName?.toString() ?: ""
+                                (activePkg.isNotEmpty() && pkg == activePkg) || w.isActive || w.isFocused
+                            } else {
+                                false
                             }
                         }
                         AccessibilityWindowInfo.TYPE_SYSTEM -> isSystemUiActive
@@ -109,7 +104,6 @@ class SerenaFocusNavigator(
         } catch (_: Exception) {}
 
         if (list.isEmpty()) {
-            val activeRoot = service.rootInActiveWindow
             if (activeRoot != null) {
                 list.add(activeRoot)
             }
@@ -252,17 +246,18 @@ class SerenaFocusNavigator(
         }
 
         val isTarget = evaluator.isFocusableTarget(node)
-        val hasFocusableChildren = if (isPinKeyNode) false else evaluator.hasFocusableChildren(node)
 
-        // 1. 子要素にフォーカス可能要素を持たない意味のあるノード（末端ノード/ボタン/テキスト/PIN入力欄等）なら登録
-        if (isTarget && !hasFocusableChildren) {
-            if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
-                list.add(node)
+        // 1. 子要素を持たない末端ノード（単一ボタン、テキストラベル、PINキー、入力欄等）なら直接登録して終了
+        if (node.childCount == 0) {
+            if (isTarget) {
+                if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
+                    list.add(node)
+                }
             }
             return
         }
 
-        // 2. 子要素が存在する場合、全子要素を必ず再帰探索！（スクロールビュー下部の画面外要素も確実に取得）
+        // 2. 子要素が存在する場合、全子要素を必ず再帰探索！（ダイアログ内のボタン、Compose要素、カード内の要素等）
         var addedAnyChild = false
         val initialSize = list.size
         for (i in 0 until node.childCount) {
