@@ -472,12 +472,9 @@ class SerenaFocusNavigator(
 
     fun setFocusAndShowOnScreen(targetNode: AccessibilityNodeInfo) {
         try {
+            // 親ノードを遡ってSHOW_ON_SCREENを連打すると、画面外のタブバーやルート全体がスクロールして誤作動するため、
+            // targetNode自身にのみSHOW_ON_SCREENを実行する！
             targetNode.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id)
-            var p = targetNode.parent
-            while (p != null) {
-                p.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id)
-                p = p.parent
-            }
         } catch (_: Exception) {}
 
         val focused = targetNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)

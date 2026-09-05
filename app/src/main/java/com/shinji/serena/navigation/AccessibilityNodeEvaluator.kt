@@ -38,7 +38,21 @@ class AccessibilityNodeEvaluator {
         val hasDirectLabel = (!node.contentDescription.isNullOrEmpty() && node.contentDescription.toString().trim().isNotEmpty()) ||
                 (!node.text.isNullOrEmpty() && node.text.toString().trim().isNotEmpty())
 
-        if (hasDirectLabel) {
+        var hasLabel = hasDirectLabel
+        if (!hasLabel && node.childCount in 1..2) {
+            // 電話アプリの通話ボタンのように、親がclickableで子に非clickableのラベル（desc='通話'等）がある場合
+            for (i in 0 until node.childCount) {
+                val c = node.getChild(i) ?: continue
+                val cDesc = c.contentDescription?.toString()?.trim() ?: ""
+                val cText = c.text?.toString()?.trim() ?: ""
+                if (!c.isClickable && (cDesc.isNotEmpty() || cText.isNotEmpty())) {
+                    hasLabel = true
+                    break
+                }
+            }
+        }
+
+        if (hasLabel) {
             val className = node.className?.toString() ?: ""
             // スクロールビューやページャー等の大枠コンテナ自体は除外
             if (className.contains("ScrollView", ignoreCase = true) ||
@@ -293,7 +307,14 @@ class AccessibilityNodeEvaluator {
             return id1 == id2
         }
 
-        return false
+        // viewIdが無い場合でも、同一ウィンドウ・同一座標・同一クラス名なら同一ノードとして判定！
+        val t1 = node1.text?.toString() ?: ""
+        val t2 = node2.text?.toString() ?: ""
+        val d1 = node1.contentDescription?.toString() ?: ""
+        val d2 = node2.contentDescription?.toString() ?: ""
+        if (t1 == t2 && d1 == d2) return true
+
+        return true
     }
 
     fun getNodeText(node: AccessibilityNodeInfo?): String {
