@@ -72,7 +72,7 @@ class SerenaFocusNavigator(
             val wins = service.windows
             if (!wins.isNullOrEmpty()) {
                 val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
-                val isSystemUiActive = activePkg.contains("systemui")
+                val isSystemUiActive = activePkg.contains("systemui") || wins.any { it.type == AccessibilityWindowInfo.TYPE_SYSTEM && (it.isActive || it.isFocused) }
 
                 // アプリウィンドウの中で最前面（最高レイヤー：ダイアログやボトムシート）を特定
                 val appWins = wins.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
@@ -91,7 +91,7 @@ class SerenaFocusNavigator(
                                 (activePkg.isNotEmpty() && pkg == activePkg) || w.isActive || w.isFocused
                             }
                         }
-                        AccessibilityWindowInfo.TYPE_SYSTEM -> isSystemUiActive
+                        AccessibilityWindowInfo.TYPE_SYSTEM -> isSystemUiActive || w.isActive || w.isFocused
                         else -> false
                     }
                 }.sortedBy { getWindowPriority(it) }
@@ -122,6 +122,10 @@ class SerenaFocusNavigator(
         // IME（ソフトウェアキーボード）
         if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
             return 1
+        }
+        // アクティブまたはフォーカスされたウィンドウ（通知シェード、システムダイアログ含む）は最優先！
+        if (w.isActive || w.isFocused) {
+            return 5
         }
         // レイヤー値の高いアプリケーションウィンドウ（ダイアログやシート等）
         if (w.type == AccessibilityWindowInfo.TYPE_APPLICATION) {
