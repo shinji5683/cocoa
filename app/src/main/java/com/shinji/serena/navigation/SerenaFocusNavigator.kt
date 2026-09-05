@@ -65,19 +65,31 @@ class SerenaFocusNavigator(
 
                 val isSystemUiActive = activePkg.contains("systemui")
 
-                // ダイアログ・モーダルウィンドウ・ボトムシート（最前面レイヤーのAPPLICATIONウィンドウ）を特定！
-                val appWins = wins.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
-                // レイヤー値が最大（画面の一番手前にある）ウィンドウを最優先！
-                val topAppWin = appWins.maxByOrNull { it.layer }
+                // 現在アクティブなアプリ (activePkg) に属するウィンドウ、またはアクティブ/フォーカス中のウィンドウのみを抽出！
+                val currentAppWins = wins.filter { w ->
+                    if (w.type != AccessibilityWindowInfo.TYPE_APPLICATION) return@filter false
+                    val root = w.root ?: return@filter false
+                    val pkg = root.packageName?.toString() ?: ""
+                    (activePkg.isNotEmpty() && pkg == activePkg) || w.isActive || w.isFocused
+                }
+
+                // 現在のアプリの中で、最前面レイヤーのウィンドウ（ダイアログ・ボトムシート）を特定
+                val topDialogWin = currentAppWins.maxByOrNull { it.layer }
 
                 val targetWins = wins.filter { w ->
                     when (w.type) {
                         AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY -> true
                         AccessibilityWindowInfo.TYPE_INPUT_METHOD -> true
                         AccessibilityWindowInfo.TYPE_APPLICATION -> {
-                            // モーダルダイアログ・ボトムシート等で複数のAPPLICATIONウィンドウが存在する場合、最前面ウィンドウ(topAppWin)を最優先！
-                            if (appWins.size > 1 && topAppWin != null) {
-                                w.id == topAppWin.id
+                            val root = w.root ?: return@filter false
+                            val pkg = root.packageName?.toString() ?: ""
+                            // 現在アクティブなアプリ以外の無関係なバックグラウンドアプリは完全除外！
+                            if (activePkg.isNotEmpty() && pkg != activePkg && !w.isActive && !w.isFocused) {
+                                return@filter false
+                            }
+                            // 同一アプリ内で複数のウィンドウがある場合（ダイアログ/ボトムシート展開時）、最前面ウィンドウを優先！
+                            if (currentAppWins.size > 1 && topDialogWin != null) {
+                                w.id == topDialogWin.id
                             } else {
                                 true
                             }
