@@ -20,6 +20,8 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import com.shinji.serena.ai.FoodAndExpirationScannerHelper
@@ -30,7 +32,7 @@ import java.util.concurrent.Executors
 
 /**
  * リアルタイムAIカメラ実況アクティビティ
- * CameraX + ML Kit (日本語OCR & 顔・服装・年代認識 & バーコード) + Gemini Nano を用いて、
+ * CameraX + ML Kit (日本語OCR & 顔・服装・年代認識 & バーコード & 物体検出) + Gemini Nano を用いて、
  * カメラに映った世界をリアルタイムに音声実況します。
  * 音声ガイドが途中で遮られず最後まで落ち着いて聞けるよう、発声中は待機制御を行います。
  */
@@ -55,6 +57,14 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
             .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+            .enableTracking()
+            .build()
+    )
+    private val objectDetector = ObjectDetection.getClient(
+        ObjectDetectorOptions.Builder()
+            .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+            .enableClassification()
+            .enableMultipleObjects()
             .build()
     )
 
@@ -505,43 +515,104 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             )
                         }
 
-                        textRecognizer.process(image)
-                            .addOnSuccessListener { visionText ->
-                                val recognizedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
-                                val sceneSummary = geminiNanoEngine.describeSceneComprehensive(
-                                    lightingLevel = brightnessLevel,
-                                    persons = persons,
-                                    objects = emptyList(),
-                                    texts = recognizedTexts
-                                )
-
-                                val finalAnnouncement = if (sceneSummary.isNotEmpty()) {
-                                    sceneSummary
-                                } else if (persons.isNotEmpty()) {
-                                    val p = persons[0]
-                                    val clothesPart = if (p.clothingColor.isNotEmpty() && p.clothingColor != "服") "${p.clothingColor}を着た" else ""
-                                    val vibePart = if (p.emotionalMeaning.endsWith("です") || p.emotionalMeaning.endsWith("ます")) p.emotionalMeaning else "${p.emotionalMeaning}です"
-                                    "${p.position}（${p.distanceMeters}）に、${clothesPart}${p.genderAndAge}が1人います。${p.gazeAndPose}。表情は${p.expression}で、${vibePart}。"
-                                } else if (recognizedTexts.isNotEmpty()) {
-                                    "文字を検出: ${recognizedTexts.take(2).joinToString("、")}"
-                                } else {
-                                    "${brightnessLevel}。前方クリアです。周囲を確認中…"
-                                }
-
-                                if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 4000)) {
-                                    lastSpokenText = finalAnnouncement
-                                    lastSpokenTime = currentTime
-                                    runOnUiThread {
-                                        tvStatus.text = "🌐 リアルタイム実況: $finalAnnouncement"
+                        objectDetector.process(image)
+                            .addOnSuccessListener { detectedObjects ->
+                                val objectDetails = detectedObjects.mapNotNull { obj ->
+                                    val box = obj.boundingBox
+                                    val centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1)
+                                    val pos = when {
+                                        centerX < 0.25f -> "左"
+                                        centerX in 0.25f..0.40f -> "左斜め前"
+                                        centerX in 0.40f..0.60f -> "正面"
+                                        centerX in 0.60f..0.75f -> "右斜め前"
+                                        else -> "右"
                                     }
-                                    speak(finalAnnouncement, TextToSpeech.QUEUE_FLUSH)
+                                    val widthRatio = box.width().toFloat() / imgWidth.coerceAtLeast(1)
+                                    val dist = when {
+                                        widthRatio > 0.45f -> "すぐ近く（約40cm）"
+                                        widthRatio > 0.25f -> "近く（約80cm）"
+                                        widthRatio > 0.12f -> "約1.5m"
+                                        else -> "約2.5m"
+                                    }
+                                    val labelText = obj.labels.firstOrNull()?.text ?: ""
+                                    val name = translateObjectLabel(labelText)
+                                    if (name.isNotEmpty()) {
+                                        "${pos} ${dist}に${name}"
+                                    } else null
                                 }
+
+                                textRecognizer.process(image)
+                                    .addOnSuccessListener { visionText ->
+                                        val recognizedTexts = visionText.textBlocks.mapNotNull { it.text.trim().takeIf { t -> t.isNotEmpty() } }
+                                        val sceneSummary = geminiNanoEngine.describeSceneComprehensive(
+                                            lightingLevel = brightnessLevel,
+                                            persons = persons,
+                                            objects = objectDetails,
+                                            texts = recognizedTexts
+                                        )
+
+                                        val finalAnnouncement = if (sceneSummary.isNotEmpty()) {
+                                            sceneSummary
+                                        } else if (persons.isNotEmpty()) {
+                                            val p = persons[0]
+                                            val clothesPart = if (p.clothingColor.isNotEmpty() && p.clothingColor != "服") "${p.clothingColor}を着た" else ""
+                                            val vibePart = if (p.emotionalMeaning.endsWith("です") || p.emotionalMeaning.endsWith("ます")) p.emotionalMeaning else "${p.emotionalMeaning}です"
+                                            "${p.position}（${p.distanceMeters}）に、${clothesPart}${p.genderAndAge}が1人います。${p.gazeAndPose}。表情は${p.expression}で、${vibePart}。"
+                                        } else if (objectDetails.isNotEmpty()) {
+                                            "周囲の物体: ${objectDetails.take(2).joinToString("、")}"
+                                        } else if (recognizedTexts.isNotEmpty()) {
+                                            "文字を検出: ${recognizedTexts.take(2).joinToString("、")}"
+                                        } else {
+                                            "${brightnessLevel}。前方クリアです。周囲を確認中…"
+                                        }
+
+                                        if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 3500)) {
+                                            lastSpokenText = finalAnnouncement
+                                            lastSpokenTime = currentTime
+                                            runOnUiThread {
+                                                tvStatus.text = "🌐 リアルタイム実況: $finalAnnouncement"
+                                            }
+                                            speak(finalAnnouncement, TextToSpeech.QUEUE_FLUSH)
+                                        }
+                                    }
+                                    .addOnCompleteListener {
+                                        imageProxy.close()
+                                    }
+                            }
+                            .addOnFailureListener {
+                                imageProxy.close()
                             }
                     }
-                    .addOnCompleteListener {
+                    .addOnFailureListener {
                         imageProxy.close()
                     }
             }
+        }
+    }
+
+    private fun translateObjectLabel(label: String): String {
+        val lower = label.lowercase()
+        return when {
+            lower.contains("food") -> "食品"
+            lower.contains("beverage") || lower.contains("drink") || lower.contains("bottle") -> "ペットボトル・飲み物"
+            lower.contains("cup") || lower.contains("mug") -> "コップ"
+            lower.contains("home good") || lower.contains("furniture") -> "家具"
+            lower.contains("chair") || lower.contains("seat") -> "椅子"
+            lower.contains("table") || lower.contains("desk") -> "机"
+            lower.contains("couch") || lower.contains("sofa") -> "ソファ"
+            lower.contains("door") -> "ドア"
+            lower.contains("plant") || lower.contains("flower") -> "観葉植物"
+            lower.contains("electronic") || lower.contains("gadget") -> "電子機器"
+            lower.contains("laptop") || lower.contains("computer") -> "ノートパソコン"
+            lower.contains("phone") || lower.contains("mobile") -> "スマートフォン"
+            lower.contains("book") || lower.contains("magazine") -> "本・書類"
+            lower.contains("bag") || lower.contains("backpack") -> "カバン"
+            lower.contains("shoe") || lower.contains("footwear") -> "靴"
+            lower.contains("clock") || lower.contains("watch") -> "時計"
+            lower.contains("glasses") -> "メガネ"
+            lower.contains("key") -> "鍵"
+            lower.isNotEmpty() -> label
+            else -> "身の回りの物"
         }
     }
 
@@ -569,5 +640,6 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         textRecognizer.close()
         barcodeScanner.close()
         faceDetector.close()
+        objectDetector.close()
     }
 }

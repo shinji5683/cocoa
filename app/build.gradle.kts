@@ -10,8 +10,8 @@ android {
         applicationId = "com.shinji.serena"
         minSdk = 26
         targetSdk = 37
-        versionCode = 6
-        versionName = "1.5.0"
+        versionCode = 7
+        versionName = "1.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -107,12 +107,12 @@ dependencies {
     // Google AI / Gemini Nano & Generative AI Prompt API Latest
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
-    // CameraX for Live Vision and Camera Capture Latest
-    implementation("androidx.camera:camera-core:1.4.1")
-    implementation("androidx.camera:camera-camera2:1.4.1")
-    implementation("androidx.camera:camera-lifecycle:1.4.1")
-    implementation("androidx.camera:camera-view:1.4.1")
-    implementation("androidx.camera:camera-extensions:1.4.1")
+    // CameraX for Live Vision and Camera Capture Latest (v1.6.2)
+    implementation("androidx.camera:camera-core:1.6.2")
+    implementation("androidx.camera:camera-camera2:1.6.2")
+    implementation("androidx.camera:camera-lifecycle:1.6.2")
+    implementation("androidx.camera:camera-view:1.6.2")
+    implementation("androidx.camera:camera-extensions:1.6.2")
 
     // Unit Testing
     testImplementation("junit:junit:4.13.2")

@@ -40,8 +40,12 @@ object FoodAndExpirationScannerHelper {
         Pattern.compile("(?i)(賞味期限|消費期限|賞味|消費|期限)?[:：\\s]*([2-3][0-9]{3})[年./\\-](0?[1-9]|1[0-2])[月./\\-](0?[1-9]|[12][0-9]|3[01])[日]?"),
         // パターン2: 26.09.15 / 26/09/15 (西暦下2桁)
         Pattern.compile("(?i)(賞味期限|消費期限|賞味|消費|期限)?[:：\\s]*([2-3][0-9])[./\\-](0?[1-9]|1[0-2])[./\\-](0?[1-9]|[12][0-9]|3[01])"),
-        // パターン3: 9月15日
-        Pattern.compile("(?i)(賞味期限|消費期限|賞味|消費|期限)?[:：\\s]*(0?[1-9]|1[0-2])月(0?[1-9]|[12][0-9]|3[01])日")
+        // パターン3: 和暦 R8.9.15 / 令和8年9月15日
+        Pattern.compile("(?i)(賞味期限|消費期限|賞味|消費|期限)?[:：\\s]*(?:令|令和|R)([1-9]|1[0-9])[年./\\-](0?[1-9]|1[0-2])[月./\\-](0?[1-9]|[12][0-9]|3[01])[日]?"),
+        // パターン4: 9月15日
+        Pattern.compile("(?i)(賞味期限|消費期限|賞味|消費|期限)?[:：\\s]*(0?[1-9]|1[0-2])月(0?[1-9]|[12][0-9]|3[01])日"),
+        // パターン5: 年月のみ 2026.09 / 2026年9月 / 26.09
+        Pattern.compile("(?i)(賞味期限|消費期限|賞味|消費|期限)?[:：\\s]*([2-3][0-9]{3}|[2-3][0-9])[年./\\-](0?[1-9]|1[0-2])[月]?$")
     )
 
     // 食品カテゴリとキーワード定義
@@ -90,7 +94,19 @@ object FoodAndExpirationScannerHelper {
                 val month: Int
                 val day: Int
 
-                if (matcher.groupCount() >= 4 && matcher.group(4) != null) {
+                if (pattern == DATE_PATTERNS[2]) {
+                    // 和暦（令和）
+                    val reiwaYear = matcher.group(2)?.toIntOrNull() ?: 8
+                    year = 2018 + reiwaYear
+                    month = matcher.group(3)?.toIntOrNull() ?: 1
+                    day = matcher.group(4)?.toIntOrNull() ?: 1
+                } else if (pattern == DATE_PATTERNS[4]) {
+                    // 年月のみ
+                    val rawYear = matcher.group(2)?.toIntOrNull() ?: currentYear
+                    year = if (rawYear < 100) 2000 + rawYear else rawYear
+                    month = matcher.group(3)?.toIntOrNull() ?: 1
+                    day = 1
+                } else if (matcher.groupCount() >= 4 && matcher.group(4) != null) {
                     val rawYear = matcher.group(2)?.toIntOrNull() ?: currentYear
                     year = if (rawYear < 100) 2000 + rawYear else rawYear
                     month = matcher.group(3)?.toIntOrNull() ?: 1
