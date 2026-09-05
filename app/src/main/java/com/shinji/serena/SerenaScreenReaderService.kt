@@ -47,6 +47,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         const val KEY_SHAKE_THRESHOLD = "shake_threshold"
         const val KEY_TALKBACK_MODE = "key_talkback_mode"
         const val KEY_CHIME_STYLE = "key_chime_style"
+        const val KEY_ANNOUNCE_OPERATION_ACTIONS = "announce_operation_actions"
         const val CHIME_STYLE_NHK = "nhk_radio"
         const val CHIME_STYLE_CUTE = "cute_beep"
         const val CHIME_STYLE_BELL = "japanese_bell"
@@ -55,6 +56,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             private set
 
         fun isServiceRunning(): Boolean = instance != null
+        fun isOperationActionsAnnounceEnabled(context: Context): Boolean {
+            val p = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            return p.getBoolean(KEY_ANNOUNCE_OPERATION_ACTIONS, false)
+        }
     }
 
     var focusNavigator: com.shinji.serena.navigation.SerenaFocusNavigator? = null
@@ -602,7 +607,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
         if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = true) == true) {
             soundHelper?.playScroll(isForward = true)
-            speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
             onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ it(true) }, 350) }
             return
         }
@@ -623,7 +628,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
         if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = false) == true) {
             soundHelper?.playScroll(isForward = false)
-            speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
             onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ it(true) }, 350) }
             return
         }
@@ -673,7 +678,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(onComplete, 200)
                 } else {
                     val dirStr = if (swipeUp) "次" else "前"
-                    speak("${dirStr}へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+                    if (isOperationActionsAnnounceEnabled(this@SerenaScreenReaderService)) {
+                        speak("${dirStr}へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+                    }
                 }
             }
         }, null)
@@ -707,7 +714,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(onComplete, 350)
                 } else {
                     val pageStr = if (swipeLeft) "次" else "前"
-                    speak("${pageStr}のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+                    if (isOperationActionsAnnounceEnabled(this@SerenaScreenReaderService)) {
+                        speak("${pageStr}のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+                    }
                 }
             }
 
@@ -1063,7 +1072,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastScrollTime = now
 
         soundHelper?.playScroll(isForward = true)
-        speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+        if (isOperationActionsAnnounceEnabled(this)) speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
         Log.i(TAG, "scrollHorizontalForward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
@@ -1098,7 +1107,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastScrollTime = now
 
         soundHelper?.playScroll(isForward = false)
-        speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+        if (isOperationActionsAnnounceEnabled(this)) speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
         Log.i(TAG, "scrollHorizontalBackward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
@@ -1140,7 +1149,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
         if (scrollNode != null && focusNavigator?.performScroll(scrollNode, forward = true) == true) {
-            speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
@@ -1160,7 +1169,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+        if (isOperationActionsAnnounceEnabled(this)) speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = true, horizontal = false)
         return true
     }
@@ -1178,7 +1187,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
         if (scrollNode != null && focusNavigator?.performScroll(scrollNode, forward = false) == true) {
-            speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
@@ -1198,7 +1207,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return true
         }
 
-        speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+        if (isOperationActionsAnnounceEnabled(this)) speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = false, horizontal = false)
         return true
     }
@@ -1795,7 +1804,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             if (logicalSuccess) {
-                if (text.isNotEmpty()) speak("$text を実行", TextToSpeech.QUEUE_FLUSH)
+                if (isOperationActionsAnnounceEnabled(this) && text.isNotEmpty()) {
+                    speak("$text を実行", TextToSpeech.QUEUE_FLUSH)
+                }
                 return
             }
         }
@@ -1806,7 +1817,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             if (target.isClickable || target.isCheckable) {
                 if (target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
                     val text = getNodeText(focusedNode)
-                    if (text.isNotEmpty()) speak("$text を実行", TextToSpeech.QUEUE_FLUSH)
+                    if (isOperationActionsAnnounceEnabled(this) && text.isNotEmpty()) {
+                        speak("$text を実行", TextToSpeech.QUEUE_FLUSH)
+                    }
                     return
                 }
             }
@@ -1816,7 +1829,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         // 3. ACTION_SELECT の試行
         if (focusedNode.performAction(AccessibilityNodeInfo.ACTION_SELECT)) {
             val text = getNodeText(focusedNode)
-            if (text.isNotEmpty()) speak("$text 選択", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this) && text.isNotEmpty()) {
+                speak("$text 選択", TextToSpeech.QUEUE_FLUSH)
+            }
             return
         }
 
@@ -1841,7 +1856,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         // 1. 直近ノードの ACTION_CLICK
         if (focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
             soundHelper?.playClick()
-            speak(announceText, TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) {
+                speak(announceText, TextToSpeech.QUEUE_FLUSH)
+            }
             return true
         }
 
@@ -3164,7 +3181,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         // 縦スクロール
                         if (dy > 0) "下へスクロールしました" else "上へスクロールしました"
                     }
-                    speak(dirText, TextToSpeech.QUEUE_ADD)
+                    if (isOperationActionsAnnounceEnabled(this)) {
+                        speak(dirText, TextToSpeech.QUEUE_ADD)
+                    }
                 }
 
                 // スクロール後に画面内の最初の要素に自動フォーカス＆音声ガイド！

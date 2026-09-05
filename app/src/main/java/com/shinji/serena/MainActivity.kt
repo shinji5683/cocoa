@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
             setupTtsControls()
             setupHourlyChimeSection()
             setupCallAssistantSection()
+            setupOperationGuideSection()
             setupShakeSensitivitySection()
             setupDeveloperCallSection()
             setupTestBench()
@@ -487,6 +488,17 @@ class MainActivity : AppCompatActivity() {
         binding.switchCallPeriodicAnnounce.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean(SerenaScreenReaderService.KEY_CALL_PERIODIC_ANNOUNCE, isChecked).apply()
             val statusStr = if (isChecked) "通話中の経過時間定期読み上げを有効にしました" else "通話中の経過時間定期読み上げを無効にしました"
+            Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupOperationGuideSection() {
+        val isEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_ANNOUNCE_OPERATION_ACTIONS, false)
+        binding.switchAnnounceOperationActions.isChecked = isEnabled
+
+        binding.switchAnnounceOperationActions.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_ANNOUNCE_OPERATION_ACTIONS, isChecked).apply()
+            val statusStr = if (isChecked) "操作ガイド音声を有効にしました（初心者向け）" else "操作ガイド音声を無効にしました（ノイズ低減・推奨）"
             Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
         }
     }

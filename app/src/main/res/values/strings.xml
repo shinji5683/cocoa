@@ -57,6 +57,9 @@
     <string name="label_call_periodic_switch">通話中の経過時間を1分ごとに定期アナウンス</string>
     <string name="desc_call_periodic_switch">※有効にすると通話中に1分ごとの経過時間を読み上げます（デフォルトOFF推奨）。開始・終了時の案内は常に動作します。</string>
 
+    <string name="label_announce_operation_actions">詳細な操作ガイド音声（初心者向け）</string>
+    <string name="desc_announce_operation_actions">画面スクロール時やボタン実行時に「下へスクロールしました」「実行」等の動作ガイドを音声で読み上げます。オフ（推奨）の場合、軽快な効果音と振動のみで通知し、遷移先の内容を最速で読み上げます。</string>
+
     <string name="title_security_health">OS環境 ＆ セキュリティ安全診断</string>
     <string name="btn_recheck_security">端末セキュリティを再診断</string>
 

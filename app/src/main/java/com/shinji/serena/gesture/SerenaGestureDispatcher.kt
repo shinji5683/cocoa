@@ -119,7 +119,9 @@ class SerenaGestureDispatcher(
                     val directSuccess = focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
                     if (directSuccess) {
                         service.soundHelper?.playClick()
-                        service.speak(announceText, TextToSpeech.QUEUE_FLUSH)
+                        if (SerenaScreenReaderService.isOperationActionsAnnounceEnabled(service)) {
+                            service.speak(announceText, TextToSpeech.QUEUE_FLUSH)
+                        }
                         return true
                     }
 
@@ -129,7 +131,9 @@ class SerenaGestureDispatcher(
                         if (parent.isClickable || parent.isCheckable) {
                             if (parent.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) {
                                 service.soundHelper?.playClick()
-                                service.speak(announceText, TextToSpeech.QUEUE_FLUSH)
+                                if (SerenaScreenReaderService.isOperationActionsAnnounceEnabled(service)) {
+                                    service.speak(announceText, TextToSpeech.QUEUE_FLUSH)
+                                }
                                 return true
                             }
                         }

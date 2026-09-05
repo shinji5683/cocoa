@@ -53,6 +53,9 @@
     <string name="label_hourly_chime_switch">I-on ang Hourly Chime</string>
     <string name="btn_test_hourly_chime">Subukan ang Chime at Boses</string>
 
+    <string name="label_announce_operation_actions">Detalyadong Boses ng Gabay sa Pagkilos (Para sa Nagsisimula)</string>
+    <string name="desc_announce_operation_actions">Binabasa ang mga gabay sa pagkilos tulad ng pag-scroll o pag-execute. Kapag naka-off (inirerekomenda), tanging tunog at vibration lang ang maririnig para mas mabilis marinig ang nilalaman.</string>
+
     <string name="title_security_health">Kaligtasan at Diagnostiko ng OS</string>
     <string name="btn_recheck_security">Muling Suriin ang Kaligtasan</string>
 
