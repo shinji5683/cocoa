@@ -17,7 +17,9 @@
     - Release APK: `app-serena-release.apk`
     - Debug APK: `app-serena-debug.apk`
     - Play Store Bundle: `serena-release.aab`
-  - When Shinji explicitly requests local builds or local device testing, execute `build_apk.ps1` (with 16KB alignment, signing, local sync to Desktop/Downloads) or `deploy_usb.ps1` to quickly deploy to the connected device.
+  - Local Build Strictly Prohibited & Cloud Release Fetching Policy (ローカルビルド絶対禁止・GitHubリリース取得の鉄則):
+    - NEVER execute local builds (e.g. ./gradlew assembleRelease, build_apk.ps1) on the local machine under any circumstances!
+    - Always download the officially compiled release APK directly from GitHub Releases (`gh release download <tag> -p "app-serena-release.apk" --clobber`) and install that APK onto connected test devices.
 - Automated Build, Deploy & Accessibility Auto-Activation Workflow:
   - Whenever completing a build or code modification, automatically proceed to deploy/install the generated APK onto connected Android devices (`adb install -r ...`).
   - Immediately auto-enable the `serena` Accessibility Service on the target device via ADB so Shinji does not need to manually open settings and toggle it:
