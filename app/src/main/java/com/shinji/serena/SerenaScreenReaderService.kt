@@ -3014,6 +3014,31 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
+                val isPermission = pkgName.contains("permissioncontroller") || pkgName.contains("packageinstaller")
+                if (isPermission) {
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        val nodes = collectAccessibleNodes()
+                        if (nodes.isNotEmpty()) {
+                            val msgNode = nodes.find { 
+                                val id = it.viewIdResourceName?.lowercase() ?: ""
+                                id.contains("permission_message") || id.contains("message")
+                            } ?: nodes.find { !it.isClickable && !it.text.isNullOrEmpty() }
+                            val msgText = msgNode?.text?.toString() ?: "権限の許可を求めています。"
+
+                            val firstButton = nodes.find { 
+                                it.isClickable && (it.className?.toString()?.contains("Button") == true)
+                            } ?: nodes[0]
+
+                            focusNavigator?.setFocusAndShowOnScreen(firstButton)
+                            if (isTtsReady) {
+                                speak("【確認】$msgText", TextToSpeech.QUEUE_FLUSH)
+                                announceNode(firstButton, TextToSpeech.QUEUE_ADD)
+                            }
+                        }
+                    }, 150)
+                    return
+                }
+
                 val isDialog = className.contains("Dialog", ignoreCase = true) || className.contains("AlertDialog", ignoreCase = true)
                 if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
                     // SystemUI / ロック画面 / Bouncer のウィンドウ検知時は、未フォーカス時のみPIN入力欄を捕捉

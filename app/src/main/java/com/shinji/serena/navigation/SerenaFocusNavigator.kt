@@ -45,12 +45,24 @@ class SerenaFocusNavigator(
             return if (root != null) listOf(root) else emptyList()
         }
 
-        // 2. 通常時: service.windows から最前面のフォーカスウィンドウを優先取得！
+        // 2. システム権限ダイアログ（PermissionController, PackageInstaller）を最優先検知！
         try {
             val wins = service.windows
             if (!wins.isNullOrEmpty()) {
+                val permissionWin = wins.firstOrNull { w ->
+                    val pkg = w.root?.packageName?.toString()?.lowercase() ?: ""
+                    pkg.contains("permissioncontroller") || pkg.contains("packageinstaller")
+                }
+                if (permissionWin?.root != null) {
+                    return listOf(permissionWin.root!!)
+                }
+
                 val activeRoot = service.rootInActiveWindow
                 val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
+                if (activePkg.contains("permissioncontroller") || activePkg.contains("packageinstaller")) {
+                    return listOf(activeRoot)
+                }
+
                 val isSystemUiActive = activePkg.contains("systemui")
 
                 // ダイアログ・モーダルウィンドウ（最前面のフォーカス中/アクティブなAPPLICATIONウィンドウ）を特定
