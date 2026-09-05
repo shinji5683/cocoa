@@ -29,8 +29,37 @@ class AccessibilityNodeEvaluator {
                 className.contains("CompoundButton", ignoreCase = true)
     }
 
+    fun isSelfContainedControl(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+        val isActionable = node.isClickable || node.isCheckable || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && node.isScreenReaderFocusable)
+        if (!isActionable) return false
+
+        // 有効な contentDescription または text を自身が直接持っているか判定
+        val hasDirectLabel = (!node.contentDescription.isNullOrEmpty() && node.contentDescription.toString().trim().isNotEmpty()) ||
+                (!node.text.isNullOrEmpty() && node.text.toString().trim().isNotEmpty())
+
+        if (hasDirectLabel) {
+            val className = node.className?.toString() ?: ""
+            // スクロールビューやページャー等の大枠コンテナ自体は除外
+            if (className.contains("ScrollView", ignoreCase = true) ||
+                className.contains("ViewPager", ignoreCase = true) ||
+                className.contains("RecyclerView", ignoreCase = true) ||
+                className.contains("ListView", ignoreCase = true)
+            ) {
+                return false
+            }
+            return true
+        }
+        return false
+    }
+
     fun isContainerNode(node: AccessibilityNodeInfo): Boolean {
         if (node.childCount == 0) return false
+
+        // 自己充足コントロール（自身がクリック可能でラベルを持つアカウントボタン・各種アクション等）は分解せず単一ノードとして保持
+        if (isSelfContainedControl(node)) {
+            return false
+        }
 
         val className = node.className?.toString() ?: ""
         val pkgName = node.packageName?.toString() ?: ""

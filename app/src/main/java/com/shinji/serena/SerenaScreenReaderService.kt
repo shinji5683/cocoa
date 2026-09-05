@@ -3039,7 +3039,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     return
                 }
 
-                val isDialog = className.contains("Dialog", ignoreCase = true) || className.contains("AlertDialog", ignoreCase = true)
+                val isDialog = className.contains("Dialog", ignoreCase = true) || className.contains("AlertDialog", ignoreCase = true) || className.contains("PopupWindow", ignoreCase = true)
                 if (isKeyguardLocked() || pkgName.contains("systemui") || pkgName.contains("keyguard")) {
                     // SystemUI / ロック画面 / Bouncer のウィンドウ検知時は、未フォーカス時のみPIN入力欄を捕捉
                     autoFocusPinKeypadIfPresent(force = false)
@@ -3048,7 +3048,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         val nodes = collectAccessibleNodes()
                         if (nodes.isNotEmpty()) {
                             val currentFocus = getAccessibilityFocusedNode()
-                            if (currentFocus == null || !nodes.any { isSameNode(it, currentFocus) }) {
+                            val isDifferentWindow = currentFocus == null || currentFocus.windowId != nodes[0].windowId
+                            if (isDifferentWindow || !nodes.any { isSameNode(it, currentFocus) }) {
                                 val first = nodes[0]
                                 focusNavigator?.setFocusAndShowOnScreen(first)
                                 if (isTtsReady) {
@@ -3449,7 +3450,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        if (text.isNotEmpty()) parts.add(text)
+        if (text.isNotEmpty()) {
+            val formattedText = text.replace(Regex("[\\r\\n]+"), "、")
+                .replace(Regex("、+"), "、")
+                .trim('、', ' ')
+            if (formattedText.isNotEmpty()) parts.add(formattedText)
+        }
         if (role.isNotEmpty()) parts.add(role)
         if (state.isNotEmpty()) parts.add(state)
 
@@ -3658,10 +3664,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     else -> "テキスト入力欄"
                 }
             }
-            className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> "画像"
+            className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> if (node.isClickable) "ボタン" else "画像"
             className.contains("SeekBar", ignoreCase = true) -> "スライダー"
             target.isCheckable -> "スイッチ"
-            className.contains("TextView", ignoreCase = true) -> ""
+            className.contains("TextView", ignoreCase = true) -> if (node.isClickable) "ボタン" else ""
+            node.isClickable -> "ボタン"
             else -> ""
         }
     }

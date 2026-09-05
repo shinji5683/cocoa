@@ -65,20 +65,19 @@ class SerenaFocusNavigator(
 
                 val isSystemUiActive = activePkg.contains("systemui")
 
-                // ダイアログ・モーダルウィンドウ（最前面のフォーカス中/アクティブなAPPLICATIONウィンドウ）を特定
+                // ダイアログ・モーダルウィンドウ・ボトムシート（最前面レイヤーのAPPLICATIONウィンドウ）を特定！
                 val appWins = wins.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
-                val focusedAppWin = appWins.firstOrNull { it.isFocused }
-                    ?: appWins.firstOrNull { it.isActive }
-                    ?: appWins.maxByOrNull { it.layer }
+                // レイヤー値が最大（画面の一番手前にある）ウィンドウを最優先！
+                val topAppWin = appWins.maxByOrNull { it.layer }
 
                 val targetWins = wins.filter { w ->
                     when (w.type) {
                         AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY -> true
                         AccessibilityWindowInfo.TYPE_INPUT_METHOD -> true
                         AccessibilityWindowInfo.TYPE_APPLICATION -> {
-                            // モーダルダイアログ等で複数のAPPLICATIONウィンドウが存在する場合、最前面のフォーカス中ウィンドウのみを対象にする！
-                            if (appWins.size > 1 && focusedAppWin != null) {
-                                w.id == focusedAppWin.id
+                            // モーダルダイアログ・ボトムシート等で複数のAPPLICATIONウィンドウが存在する場合、最前面ウィンドウ(topAppWin)を最優先！
+                            if (appWins.size > 1 && topAppWin != null) {
+                                w.id == topAppWin.id
                             } else {
                                 true
                             }
@@ -112,23 +111,19 @@ class SerenaFocusNavigator(
         if (w.type == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
             return 0
         }
-        // フォーカス中ウィンドウまたはアクティブウィンドウ（現在操作中のメインアプリ画面）
-        if (w.isFocused || w.isActive) {
-            return 1
-        }
         // IME（ソフトウェアキーボード）
         if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
-            return 2
+            return 1
         }
-        // 通常アプリケーション
+        // レイヤー値の高いアプリケーションウィンドウ（ダイアログやシート等）
         if (w.type == AccessibilityWindowInfo.TYPE_APPLICATION) {
-            return 3
+            return 10 + (100 - w.layer.coerceIn(0, 90))
         }
         // システムウィンドウ（ステータスバー・ナビゲーションバー）
         if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM) {
-            return 4
+            return 200
         }
-        return 5
+        return 300
     }
 
     fun collectAccessibleNodes(root: AccessibilityNodeInfo? = null): List<AccessibilityNodeInfo> {
@@ -233,6 +228,14 @@ class SerenaFocusNavigator(
                            viewId.contains("element:pin_key") ||
                            viewId.contains("pin_pad") ||
                            viewId.contains("numpad")
+
+        // 0. 自己充足コントロール（自身がクリック可能でラベルを持つアカウントボタン、各種アクション等）なら子要素に潜らず即時登録！
+        if (evaluator.isSelfContainedControl(node)) {
+            if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
+                list.add(node)
+            }
+            return
+        }
 
         val isTarget = evaluator.isFocusableTarget(node)
         val hasFocusableChildren = if (isPinKeyNode) false else evaluator.hasFocusableChildren(node)
