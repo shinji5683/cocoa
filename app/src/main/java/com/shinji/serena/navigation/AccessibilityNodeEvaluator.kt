@@ -218,21 +218,23 @@ class AccessibilityNodeEvaluator {
             val hasDirect = hasDirectTextOrLabel(node)
 
             if (isContainerNode(node)) {
-                // ボタンや入力欄など、配下にインタラクティブな子要素を1つでも含むコンテナ（ダイアログのボタンバー等）は、
-                // コンテナ自体をターゲットにせず、子要素（「完了」「開く」ボタン等）をそれぞれ個別に検出させる
-                if (hasInteractiveChild(node)) {
+                // 配下に別の独立したインタラクティブな子要素（複数のボタン等）を含む巨大コンテナ（行・カード・ツールバー等）は
+                // コンテナ自体ではなく子要素にフォーカスを譲る
+                val hasInteractive = hasInteractiveChild(node)
+                if (hasInteractive) {
                     return false
                 }
 
-                // 子要素にフォーカス可能な要素やテキストが存在する場合、コンテナ自体はターゲットとせず子要素に譲る！
+                // 自身がクリック可能またはフォーカス可能な場合（Jetpack Composeのボタンやカスタムボタン、設定行など）
+                // 配下に他のボタンがなければ、このノード自体が単一の操作対象（ボタン）としてターゲットになる！
+                if (isActionable) {
+                    return true
+                }
+
+                // 子要素にフォーカス可能な要素やテキストが存在する場合、非操作コンテナは子要素に譲る
                 val hasChildren = hasFocusableChildren(node)
                 if (hasChildren) {
                     return false
-                }
-
-                // 子要素に要素が存在しないクリック可能行（セレナメニュー項目や設定行など）は行全体を1つのターゲットとする
-                if (isActionable) {
-                    return true
                 }
 
                 return hasDirect
@@ -411,28 +413,12 @@ class AccessibilityNodeEvaluator {
                 }
             }
 
-            // 4. Jetpack Compose & 階層UI: 子要素テキストの再帰的収集（直下および2階層下まで）
+            // 4. Jetpack Compose & 階層UI: 深層再帰テキスト抽出エンジン（最大8階層まで完全走査）
             if (node.childCount > 0) {
-                val childTexts = mutableListOf<String>()
-                for (i in 0 until node.childCount.coerceAtMost(10)) {
-                    val child = node.getChild(i) ?: continue
-                    val ct = child.contentDescription?.toString()?.trim() ?: child.text?.toString()?.trim()
-                    if (!ct.isNullOrEmpty() && !childTexts.contains(ct)) {
-                        childTexts.add(ct)
-                    }
-                    if (child.childCount > 0) {
-                        for (j in 0 until child.childCount.coerceAtMost(6)) {
-                            val gc = child.getChild(j) ?: continue
-                            val gct = gc.contentDescription?.toString()?.trim() ?: gc.text?.toString()?.trim()
-                            if (!gct.isNullOrEmpty() && !childTexts.contains(gct)) {
-                                childTexts.add(gct)
-                            }
-                        }
-                    }
-                    if (childTexts.size >= 6) break
-                }
-                if (childTexts.isNotEmpty()) {
-                    return childTexts.joinToString(" ")
+                val deepTexts = mutableListOf<String>()
+                collectDeepTexts(node, deepTexts, currentDepth = 0, maxDepth = 8)
+                if (deepTexts.isNotEmpty()) {
+                    return deepTexts.distinct().joinToString(" ")
                 }
             }
 
@@ -509,6 +495,35 @@ class AccessibilityNodeEvaluator {
             "enter_button", "btn_ok", "btn_done" -> "決定"
             "search_button" -> "検索"
             else -> ""
+        }
+    }
+
+    private fun collectDeepTexts(
+        node: AccessibilityNodeInfo,
+        outList: MutableList<String>,
+        currentDepth: Int,
+        maxDepth: Int = 8
+    ) {
+        if (currentDepth >= maxDepth || outList.size >= 16) return
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            val cd = child.contentDescription?.toString()?.trim()
+            val txt = child.text?.toString()?.trim()
+            val tooltip = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) child.tooltipText?.toString()?.trim() else null
+
+            val chosen = when {
+                !cd.isNullOrEmpty() -> cd
+                !txt.isNullOrEmpty() -> txt
+                !tooltip.isNullOrEmpty() -> tooltip
+                else -> null
+            }
+            if (!chosen.isNullOrEmpty() && !outList.contains(chosen)) {
+                outList.add(chosen)
+            }
+            if (child.childCount > 0) {
+                collectDeepTexts(child, outList, currentDepth + 1, maxDepth)
+            }
+            if (outList.size >= 16) break
         }
     }
 

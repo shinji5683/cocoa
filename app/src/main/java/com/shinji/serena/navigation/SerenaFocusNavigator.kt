@@ -46,6 +46,20 @@ class SerenaFocusNavigator(
         }
 
         // 2. システム権限ダイアログ（PermissionController, PackageInstaller, SafetyCenter）を最優先検知！
+        try {
+            val wins = service.windows
+            if (!wins.isNullOrEmpty()) {
+                // ウィンドウ群から権限ダイアログを検出（最優先！）
+                for (w in wins) {
+                    val r = w.root ?: continue
+                    val pkg = r.packageName?.toString()?.lowercase() ?: ""
+                    if (pkg.contains("permissioncontroller") || pkg.contains("packageinstaller") || pkg.contains("safetycenter")) {
+                        return listOf(r)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
         val activeRoot = service.rootInActiveWindow
         if (activeRoot != null) {
             val activePkg = activeRoot.packageName?.toString()?.lowercase() ?: ""
@@ -57,36 +71,24 @@ class SerenaFocusNavigator(
         try {
             val wins = service.windows
             if (!wins.isNullOrEmpty()) {
-                // ウィンドウ群から権限ダイアログを検出
-                for (w in wins) {
-                    val r = w.root ?: continue
-                    val pkg = r.packageName?.toString()?.lowercase() ?: ""
-                    if (pkg.contains("permissioncontroller") || pkg.contains("packageinstaller") || pkg.contains("safetycenter")) {
-                        return listOf(r)
-                    }
-                }
-
                 val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
                 val isSystemUiActive = activePkg.contains("systemui")
 
                 // アプリウィンドウの中で最前面（最高レイヤー：ダイアログやボトムシート）を特定
                 val appWins = wins.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
-                val topDialogWin = appWins.maxByOrNull { it.layer }
+                val topDialogWin = if (appWins.size > 1) appWins.maxByOrNull { it.layer } else null
 
                 val targetWins = wins.filter { w ->
                     when (w.type) {
                         AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY -> true
                         AccessibilityWindowInfo.TYPE_INPUT_METHOD -> true
                         AccessibilityWindowInfo.TYPE_APPLICATION -> {
-                            // 最前面のダイアログ/シートが存在する場合はそのウィンドウを最優先！
-                            if (topDialogWin != null && w.id == topDialogWin.id) {
-                                true
-                            } else if (topDialogWin == null) {
+                            if (topDialogWin != null) {
+                                w.id == topDialogWin.id
+                            } else {
                                 val r = w.root ?: return@filter false
                                 val pkg = r.packageName?.toString() ?: ""
                                 (activePkg.isNotEmpty() && pkg == activePkg) || w.isActive || w.isFocused
-                            } else {
-                                false
                             }
                         }
                         AccessibilityWindowInfo.TYPE_SYSTEM -> isSystemUiActive
@@ -257,7 +259,16 @@ class SerenaFocusNavigator(
             return
         }
 
-        // 2. 子要素が存在する場合、全子要素を必ず再帰探索！（ダイアログ内のボタン、Compose要素、カード内の要素等）
+        // 2. Jetpack Compose等のクリック可能ボタンで、配下に別のボタンを含まない単一操作要素の場合：
+        // 子要素をバラバラに登録せず、ボタン全体を1つのフォーカス対象として登録！（深層テキスト抽出により完全なラベルを読み上げ）
+        if (node.isClickable && !evaluator.hasInteractiveChild(node)) {
+            if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
+                list.add(node)
+            }
+            return
+        }
+
+        // 3. 複数要素を含むコンテナ等の場合、全子要素を再帰探索！
         var addedAnyChild = false
         val initialSize = list.size
         for (i in 0 until node.childCount) {
@@ -268,7 +279,7 @@ class SerenaFocusNavigator(
             addedAnyChild = true
         }
 
-        // 3. 子要素から1つもターゲットが取れなかったが、このノード自体がターゲット（クリック可能行など）ならフォールバック登録
+        // 4. 子要素から1つもターゲットが取れなかったが、このノード自体がターゲット（クリック可能行など）ならフォールバック登録
         if (!addedAnyChild && isTarget) {
             if (list.none { it == node || (it.windowId == node.windowId && evaluator.isSameNode(it, node)) }) {
                 list.add(node)

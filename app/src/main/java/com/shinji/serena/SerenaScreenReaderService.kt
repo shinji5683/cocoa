@@ -2938,6 +2938,40 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         startActivity(intent)
     }
 
+    private fun announcePermissionDialogWithRetry(attempt: Int) {
+        val delayMs = if (attempt == 1) 150L else 250L
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val nodes = collectAccessibleNodes()
+            if (nodes.isNotEmpty()) {
+                val msgNode = nodes.find {
+                    val id = it.viewIdResourceName?.lowercase() ?: ""
+                    id.contains("permission_message") || id.contains("message") || id.contains("desc")
+                } ?: nodes.find { !it.isClickable && getNodeText(it).isNotEmpty() }
+
+                val rawMsg = if (msgNode != null) getNodeText(msgNode) else ""
+                val msgText = if (rawMsg.isNotEmpty()) rawMsg else "権限の許可を求めています。"
+
+                val firstButton = nodes.find {
+                    it.isClickable && (it.className?.toString()?.contains("Button") == true)
+                } ?: nodes.find { it.isClickable } ?: nodes[0]
+
+                focusNavigator?.setFocusAndShowOnScreen(firstButton)
+                if (isTtsReady) {
+                    speak("【確認】$msgText", TextToSpeech.QUEUE_FLUSH)
+                    announceNode(firstButton, TextToSpeech.QUEUE_ADD)
+                }
+            } else {
+                if (attempt < 3) {
+                    announcePermissionDialogWithRetry(attempt + 1)
+                } else {
+                    if (isTtsReady) {
+                        speak("【確認】権限の確認ダイアログが表示されています。左右スワイプで選択できます。", TextToSpeech.QUEUE_FLUSH)
+                    }
+                }
+            }
+        }, delayMs)
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
 
@@ -3011,28 +3045,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
-                val isPermission = pkgName.contains("permissioncontroller") || pkgName.contains("packageinstaller")
+                val isPermission = pkgName.contains("permissioncontroller") || pkgName.contains("packageinstaller") || pkgName.contains("safetycenter")
                 if (isPermission) {
-                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                        val nodes = collectAccessibleNodes()
-                        if (nodes.isNotEmpty()) {
-                            val msgNode = nodes.find { 
-                                val id = it.viewIdResourceName?.lowercase() ?: ""
-                                id.contains("permission_message") || id.contains("message")
-                            } ?: nodes.find { !it.isClickable && !it.text.isNullOrEmpty() }
-                            val msgText = msgNode?.text?.toString() ?: "権限の許可を求めています。"
-
-                            val firstButton = nodes.find { 
-                                it.isClickable && (it.className?.toString()?.contains("Button") == true)
-                            } ?: nodes[0]
-
-                            focusNavigator?.setFocusAndShowOnScreen(firstButton)
-                            if (isTtsReady) {
-                                speak("【確認】$msgText", TextToSpeech.QUEUE_FLUSH)
-                                announceNode(firstButton, TextToSpeech.QUEUE_ADD)
-                            }
-                        }
-                    }, 150)
+                    announcePermissionDialogWithRetry(attempt = 1)
                     return
                 }
 
@@ -3517,29 +3532,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
 
-            // 3. 子要素テキストの安全な収集（直下および1階層下まで、最大4件）
+            // 3. Jetpack Compose & 階層UI: 深層再帰テキスト抽出エンジン（最大8階層まで完全走査）
             if (node.childCount > 0) {
-                val childTexts = mutableListOf<String>()
-                for (i in 0 until node.childCount.coerceAtMost(8)) {
-                    val child = node.getChild(i) ?: continue
-                    if (!child.isVisibleToUser) continue
-                    val ct = child.contentDescription?.toString()?.trim() ?: child.text?.toString()?.trim()
-                    if (!ct.isNullOrEmpty() && !childTexts.contains(ct)) {
-                        childTexts.add(ct)
-                    } else if (child.childCount > 0) {
-                        for (j in 0 until child.childCount.coerceAtMost(4)) {
-                            val gc = child.getChild(j) ?: continue
-                            if (!gc.isVisibleToUser) continue
-                            val gct = gc.contentDescription?.toString()?.trim() ?: gc.text?.toString()?.trim()
-                            if (!gct.isNullOrEmpty() && !childTexts.contains(gct)) {
-                                childTexts.add(gct)
-                            }
-                        }
-                    }
-                    if (childTexts.size >= 4) break
-                }
-                if (childTexts.isNotEmpty()) {
-                    return childTexts.joinToString(" ")
+                val deepTexts = mutableListOf<String>()
+                collectDeepTextsForService(node, deepTexts, currentDepth = 0, maxDepth = 8)
+                if (deepTexts.isNotEmpty()) {
+                    return deepTexts.distinct().joinToString(" ")
                 }
             }
 
@@ -3622,6 +3620,35 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             name.contains("enter_button") || name.contains("btn_ok") || name.contains("btn_done") -> "決定"
             name.contains("search_button") || name == "search" -> "検索"
             else -> ""
+        }
+    }
+
+    private fun collectDeepTextsForService(
+        node: AccessibilityNodeInfo,
+        outList: MutableList<String>,
+        currentDepth: Int,
+        maxDepth: Int = 8
+    ) {
+        if (currentDepth >= maxDepth || outList.size >= 16) return
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            val cd = child.contentDescription?.toString()?.trim()
+            val txt = child.text?.toString()?.trim()
+            val tooltip = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) child.tooltipText?.toString()?.trim() else null
+
+            val chosen = when {
+                !cd.isNullOrEmpty() -> cd
+                !txt.isNullOrEmpty() -> txt
+                !tooltip.isNullOrEmpty() -> tooltip
+                else -> null
+            }
+            if (!chosen.isNullOrEmpty() && !outList.contains(chosen)) {
+                outList.add(chosen)
+            }
+            if (child.childCount > 0) {
+                collectDeepTextsForService(child, outList, currentDepth + 1, maxDepth)
+            }
+            if (outList.size >= 16) break
         }
     }
 
