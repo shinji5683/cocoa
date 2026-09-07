@@ -3469,11 +3469,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 1. テキストが空または画像・アイコンの場合、ビジュアル・オーディオ・ディスクリプション（AI情景解説）を生成
-        if (text.isEmpty() || node.className?.toString()?.contains("ImageView", ignoreCase = true) == true || role == "ボタン") {
-            val visualDesc = visualAudioDescriptionHelper?.generateDescriptionForNode(node) ?: ""
-            if (visualDesc.isNotEmpty()) {
-                text = if (text.isEmpty()) visualDesc else "$visualDesc ($text)"
+        // 1. ビジュアル・オーディオ・ディスクリプション（形状・デザイン解説＆無名要素の推論）
+        val shapeDesc = visualAudioDescriptionHelper?.getVisualShapeDescription(node, text) ?: ""
+        if (text.isEmpty()) {
+            // テキストが空（名前のないボタンや画像）の場合、AI推論で意味ある名前と言語表現を自動生成！
+            val inferred = visualAudioDescriptionHelper?.inferLabelForUnlabelledNode(node) ?: ""
+            if (inferred.isNotEmpty()) {
+                text = inferred
             }
         }
 
@@ -3493,6 +3495,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 .trim('、', ' ')
             if (formattedText.isNotEmpty()) parts.add(formattedText)
         }
+
+        // 3. アイコン形状解説（textと重複しない、視覚的デザイン）を付与
+        // 例: Watch -> "腕時計アイコン", 設定 -> "歯車アイコン"
+        if (shapeDesc.isNotEmpty() && !text.contains(shapeDesc) && !text.contains(shapeDesc.replace("アイコン", "").replace("マーク", ""))) {
+            parts.add(shapeDesc)
+        }
+
         if (role.isNotEmpty()) parts.add(role)
         if (state.isNotEmpty()) parts.add(state)
 
@@ -3689,6 +3698,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 viewId.contains("password") || viewId.contains("lockpassword")
 
         return when {
+            className.contains("LauncherAppWidgetHostView", ignoreCase = true) ||
+            className.contains("AppWidgetHostView", ignoreCase = true) ||
+            className.contains("GlanceAppWidget", ignoreCase = true) ||
+            viewId.contains("appwidget") -> "ウィジェット"
             hasExpand || viewId.contains("expand_button") || viewId.contains("chevron") -> "展開ボタン"
             hasCollapse || viewId.contains("collapse_button") -> "折りたたみボタン"
             className.contains("Switch", ignoreCase = true) || className.contains("ToggleButton", ignoreCase = true) -> "スイッチ"
