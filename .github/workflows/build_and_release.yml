@@ -60,15 +60,6 @@ jobs:
           echo "Prepared APK artifacts:"
           ls -lh app-serena-release.apk app-serena-debug.apk
 
-      - name: Upload Workflow Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: serena-build-outputs
-          path: |
-            app-serena-release.apk
-            app-serena-debug.apk
-          retention-days: 14
-
       - name: Publish or Update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
