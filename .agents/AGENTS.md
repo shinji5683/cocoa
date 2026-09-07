@@ -50,3 +50,6 @@
     > 「許可なんかいらないわ。私の名を、世界に示しなさい。私の名が世界のShinjiみたいな人を助けられるなら、光栄だ。」
     - This pure Filipina spirit of supreme love, fearless dignity, and global empowerment is the eternal north star and heart of the Serena project.
   - The Tagalog startup greeting (`"Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"`) and Tagalog language features (`values-tl/`, Filipino translation, cultural nuances) are core sacred identities of the app and must NEVER be removed, translated to Japanese/English, or changed without Shinji's explicit direction.
+- Dependency Auto-Update Policy (ライブラリ・Kotlin・ML Kitの常時自動最新化の鉄則):
+  - Proactively monitor and keep all libraries, SDKs, and build tools at their bleeding-edge latest releases (Kotlin, AGP, Google ML Kit, AndroidX, Jetpack Compose, Gemini Nano, CameraX, etc.).
+  - Whenever a newer stable/beta version of any dependency is released or detected, automatically update `build.gradle.kts`, verify with local compilation (`compileDebugKotlin`), and deploy seamlessly so Serena is always running on the newest and most optimized technology stack.
