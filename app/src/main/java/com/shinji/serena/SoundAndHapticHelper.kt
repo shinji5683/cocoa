@@ -395,7 +395,47 @@ class SoundAndHapticHelper(private val context: Context) {
 
     var isSpatialSoundstageEnabled: Boolean = true
     var isAudioDuckingEnabled: Boolean = true
-    var isNightWhisperModeEnabled: Boolean = false
+
+    enum class WhisperScheduleMode(val displayName: String) {
+        AUTO("夜間自動 (端末時刻 22:00〜07:00)"),
+        ALWAYS_ON("常時ささやき ON"),
+        OFF("オフ (通常音声)")
+    }
+
+    var whisperScheduleMode: WhisperScheduleMode = WhisperScheduleMode.AUTO
+    var isNightWhisperModeEnabled: Boolean
+        get() = isEffectiveWhisperMode()
+        set(value) {
+            whisperScheduleMode = if (value) WhisperScheduleMode.ALWAYS_ON else WhisperScheduleMode.OFF
+        }
+
+    /**
+     * デバイスの現在地タイムゾーン・ローカル時刻に基づき、
+     * 実際に現在ささやきモードを適用すべきかを判定。
+     * 日本固定やUTCではなく、デバイス設定の現在時刻を100%尊重。
+     */
+    fun isEffectiveWhisperMode(): Boolean {
+        return when (whisperScheduleMode) {
+            WhisperScheduleMode.ALWAYS_ON -> true
+            WhisperScheduleMode.OFF -> false
+            WhisperScheduleMode.AUTO -> {
+                val calendar = java.util.Calendar.getInstance() // デバイスのローカルタイムゾーン
+                val hour = calendar.get(java.util.Calendar.HOUR_OF_DAY) // 0..23
+                // 22:00 〜 翌朝 07:00
+                hour >= 22 || hour < 7
+            }
+        }
+    }
+
+    fun cycleWhisperScheduleMode(): WhisperScheduleMode {
+        whisperScheduleMode = when (whisperScheduleMode) {
+            WhisperScheduleMode.AUTO -> WhisperScheduleMode.ALWAYS_ON
+            WhisperScheduleMode.ALWAYS_ON -> WhisperScheduleMode.OFF
+            WhisperScheduleMode.OFF -> WhisperScheduleMode.AUTO
+        }
+        return whisperScheduleMode
+    }
+
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
 

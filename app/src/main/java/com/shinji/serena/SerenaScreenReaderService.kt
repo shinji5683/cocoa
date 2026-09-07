@@ -95,6 +95,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var walkingNavigator: com.shinji.serena.navigation.SerenaWalkingNavigator? = null
     var osmValhallaNavHelper: com.shinji.serena.location.OsmValhallaNavigationHelper? = null
     var spatialSurroundingRadarHelper: com.shinji.serena.location.SpatialSurroundingRadarHelper? = null
+    var sentinelEyesManager: com.shinji.serena.ai.SerenaSentinelEyesManager? = null
     private var shakeDetectorHelper: ShakeDetectorHelper? = null
     private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
     private var isLiveEnvironmentModeActive = false
@@ -138,6 +139,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             }
             spatialSurroundingRadarHelper = com.shinji.serena.location.SpatialSurroundingRadarHelper(this, soundHelper) { msg ->
+                speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            }
+            sentinelEyesManager = com.shinji.serena.ai.SerenaSentinelEyesManager(this) { msg ->
                 speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             }
             wifiConnectivityHelper = WifiConnectivityHelper(this).apply { try { startMonitoring() } catch (_: Exception) {} }
@@ -1993,8 +1997,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🎵", "音楽オーディオダッキング (現在: ${if (soundHelper?.isAudioDuckingEnabled == true) "ON" else "OFF"})") {
                 toggleAudioDucking()
             },
-            serenaMenuItem("🌙", "深夜ささやきモード (現在: ${if (soundHelper?.isNightWhisperModeEnabled == true) "ON" else "OFF"})") {
-                toggleNightWhisperMode()
+            serenaMenuItem("🌙", "深夜ささやきモード (現在: ${soundHelper?.whisperScheduleMode?.displayName ?: "夜間自動"})") {
+                cycleNightWhisperMode()
             },
             serenaMenuItem("⌨️", "キー入力方式 (現在: ${if (isKeyboardLiftToType) "指を離して入力" else "ダブルタップ入力"})") {
                 cycleKeyboardTypingMode()
@@ -2018,6 +2022,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             },
             serenaMenuItem("👀", "Serena Eyes (リアルタイムAI視覚＆実況カメラ)") {
                 launchSerenaEyes()
+            },
+            serenaMenuItem("👁️‍🗨️", "常駐見守りアイズ (動体・性別・表情検知) (現在: ${if (sentinelEyesManager?.isSentinelActive() == true) "ON" else "OFF"})") {
+                toggleSentinelEyes()
             },
             serenaMenuItem("🧠", "AI画面要約 (クイックブリーフィング)") {
                 summarizeCurrentScreen()
@@ -2418,12 +2425,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    fun toggleNightWhisperMode() {
+    fun cycleNightWhisperMode() {
         soundHelper?.let {
-            it.isNightWhisperModeEnabled = !it.isNightWhisperModeEnabled
+            val nextMode = it.cycleWhisperScheduleMode()
             it.playActionDone()
-            val state = if (it.isNightWhisperModeEnabled) "ON (ソフト音声)" else "OFF (通常音声)"
-            speak("深夜ささやきモードを $state にしました", TextToSpeech.QUEUE_FLUSH)
+            val effective = if (it.isEffectiveWhisperMode()) "現在ささやき中" else "現在通常音声"
+            speak("深夜ささやきモードを ${nextMode.displayName} に変更しました ($effective)", TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -2565,6 +2572,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             radar.stopSurroundingRadar()
         } else {
             radar.startSurroundingRadar()
+        }
+    }
+
+    fun toggleSentinelEyes() {
+        val sentinel = sentinelEyesManager ?: return
+        if (sentinel.isSentinelActive()) {
+            sentinel.stopSentinelEyes()
+        } else {
+            sentinel.startSentinelEyes()
         }
     }
 
@@ -3987,7 +4003,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val utteranceId = "serenaUtterance_${System.currentTimeMillis()}"
         val params = android.os.Bundle().apply {
-            val vol = if (soundHelper?.isNightWhisperModeEnabled == true) 0.6f else 1.0f
+            val isWhispering = soundHelper?.isEffectiveWhisperMode() == true
+            val vol = if (isWhispering) 0.55f else 1.0f
             putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, vol)
             if (soundHelper?.isSpatialSoundstageEnabled == true && pan != 0.0f) {
                 putFloat(TextToSpeech.Engine.KEY_PARAM_PAN, pan.coerceIn(-1.0f, 1.0f))
@@ -4165,6 +4182,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             tts?.speak(farewell, TextToSpeech.QUEUE_FLUSH, null, "serena_shutdown_greeting")
             Thread.sleep(2600)
         } catch (_: Exception) {}
+        try {
+            sentinelEyesManager?.stopSentinelEyes()
+            spatialSurroundingRadarHelper?.stopSurroundingRadar()
+        } catch (_: Exception) {}
         super.onDestroy()
         callManager?.release()
         callManager = null
@@ -4240,8 +4261,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             Log.e(TAG, "showSerenaAssistantDialog error: ${e.message}")
         }
     }
-
-
 }
 
 private val AccessibilityNodeInfo.safeIsHeading: Boolean
