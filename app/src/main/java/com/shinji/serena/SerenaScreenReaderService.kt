@@ -3142,7 +3142,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val now = System.currentTimeMillis()
                 lastFocusTimeMs = now
                 lastHoveredNode = node
-                soundHelper?.playFocusMove()
                 if (isTtsReady) {
                     val queueMode = if (now - lastScrollTime < 900) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
                     announceNode(node, queueMode)
@@ -3413,7 +3412,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val normalizedX = if (displayWidth > 0) rect.centerX().toFloat() / displayWidth else 0.5f
 
         val currentTime = System.currentTimeMillis()
-        if (announcement == lastSpokenText && (currentTime - lastSpokenTime) < 200) {
+        if (announcement == lastSpokenText && (currentTime - lastSpokenTime) < 900) {
             return
         }
 
@@ -3961,6 +3960,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val processedText = emojiHelper?.translateEmojiAndKaomoji(text) ?: text
         lastSpokenText = processedText
+        lastSpokenTime = System.currentTimeMillis()
         currentSpeakingUtterance = processedText
         isSpeechPaused = false
 
