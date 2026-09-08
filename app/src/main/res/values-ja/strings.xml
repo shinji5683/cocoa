@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">serena Screen Reader</string>
+    <string name="accessibility_service_name">serena Screen Reader</string>
+    <string name="ime_name">Serena IME (マルチリンガル・フォネティックキーボード)</string>
+    <string name="accessibility_service_description">画面上の文字やボタン、電話・LINE・各種メッセージアプリの着信相手、通話時間（○時間○分○秒）を自動音声で読み上げ、視覚障害者や操作の補助をサポートする高機能スクリーンリーダーサービスです。</string>
+    
+    <string name="status_label">サービス動作状況</string>
+    <string name="status_disabled">無効 (設定から有効にしてください)</string>
+    <string name="status_enabled">有効 (稼働中)</string>
+    
+    <string name="btn_open_accessibility">アクセシビリティ設定を開く</string>
+    <string name="btn_test_speech">音声読み上げテスト</string>
+
+    <string name="title_tts_settings">読み上げ設定</string>
+    <string name="label_speech_rate">読み上げ速度</string>
+    <string name="label_pitch">音声の高さ (ピッチ)</string>
+
+    <string name="title_test_bench">インタラクティブ体験テスト領域</string>
+    <string name="test_button_1">テスト用ボタン A</string>
+    <string name="test_button_2">テスト用ボタン B</string>
+    <string name="test_edit_hint">ここにテキストを入力して読み上げを確認</string>
+    <string name="test_switch_label">読み上げ詳細モード</string>
+
+    <string name="title_permissions">権限・動作パーミッション設定</string>
+    <string name="status_perm_granted">許可済み (正常)</string>
+    <string name="status_perm_denied">未許可 (タップして許可)</string>
+    <string name="btn_request_overlay">重ねて表示（オーバーレイ）の許可設定</string>
+    <string name="btn_request_notification">通知の受信許可を設定</string>
+
+    <string name="title_features">serena Screen Reader の主な機能と操作方法</string>
+    <string name="feature_1">・【フォーカス移動】1本指で左右スワイプ（前後の要素に移動）</string>
+    <string name="feature_2">・【タップ実行】1本指で画面をダブルタップ（選択項目をクリック）</string>
+    <string name="feature_3">・【ジェスチャーナビ】下→左で戻る、上→左でホーム、下→右で通知センター</string>
+    <string name="feature_4">・【電話・LINE連携】着信相手アナウンス ＆ 通話終了時の時間読み上げ</string>
+    <string name="title_multilingual_tts">マルチリンガル音声 ＆ タガログ語設定</string>
+    <string name="label_multilingual_status">自動言語判定: 日本語 / English / Tagalog</string>
+    <string name="btn_open_tts_settings">OSの読み上げ設定を開く (タガログ語音声の追加)</string>
+
+    <string name="title_telemetry">アルファ版 動作診断・利用統計レポート</string>
+    <string name="desc_telemetry">不具合修正・品質向上のため、完全匿名化された利用回数・動作ログを集計します。</string>
+    <string name="btn_send_telemetry">診断レポートを開発者(shinjisakiyama@gmail.com)へ送信</string>
+    <string name="btn_copy_telemetry">診断レポートをクリップボードにコピー</string>
+    <string name="label_telemetry_optin">動作改善・レポート送信に協力する</string>
+
+    <string name="dialog_telemetry_title">🌸 serena Screen Reader アルファ版 動作改善ご協力のお願い</string>
+    <string name="dialog_telemetry_message">serena Screen Reader アルファ版をご利用いただきありがとうございます。\n\nアプリの品質向上および Canary / QPR Beta / Stable 各OSチャンネルでの動作安定化のため、端末の動作統計データを Shinji (shinjisakiyama@gmail.com) へ送信する機能を提供しています。\n\n【送信される情報】\n・OSバージョン、APIレベル、端末モデル名\n・ジェスチャー操作回数、TTS使用言語数、通話アナウンス件数\n\n⚠️ 電話番号、連絡先名、メッセージ本文、発声音声などの個人情報は一切収集・送信されません。\n\n動作改善にご協力いただけますでしょうか？（後から設定でいつでも変更可能です）</string>
+    <string name="dialog_telemetry_agree">同意して協力する</string>
+    <string name="dialog_telemetry_refuse">今回は見送る</string>
+
+    <string name="title_hourly_chime">時報機能（毎時0分の時刻アナウンス）</string>
+    <string name="desc_hourly_chime">毎時0分（例: 午後3時）に心地よいチャイム音とともに時刻を自動音声でお知らせします。</string>
+    <string name="label_hourly_chime_switch">時報（毎時アナウンス）を有効にする</string>
+    <string name="btn_test_hourly_chime">時報の音声・チャイムテスト</string>
+
+    <string name="title_call_settings">電話・通話アシスタント設定</string>
+    <string name="desc_call_settings">着信相手の通知、通話開始・終了時の合計通話時間を音声でお知らせします。</string>
+    <string name="label_call_periodic_switch">通話中の経過時間を1分ごとに定期アナウンス</string>
+    <string name="desc_call_periodic_switch">※有効にすると通話中に1分ごとの経過時間を読み上げます（デフォルトOFF推奨）。開始・終了時の案内は常に動作します。</string>
+
+    <string name="label_announce_operation_actions">詳細な操作ガイド音声（初心者向け）</string>
+    <string name="desc_announce_operation_actions">画面スクロール時やボタン実行時に「下へスクロールしました」「実行」等の動作ガイドを音声で読み上げます。オフ（推奨）の場合、軽快な効果音と振動のみで通知し、遷移先の内容を最速で読み上げます。</string>
+
+    <string name="title_security_health">OS環境 ＆ セキュリティ安全診断</string>
+    <string name="btn_recheck_security">端末セキュリティを再診断</string>
+
+    <string name="title_developer_info">アプリ提供元 ＆ 公式サポート窓口</string>
+    <string name="developer_name">Shinji</string>
+    <string name="provider_name">Shinji</string>
+    <string name="developer_email">shinjisakiyama@gmail.com</string>
+    <string name="developer_phone">08094959134</string>
+    <string name="developer_phone_int">+818094959134</string>
+
+    <string name="developer_name_label">開発者: Shinji</string>
+    <string name="provider_name_label">提供元: Shinji</string>
+    <string name="developer_phone_label">サポート窓口: 電話・メール・LINE・WhatsApp対応</string>
+    <string name="btn_call_developer">📞 開発者 (Shinji) へ直接電話をかける</string>
+    <string name="btn_email_developer">📧 開発者へメールを送る (shinjisakiyama@gmail.com)</string>
+    <string name="btn_message_developer">💬 LINE / WhatsApp / メッセージで相談する</string>
+    <string name="signature_label">公式デジタル署名: 認証済み (Shinji Official / serena-release-key)</string>
+    <string name="copyright_label">Copyright © 2026 Shinji. All Rights Reserved.</string>
+</resources>

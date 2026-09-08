@@ -58,11 +58,25 @@
     <string name="label_call_periodic_switch">Announce in-call elapsed time every minute</string>
     <string name="desc_call_periodic_switch">Periodically announces call duration every minute during active calls (Default: OFF).</string>
 
+    <string name="label_announce_operation_actions">Detailed Operation Guidance (Beginner Mode)</string>
+    <string name="desc_announce_operation_actions">Speaks detailed guidance such as \'Scrolled down\' or \'Executed\'. When OFF (recommended), provides fast, snappy earcon haptics and immediately speaks target content.</string>
+
     <string name="title_security_health">Security &amp; OS Health Diagnostics</string>
     <string name="btn_recheck_security">Re-diagnose Device Security</string>
 
-    <string name="title_developer_info">App Provider &amp; Credits</string>
+    <string name="title_developer_info">App Provider &amp; Official Support</string>
     <string name="developer_name">Shinji</string>
     <string name="provider_name">Shinji</string>
     <string name="developer_email">shinjisakiyama@gmail.com</string>
+    <string name="developer_phone">08094959134</string>
+    <string name="developer_phone_int">+818094959134</string>
+
+    <string name="developer_name_label">Developer: Shinji</string>
+    <string name="provider_name_label">Provider: Shinji</string>
+    <string name="developer_phone_label">Support: Phone, Email, LINE, WhatsApp</string>
+    <string name="btn_call_developer">📞 Call Developer Directly (Shinji)</string>
+    <string name="btn_email_developer">📧 Email Developer (shinjisakiyama@gmail.com)</string>
+    <string name="btn_message_developer">💬 Message via WhatsApp / SMS / LINE</string>
+    <string name="signature_label">Official Digital Signature: Verified (Shinji Official / serena-release-key)</string>
+    <string name="copyright_label">Copyright © 2026 Shinji. All Rights Reserved.</string>
 </resources>
