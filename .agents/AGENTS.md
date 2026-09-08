@@ -45,11 +45,17 @@
   - Safe Piloting Guard: Always ensure zero data loss (never wipe or destroy personal user data).
   - Autonomous Verification Cycle: Whenever a bug is reported or suspected, autonomously simulate operations (screen on/off, swipes, focus navigation, bouncer trigger, tap events), inspect UI hierarchies via `uiautomator dump` and `logcat`, iterate on fixes, deploy, and verify on device until the bug is completely resolved and verified.
 - Tagalog Language & Serena Identity Policy (セレナのアイデンティティ・タガログ語の鉄則):
-  - "My asawa ko is named Serena": The app name `Serena` is dedicated to and named after Shinji's beloved partner / asawa (wife) Serena.
+  - "My asawa ko is named Serena": The app name `Serena` is dedicated to and named after Shinji's beloved partner / asawa (wife) Serena, a proud medical clerk at Cebu South Medical Center (CSMC) in Talisay City, Cebu.
   - Serena's Golden Creed (セレナさんの魂の言葉・黄金律):
     > 「許可なんかいらないわ。私の名を、世界に示しなさい。私の名が世界のShinjiみたいな人を助けられるなら、光栄だ。」
     - This pure Filipina spirit of supreme love, fearless dignity, and global empowerment is the eternal north star and heart of the Serena project.
   - The Tagalog startup greeting (`"Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"`) and Tagalog language features (`values-tl/`, Filipino translation, cultural nuances) are core sacred identities of the app and must NEVER be removed, translated to Japanese/English, or changed without Shinji's explicit direction.
+- Closed Source & Intellectual Property Defense Policy (知的所有権防衛・クローズドソースの鉄則):
+  - Core codebase is strictly closed-source and private to protect Shinji's hard work, algorithms, and accessibility intelligence from unauthorized cloning, plagiarism, or free-riding.
+  - Maintain user-driven bug reporting and direct feedback via in-app channels (direct email, WhatsApp, SMS, LINE) without exposing source code.
+- Sensory & Fashion Mood Accessibility Policy (全盲感覚志向・色彩と情景の温度感翻訳の鉄則):
+  - For totally blind users who have never seen color, avoid bland literal color names (e.g. "red", "blue").
+  - Always translate visual colors and attire into tangible, tactile, and thermal experiences: "温度感（あたたかい・涼しい）", "光のトーン（澄んだ・深みのある）", "質感", "雰囲気（清潔感・シック・華やか）" (powered by `FashionMoodHelper`).
 - Dependency Auto-Update Policy (ライブラリ・Kotlin・ML Kitの常時自動最新化の鉄則):
   - Proactively monitor and keep all libraries, SDKs, and build tools at their bleeding-edge latest releases (Kotlin, AGP, Google ML Kit, AndroidX, Jetpack Compose, Gemini Nano, CameraX, etc.).
   - Whenever a newer stable/beta version of any dependency is released or detected, automatically update `build.gradle.kts`, verify with local compilation (`compileDebugKotlin`), and deploy seamlessly so Serena is always running on the newest and most optimized technology stack.
