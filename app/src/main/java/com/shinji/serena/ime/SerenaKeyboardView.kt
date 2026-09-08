@@ -451,6 +451,9 @@ class SerenaKeyboardView @JvmOverloads constructor(
             if (gestureDetector.onTouchEvent(ev)) {
                 return true
             }
+            if (isLiftToType) {
+                return true
+            }
         }
         return super.onInterceptTouchEvent(ev)
     }

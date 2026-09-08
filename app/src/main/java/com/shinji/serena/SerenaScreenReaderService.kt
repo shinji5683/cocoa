@@ -2394,6 +2394,35 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         speak("キー入力方式を $modeName に変更しました", TextToSpeech.QUEUE_FLUSH)
     }
 
+    private fun isKeyboardNode(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null) return false
+        val winType = try { node.window?.type } catch (_: Exception) { null }
+        if (winType == android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD) return true
+
+        val pkg = node.packageName?.toString()?.lowercase() ?: ""
+        if (pkg.contains("inputmethod") || pkg.contains("gboard") ||
+            pkg.contains("keyboard") || pkg.contains("latin") ||
+            pkg.contains("simeji") || pkg.contains("atok") ||
+            pkg.contains("com.shinji.serena")) {
+            val cls = node.className?.toString()?.lowercase() ?: ""
+            val viewId = node.viewIdResourceName?.lowercase() ?: ""
+            if (cls.contains("key") || cls.contains("button") ||
+                viewId.contains("key") || viewId.contains("btn") ||
+                node.isClickable) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun tryPerformLiftToType(node: AccessibilityNodeInfo?) {
+        if (!isKeyboardLiftToType || node == null) return
+        if (isKeyboardNode(node)) {
+            soundHelper?.playClick()
+            node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        }
+    }
+
     fun launchVoiceInput() {
         soundHelper?.playActionDone()
         assistantHelper?.startVoiceInput()
@@ -3173,6 +3202,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     val queueMode = if (now - lastScrollTime < 900) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
                     announceNode(node, queueMode)
                 }
+            }
+
+            AccessibilityEvent.TYPE_VIEW_HOVER_EXIT -> {
+                val node = event.source ?: lastHoveredNode
+                tryPerformLiftToType(node)
+            }
+
+            AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> {
+                val node = lastHoveredNode
+                tryPerformLiftToType(node)
             }
 
             AccessibilityEvent.TYPE_VIEW_FOCUSED,
