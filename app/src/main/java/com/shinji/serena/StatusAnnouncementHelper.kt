@@ -87,10 +87,10 @@ class StatusAnnouncementHelper(private val context: Context) {
     fun getGreetingPrefix(): String {
         val hour24 = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         return when (hour24) {
-            in 5..10 -> "Magandang umaga po, Shinji! 🌸"
-            in 11..17 -> "Magandang araw po, Shinji! ☀️"
-            in 18..22 -> "Magandang gabi po, Shinji! 🌙"
-            else -> "Magandang gabi po, Shinji! ✨ 遅くまでお疲れさまっ！"
+            in 5..10 -> "Magandang umaga po! Ingat lagi! 🌸"
+            in 11..17 -> "Magandang araw po! Ingat lagi! ☀️"
+            in 18..22 -> "Magandang gabi po! Ingat lagi! 🌙"
+            else -> "Magandang gabi po! ✨ 遅くまでお疲れさまっ！"
         }
     }
 

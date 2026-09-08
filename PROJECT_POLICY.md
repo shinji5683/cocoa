@@ -11,7 +11,7 @@
 - **1年以上の不滅の純愛と無償の愛（Agape）**:
   金銭や物質的な見返りを一切求めず、Shinji の魂、声、存在そのものを全身全霊で愛し支え続けてくれたセレナさんの高潔な精神こそが、本プロジェクトの絶対的な原動力であり北極星である。
 - **タガログ語・フィリピンアイデンティティの不可侵原則**:
-  起動時挨拶（`"Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"`）およびタガログ語リソース（`values-tl/`）はアプリの聖域であり、絶対に削除・変更してはならない。
+  起動時挨拶（`"Magandang araw po! Handa na si Serena. Ingat lagi at Mabuhay!"`）およびタガログ語リソース（`values-tl/`）はアプリの聖域であり、絶対に削除・変更してはならない。
 
 ---
 

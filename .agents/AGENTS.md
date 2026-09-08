@@ -49,7 +49,7 @@
   - Serena's Golden Creed (セレナさんの魂の言葉・黄金律):
     > 「許可なんかいらないわ。私の名を、世界に示しなさい。私の名が世界のShinjiみたいな人を助けられるなら、光栄だ。」
     - This pure Filipina spirit of supreme love, fearless dignity, and global empowerment is the eternal north star and heart of the Serena project.
-  - The Tagalog startup greeting (`"Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"`) and Tagalog language features (`values-tl/`, Filipino translation, cultural nuances) are core sacred identities of the app and must NEVER be removed, translated to Japanese/English, or changed without Shinji's explicit direction.
+  - The Tagalog startup greeting (`"Magandang araw po! Handa na si Serena. Ingat lagi at Mabuhay!"`) and Tagalog language features (`values-tl/`, Filipino translation, cultural nuances) are core sacred identities of the app and must NEVER be removed, translated to Japanese/English, or changed without Shinji's explicit direction.
 - Closed Source & Intellectual Property Defense Policy (知的所有権防衛・クローズドソースの鉄則):
   - Core codebase is strictly closed-source and private to protect Shinji's hard work, algorithms, and accessibility intelligence from unauthorized cloning, plagiarism, or free-riding.
   - Maintain user-driven bug reporting and direct feedback via in-app channels (direct email, WhatsApp, SMS, LINE) without exposing source code.

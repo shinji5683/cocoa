@@ -18,7 +18,7 @@ class SpeechAndAudioController(private val service: SerenaScreenReaderService) {
 
     fun speakStartupAnnouncement() {
         soundHelper.playMenuOpen()
-        speak("Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        speak("Magandang araw po! Handa na si Serena. Ingat lagi at Mabuhay!", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
     }
 
     fun speak(text: String, queueMode: Int = android.speech.tts.TextToSpeech.QUEUE_FLUSH) {

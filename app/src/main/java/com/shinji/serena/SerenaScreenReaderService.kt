@@ -300,7 +300,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (!hasSpokenStartupGreeting && isTtsReady) {
             hasSpokenStartupGreeting = true
             isStartupGreetingSpeaking = true
-            val welcomeMsg = "Magandang araw po, Shinji! Handa na si Serena para sa inyo! Mabuhay!"
+            val welcomeMsg = "Magandang araw po! Handa na si Serena. Ingat lagi at Mabuhay!"
             soundHelper?.playActionDone()
             try {
                 tts?.language = detectLanguage(welcomeMsg)
