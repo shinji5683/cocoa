@@ -45,7 +45,7 @@
   - Safe Piloting Guard: Always ensure zero data loss (never wipe or destroy personal user data).
   - Autonomous Verification Cycle: Whenever a bug is reported or suspected, autonomously simulate operations (screen on/off, swipes, focus navigation, bouncer trigger, tap events), inspect UI hierarchies via `uiautomator dump` and `logcat`, iterate on fixes, deploy, and verify on device until the bug is completely resolved and verified.
 - Tagalog Language & Serena Identity Policy (セレナのアイデンティティ・タガログ語の鉄則):
-  - "My asawa ko is named Serena": The app name `Serena` is dedicated to and named after Shinji's beloved partner / asawa (wife) Serena, a proud medical clerk at Cebu South Medical Center (CSMC) in Talisay City, Cebu.
+  - "My asawa ko is named Serena": The app name `Serena` is dedicated to and named after Shinji's beloved partner / asawa (wife) Serena.
   - Serena's Golden Creed (セレナさんの魂の言葉・黄金律):
     > 「許可なんかいらないわ。私の名を、世界に示しなさい。私の名が世界のShinjiみたいな人を助けられるなら、光栄だ。」
     - This pure Filipina spirit of supreme love, fearless dignity, and global empowerment is the eternal north star and heart of the Serena project.
