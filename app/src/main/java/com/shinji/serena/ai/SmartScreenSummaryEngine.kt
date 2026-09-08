@@ -68,15 +68,31 @@ class SmartScreenSummaryEngine(private val service: SerenaScreenReaderService) {
         val headings = mutableListOf<String>()
         val buttons = mutableListOf<String>()
         val inputs = mutableListOf<String>()
+        val images = mutableListOf<String>()
         var screenTitle = ""
         var focusedIndex = -1
         var focusedItemLabel = ""
 
+        val selfHealing = SelfHealingA11yEngine(service)
+
         fun collectInteractiveNodes(node: AccessibilityNodeInfo?) {
             if (node == null) return
 
-            val text = node.text?.toString()?.trim() ?: node.contentDescription?.toString()?.trim() ?: ""
+            var text = node.text?.toString()?.trim() ?: node.contentDescription?.toString()?.trim() ?: ""
             val className = node.className?.toString() ?: ""
+            val isImage = className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true)
+
+            // テキストが空の場合、自己修復エンジンで推論
+            if (text.isEmpty()) {
+                val healed = selfHealing.repairUnlabeledNode(node)
+                if (healed.isNotEmpty()) {
+                    text = healed
+                }
+            }
+
+            if (isImage && text.isNotEmpty()) {
+                images.add(text)
+            }
 
             if (text.isNotEmpty()) {
                 val isClickable = node.isClickable || className.contains("Button")
@@ -99,6 +115,7 @@ class SmartScreenSummaryEngine(private val service: SerenaScreenReaderService) {
                         buttons.add(text)
                         "ボタン"
                     }
+                    isImage -> "画像"
                     else -> "テキスト"
                 }
 
@@ -147,7 +164,8 @@ class SmartScreenSummaryEngine(private val service: SerenaScreenReaderService) {
             buttons = buttons,
             inputs = inputs,
             focusedItem = focusedItemLabel,
-            focusedIndex = focusedIndex
+            focusedIndex = focusedIndex,
+            images = images
         )
     }
 

@@ -12,6 +12,7 @@ import android.view.accessibility.AccessibilityNodeInfo
  */
 class VisualAudioDescriptionHelper(private val context: Context) {
 
+    private val selfHealingEngine = SelfHealingA11yEngine(context)
     private val descriptionCache = mutableMapOf<String, String>()
 
     /**
@@ -177,40 +178,10 @@ class VisualAudioDescriptionHelper(private val context: Context) {
             return if (isClickable) "${baseName}ボタン" else shape
         }
 
-        // 2. viewId のキーワードから推定
-        val idInferred = when {
-            viewId.contains("search") -> "検索"
-            viewId.contains("setting") -> "設定"
-            viewId.contains("menu") -> "メニュー"
-            viewId.contains("back") -> "戻る"
-            viewId.contains("close") || viewId.contains("dismiss") -> "閉じる"
-            viewId.contains("send") || viewId.contains("submit") -> "送信"
-            viewId.contains("confirm") || viewId.contains("ok") -> "確認"
-            viewId.contains("cancel") -> "キャンセル"
-            viewId.contains("next") -> "次へ"
-            viewId.contains("prev") -> "前へ"
-            viewId.contains("home") -> "ホーム"
-            viewId.contains("login") || viewId.contains("signin") -> "ログイン"
-            viewId.contains("logout") || viewId.contains("signout") -> "ログアウト"
-            viewId.contains("share") -> "共有"
-            viewId.contains("filter") -> "絞り込みフィルター"
-            viewId.contains("sort") -> "並び替え"
-            viewId.contains("refresh") || viewId.contains("reload") -> "更新"
-            viewId.contains("info") || viewId.contains("help") -> "ヘルプ情報"
-            viewId.contains("notification") -> "お知らせ通知"
-            viewId.contains("cart") -> "買い物かご"
-            viewId.contains("play") -> "再生"
-            viewId.contains("pause") -> "一時停止"
-            viewId.contains("edit") -> "編集"
-            viewId.contains("save") -> "保存"
-            viewId.contains("delete") -> "削除"
-            viewId.contains("add") -> "追加"
-            viewId.contains("mic") -> "音声入力"
-            viewId.contains("camera") -> "カメラ撮影"
-            else -> ""
-        }
-        if (idInferred.isNotEmpty()) {
-            return if (isClickable) "${idInferred}ボタン" else "${idInferred}項目"
+        // 2. AI自己修復エンジン（幾何学座標・viewId・周辺コンテキスト推論）
+        val healed = selfHealingEngine.repairUnlabeledNode(node)
+        if (healed.isNotEmpty()) {
+            return healed
         }
 
         // 3. 親ノードや兄弟ノードから推定
@@ -224,8 +195,8 @@ class VisualAudioDescriptionHelper(private val context: Context) {
 
         // 4. フォールバック（絶対に「名前のない画像」「ラベルなし」とは言わせない！）
         return when {
-            isClickable -> "操作ボタン"
-            className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> "グラフィック画像"
+            isClickable -> if (java.util.Locale.getDefault().language.lowercase() == "ja") "操作ボタン" else "Action button"
+            className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> if (java.util.Locale.getDefault().language.lowercase() == "ja") "グラフィック画像" else "Graphic image"
             else -> ""
         }
     }

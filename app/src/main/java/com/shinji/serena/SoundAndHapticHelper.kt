@@ -498,6 +498,23 @@ class SoundAndHapticHelper(private val context: Context) {
         playFocusMovePanned(normX, normY)
     }
 
+    /**
+     * 空間ソナーパルス音再生（距離と左右パン）
+     * @param distanceMeters 障害物までの推定距離（メートル）
+     * @param pan -1.0f (左) 〜 0.0f (正面) 〜 1.0f (右)
+     */
+    fun playSonarPulse(distanceMeters: Float, pan: Float = 0f) {
+        val leftVol = ((1.0f - pan) / 2.0f).coerceIn(0.1f, 1.0f)
+        val rightVol = ((1.0f + pan) / 2.0f).coerceIn(0.1f, 1.0f)
+        val rate = when {
+            distanceMeters < 0.8f -> 1.6f
+            distanceMeters < 1.5f -> 1.3f
+            distanceMeters < 2.5f -> 1.0f
+            else -> 0.8f
+        }
+        soundPool?.play(soundFocusId, leftVol, rightVol, 1, 0, rate)
+    }
+
     fun release() {
         abandonDuckAudioFocus()
         soundPool?.release()

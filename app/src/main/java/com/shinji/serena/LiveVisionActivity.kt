@@ -26,6 +26,8 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import com.shinji.serena.ai.FoodAndExpirationScannerHelper
 import com.shinji.serena.navigation.WalkAndTransitVisionHelper
+import com.shinji.serena.navigation.SpatialSonarEngine
+import android.graphics.RectF
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -71,6 +73,8 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var mode = "LIVE"
     private var lastSpokenText = ""
     private var lastSpokenTime = 0L
+    private val soundHelper by lazy { SoundAndHapticHelper(this) }
+    private val spatialSonarEngine by lazy { SpatialSonarEngine(this, soundHelper) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,6 +100,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "WALK_TRANSIT" -> "🚦 歩行・信号＆点字ブロックナビ"
             "BARCODE_DOC" -> "📄 バーコード＆書類・レシート読み取り"
             "FASHION" -> "👗 ファッション＆衣服カラー情景スキャナー"
+            "SONAR" -> "🦇 空間障害物＆ドア・段差ソナー"
             "EYES", "LIVE" -> "👀 Serena Eyes リアルタイムAI視覚＆実況"
             else -> "👀 Serena Eyes リアルタイムAI視覚＆実況"
         }
@@ -106,6 +111,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "WALK_TRANSIT" -> "歩行・信号および点字ブロックナビを起動しました。正面の道路や信号機を映してください。"
             "BARCODE_DOC" -> "バーコードおよび書類スキャナーを起動しました。商品バーコードやレシート、請求書を映してください。"
             "FASHION" -> "ファッション＆衣服カラー情景スキャナーを起動しました。服や靴下、身の回りのものをカメラに映してください。色や温度感、雰囲気を実況します。"
+            "SONAR" -> "空間障害物およびドア、段差ソナーを起動しました。歩行中の障害物やドアまでの距離を、立体音響ソナーパルス音と音声で案内します。"
             "OCR" -> "文字読み取りカメラを起動しました。"
             "FACE" -> "表情・人物認識カメラを起動しました。"
             else -> "Serena Eyes（リアルタイムAI視覚）を起動しました。周囲をゆっくり映してください。"
@@ -527,6 +533,50 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 } finally {
                     imageProxy.close()
                 }
+            }
+            "SONAR" -> {
+                objectDetector.process(image)
+                    .addOnSuccessListener { detectedObjects ->
+                        if (detectedObjects.isNotEmpty()) {
+                            val primary = detectedObjects.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() }
+                            if (primary != null) {
+                                val box = primary.boundingBox
+                                val rectF = RectF(
+                                    box.left.toFloat() / imgWidth.coerceAtLeast(1),
+                                    box.top.toFloat() / imgHeight.coerceAtLeast(1),
+                                    box.right.toFloat() / imgWidth.coerceAtLeast(1),
+                                    box.bottom.toFloat() / imgHeight.coerceAtLeast(1)
+                                )
+                                val label = primary.labels.firstOrNull()?.text ?: "障害物"
+                                val areaRatio = (rectF.width() * rectF.height()).coerceIn(0.01f, 1.0f)
+                                val dist = ((1.0f - kotlin.math.sqrt(areaRatio)) * 3.0f + 0.3f).coerceIn(0.3f, 3.5f)
+
+                                val sonarRes = spatialSonarEngine.processDetectedTarget(rectF, label, dist)
+                                val announcement = sonarRes.guideMessage
+
+                                if (announcement != lastSpokenText || currentTime - lastSpokenTime > 3000) {
+                                    lastSpokenText = announcement
+                                    lastSpokenTime = currentTime
+                                    runOnUiThread {
+                                        tvStatus.text = "🦇 $announcement"
+                                    }
+                                    speak(announcement, TextToSpeech.QUEUE_FLUSH)
+                                }
+                            }
+                        } else {
+                            if (currentTime - lastSpokenTime > 4000) {
+                                lastSpokenTime = currentTime
+                                val clearMsg = if (Locale.getDefault().language.lowercase() == "ja") "前方クリアです" else "Front is clear"
+                                runOnUiThread {
+                                    tvStatus.text = "🦇 $clearMsg"
+                                }
+                                speak(clearMsg, TextToSpeech.QUEUE_FLUSH)
+                            }
+                        }
+                    }
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
             }
             else -> {
                 // LIVE リアルタイムAI環境実況モード (Gemini Nano + Face Detection + Object/Labeling + Japanese OCR)

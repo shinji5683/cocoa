@@ -54,34 +54,72 @@ class GeminiNanoEngine(private val context: Context) {
         buttons: List<String>,
         inputs: List<String>,
         focusedItem: String,
-        focusedIndex: Int
+        focusedIndex: Int,
+        images: List<String> = emptyList()
     ): String {
+        val isJa = java.util.Locale.getDefault().language.lowercase() == "ja"
         val baseSummary = StringBuilder()
-        if (appName.isNotEmpty()) {
-            baseSummary.append("「$appName」の画面です。")
-        }
-        if (screenTitle.isNotEmpty() && screenTitle != appName) {
-            baseSummary.append("タイトル: $screenTitle。")
-        }
-        baseSummary.append("画面全体は全${itemCount}項目。")
+        if (isJa) {
+            if (appName.isNotEmpty()) {
+                baseSummary.append("「$appName」の画面です。")
+            }
+            if (screenTitle.isNotEmpty() && screenTitle != appName) {
+                baseSummary.append("タイトル: $screenTitle。")
+            }
+            baseSummary.append("画面全体は全${itemCount}項目。")
 
-        if (headings.isNotEmpty()) {
-            baseSummary.append("主な見出し: ${headings.take(2).joinToString("、")}。")
+            if (headings.isNotEmpty()) {
+                baseSummary.append("主な見出し: ${headings.take(2).joinToString("、")}。")
+            }
+
+            if (images.isNotEmpty()) {
+                val imgDesc = images.take(2).joinToString("、")
+                baseSummary.append("画面内の画像: ${images.size}件（$imgDesc）。")
+            }
+
+            val buttonSummary = if (buttons.isNotEmpty()) "ボタン${buttons.size}個（${buttons.take(3).joinToString("、")}など）" else ""
+            val inputSummary = if (inputs.isNotEmpty()) "入力欄${inputs.size}個" else ""
+
+            val parts = listOf(buttonSummary, inputSummary).filter { it.isNotEmpty() }
+            if (parts.isNotEmpty()) {
+                baseSummary.append("内訳: ${parts.joinToString("、")}。")
+            }
+
+            if (focusedIndex > 0) {
+                baseSummary.append("現在フォーカス中: 全${itemCount}項目中${focusedIndex}番目「$focusedItem」。")
+            }
+        } else {
+            if (appName.isNotEmpty()) {
+                baseSummary.append("Screen of $appName. ")
+            }
+            if (screenTitle.isNotEmpty() && screenTitle != appName) {
+                baseSummary.append("Title: $screenTitle. ")
+            }
+            baseSummary.append("Total $itemCount items. ")
+
+            if (headings.isNotEmpty()) {
+                baseSummary.append("Headings: ${headings.take(2).joinToString(", ")}. ")
+            }
+
+            if (images.isNotEmpty()) {
+                val imgDesc = images.take(2).joinToString(", ")
+                baseSummary.append("Images detected: ${images.size} ($imgDesc). ")
+            }
+
+            val buttonSummary = if (buttons.isNotEmpty()) "${buttons.size} buttons (${buttons.take(3).joinToString(", ")})" else ""
+            val inputSummary = if (inputs.isNotEmpty()) "${inputs.size} input fields" else ""
+
+            val parts = listOf(buttonSummary, inputSummary).filter { it.isNotEmpty() }
+            if (parts.isNotEmpty()) {
+                baseSummary.append("Contents: ${parts.joinToString(", ")}. ")
+            }
+
+            if (focusedIndex > 0) {
+                baseSummary.append("Focused on: item $focusedIndex of $itemCount, \"$focusedItem\".")
+            }
         }
 
-        val buttonSummary = if (buttons.isNotEmpty()) "ボタン${buttons.size}個（${buttons.take(3).joinToString("、")}など）" else ""
-        val inputSummary = if (inputs.isNotEmpty()) "入力欄${inputs.size}個" else ""
-
-        val parts = listOf(buttonSummary, inputSummary).filter { it.isNotEmpty() }
-        if (parts.isNotEmpty()) {
-            baseSummary.append("内訳: ${parts.joinToString("、")}。")
-        }
-
-        if (focusedIndex > 0) {
-            baseSummary.append("現在フォーカス中: 全${itemCount}項目中${focusedIndex}番目「$focusedItem」。")
-        }
-
-        return baseSummary.toString()
+        return baseSummary.toString().trim()
     }
 
     data class PersonAnalysisDetail(
