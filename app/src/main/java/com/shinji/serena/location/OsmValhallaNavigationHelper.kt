@@ -37,21 +37,35 @@ class OsmValhallaNavigationHelper(
          * 角度（-180 ~ +180度）を直感的相対方向用語に変換
          * クロックポジション（〜時の方向）は完全不使用！
          */
-        fun getRelativeDirectionName(relativeBearingDegrees: Double): String {
+        fun getRelativeDirectionName(relativeBearingDegrees: Double, isJapanese: Boolean = java.util.Locale.getDefault().language.lowercase() == "ja"): String {
             var norm = relativeBearingDegrees
             while (norm > 180.0) norm -= 360.0
             while (norm < -180.0) norm += 360.0
 
-            return when {
-                norm >= -22.5 && norm <= 22.5 -> "正面"
-                norm > 22.5 && norm <= 67.5 -> "右斜め前"
-                norm > 67.5 && norm <= 112.5 -> "右"
-                norm > 112.5 && norm <= 157.5 -> "右斜め後ろ"
-                norm > 157.5 || norm < -157.5 -> "真後ろ"
-                norm >= -157.5 && norm < -112.5 -> "左斜め後ろ"
-                norm >= -112.5 && norm < -67.5 -> "左"
-                norm >= -67.5 && norm < -22.5 -> "左斜め前"
-                else -> "正面"
+            return if (isJapanese) {
+                when {
+                    norm >= -22.5 && norm <= 22.5 -> "正面"
+                    norm > 22.5 && norm <= 67.5 -> "右斜め前"
+                    norm > 67.5 && norm <= 112.5 -> "右"
+                    norm > 112.5 && norm <= 157.5 -> "右斜め後ろ"
+                    norm > 157.5 || norm < -157.5 -> "真後ろ"
+                    norm >= -157.5 && norm < -112.5 -> "左斜め後ろ"
+                    norm >= -112.5 && norm < -67.5 -> "左"
+                    norm >= -67.5 && norm < -22.5 -> "左斜め前"
+                    else -> "正面"
+                }
+            } else {
+                when {
+                    norm >= -22.5 && norm <= 22.5 -> "Straight ahead"
+                    norm > 22.5 && norm <= 67.5 -> "Front-right"
+                    norm > 67.5 && norm <= 112.5 -> "Right"
+                    norm > 112.5 && norm <= 157.5 -> "Back-right"
+                    norm > 157.5 || norm < -157.5 -> "Directly behind"
+                    norm >= -157.5 && norm < -112.5 -> "Back-left"
+                    norm >= -112.5 && norm < -67.5 -> "Left"
+                    norm >= -67.5 && norm < -22.5 -> "Front-left"
+                    else -> "Straight ahead"
+                }
             }
         }
     }
@@ -180,8 +194,8 @@ class OsmValhallaNavigationHelper(
 
     private fun geocodeDestination(query: String, currentLat: Double, currentLon: Double): Triple<String, Double, Double>? {
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
-        // 日本語対応 Photon Geocoding API
-        val urlStr = "https://photon.komoot.io/api/?q=$encodedQuery&lat=$currentLat&lon=$currentLon&limit=1&lang=ja"
+        val photonLang = if (java.util.Locale.getDefault().language.lowercase() == "ja") "ja" else "en"
+        val urlStr = "https://photon.komoot.io/api/?q=$encodedQuery&lat=$currentLat&lon=$currentLon&limit=1&lang=$photonLang"
         val url = URL(urlStr)
         val conn = url.openConnection() as HttpURLConnection
         conn.connectTimeout = 5000
@@ -224,9 +238,14 @@ class OsmValhallaNavigationHelper(
                         put("step_penalty", 0.0)
                     })
                 })
+                val isJa = java.util.Locale.getDefault().language.lowercase() == "ja"
+                val langCode = if (isJa) "ja-JP" else "en-US"
+                val country = java.util.Locale.getDefault().country.uppercase()
+                val units = if (country in listOf("US", "GB", "LR", "MM")) "miles" else "kilometers"
+
                 put("directions_options", JSONObject().apply {
-                    put("language", "ja-JP")
-                    put("units", "kilometers")
+                    put("language", langCode)
+                    put("units", units)
                 })
             }
 

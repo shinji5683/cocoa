@@ -95,6 +95,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var walkingNavigator: com.shinji.serena.navigation.SerenaWalkingNavigator? = null
     var osmValhallaNavHelper: com.shinji.serena.location.OsmValhallaNavigationHelper? = null
     var spatialSurroundingRadarHelper: com.shinji.serena.location.SpatialSurroundingRadarHelper? = null
+    var streetIntersectionNavigator: com.shinji.serena.location.StreetIntersectionNavigator? = null
     var sentinelEyesManager: com.shinji.serena.ai.SerenaSentinelEyesManager? = null
     private var shakeDetectorHelper: ShakeDetectorHelper? = null
     private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
@@ -139,6 +140,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             }
             spatialSurroundingRadarHelper = com.shinji.serena.location.SpatialSurroundingRadarHelper(this, soundHelper) { msg ->
+                speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            }
+            streetIntersectionNavigator = com.shinji.serena.location.StreetIntersectionNavigator(this, soundHelper, com.shinji.serena.location.LocationAddressHelper(safeContext)) { msg ->
                 speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             }
             sentinelEyesManager = com.shinji.serena.ai.SerenaSentinelEyesManager(this) { msg ->
@@ -2056,6 +2060,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🏠", "インドア空間ナビ ＆ 屋内リアルタイム実況 (正面・左右・足元案内)") {
                 launchIndoorNavigation()
             },
+            serenaMenuItem("🗺️", "ストリート名＆交差点・空間ナビ (現在の通り・前方交差点アラート)") {
+                announceStreetAndIntersections()
+            },
             serenaMenuItem("🚶‍♂️", "徒歩ナビ・現在地と目的地案内") {
                 announceCurrentLocationAndNav()
             },
@@ -2996,6 +3003,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         } else {
             speak("3D空間障害物ソナーを停止しました。", TextToSpeech.QUEUE_FLUSH)
         }
+    }
+
+    fun announceStreetAndIntersections() {
+        soundHelper?.playMenuOpen()
+        val nav = streetIntersectionNavigator ?: run {
+            val prepMsg = if (java.util.Locale.getDefault().language.lowercase() == "ja") "ストリートナビゲーションを準備中です" else "Preparing street navigation"
+            speak(prepMsg, TextToSpeech.QUEUE_FLUSH)
+            return
+        }
+        nav.currentHeadingDegrees = compassHelper?.currentAzimuth ?: 0f
+        nav.announceStreetAndIntersections()
     }
 
     fun announceCompassHeading() {
@@ -4262,6 +4280,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         instantTranslationHelper?.close()
         instantTranslationHelper = null
         visualAudioDescriptionHelper = null
+        streetIntersectionNavigator = null
         brailleController?.disconnect()
         brailleController = null
         shakeDetectorHelper?.stop()

@@ -298,4 +298,40 @@ class LocationAddressHelper(private val context: Context) {
             }
         }
     }
+
+    /**
+     * 現在地からストリート名（通り名）と地区・近隣界隈名を高精度抽出
+     */
+    fun resolveStreetAndNeighborhood(location: Location, callback: (streetName: String, neighborhood: String) -> Unit) {
+        val lat = location.latitude
+        val lng = location.longitude
+        val locale = Locale.getDefault()
+
+        Thread {
+            try {
+                val geocoder = Geocoder(context, locale)
+                val addresses = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    var result: List<Address>? = null
+                    val latch = java.util.concurrent.CountDownLatch(1)
+                    geocoder.getFromLocation(lat, lng, 1) { addrs ->
+                        result = addrs
+                        latch.countDown()
+                    }
+                    latch.await(3, java.util.concurrent.TimeUnit.SECONDS)
+                    result
+                } else {
+                    @Suppress("DEPRECATION")
+                    geocoder.getFromLocation(lat, lng, 1)
+                }
+
+                val addr = addresses?.firstOrNull()
+                val street = addr?.thoroughfare ?: addr?.featureName ?: ""
+                val neighborhood = addr?.subLocality ?: addr?.locality ?: ""
+                mainHandler.post { callback(street, neighborhood) }
+            } catch (e: Exception) {
+                Log.e(TAG, "resolveStreet error: ${e.message}")
+                mainHandler.post { callback("", "") }
+            }
+        }.start()
+    }
 }
