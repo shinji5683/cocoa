@@ -95,6 +95,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "FOOD_EXPIRATION" -> "🥫 食品＆賞味期限スキャナー"
             "WALK_TRANSIT" -> "🚦 歩行・信号＆点字ブロックナビ"
             "BARCODE_DOC" -> "📄 バーコード＆書類・レシート読み取り"
+            "FASHION" -> "👗 ファッション＆衣服カラー情景スキャナー"
             "EYES", "LIVE" -> "👀 Serena Eyes リアルタイムAI視覚＆実況"
             else -> "👀 Serena Eyes リアルタイムAI視覚＆実況"
         }
@@ -104,6 +105,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "FOOD_EXPIRATION" -> "食品と賞味期限スキャナーを起動しました。食品パッケージや賞味期限の印字をゆっくり映してください。"
             "WALK_TRANSIT" -> "歩行・信号および点字ブロックナビを起動しました。正面の道路や信号機を映してください。"
             "BARCODE_DOC" -> "バーコードおよび書類スキャナーを起動しました。商品バーコードやレシート、請求書を映してください。"
+            "FASHION" -> "ファッション＆衣服カラー情景スキャナーを起動しました。服や靴下、身の回りのものをカメラに映してください。色や温度感、雰囲気を実況します。"
             "OCR" -> "文字読み取りカメラを起動しました。"
             "FACE" -> "表情・人物認識カメラを起動しました。"
             else -> "Serena Eyes（リアルタイムAI視覚）を起動しました。周囲をゆっくり映してください。"
@@ -479,6 +481,52 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     .addOnCompleteListener {
                         imageProxy.close()
                     }
+            }
+            "FASHION" -> {
+                try {
+                    val bitmap = imageProxy.toBitmap()
+                    val centerX = imgWidth / 2
+                    val centerY = imgHeight / 2
+                    val sampleRadius = (imgWidth * 0.15f).toInt().coerceAtLeast(10)
+
+                    var totalR = 0L
+                    var totalG = 0L
+                    var totalB = 0L
+                    var count = 0
+
+                    val step = (sampleRadius / 4).coerceAtLeast(1)
+                    for (y in (centerY - sampleRadius).coerceAtLeast(0) until (centerY + sampleRadius).coerceAtMost(imgHeight - 1) step step) {
+                        for (x in (centerX - sampleRadius).coerceAtLeast(0) until (centerX + sampleRadius).coerceAtMost(imgWidth - 1) step step) {
+                            val pixel = bitmap.getPixel(x, y)
+                            totalR += android.graphics.Color.red(pixel)
+                            totalG += android.graphics.Color.green(pixel)
+                            totalB += android.graphics.Color.blue(pixel)
+                            count++
+                        }
+                    }
+
+                    if (count > 0) {
+                        val avgR = (totalR / count).toInt()
+                        val avgG = (totalG / count).toInt()
+                        val avgB = (totalB / count).toInt()
+
+                        val mood = com.shinji.serena.ai.FashionMoodHelper.describeColorFromRgb(avgR, avgG, avgB)
+                        val announcement = "👗 ${mood.fullSpokenDescription}"
+
+                        if (announcement != lastSpokenText || currentTime - lastSpokenTime > 3500) {
+                            lastSpokenText = announcement
+                            lastSpokenTime = currentTime
+                            runOnUiThread {
+                                tvStatus.text = announcement
+                            }
+                            speak(mood.fullSpokenDescription, TextToSpeech.QUEUE_FLUSH)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Fashion analysis error: ${e.message}")
+                } finally {
+                    imageProxy.close()
+                }
             }
             else -> {
                 // LIVE リアルタイムAI環境実況モード (Gemini Nano + Face Detection + Object/Labeling + Japanese OCR)

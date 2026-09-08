@@ -2026,6 +2026,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("👁️‍🗨️", "常駐見守りアイズ (動体・性別・表情検知) (現在: ${if (sentinelEyesManager?.isSentinelActive() == true) "ON" else "OFF"})") {
                 toggleSentinelEyes()
             },
+            serenaMenuItem("👗", "ファッション＆衣服カラー情景スキャナー (温度・質感・印象の実況)") {
+                launchFashionScanner()
+            },
             serenaMenuItem("🧠", "AI画面要約 (クイックブリーフィング)") {
                 summarizeCurrentScreen()
             },
@@ -2458,6 +2461,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun launchCameraObjectAnalysis() {
         launchSerenaEyes("OBJECT")
+    }
+
+    fun launchFashionScanner() {
+        launchSerenaEyes("FASHION")
     }
 
     fun launchIndoorNavigation() {

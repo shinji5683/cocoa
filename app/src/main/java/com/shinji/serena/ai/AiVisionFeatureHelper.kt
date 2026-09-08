@@ -25,9 +25,10 @@ object AiVisionFeatureHelper {
 
     data class PersonAttributes(
         val genderAndAge: String,          // 例: "20代から30代くらいの女性", "大人の男性", "男の子（子供）", "女の子（子供）"
-        val clothingDescription: String,   // 例: "白い服", "黒い服", "青系の服", "明るめのトップス"
+        val clothingDescription: String,   // 例: "涼やかなスカイブルーの服（爽快感のあるトーン）"
         val estimatedDistanceMeters: String, // 例: "すぐ近く（約60cm）", "近く（約1m）", "約1.5m", "約2.5m"
-        val emotion: DetailedEmotion
+        val emotion: DetailedEmotion,
+        val fashionMood: FashionMoodHelper.FashionMoodDescription? = null
     )
 
     /**
@@ -191,11 +192,11 @@ object AiVisionFeatureHelper {
 
             val avgY = if (count > 0) totalY / count else 128
             when {
-                avgY >= 175 -> "白い服"
-                avgY in 135..174 -> "明るい色のトップス"
-                avgY in 75..134 -> "グレーや中間色の服"
-                avgY in 35..74 -> "濃い色の服"
-                else -> "黒い服"
+                avgY >= 185 -> "パリッと清潔感のあるクリアホワイトの服"
+                avgY in 140..184 -> "ふんわり温かみのある明るい色のトップス"
+                avgY in 85..139 -> "落ち着きのある上品なグレー系の服"
+                avgY in 45..84 -> "深みのあるシックで落ち着いた色の服"
+                else -> "キリッと引き締まった漆黒ブラックの服"
             }
         } catch (_: Exception) {
             "服"
@@ -234,20 +235,12 @@ object AiVisionFeatureHelper {
 
             if (sampleCount == 0) return "服"
 
-            val avgR = totalR / sampleCount
-            val avgG = totalG / sampleCount
-            val avgB = totalB / sampleCount
-            val brightness = (avgR * 299 + avgG * 587 + avgB * 114) / 1000
+            val avgR = (totalR / sampleCount).toInt()
+            val avgG = (totalG / sampleCount).toInt()
+            val avgB = (totalB / sampleCount).toInt()
 
-            when {
-                brightness < 45 -> "黒い服"
-                brightness > 195 -> "白い服"
-                avgB > avgR + 30 && avgB > avgG + 20 -> "青系の服"
-                avgR > avgG + 30 && avgR > avgB + 30 -> "赤系の服"
-                avgG > avgR + 20 && avgG > avgB + 20 -> "緑系の服"
-                avgR > 140 && avgG > 120 && avgB < 100 -> "ベージュ・黄色系の服"
-                else -> if (brightness > 120) "明るい色のトップス" else "落ち着いた色の服"
-            }
+            val mood = FashionMoodHelper.describeColorFromRgb(avgR, avgG, avgB)
+            "${mood.simpleColorName}の服（${mood.sensoryTone}）"
         } catch (_: Exception) {
             "服"
         }
