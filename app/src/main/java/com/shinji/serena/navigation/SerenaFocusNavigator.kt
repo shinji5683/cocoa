@@ -74,17 +74,48 @@ class SerenaFocusNavigator(
                 val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
                 val isSystemUiActive = activePkg.contains("systemui") || wins.any { it.type == AccessibilityWindowInfo.TYPE_SYSTEM && (it.isActive || it.isFocused) }
 
-                // アプリウィンドウの中で最前面（最高レイヤー：ダイアログやボトムシート）を特定
-                val appWins = wins.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
-                val topDialogWin = if (appWins.size > 1) appWins.maxByOrNull { it.layer } else null
+                // 1. 権限ダイアログ / パッケージインストーラー / セーフティセンターを絶対最優先
+                for (w in wins) {
+                    val r = w.root ?: continue
+                    val pkg = r.packageName?.toString()?.lowercase() ?: ""
+                    if (pkg.contains("permissioncontroller") || pkg.contains("packageinstaller") || pkg.contains("safetycenter")) {
+                        return listOf(r)
+                    }
+                }
+
+                // 2. Googleアカウント選択ポップアップ / アカウント設定 (com.google.android.gms) やダイアログウィンドウを最優先捕捉
+                val modalWins = wins.filter { w ->
+                    val r = w.root
+                    val pkg = r?.packageName?.toString()?.lowercase() ?: ""
+                    val isAccountPicker = pkg.contains("com.google.android.gms") && (w.type == AccessibilityWindowInfo.TYPE_APPLICATION || w.layer > 0)
+                    w.type == AccessibilityWindowInfo.TYPE_APPLICATION || isAccountPicker
+                }
+
+                // 最前面（最高レイヤー）のダイアログ／ポップアップウィンドウを特定
+                val topModalWin = if (modalWins.size > 1) {
+                    modalWins.maxByOrNull { it.layer }
+                } else null
+
+                // 最前面モーダルが存在する場合、背後画面を隔離してダイアログ内の要素のみを返す（フォーカス抜けを完全防止！）
+                if (topModalWin != null && topModalWin.layer > 1) {
+                    val modalRoot = topModalWin.root
+                    if (modalRoot != null) {
+                        val isolatedRoots = mutableListOf<AccessibilityNodeInfo>()
+                        // IME（キーボード）があれば併せて保持
+                        val imeWin = wins.find { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+                        imeWin?.root?.let { isolatedRoots.add(it) }
+                        isolatedRoots.add(modalRoot)
+                        return isolatedRoots
+                    }
+                }
 
                 val targetWins = wins.filter { w ->
                     when (w.type) {
                         AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY -> true
                         AccessibilityWindowInfo.TYPE_INPUT_METHOD -> true
                         AccessibilityWindowInfo.TYPE_APPLICATION -> {
-                            if (topDialogWin != null) {
-                                w.id == topDialogWin.id
+                            if (topModalWin != null) {
+                                w.id == topModalWin.id
                             } else {
                                 val r = w.root ?: return@filter false
                                 val pkg = r.packageName?.toString() ?: ""

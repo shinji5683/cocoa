@@ -3012,6 +3012,37 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }, delayMs)
     }
 
+    private fun handleWindowFocusTransition(windowTitle: String, isDialog: Boolean, delayMs: Long = 150L) {
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val nodes = collectAccessibleNodes()
+            if (nodes.isNotEmpty()) {
+                val currentFocus = getAccessibilityFocusedNode()
+                val isDifferentWindow = currentFocus == null || currentFocus.windowId != nodes[0].windowId
+                val isFocusLost = currentFocus == null || !nodes.any { isSameNode(it, currentFocus) }
+
+                if (isDifferentWindow || isFocusLost) {
+                    val targetNode = if (isDialog) {
+                        nodes.find { it.isClickable && (it.className?.toString()?.contains("Button") == true || it.isCheckable) }
+                            ?: nodes.find { it.isClickable }
+                            ?: nodes[0]
+                    } else {
+                        nodes[0]
+                    }
+
+                    focusNavigator?.setFocusAndShowOnScreen(targetNode)
+                    if (isTtsReady) {
+                        if (windowTitle.isNotEmpty() && !windowTitle.contains("画面") && isDialog) {
+                            speak(windowTitle, TextToSpeech.QUEUE_FLUSH)
+                            announceNode(targetNode, TextToSpeech.QUEUE_ADD)
+                        } else {
+                            announceNode(targetNode, TextToSpeech.QUEUE_FLUSH)
+                        }
+                    }
+                }
+            }
+        }, delayMs)
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
 
@@ -3043,6 +3074,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     speak("ロックを解除しました", TextToSpeech.QUEUE_FLUSH)
                 } else if (currentlyLocked) {
                     wasKeyguardLocked = true
+                }
+
+                if (activeMenuDialog != null) return
+                if (!isKeyguardLocked()) {
+                    handleWindowFocusTransition(windowTitle = "", isDialog = true, delayMs = 150)
                 }
             }
 
@@ -3091,30 +3127,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     return
                 }
 
-                val isDialog = className.contains("Dialog", ignoreCase = true) || className.contains("AlertDialog", ignoreCase = true) || className.contains("PopupWindow", ignoreCase = true)
+                val isDialog = className.contains("Dialog", ignoreCase = true) || className.contains("AlertDialog", ignoreCase = true) || className.contains("PopupWindow", ignoreCase = true) || pkgName.contains("com.google.android.gms")
                 if (isKeyguardLocked()) {
                     // ロック画面 / Bouncer のウィンドウ検知時のみPIN入力欄を捕捉
                     autoFocusPinKeypadIfPresent(force = false)
                 } else {
-                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                        val nodes = collectAccessibleNodes()
-                        if (nodes.isNotEmpty()) {
-                            val currentFocus = getAccessibilityFocusedNode()
-                            val isDifferentWindow = currentFocus == null || currentFocus.windowId != nodes[0].windowId
-                            if (isDifferentWindow || !nodes.any { isSameNode(it, currentFocus) }) {
-                                val first = nodes[0]
-                                focusNavigator?.setFocusAndShowOnScreen(first)
-                                if (isTtsReady) {
-                                    if (windowTitle.isNotEmpty() && !windowTitle.contains("画面") && isDialog) {
-                                        speak(windowTitle, TextToSpeech.QUEUE_FLUSH)
-                                        announceNode(first, TextToSpeech.QUEUE_ADD)
-                                    } else {
-                                        announceNode(first, TextToSpeech.QUEUE_FLUSH)
-                                    }
-                                }
-                            }
-                        }
-                    }, 200)
+                    handleWindowFocusTransition(windowTitle, isDialog, delayMs = 180)
                 }
             }
 
