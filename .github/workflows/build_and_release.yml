@@ -51,7 +51,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Debug & Release APKs
-        run: ./gradlew assembleRelease assembleDebug --stacktrace
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m' -Dfile.encoding=UTF-8"
+        run: |
+          ./gradlew assembleRelease --stacktrace
+          ./gradlew assembleDebug --stacktrace
+
 
       - name: Prepare Standard Named Artifacts
         run: |

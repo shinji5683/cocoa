@@ -16,6 +16,13 @@
 
 ---
 
+## 📥 ダウンロード＆クイックスタート
+
+* 🚀 **[最新リリース APK を直接ダウンロード (app-serena-release.apk)](https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-release.apk)**
+* 📦 **[全リリース一覧＆更新履歴 (Releases)](https://github.com/shinji5683/cocoa/releases)**
+
+---
+
 ## 🌟 Serena（セレナ）の特長・主要機能
 
 ### 1. ⚡ 超高速リニア＆セマンティクスナビゲーション

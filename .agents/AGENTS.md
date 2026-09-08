@@ -20,6 +20,10 @@
   - Local Build Strictly Prohibited & Cloud Release Fetching Policy (ローカルビルド絶対禁止・GitHubリリース取得の鉄則):
     - NEVER execute local builds (e.g. ./gradlew assembleRelease, build_apk.ps1) on the local machine under any circumstances!
     - Always download the officially compiled release APK directly from GitHub Releases (`gh release download <tag> -p "app-serena-release.apk" --clobber`) and install that APK onto connected test devices.
+  - README Latest APK Direct Download Link Policy (READMEへの最新APK直リンク常時掲載の鉄則):
+    - Always prominently maintain the direct download link to the latest release APK (`app-serena-release.apk`) in the "Download & Quick Start" / "ダウンロード＆クイックスタート" section of both `README.md` (English) and `README.ja.md` (Japanese) so blind users globally and in Japan can download and install Serena with a single click/tap without navigation friction.
+    - Direct Link URL: `https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-release.apk` and releases URL: `https://github.com/shinji5683/cocoa/releases`.
+
 - Automated Build, Deploy & Accessibility Auto-Activation Workflow:
   - Whenever completing a build or code modification, automatically proceed to deploy/install the generated APK onto connected Android devices (`adb install -r ...`).
   - Immediately auto-enable the `serena` Accessibility Service on the target device via ADB so Shinji does not need to manually open settings and toggle it:
