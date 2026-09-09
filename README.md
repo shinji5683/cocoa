@@ -94,6 +94,16 @@ Serena Screen Reader adheres to Google's Responsible AI Principles, ensuring saf
 
 ---
 
+## 🌍 Community & Contributors
+
+Serena Screen Reader is continuously refined with deep dedication, love, and collaboration from blind and visually impaired contributors worldwide:
+
+- **Lead Developer & Creator**: **Shinji Sakiyama** ([@shinji5683](https://github.com/shinji5683)) 🇯🇵
+- **Translators & Localization Contributors**:
+  - **Spanish (Español)**: **Luis Carlos González Morales** ([@luiscarlos2000](https://github.com/luiscarlos2000) / Panama 🇵🇦)
+
+---
+
 ## 📜 License
 
 Copyright (c) 2026 Shinji Sakiyama (`shinji5683`).

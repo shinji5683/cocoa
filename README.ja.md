@@ -78,8 +78,19 @@
 
 ---
 
+## 🌍 コミュニティ＆貢献者 (Community & Contributors)
+
+Serena Screen Readerは、世界中の全盲・視覚障害当事者コミュニティの温かい愛と協力によって発展を続けています：
+
+- **リード開発者・原作者**: **Shinji** ([@shinji5683](https://github.com/shinji5683)) 🇯🇵
+- **翻訳・ローカライズ協力者**:
+  - **スペイン語 (Español)**: **Luis Carlos González Morales** ([@luiscarlos2000](https://github.com/luiscarlos2000) / パナマ 🇵🇦)
+
+---
+
 ## 📜 ライセンス (License)
 
 Copyright (c) 2026 Shinji (shinji5683)
 
 本プロジェクトは **[Apache License, Version 2.0](LICENSE)** の下で公開されています。
+

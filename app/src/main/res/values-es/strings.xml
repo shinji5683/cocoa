@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">serena Screen Reader</string>
+    <string name="accessibility_service_name">serena Screen Reader</string>
+    <string name="ime_name">Serena IME (teclado fonético multilingüe)</string>
+    <string name="accessibility_service_description">Este es un servicio de lector de pantalla de alto rendimiento que lee en voz alta el texto y los botones de la pantalla, los nombres de quienes llaman por teléfono, LINE y otras aplicaciones de mensajería, y la duración de las llamadas (○ horas, ○ minutos y ○ segundos), para ayudar a las personas con discapacidad visual a utilizar el dispositivo de forma accesible e independiente.</string>
+    
+    <string name="status_label">Estado del servicio</string>
+    <string name="status_disabled">Desactivado (actívalo en Ajustes)</string>
+    <string name="status_enabled">Activado (en funcionamiento)</string>
+    
+    <string name="btn_open_accessibility">Abrir los ajustes de accesibilidad</string>
+    <string name="btn_test_speech">Prueba de voz</string>
+
+    <string name="title_tts_settings">Ajustes de síntesis de voz (TTS)</string>
+    <string name="label_speech_rate">Velocidad de lectura</string>
+    <string name="label_pitch">Tono</string>
+
+    <string name="title_test_bench">Área de pruebas interactiva</string>
+    <string name="test_button_1">Botón de prueba A</string>
+    <string name="test_button_2">Botón de prueba B</string>
+    <string name="test_edit_hint">Escribe aquí para probar la lectura en voz alta</string>
+    <string name="test_switch_label">Nivel de detalle (verbosidad)</string>
+
+    <string name="title_permissions">Ajustes de permisos y ejecución</string>
+    <string name="status_perm_granted">Concedido (correcto)</string>
+    <string name="status_perm_denied">Denegado (toca para conceder permiso)</string>
+    <string name="btn_request_overlay">Permiso para mostrarse sobre otras aplicaciones (overlay)</string>
+    <string name="btn_request_notification">Permiso para recibir y anunciar notificaciones</string>
+
+    <string name="title_features">Funciones principales y uso de serena Screen Reader</string>
+    <string name="feature_1">・[Mover el foco] Deslizar a izquierda o derecha con un dedo (ir al elemento anterior o siguiente)</string>
+    <string name="feature_2">・[Activar] Tocar dos veces la pantalla con un dedo (hacer clic en el elemento seleccionado)</string>
+    <string name="feature_3">・[Gestos de navegación] Abajo y luego izquierda para Atrás; arriba y luego izquierda para Inicio; abajo y luego derecha para Notificaciones</string>
+    <string name="feature_4">・[Llamadas y LINE] Anuncio del nombre del contacto y lectura de la duración al finalizar la llamada</string>
+    <string name="title_multilingual_tts">Ajustes de voz multilingüe y tagalo</string>
+    <string name="label_multilingual_status">Detección automática de idioma: Japonés / Inglés / Tagalo</string>
+    <string name="btn_open_tts_settings">Abrir los ajustes de texto a voz del sistema (añadir voz en tagalo)</string>
+
+    <string name="title_telemetry">Diagnóstico de la versión alfa y estadísticas de uso</string>
+    <string name="desc_telemetry">Recopila registros de uso y funcionamiento de forma totalmente anónima para corregir errores y mejorar la calidad.</string>
+    <string name="btn_send_telemetry">Enviar informe de diagnóstico al desarrollador (shinjisakiyama@gmail.com)</string>
+    <string name="btn_copy_telemetry">Copiar informe de diagnóstico al portapapeles</string>
+    <string name="label_telemetry_optin">Participar enviando informes para mejorar el funcionamiento</string>
+
+    <string name="dialog_telemetry_title">🌸 Petición de ayuda para mejorar la versión alfa de serena Screen Reader</string>
+    <string name="dialog_telemetry_message">Gracias por usar la versión alfa de serena Screen Reader.
+
+Para mejorar la calidad de la aplicación y la estabilidad en los canales Canary, QPR Beta y Estable del sistema operativo, te ofrecemos la opción de enviar estadísticas de funcionamiento del dispositivo a Shinji (shinjisakiyama@gmail.com).
+
+[Información enviada]
+・Versión del SO, nivel de API, modelo del dispositivo
+・Recuento de gestos, número de idiomas de TTS usados, cantidad de llamadas anunciadas
+
+⚠️ No se recopilará ni enviará NINGÚN dato personal, como números de teléfono, nombres de contactos, contenido de mensajes o grabaciones de voz.
+
+¿Nos ayudas a mejorar? (Puedes cambiar esta opción más tarde en los ajustes).</string>
+    <string name="dialog_telemetry_agree">Aceptar y colaborar</string>
+    <string name="dialog_telemetry_refuse">En otro momento</string>
+
+    <string name="title_hourly_chime">Señal horaria (anuncio de la hora en punto)</string>
+    <string name="desc_hourly_chime">Anuncia automáticamente la hora con un agradable timbre cada hora en punto (ej., las 3:00 p.m.).</string>
+    <string name="label_hourly_chime_switch">Activar señal horaria (anuncio cada hora)</string>
+    <string name="btn_test_hourly_chime">Probar timbre y voz de la señal horaria</string>
+
+    <string name="title_call_settings">Ajustes del asistente de llamadas</string>
+    <string name="desc_call_settings">Anuncia con voz quién llama y lee la duración total de la llamada al iniciar y finalizar.</string>
+    <string name="label_call_periodic_switch">Anunciar la duración de la llamada cada minuto</string>
+    <string name="desc_call_periodic_switch">※ Si se activa, leerá el tiempo transcurrido cada minuto durante la llamada (se recomienda dejar desactivado). Los anuncios al iniciar y finalizar siempre funcionan.</string>
+
+    <string name="label_announce_operation_actions">Sugerencias de uso detalladas (para principiantes)</string>
+    <string name="desc_announce_operation_actions">Lee en voz alta guías de acción como "Se desplazó hacia abajo" o "Activado" al mover la pantalla o tocar un botón. Si está desactivado (recomendado), solo se usarán sonidos y vibraciones rápidas, leyendo el contenido de la nueva pantalla lo más rápido posible.</string>
+
+    <string name="title_security_health">Entorno del sistema y diagnóstico de seguridad</string>
+    <string name="btn_recheck_security">Volver a comprobar la seguridad del dispositivo</string>
+
+    <string name="title_developer_info">Proveedor de la aplicación y soporte oficial</string>
+    <string name="developer_name">Shinji</string>
+    <string name="provider_name">Shinji</string>
+    <string name="developer_email">shinjisakiyama@gmail.com</string>
+    <string name="developer_phone">08094959134</string>
+    <string name="developer_phone_int">+818094959134</string>
+
+    <string name="developer_name_label">Desarrollador: Shinji</string>
+    <string name="provider_name_label">Proveedor: Shinji</string>
+    <string name="developer_phone_label">Soporte: Disponible por teléfono, correo, LINE y WhatsApp</string>
+    <string name="btn_call_developer">📞 Llamar directamente al desarrollador (Shinji)</string>
+    <string name="btn_email_developer">📧 Enviar un correo al desarrollador (shinjisakiyama@gmail.com)</string>
+    <string name="btn_message_developer">💬 Consultar por LINE / WhatsApp / Mensajes</string>
+    <string name="signature_label">Firma digital oficial: Verificada (Shinji Official / serena-release-key)</string>
+    <string name="copyright_label">Copyright © 2026 Shinji. Todos los derechos reservados.</string>
+
+    <!-- Accessibility Roles & Semantics -->
+    <string name="role_button">Botón</string>
+    <string name="role_image">Imagen</string>
+    <string name="role_switch">Interruptor</string>
+    <string name="role_checkbox">Casilla de verificación</string>
+    <string name="role_radio_button">Botón de opción</string>
+    <string name="role_edit_text">Cuadro de edición</string>
+    <string name="role_pin_entry">Cuadro de edición de PIN</string>
+    <string name="role_password_entry">Cuadro de edición de contraseña</string>
+    <string name="role_number_entry">Campo numérico</string>
+    <string name="role_phone_entry">Cuadro de edición de número de teléfono</string>
+    <string name="role_email_entry">Cuadro de edición de correo electrónico</string>
+    <string name="role_url_entry">Cuadro de edición de URL</string>
+    <string name="role_slider">Control deslizante</string>
+    <string name="role_widget">Widget</string>
+    <string name="role_expand_button">Botón de expandir</string>
+    <string name="role_collapse_button">Botón de contraer</string>
+    <string name="role_window">Ventana</string>
+    <string name="role_lock_screen">Pantalla de bloqueo</string>
+
+    <!-- Accessibility States -->
+    <string name="state_on">Activado</string>
+    <string name="state_off">Desactivado</string>
+    <string name="state_checked">Marcado</string>
+    <string name="state_not_checked">Sin marcar</string>
+    <string name="state_selected">Seleccionado</string>
+    <string name="state_not_selected">No seleccionado</string>
+    <string name="state_collapsed">Contraído</string>
+    <string name="state_expanded">Expandido</string>
+    <string name="state_disabled">No disponible</string>
+
+    <!-- Serena Menu & Navigation Dialogs -->
+    <string name="menu_serena_title">Menú de serena</string>
+    <string name="menu_edit_title">Asistencia de edición de serena</string>
+    <string name="menu_actions_title">Menú de acciones</string>
+    <string name="menu_close">Cerrar</string>
+    <string name="menu_closed">Menú cerrado</string>
+    <string name="menu_spoken_header">Menú serena, %1$d elementos. Elemento 1, %2$s</string>
+    <string name="menu_item_accessible">Elemento %1$d, %2$s</string>
+    <string name="menu_actions_spoken_header">Menú de acciones abierto. %1$d elementos.</string>
+    <string name="menu_edit_spoken_header">Menú de asistencia de edición abierto. %1$d elementos.</string>
+    <string name="granularity_spoken_header">Controles de lectura: %1$s</string>
+    <string name="menu_long_click">Pulsación larga en el elemento (toque prolongado)</string>
+    <string name="menu_uninstall_app">Desinstalar "%1$s"</string>
+    <string name="menu_app_info">Información de la aplicación "%1$s"</string>
+    <string name="menu_uninstall_from_settings">Desinstalar aplicación (desde los ajustes)</string>
+    <string name="menu_item_smart_summary">Resumen inteligente (Estructura de la pantalla, cantidad de elementos y detalles)</string>
+    <string name="menu_item_ai_assistant">Asistente de voz por IA de serena</string>
+    <string name="menu_item_mode_switch">Cambiar de modo (Actual: %1$s)</string>
+    <string name="menu_item_phone_status">Estado y ubicación (Batería / Señal / Wi-Fi / Hora / Ubicación actual)</string>
+    <string name="menu_item_location_precision">Precisión de la ubicación (Actual: %1$s)</string>
+    <string name="menu_item_country_setting">Ajuste de lectura del nombre del país (Actual: %1$s)</string>
+    <string name="menu_item_reading_control">Controles de lectura (Actual: %1$s)</string>
+    <string name="menu_item_clipboard_history">Historial del portapapeles (Elementos copiados)</string>
+    <string name="menu_item_notification_filter">Ajustes de lectura de notificaciones y llamadas (Actual: %1$s)</string>
+    <string name="menu_item_spatial_soundstage">Escenario sonoro espacial 3D (Actual: %1$s)</string>
+    <string name="menu_item_audio_ducking">Atenuación de audio para música (Actual: %1$s)</string>
+    <string name="menu_item_whisper_mode">Modo susurro nocturno (Actual: %1$s)</string>
+    <string name="menu_item_keyboard_mode">Método de entrada del teclado (Actual: %1$s)</string>
+    <string name="menu_item_voice_input">Dictado por voz de serena (Dictar directamente al campo de edición)</string>
+    <string name="menu_item_voice_translation">Traducción por voz de serena (Traducir, dictar o leer en el idioma indicado)</string>
+    <string name="menu_item_translation_lang">Idioma predeterminado para traducción en tiempo real (Actual: %1$s)</string>
+    <string name="menu_item_image_explainer">Explicación profunda de imágenes por IA (Descripción detallada de la escena)</string>
+    <string name="menu_item_sound_recognition">Detección de sonidos ambientales, peligros y voces (Actual: %1$s)</string>
+    <string name="menu_item_eyes_camera">serena Eyes (Cámara con visión e IA en tiempo real)</string>
+    <string name="menu_item_sentinel_eyes">Ojos centinelas permanentes (Detección de movimiento, género y expresión) (Actual: %1$s)</string>
+    <string name="menu_item_fashion_scanner">Escáner de moda y colores de ropa (Descripción de temperatura, textura y aspecto)</string>
+    <string name="menu_item_screen_summary">Resumen de pantalla por IA (Análisis rápido)</string>
+    <string name="menu_item_notification_digest">Resumen inteligente de notificaciones (Notificaciones no leídas e importantes)</string>
+    <string name="menu_item_surrounding_radar">Radar 3D de entorno y prevención de pérdidas</string>
+    <string name="menu_item_hourly_chime">Cambiar sonido de la señal horaria (Estilo radio, pop, tradicional)</string>
+    <string name="menu_item_screen_curtain">Cortina de pantalla</string>
+    <string name="menu_item_light_checker">Detector de luz y colores (Brillo de la habitación, sol y colores)</string>
+    <string name="menu_item_compass_audio">Brújula con audio 3D (Sonido estéreo y anuncio de dirección)</string>
+    <string name="menu_item_sonar_radar">Sonar de obstáculos y escalones con audio 3D (Estéreo)</string>
+    <string name="menu_item_indoor_nav">Navegación en interiores (Guías frontales, laterales y de suelo en tiempo real)</string>
+    <string name="menu_item_street_nav">Navegación de calles e intersecciones (Calle actual y alertas de cruces)</string>
+    <string name="menu_item_walk_nav">Navegación a pie (Ubicación actual y destino)</string>
+    <string name="menu_item_food_scanner">Escáner de alimentos y fechas de caducidad (Latas, condimentos, bebidas y fechas)</string>
+    <string name="menu_item_transit_nav">Navegación de semáforos y bloques podotáctiles (Avisos de cruce y guías táctiles)</string>
+    <string name="menu_item_barcode_scanner">Escáner de códigos de barras, documentos y recibos (Total, fechas, códigos)</string>
+    <string name="menu_item_kanji_detail">Lectura detallada de caracteres (Deletreo fonético y descripción de los kanjis/caracteres actuales)</string>
+    <string name="menu_item_speech_rate">Cambiar la velocidad de lectura (Alternar)</string>
+    <string name="menu_item_page_next">Ir a la página siguiente</string>
+    <string name="menu_item_page_prev">Ir a la página anterior</string>
+    <string name="menu_item_read_from_top">Leer desde la parte superior</string>
+    <string name="menu_item_call_dev">Llamar al desarrollador (%1$s)</string>
+    <string name="menu_item_email_dev">Enviar correo al desarrollador (%1$s)</string>
+    <string name="menu_item_diagnostics">Enviar diagnóstico al desarrollador (%1$s)</string>
+    <string name="menu_item_settings">Ajustes de serena</string>
+    <string name="menu_item_help">Ayuda de serena</string>
+
+    <!-- Core Screen Reader Spoken Feedback -->
+    <string name="gesture_back">Atrás</string>
+    <string name="gesture_home">Pantalla de inicio</string>
+    <string name="gesture_recents">Aplicaciones recientes</string>
+    <string name="gesture_quick_settings">Ajustes rápidos</string>
+    <string name="gesture_notifications">Notificaciones</string>
+    <string name="screen_unlocked">Pantalla desbloqueada</string>
+    <string name="screen_locked">Pantalla bloqueada</string>
+    <string name="lock_screen_guide">Pantalla de bloqueo. Desliza dos dedos hacia arriba para desbloquear.</string>
+    <string name="page_next">Siguiente página</string>
+    <string name="page_prev">Página anterior</string>
+    <string name="scrolled_vertical">Se desplazó hacia %1$s</string>
+    <string name="granularity_next_control">Siguiente control</string>
+    <string name="granularity_prev_control">Control anterior</string>
+    <string name="granularity_characters">Caracteres</string>
+    <string name="granularity_words">Palabras</string>
+    <string name="granularity_lines">Líneas</string>
+    <string name="granularity_paragraphs">Párrafos</string>
+    <string name="granularity_headings">Encabezados</string>
+    <string name="granularity_controls">Controles</string>
+    <string name="granularity_links">Enlaces</string>
+    <string name="granularity_actions">Acciones</string>
+    <string name="granularity_default">Navegación predeterminada</string>
+    <string name="text_deleted_item">%1$s eliminado</string>
+    <string name="text_deleted">Eliminado</string>
+    <string name="clipboard_copied">Copiado al portapapeles</string>
+    <string name="clipboard_empty">El historial de lectura está vacío</string>
+    <string name="call_answered">Llamada respondida</string>
+    <string name="call_ended">Llamada finalizada</string>
+    <string name="media_paused">Contenido multimedia pausado</string>
+    <string name="media_resumed">Contenido multimedia reanudado</string>
+    <string name="speech_muted">Voz silenciada</string>
+    <string name="speech_unmuted">Voz reactivada</string>
+
+    <!-- Main Activity UI & Permissions -->
+    <string name="btn_open_welcome_guide">Ver pantalla de bienvenida y guía de voz de funciones</string>
+    <string name="perm_overlay_title">Mostrar sobre otras aplicaciones</string>
+    <string name="perm_notification_title">Permiso para recibir y anunciar notificaciones</string>
+    <string name="security_diagnosing">Diagnosticando...</string>
+    <string name="security_diagnosing_detail">Diagnosticando el entorno</string>
+    <string name="label_speech_rate_default">Velocidad de lectura: 1.0x</string>
+    <string name="label_pitch_default">Tono: 1.0x</string>
+    <string name="label_speech_rate_format">Velocidad de lectura: %1$.1fx</string>
+    <string name="label_pitch_format">Tono: %1$.1fx</string>
+    <string name="shake_sensitive">Sensible (2.3f) - Reacciona con fuerza ligera</string>
+    <string name="shake_normal">Normal (3.5f) - Reacciona al agitar intencionadamente</string>
+    <string name="shake_firm">Firme (4.3f) - Reacciona al agitar con fuerza</string>
+    <string name="title_translation_settings">Ajustes de traducción y lectura en tiempo real</string>
+    <string name="desc_translation_settings">Detecta idiomas como el inglés, español, tagalo, chino y otros en la pantalla o en los iconos, y los traduce y lee en tiempo real al idioma del dispositivo.</string>
+    <string name="translation_target_format">Idioma de destino: Traducción automática al %1$s</string>
+    <string name="translation_mode_orig_then_trans">Leer el texto original seguido de la traducción (recomendado)</string>
+    <string name="translation_mode_trans_only">Leer solo la traducción</string>
+    <string name="translation_mode_off">Traducción desactivada (leer solo el texto original)</string>
+
+    <!-- Welcome Guide Dialog -->
+    <string name="welcome_title">¡Te damos la bienvenida a serena Screen Reader!</string>
+    <string name="welcome_subtitle">El lector de pantalla de nueva generación más accesible e inteligente del mundo, creado por Shinji, un desarrollador ciego.</string>
+    <string name="welcome_btn_play_tts">Escuchar guía de voz (Síntesis de voz)</string>
+    <string name="welcome_btn_stop_tts">Detener guía de voz</string>
+    <string name="welcome_features_title">Características y funciones útiles de serena</string>
+    <string name="welcome_feature_1_title">1. Navegación original de serena y compatibilidad con TalkBack</string>
+    <string name="welcome_feature_1_desc">Desliza un dedo a izquierda o derecha para moverte, y toca dos veces para activar. Alterna libremente entre la exploración táctil intuitiva y el modo tradicional de TalkBack en cualquier momento.</string>
+    <string name="welcome_feature_2_title">2. Asistente inteligente de llamadas</string>
+    <string name="welcome_feature_2_desc">Anuncia quién llama por teléfono o LINE. Lee automáticamente el tiempo de la llamada (○ horas ○ minutos ○ segundos) al empezar y terminar.</string>
+    <string name="welcome_feature_3_title">3. Señal horaria y estado por agitación</string>
+    <string name="welcome_feature_3_desc">Emite un agradable timbre cada hora en punto. Agita tu teléfono para comprobar al instante la hora actual, la batería y la señal.</string>
+    <string name="welcome_feature_4_title">4. Navegación a pie de alta precisión y radar espacial</string>
+    <string name="welcome_feature_4_desc">Navega por tu entorno de forma segura usando direcciones relativas intuitivas como "enfrente" o "diagonal derecha", diseñadas específicamente para personas con discapacidad visual.</string>
+    <string name="welcome_feature_5_title">5. Traducción multilingüe en tiempo real y soporte de tagalo</string>
+    <string name="welcome_feature_5_desc">Identifica automáticamente idiomas en la pantalla y los traduce en el dispositivo al inglés, español, etc., incluyendo soporte nativo para el tagalo, el idioma materno de Serena, la amada esposa del desarrollador.</string>
+    <string name="welcome_feature_6_title">6. Reconocimiento por IA en el dispositivo y deletreo detallado</string>
+    <string name="welcome_feature_6_desc">Incluye reconocimiento de escenas y OCR impulsado por Gemini Nano/ML Kit, además de descripciones y deletreo detallado de caracteres para no confundir palabras homófonas.</string>
+    <string name="welcome_dont_show_again">No volver a mostrar esta pantalla de bienvenida</string>
+    <string name="welcome_btn_start">Empezar a usar serena</string>
+    <string name="welcome_tts_guide_text">¡Te damos la bienvenida a serena Screen Reader! El lector de pantalla de nueva generación más accesible e inteligente del mundo, creado por Shinji, un desarrollador ciego. Aquí tienes sus características principales: 1. Alterna entre la exploración táctil intuitiva y el modo tradicional de TalkBack. 2. Asistente inteligente que anuncia quién te llama y cuánto ha durado la llamada. 3. Timbre horario cada hora en punto y notificaciones de estado, como la hora y la batería, con solo agitar el teléfono. 4. Navegación a pie de alta precisión utilizando referencias intuitivas como "enfrente" o "diagonal derecha". 5. Traducción en tiempo real de idiomas en pantalla, con soporte nativo para tagalo. 6. Reconocimiento de escenas por IA directamente en tu dispositivo y descripciones fonéticas detalladas de caracteres para no perder ningún detalle. ¡Disfruta de una experiencia más libre y cómoda con serena!</string>
+
+    <!-- Disclosures & Ethics Dialogs -->
+    <string name="disclosure_title">Sobre las funciones de accesibilidad de serena</string>
+    <string name="disclosure_message">serena Screen Reader ofrece las siguientes funciones para personas con discapacidad visual o que requieren asistencia motriz:
+
+Lectura en voz alta en tiempo real del texto y los botones de la pantalla.
+Anuncio de contactos entrantes (teléfono, LINE) y duración de llamadas.
+Navegación a pie de alta precisión (guías intuitivas como "enfrente" o "diagonal derecha") y reconocimiento de cámara por IA.
+
+[Política de privacidad]
+Todo el contenido de la pantalla y los datos introducidos se procesan exclusivamente de forma local en el dispositivo (on-device). No se envía, recopila ni comparte ningún dato con servidores externos.
+
+Para habilitar el servicio, selecciona "serena" en la siguiente pantalla y actívalo.</string>
+    <string name="disclosure_agree">Aceptar y abrir los ajustes</string>
+    <string name="disclosure_cancel">Cancelar</string>
+
+    <string name="ai_ethics_title">Pautas éticas de IA responsable de Google y consentimiento</string>
+    <string name="ai_ethics_message">serena Screen Reader usa inteligencia artificial local (Gemini Nano) y aprendizaje automático para guiarte en el entorno, reconocer expresiones, objetos, leer texto y resumir contenido de manera inteligente.
+
+[1. Cumplimiento de las políticas de IA responsable de Google]
+Las funciones de IA de esta aplicación están diseñadas siguiendo los Principios de IA responsable de Google (https://ai.google/responsibility/principles/).
+
+[2. Exención de responsabilidad sobre la inferencia de la IA y seguridad]
+Las funciones de IA, como el reconocimiento de expresiones, personas y objetos, o el cálculo de distancias, se basan en estimaciones. Pueden producirse errores de reconocimiento debido al entorno (oscuridad, contraluz, ángulo de la cámara, estado de la red, etc.).
+En situaciones donde la seguridad es vital (cruces peatonales, escaleras, andenes de tren, carreteras), SIEMPRE debes apoyarte en tu bastón blanco, los sonidos del entorno y tus sentidos.
+
+[3. Procesamiento local y privacidad]
+Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de forma local en el dispositivo. No se envían secuencias de cámara ni datos personales a ningún servidor externo.
+
+¿Aceptas estas directrices y las condiciones de uso para empezar a utilizar la aplicación?</string>
+    <string name="ai_ethics_agree">Aceptar y continuar</string>
+    <string name="ai_ethics_view_google">Ver principios de IA de Google</string>
+    <string name="ai_ethics_disagree">No aceptar</string>
+
+    <!-- Auto Update Strings -->
+    <string name="menu_item_check_update">Buscar actualizaciones</string>
+    <string name="update_dialog_title">🚀 Actualización disponible de Serena: %1$s</string>
+    <string name="update_dialog_message">¡Hay una versión más reciente de Serena disponible!\n\nVersión actual: %1$s\nÚltima versión: %2$s\n\nNotas de la versión:\n%3$s\n\n¿Deseas instalar la actualización ahora?</string>
+    <string name="update_btn_install_now">Instalar actualización</string>
+    <string name="update_btn_open_github">Ver en GitHub</string>
+    <string name="update_btn_later">Más tarde</string>
+    <string name="update_download_started">Descargando APK de actualización de Serena...</string>
+    <string name="update_download_finished">Descarga completada. Abriendo el instalador...</string>
+    <string name="update_download_failed">Error al descargar la actualización: %1$s</string>
+    <string name="update_permission_required">Permite \'Instalar aplicaciones desconocidas\' para que Serena pueda continuar con la actualización.</string>
+    <string name="update_install_failed">Error al iniciar el instalador: %1$s</string>
+    <string name="update_already_latest">Serena ya está actualizada (v%1$s).</string>
+    <string name="update_checking">Buscando actualizaciones...</string>
+</resources>
