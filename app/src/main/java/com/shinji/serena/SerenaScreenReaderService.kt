@@ -3999,17 +3999,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val systemLocale = Locale.getDefault()
         if (trimmed.isEmpty()) return systemLocale
 
-        // 1. タガログ語判定（Serenaのアイデンティティ挨拶 "Magandang araw po! Handa na si Serena. Ingat lagi at Mabuhay!" 等）
+        // 1. タガログ語判定（Serenaのアイデンティティ挨拶やタガログ固有語）
         val lower = trimmed.lowercase()
         val tagalogDistinctPhrases = listOf(
             "magandang araw", "handa na si serena", "ingat lagi", "mabuhay", "maraming salamat", "kumusta", "kamusta"
         )
         val tagalogWords = setOf(
-            "kamusta", "kumusta", "salamat", "magandang", "mabuhay", "asawa", "handa", "walang", "opo", "ingat"
+            "kamusta", "kumusta", "salamat", "magandang", "mabuhay", "asawa", "handa", "walang", "opo", "ingat", "araw", "po"
         )
-        val tokens = lower.split(Regex("[^a-zA-Z]+")).filter { it.isNotEmpty() }
+        val tokens = lower.split(Regex("[^\\p{L}]+")).filter { it.isNotEmpty() }
         val isTagalog = tagalogDistinctPhrases.any { lower.contains(it) } || tokens.any { tagalogWords.contains(it) }
-
         if (isTagalog) {
             val tagalogLocale = Locale.Builder().setLanguage("fil").setRegion("PH").build()
             val availability = tts?.isLanguageAvailable(tagalogLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
@@ -4018,29 +4017,147 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 2. 日本語判定（ひらがな・カタカナ・漢字・全角記号が含まれている場合）
-        val hasJapanese = trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF\\u3000-\\u303F].*"))
-        if (hasJapanese) {
+        // 2. 日本語判定（ひらがな・カタカナ・漢字）
+        // ※ 英語と日本語の混ざり防止：ひらがな・カタカナが含まれているか、漢字が含まれている場合は日本語TTSを厳格に優先
+        val hasKana = trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF].*"))
+        val hasKanji = trimmed.matches(Regex(".*[\\u4E00-\\u9FAF].*"))
+        if (hasKana || hasKanji) {
             val jaAvailability = tts?.isLanguageAvailable(Locale.JAPANESE) ?: TextToSpeech.LANG_NOT_SUPPORTED
             if (jaAvailability >= TextToSpeech.LANG_AVAILABLE) {
                 return Locale.JAPANESE
             }
         }
 
-        // 3. ユーザーの端末デフォルト言語を最優先（オランダ語 Dutch, ドイツ語, フランス語, スペイン語, 英語, etc.）
-        val sysLang = systemLocale.language.lowercase()
-        if (sysLang != "ja" || hasJapanese) {
-            val sysAvail = tts?.isLanguageAvailable(systemLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-            if (sysAvail >= TextToSpeech.LANG_AVAILABLE) {
-                return systemLocale
+        // 3. ハングル（韓国語）判定
+        val hasHangul = trimmed.matches(Regex(".*[\\uAC00-\\uD7AF\\u1100-\\u11FF].*"))
+        if (hasHangul) {
+            val koAvailability = tts?.isLanguageAvailable(Locale.KOREAN) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (koAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return Locale.KOREAN
             }
         }
 
-        // 4. 英語判定およびフォールバック
-        val englishLocale = Locale.ENGLISH
-        val engAvail = tts?.isLanguageAvailable(englishLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+        // 4. キリル文字（ロシア語等）判定
+        val hasCyrillic = trimmed.matches(Regex(".*[\\u0400-\\u04FF].*"))
+        if (hasCyrillic) {
+            val ruLocale = Locale.forLanguageTag("ru-RU")
+            val ruAvailability = tts?.isLanguageAvailable(ruLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (ruAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return ruLocale
+            }
+        }
+
+        // 5. ラテン文字言語のインテリジェント弁別（オランダ語、ドイツ語、スペイン語、フランス語、英語）
+        // 5-1. オランダ語 (Nederlands) 判定
+        val dutchSpecificChars = lower.contains("ij") || lower.contains("ĳ") || lower.contains("ë")
+        val dutchWords = setOf(
+            "het", "een", "van", "naar", "voor", "niet", "geen", "wel", "over", "uit", "deze", "dit", "dat",
+            "ook", "maar", "meer", "alle", "openen", "sluiten", "instellingen", "meldingen", "scherm", "knop",
+            "schakelaar", "zoeken", "volgende", "vorige", "startscherm", "ingeschakeld", "uitgeschakeld",
+            "geselecteerd", "dubbel", "activeren", "koppeling", "kop", "lijst", "item", "gereed", "annuleren",
+            "waarschuwing", "kopiëren", "plakken", "knippen", "tekst", "batterij", "opgeladen", "opladen"
+        )
+        val isDutch = dutchSpecificChars || tokens.any { dutchWords.contains(it) }
+        if (isDutch) {
+            val nlLocale = Locale.forLanguageTag("nl-NL")
+            val nlAvailability = tts?.isLanguageAvailable(nlLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (nlAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return nlLocale
+            }
+        }
+
+        // 5-2. ドイツ語 (Deutsch) 判定
+        val germanSpecificChars = lower.contains("ä") || lower.contains("ö") || lower.contains("ü") || lower.contains("ß")
+        val germanWords = setOf(
+            "der", "die", "das", "und", "ein", "eine", "einen", "einem", "einer", "nicht", "für", "mit", "von",
+            "auf", "zu", "im", "ist", "sind", "einstellungen", "benachrichtigungen", "bildschirm", "schaltfläche",
+            "zurück", "weiter", "aktivieren", "tippen", "ausgewählt", "aktiviert", "deaktiviert", "überschrift",
+            "link", "liste", "element", "suchen", "abbrechen", "warnung", "kopieren", "einfügen", "akku"
+        )
+        val isGerman = germanSpecificChars || tokens.any { germanWords.contains(it) }
+        if (isGerman) {
+            val deAvailability = tts?.isLanguageAvailable(Locale.GERMAN) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (deAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return Locale.GERMAN
+            }
+        }
+
+        // 5-3. スペイン語 (Español) 判定
+        val spanishSpecificChars = lower.contains("ñ") || lower.contains("¿") || lower.contains("¡") ||
+                lower.contains("á") || lower.contains("í") || lower.contains("ó") || lower.contains("ú")
+        val spanishWords = setOf(
+            "el", "la", "los", "las", "un", "una", "para", "con", "por", "del", "al", "no", "sí", "es", "son",
+            "ajustes", "configuración", "notificaciones", "pantalla", "botón", "atrás", "siguiente", "activar",
+            "toca", "dos", "veces", "seleccionado", "activado", "desactivado", "encabezado", "enlace", "lista",
+            "elemento", "buscar", "cancelar", "advertencia", "copiar", "pegar", "batería"
+        )
+        val isSpanish = spanishSpecificChars || tokens.any { spanishWords.contains(it) }
+        if (isSpanish) {
+            val esLocale = Locale.forLanguageTag("es-ES")
+            val esAvailability = tts?.isLanguageAvailable(esLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (esAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return esLocale
+            }
+        }
+
+        // 5-4. フランス語 (Français) 判定
+        val frenchSpecificChars = lower.contains("ç") || lower.contains("œ") || lower.contains("è") ||
+                lower.contains("ê") || lower.contains("î") || lower.contains("ô") || lower.contains("û")
+        val frenchWords = setOf(
+            "le", "la", "les", "un", "une", "des", "pour", "dans", "avec", "sur", "pas", "est", "sont",
+            "paramètres", "notifications", "écran", "bouton", "retour", "suivant", "activer", "appuyer",
+            "activé", "désactivé", "titre", "lien", "liste", "élément", "rechercher", "annuler", "avertissement",
+            "copier", "coller", "batterie"
+        )
+        val isFrench = frenchSpecificChars || tokens.any { frenchWords.contains(it) }
+        if (isFrench) {
+            val frAvailability = tts?.isLanguageAvailable(Locale.FRENCH) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (frAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return Locale.FRENCH
+            }
+        }
+
+        // 5-5. 英語 (English) 判定（英単語・UIキーワードの確実な検出）
+        val englishWords = setOf(
+            "the", "and", "to", "of", "in", "is", "you", "that", "it", "was", "for", "on", "are", "as", "with",
+            "be", "this", "have", "from", "or", "one", "by", "but", "not", "what", "all", "were", "we", "when",
+            "your", "can", "said", "there", "use", "an", "each", "which", "do", "how", "their", "if", "will",
+            "up", "other", "about", "out", "many", "then", "them", "these", "so", "some", "would", "make", "like",
+            "into", "time", "has", "look", "two", "more", "see", "number", "no", "way", "could", "people", "my",
+            "than", "first", "water", "been", "call", "who", "its", "now", "find", "long", "down", "day", "did",
+            "get", "come", "made", "may", "part", "button", "switch", "checkbox", "settings", "home", "back",
+            "next", "cancel", "ok", "save", "close", "menu", "search", "double", "tap", "activate", "selected",
+            "checked", "disabled", "enabled", "heading", "link", "list", "item", "battery", "volume", "percent",
+            "charging", "unlabeled", "edit", "clear", "done", "warning", "notification", "notifications"
+        )
+        val isEnglish = tokens.any { englishWords.contains(it) }
+        if (isEnglish) {
+            val engAvailability = tts?.isLanguageAvailable(Locale.ENGLISH) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (engAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return Locale.ENGLISH
+            }
+        }
+
+        // 6. ユーザーの端末デフォルト言語の適合チェック
+        val sysLang = systemLocale.language.lowercase()
+        // 端末言語が日本語の場合、ここに来たテキストには日本語文字が含まれていない（ASCII/英数記号のみ）ため英語を優先
+        if (sysLang == "ja") {
+            val engAvailability = tts?.isLanguageAvailable(Locale.ENGLISH) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (engAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return Locale.ENGLISH
+            }
+        }
+
+        // 端末言語が英語または欧州言語（nl, de, es, fr 等）の場合、システム言語を適用
+        val sysAvail = tts?.isLanguageAvailable(systemLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+        if (sysAvail >= TextToSpeech.LANG_AVAILABLE) {
+            return systemLocale
+        }
+
+        // 7. 最終フォールバック：英語
+        val engAvail = tts?.isLanguageAvailable(Locale.ENGLISH) ?: TextToSpeech.LANG_NOT_SUPPORTED
         if (engAvail >= TextToSpeech.LANG_AVAILABLE) {
-            return englishLocale
+            return Locale.ENGLISH
         }
 
         return systemLocale

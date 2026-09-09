@@ -37,6 +37,8 @@ class InstantTranslationHelper(private val context: Context) {
 
         val SUPPORTED_TARGET_LANGUAGES = listOf(
             "en" to "英語 (English)",
+            "nl" to "オランダ語 (Dutch / Nederlands)",
+            "de" to "ドイツ語 (German / Deutsch)",
             "tl" to "タガログ語 (Tagalog / Filipino)",
             "zh" to "中国語 (Chinese)",
             "es" to "スペイン語 (Spanish)",

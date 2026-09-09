@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">serena Screen Reader</string>
+    <string name="accessibility_service_name">serena Screen Reader</string>
+    <string name="ime_name">Serena IME (Meertalig fonetisch toetsenbord)</string>
+    <string name="accessibility_service_description">Krachtige toegankelijke schermlezer met live gesproken navigatie, belleridentificatie, gespreksduur, camera-AI en Gemini Nano on-device AI voor blinde gebruikers.</string>
+    
+    <string name="status_label">Servicestatus</string>
+    <string name="status_disabled">Uitgeschakeld (Schakel in via Instellingen)</string>
+    <string name="status_enabled">Ingeschakeld (Actief)</string>
+    
+    <string name="btn_open_accessibility">Toegankelijkheidsinstellingen openen</string>
+    <string name="btn_test_speech">Spraakuitvoer testen</string>
+
+    <string name="title_tts_settings">Spraakinstellingen</string>
+    <string name="label_speech_rate">Spraaksnelheid</string>
+    <string name="label_pitch">Toonhoogte</string>
+
+    <string name="title_test_bench">Interactieve oefenomgeving</string>
+    <string name="test_button_1">Testknop A</string>
+    <string name="test_button_2">Testknop B</string>
+    <string name="test_edit_hint">Typ hier tekst om spraakuitvoer te testen</string>
+    <string name="test_switch_label">Gedetailleerde spraakmodus</string>
+
+    <string name="title_permissions">App-machtigingen</string>
+    <string name="status_perm_granted">Toegestaan (Normaal)</string>
+    <string name="status_perm_denied">Geweigerd (Tik om toe te staan)</string>
+    <string name="btn_request_overlay">Toestemming geven voor weergave over andere apps</string>
+    <string name="btn_request_notification">Machtigingen voor meldingen verlenen</string>
+
+    <string name="title_features">Belangrijkste functies en gebaren</string>
+    <string name="feature_1">・[Focusnavigatie] Veeg met 1 vinger naar links/rechts om te navigeren</string>
+    <string name="feature_2">・[Klikken] Dubbeltik met 1 vinger om het gefocuste item te activeren</string>
+    <string name="feature_3">・[Gebarennavigatie] Omlaag-links voor Terug, Omhoog-links voor Start, Omlaag-rechts voor Meldingen</string>
+    <string name="feature_4">・[Oproepen] Aankondiging van beller-ID en bijhouden van gespreksduur</string>
+    <string name="title_multilingual_tts">Meertalige TTS en ondersteuning voor Tagalog</string>
+    <string name="label_multilingual_status">Automatische taalherkenning: Nederlands / Engels / Japans / Tagalog</string>
+    <string name="btn_open_tts_settings">TTS-engine-instellingen openen</string>
+
+    <string name="title_telemetry">Alpha Telemetrie en Diagnostiek</string>
+    <string name="desc_telemetry">Verzamelt volledig geanonimiseerde gegevens om fouten op te lossen en de stabiliteit te verbeteren.</string>
+    <string name="btn_send_telemetry">Rapport verzenden naar ontwikkelaar (shinjisakiyama@gmail.com)</string>
+    <string name="btn_copy_telemetry">Rapport kopiëren naar klembord</string>
+    <string name="label_telemetry_optin">Deelnemen aan diagnostiek en verbeteringen</string>
+
+    <string name="dialog_telemetry_title">🌸 Deelname aan serena Screen Reader Alpha</string>
+    <string name="dialog_telemetry_message">Bedankt voor het gebruik van serena Screen Reader Alpha.\n\nOm de app-kwaliteit te verbeteren, verzamelen we anonieme gebruiksstatistieken voor Shinji (shinjisakiyama@gmail.com).\n\n[Verzamelde gegevens]\n・OS-versie, API-niveau, apparaatmodel\n・Aantal gebaren, TTS-taaltellingen, oproepaankondigingen\n\n⚠️ Er worden geen persoonlijke gegevens verzameld.\n\nWilt u helpen serena te verbeteren?</string>
+    <string name="dialog_telemetry_agree">Akkoord en helpen</string>
+    <string name="dialog_telemetry_refuse">Voor nu overslaan</string>
+
+    <string name="title_hourly_chime">Uurlijkse tijdaankondiging</string>
+    <string name="desc_hourly_chime">Kondigt elk heel uur automatisch de tijd aan met een aangename beltoon.</string>
+    <string name="label_hourly_chime_switch">Uurlijkse beltoon inschakelen</string>
+    <string name="btn_test_hourly_chime">Beltoon en spraak testen</string>
+
+    <string name="title_call_settings">Telefoon- en oproepassistent</string>
+    <string name="desc_call_settings">Biedt gesproken aankondigingen voor wie er belt en de totale gespreksduur na afloop.</string>
+    <string name="label_call_periodic_switch">Elke minuut verstreken gesprekstijd aankondigen</string>
+    <string name="desc_call_periodic_switch">Kondigt tijdens actieve oproepen elke minuut periodiek de duur aan (Standaard: UIT).</string>
+
+    <string name="label_announce_operation_actions">Gedetailleerde bedieningsbegeleiding (Beginnersmodus)</string>
+    <string name="desc_announce_operation_actions">Spreekt gedetailleerde begeleiding uit zoals \'Omlaag gescrold\' of \'Uitgevoerd\'. Wanneer UIT (aanbevolen), biedt snelle haptische feedback.</string>
+
+    <string name="title_security_health">Beveiliging en OS-statusdiagnose</string>
+    <string name="btn_recheck_security">Apparaatbeveiliging opnieuw controleren</string>
+
+    <string name="title_developer_info">App-aanbieder en officiële ondersteuning</string>
+    <string name="developer_name">Shinji</string>
+    <string name="provider_name">Shinji</string>
+    <string name="developer_email">shinjisakiyama@gmail.com</string>
+    <string name="developer_phone">08094959134</string>
+    <string name="developer_phone_int">+818094959134</string>
+
+    <string name="developer_name_label">Ontwikkelaar: Shinji</string>
+    <string name="provider_name_label">Aanbieder: Shinji</string>
+    <string name="developer_phone_label">Ondersteuning: Telefoon, E-mail, LINE, WhatsApp</string>
+    <string name="btn_call_developer">📞 Ontwikkelaar rechtstreeks bellen (Shinji)</string>
+    <string name="btn_email_developer">📧 Ontwikkelaar e-mailen (shinjisakiyama@gmail.com)</string>
+    <string name="btn_message_developer">💬 Berichten via WhatsApp / SMS / LINE</string>
+    <string name="signature_label">Officiële digitale handtekening: Geverifieerd (Shinji Official / serena-release-key)</string>
+    <string name="copyright_label">Copyright © 2026 Shinji. Alle rechten voorbehouden.</string>
+
+    <!-- Accessibility Roles & Semantics -->
+    <string name="role_button">Knop</string>
+    <string name="role_image">Afbeelding</string>
+    <string name="role_switch">Schakelaar</string>
+    <string name="role_checkbox">Selectievakje</string>
+    <string name="role_radio_button">Keuzerondje</string>
+    <string name="role_edit_text">Invoerveld</string>
+    <string name="role_pin_entry">PIN-invoer</string>
+    <string name="role_password_entry">Wachtwoordinvoer</string>
+    <string name="role_number_entry">Nummerinvoer</string>
+    <string name="role_phone_entry">Telefoonnummerinvoer</string>
+    <string name="role_email_entry">E-mailinvoer</string>
+    <string name="role_url_entry">URL-invoer</string>
+    <string name="role_slider">Schuifregelaar</string>
+    <string name="role_widget">Widget</string>
+    <string name="role_expand_button">Knop Uitvouwen</string>
+    <string name="role_collapse_button">Knop Samenvouwen</string>
+    <string name="role_window">Venster</string>
+    <string name="role_lock_screen">Vergrendelscherm</string>
+
+    <!-- Accessibility States -->
+    <string name="state_on">aan</string>
+    <string name="state_off">uit</string>
+    <string name="state_checked">aangevinkt</string>
+    <string name="state_not_checked">niet aangevinkt</string>
+    <string name="state_selected">geselecteerd</string>
+    <string name="state_not_selected">niet geselecteerd</string>
+    <string name="state_collapsed">samengevouwen</string>
+    <string name="state_expanded">uitgevouwen</string>
+    <string name="state_disabled">uitgeschakeld</string>
+
+    <!-- Serena Menu & Navigation Dialogs -->
+    <string name="menu_serena_title">🌸 Serena Menu</string>
+    <string name="menu_edit_title">✏️ Serena Bewerkingsassistent</string>
+    <string name="menu_actions_title">⚡ Actiemenu</string>
+    <string name="menu_close">Sluiten</string>
+    <string name="menu_closed">Menu gesloten</string>
+    <string name="menu_spoken_header">Serena Menu, %1$d items. 1e, %2$s</string>
+    <string name="menu_item_accessible">Item %1$d, %2$s</string>
+    <string name="menu_actions_spoken_header">Actiemenu geopend, %1$d items.</string>
+    <string name="menu_edit_spoken_header">Bewerkingsassistent-menu geopend, %1$d items.</string>
+    <string name="granularity_spoken_header">Leesbediening: %1$s</string>
+    <string name="menu_long_click">Item lang indrukken</string>
+    <string name="menu_uninstall_app">\"%1$s\" verwijderen</string>
+    <string name="menu_app_info">App-info voor \"%1$s\"</string>
+    <string name="menu_uninstall_from_settings">App verwijderen via instellingen</string>
+    <string name="menu_item_smart_summary">Slim schermoverzicht (structuur en details)</string>
+    <string name="menu_item_ai_assistant">Serena AI Spraakassistent</string>
+    <string name="menu_item_mode_switch">Schermlezermodus (Huidig: %1$s)</string>
+    <string name="menu_item_phone_status">Apparaatstatus &amp; Locatie (Batterij/Signaal/Tijd)</string>
+    <string name="menu_item_location_precision">Locatieprecisie (Huidig: %1$s)</string>
+    <string name="menu_item_country_setting">Landnaaminstelling (Huidig: %1$s)</string>
+    <string name="menu_item_reading_control">Leesbediening (Huidig: %1$s)</string>
+    <string name="menu_item_clipboard_history">Klembordgeschiedenis</string>
+    <string name="menu_item_notification_filter">Meldingen- en oproepniveau (Huidig: %1$s)</string>
+    <string name="menu_item_spatial_soundstage">3D Ruimtelijk geluidsbeeld (Huidig: %1$s)</string>
+    <string name="menu_item_audio_ducking">Audio Ducking (Huidig: %1$s)</string>
+    <string name="menu_item_whisper_mode">Nachtfluistermodus (Huidig: %1$s)</string>
+    <string name="menu_item_keyboard_mode">Toetsinvoermodus (Huidig: %1$s)</string>
+    <string name="menu_item_voice_input">Serena Spraakinvoer (Rechtstreeks inspreken)</string>
+    <string name="menu_item_voice_translation">Serena Spraakvertaling (Gesproken invoer vertalen)</string>
+    <string name="menu_item_translation_lang">Doeltaal voor realtime vertaling (Huidig: %1$s)</string>
+    <string name="menu_item_image_explainer">AI Beelduitlegger (Gedetailleerde scènebeschrijving)</string>
+    <string name="menu_item_sound_recognition">Omgevingsgeluid &amp; Gevarenwaarschuwing (Huidig: %1$s)</string>
+    <string name="menu_item_eyes_camera">Serena Eyes (Live AI Vision-camera)</string>
+    <string name="menu_item_sentinel_eyes">Sentinel Omgevingsogen (Beweging &amp; Gezichtsdetectie) (Huidig: %1$s)</string>
+    <string name="menu_item_fashion_scanner">Mode- &amp; Kleurstemmingsscanner (Textuur en licht)</string>
+    <string name="menu_item_screen_summary">AI Schermoverzicht (Korte samenvatting)</string>
+    <string name="menu_item_notification_digest">Slim meldingenoverzicht (Samenvatting van ongelezen meldingen)</string>
+    <string name="menu_item_surrounding_radar">3D Ruimtelijke auditieve omgevingsradar</string>
+    <string name="menu_item_hourly_chime">Uurlijkse beltoonstijl</string>
+    <string name="menu_item_screen_curtain">Schermgordijn</string>
+    <string name="menu_item_light_checker">Kleur- en omgevingslichtcontrole</string>
+    <string name="menu_item_compass_audio">3D Ruimtelijk audiokompas</string>
+    <string name="menu_item_sonar_radar">3D Ruimtelijke obstakel- &amp; opstapjessonar</string>
+    <string name="menu_item_indoor_nav">Binnenshuis navigatie en kamerbegeleiding</string>
+    <string name="menu_item_street_nav">Straatnaam- en kruispuntnavigator</string>
+    <string name="menu_item_walk_nav">Wandelnavigatie en locatiezoeker</string>
+    <string name="menu_item_food_scanner">Voedsel- en houdbaarheidsdatumscanner</string>
+    <string name="menu_item_transit_nav">Voetgangersverkeerslichten en geleidelijnen</string>
+    <string name="menu_item_barcode_scanner">Barcode-, kassabon- en documentlezer</string>
+    <string name="menu_item_kanji_detail">Gedetailleerde tekenontleding</string>
+    <string name="menu_item_speech_rate">Spraaksnelheid schakelen</string>
+    <string name="menu_item_page_next">Volgende pagina</string>
+    <string name="menu_item_page_prev">Vorige pagina</string>
+    <string name="menu_item_read_from_top">Vanaf bovenkant scherm lezen</string>
+    <string name="menu_item_call_dev">Ontwikkelaar bellen (%1$s)</string>
+    <string name="menu_item_email_dev">Ontwikkelaar e-mailen (%1$s)</string>
+    <string name="menu_item_diagnostics">Diagnostiek en logs verzenden (%1$s)</string>
+    <string name="menu_item_settings">Serena Instellingen</string>
+    <string name="menu_item_help">Serena Help</string>
+
+    <!-- Core Screen Reader Spoken Feedback -->
+    <string name="gesture_back">Terug</string>
+    <string name="gesture_home">Startscherm</string>
+    <string name="gesture_recents">Recente apps</string>
+    <string name="gesture_quick_settings">Snelle instellingen openen</string>
+    <string name="gesture_notifications">Meldingen openen</string>
+    <string name="screen_unlocked">Ontgrendeld</string>
+    <string name="screen_locked">Scherm vergrendeld</string>
+    <string name="lock_screen_guide">Vergrendelscherm. Veeg omhoog met twee vingers om te ontgrendelen.</string>
+    <string name="page_next">Naar volgende pagina verplaatst</string>
+    <string name="page_prev">Naar vorige pagina verplaatst</string>
+    <string name="scrolled_vertical">%1$s verticaal gescrold</string>
+    <string name="granularity_next_control">Volgende bediening</string>
+    <string name="granularity_prev_control">Vorige bediening</string>
+    <string name="granularity_characters">Tekens</string>
+    <string name="granularity_words">Woorden</string>
+    <string name="granularity_lines">Regels</string>
+    <string name="granularity_paragraphs">Alinea\'s</string>
+    <string name="granularity_headings">Koppen</string>
+    <string name="granularity_controls">Bedieningselementen</string>
+    <string name="granularity_links">Links</string>
+    <string name="granularity_actions">Acties</string>
+    <string name="granularity_default">Standaard</string>
+    <string name="text_deleted_item">%1$s verwijderd</string>
+    <string name="text_deleted">Verwijderd</string>
+    <string name="clipboard_copied">Gekopieerd naar klembord</string>
+    <string name="clipboard_empty">Geen spraakgeschiedenis om te kopiëren</string>
+    <string name="call_answered">Oproep beantwoord</string>
+    <string name="call_ended">Oproep beëindigd</string>
+    <string name="media_paused">Media gepauzeerd</string>
+    <string name="media_resumed">Media afspelen</string>
+    <string name="speech_muted">Spraak gedempt</string>
+    <string name="speech_unmuted">Spraak dempen opgeheven</string>
+
+    <!-- Main Activity UI & Permissions -->
+    <string name="btn_open_welcome_guide">🌸 Bekijk Welkomstgids en Gesproken Rondleiding</string>
+    <string name="perm_overlay_title">Weergeven over andere apps</string>
+    <string name="perm_notification_title">Meldingen en gesproken aankondigingen</string>
+    <string name="security_diagnosing">Controleren...</string>
+    <string name="security_diagnosing_detail">OS-beveiliging controleren</string>
+    <string name="label_speech_rate_default">Spraaksnelheid: 1.0x</string>
+    <string name="label_pitch_default">Toonhoogte: 1.0x</string>
+    <string name="label_speech_rate_format">Spraaksnelheid: %1$.1fx</string>
+    <string name="label_pitch_format">Toonhoogte: %1$.1fx</string>
+    <string name="shake_sensitive">Gevoelig (2.3f) - Reageert op lichte beweging</string>
+    <string name="shake_normal">Normaal (3.5f) - Reageert op duidelijke schudbeweging</string>
+    <string name="shake_firm">Stevig (4.3f) - Reageert op krachtige beweging</string>
+    <string name="title_translation_settings">🌐 Realtime meertalige vertaalinstellingen</string>
+    <string name="desc_translation_settings">Detecteert automatisch vreemde talen op het scherm en vertaalt deze realtime naar uw apparaattaal.</string>
+    <string name="translation_target_format">Doeltaal: Automatisch aangepast aan %1$s</string>
+    <string name="translation_mode_orig_then_trans">Origineel en dan Vertaling voorlezen (Aanbevolen)</string>
+    <string name="translation_mode_trans_only">Alleen Vertaling voorlezen</string>
+    <string name="translation_mode_off">Vertaling UIT (Alleen origineel)</string>
+
+    <!-- Welcome Guide Dialog -->
+    <string name="welcome_title">🌸 Welkom bij Serena Screen Reader!</string>
+    <string name="welcome_subtitle">Gemaakt door de volledig blinde ontwikkelaar Shinji. De vriendelijkste en slimste schermlezer van de volgende generatie.</string>
+    <string name="welcome_btn_play_tts">🔊 Gesproken rondleiding beluisteren (TTS)</string>
+    <string name="welcome_btn_stop_tts">⏹️ Gesproken gids stoppen</string>
+    <string name="welcome_features_title">✨ Belangrijkste functies en mogelijkheden</string>
+    <string name="welcome_feature_1_title">🌸 1. Serena Navigatie &amp; TalkBack-modus</string>
+    <string name="welcome_feature_1_desc">Veeg met 1 vinger naar links/rechts om te navigeren, dubbeltik om te openen. Schakel vrij tussen intuïtieve aanraakverkenning en klassieke TalkBack-modus.</string>
+    <string name="welcome_feature_2_title">📱 2. Slimme oproepassistent</string>
+    <string name="welcome_feature_2_desc">Kondigt bellers aan voor Telefoon en WhatsApp. Spreekt na afloop automatisch de gespreksduur uit.</string>
+    <string name="welcome_feature_3_title">⏰ 3. Uurlijkse beltoon &amp; Schudstatus</string>
+    <string name="welcome_feature_3_desc">Aangename beltoon elk uur. Schud uw telefoon even om direct de tijd, batterij en het signaal te horen.</string>
+    <string name="welcome_feature_4_title">🗺️ 4. Intuïtieve ruimtelijke navigatie</string>
+    <string name="welcome_feature_4_desc">Begeleidt met duidelijke relatieve richtingen zoals \"Recht vooruit\", \"Schuin rechtsvoor\", \"Links\".</string>
+    <string name="welcome_feature_5_title">🌐 5. Meertalige vertaling &amp; Tagalog-ondersteuning</string>
+    <string name="welcome_feature_5_desc">On-device realtime vertaling van buitenlandse tekst, met toewijding aan de Tagalog-taal van geliefde echtgenote Serena.</string>
+    <string name="welcome_feature_6_title">👁️ 6. On-Device AI Vision &amp; Ruimtelijke Sonar</string>
+    <string name="welcome_feature_6_desc">Gemini Nano en ML Kit omgevingsherkenning, OCR en 3D ruimtelijke audiosonar voor obstakels.</string>
+    <string name="welcome_dont_show_again">Dit welkomstscherm niet meer weergeven</string>
+    <string name="welcome_btn_start">🚀 Aan de slag met Serena</string>
+    <string name="welcome_tts_guide_text">Welkom bij Serena Screen Reader! Gemaakt door de volledig blinde ontwikkelaar Shinji. De belangrijkste kenmerken: 1, Intuïtieve navigatie en TalkBack-modus. 2, Slimme oproepassistent met beller-ID en gespreksduur. 3, Uurlijkse beltoon en snelle schudstatus. 4, Intuïtieve ruimtelijke navigatie met relatieve richtingen zoals recht vooruit en schuin rechts. 5, Realtime meertalige vertaling en ondersteuning voor Tagalog. 6, On-device AI vision en 3D ruimtelijke obstakelsonar. Geniet van een vrijere en betere smartphone-ervaring met Serena!</string>
+
+    <!-- Disclosures & Ethics Dialogs -->
+    <string name="disclosure_title">🌸 Serena Toegankelijkheidsservice</string>
+    <string name="disclosure_message">Serena Screen Reader biedt essentiële toegankelijkheidshulp voor blinden en slechtzienden:\n\n・Realtime gesproken feedback voor schermtekst, knoppen en bediening\n・Belleridentificatie en bijhouden van gespreksduur\n・Intuïtieve wandelnavigatie en AI-camera scèneherkenning\n\n【Privacybeleid】\nAlle scherminhoud en invoergegevens worden uitsluitend op het apparaat zelf verwerkt. Er worden geen gegevens naar externe servers verzonden of verzameld.\n\nKies op het volgende scherm \"Serena\" en schakel deze in om de service te activeren.</string>
+    <string name="disclosure_agree">Akkoord en Instellingen openen</string>
+    <string name="disclosure_cancel">Annuleren</string>
+
+    <string name="ai_ethics_title">🤖 Google Responsible AI-richtlijnen en toestemming</string>
+    <string name="ai_ethics_message">Serena Screen Reader gebruikt on-device AI (Gemini Nano) en machine learning voor ruimtelijke begeleiding, scèneherkenning, OCR en slimme samenvattingen.\n\n【1. Verantwoorde AI-principes】\nOntworpen in overeenstemming met de Google Responsible AI Principles (https://ai.google/responsibility/principles/).\n\n【2. Veiligheid en disclaimer】\n・AI-resultaten zijn hulpmiddelen en kunnen variëren afhankelijk van belichting en omgeving.\n・Gebruik in veiligheidskritieke situaties (oversteekplaatsen, trappen, platforms) altijd uw taststok en omgevingsgeluiden.\n\n【3. 100% Privacy op het apparaat】\nAlle AI-berekeningen draaien lokaal. Camerabeelden en spraak worden nooit geüpload naar de cloud.\n\nGaat u akkoord met deze richtlijnen om de AI-functies in te schakelen?</string>
+    <string name="ai_ethics_agree">Akkoord en Inschakelen</string>
+    <string name="ai_ethics_view_google">Google AI-principes bekijken</string>
+    <string name="ai_ethics_disagree">Weigeren</string>
+</resources>
