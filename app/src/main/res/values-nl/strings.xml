@@ -315,6 +315,7 @@
     <string name="update_download_finished">Download voltooid. Installatieprogramma openen...</string>
     <string name="update_download_failed">Downloaden van update mislukt: %1$s</string>
     <string name="update_permission_required">Geef toestemming voor \'Onbekende apps installeren\' voor Serena om de update uit te voeren.</string>
+    <string name="update_launching_installer">Pakketinstallatieprogramma starten...</string>
     <string name="update_install_failed">Kan installatieprogramma niet starten: %1$s</string>
     <string name="update_already_latest">Serena is up-to-date (v%1$s).</string>
     <string name="update_checking">Controleren op updates...</string>

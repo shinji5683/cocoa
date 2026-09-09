@@ -315,6 +315,7 @@
     <string name="update_download_finished">Download complete. Opening installer...</string>
     <string name="update_download_failed">Failed to download update: %1$s</string>
     <string name="update_permission_required">Please allow \'Install unknown apps\' for Serena to proceed with the update.</string>
+    <string name="update_launching_installer">Launching package installer...</string>
     <string name="update_install_failed">Failed to launch installer: %1$s</string>
     <string name="update_already_latest">Serena is up to date (v%1$s).</string>
     <string name="update_checking">Checking for updates...</string>

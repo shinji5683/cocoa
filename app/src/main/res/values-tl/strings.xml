@@ -299,6 +299,7 @@
     <string name="update_download_finished">Tapos na ang pag-download. Binubuksan ang installer...</string>
     <string name="update_download_failed">Nabigong i-download ang update: %1$s</string>
     <string name="update_permission_required">Mangyaring payagan ang \'I-install ang hindi kilalang apps\' para sa Serena upang magpatuloy.</string>
+    <string name="update_launching_installer">Inilulunsad ang package installer...</string>
     <string name="update_install_failed">Nabigong buksan ang installer: %1$s</string>
     <string name="update_already_latest">Ang Serena ay napapanahon na (v%1$s).</string>
     <string name="update_checking">Sinusuri ang mga update...</string>

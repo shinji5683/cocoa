@@ -175,6 +175,9 @@ class MainActivity : AppCompatActivity() {
                 android.util.Log.e("MainActivity", "Error in updateServiceStatusDisplay: ${e.message}")
             }
         }
+        safeRun("checkAndResumePendingInstall") {
+            com.shinji.serena.update.AutoUpdateManager.getInstance(this).checkAndResumePendingInstall()
+        }
     }
 
     private fun setupStatusSection() {

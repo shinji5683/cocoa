@@ -1,8 +1,11 @@
 package com.shinji.serena.update
 
 import android.app.AlertDialog
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInstaller
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -40,6 +43,9 @@ class AutoUpdateManager(private val context: Context) {
 
         @Volatile
         private var instance: AutoUpdateManager? = null
+
+        @Volatile
+        var pendingInstallApkFile: File? = null
 
         fun getInstance(context: Context): AutoUpdateManager {
             return instance ?: synchronized(this) {
@@ -142,12 +148,34 @@ class AutoUpdateManager(private val context: Context) {
     }
 
     /**
+     * 設定画面等から権限付与後に復帰した際、保留中のアップデートインストールを即座に自動再開します。
+     */
+    fun checkAndResumePendingInstall(): Boolean {
+        val pending = pendingInstallApkFile ?: return false
+        if (!pending.exists() || pending.length() == 0L) {
+            pendingInstallApkFile = null
+            return false
+        }
+        val appContext = context.applicationContext
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (appContext.packageManager.canRequestPackageInstalls()) {
+                Log.i(TAG, "Permission granted! Resuming pending install: ${pending.absolutePath}")
+                pendingInstallApkFile = null
+                installApk(pending)
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
      * 最新の APK をバックグラウンドで高速ダウンロードし、完了時に自動でインストール画面へ遷移します。
      */
     fun startDownloadAndInstall(downloadUrl: String, onStatus: ((String) -> Unit)? = null) {
         val appContext = context.applicationContext
         val fileName = "app-serena-release.apk"
-        val destinationFile = File(appContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: appContext.cacheDir, fileName)
+        val updateDir = File(appContext.cacheDir, "updates").apply { mkdirs() }
+        val destinationFile = File(updateDir, fileName)
         if (destinationFile.exists()) {
             destinationFile.delete()
         }
@@ -184,6 +212,7 @@ class AutoUpdateManager(private val context: Context) {
                         input.copyTo(output)
                     }
                 }
+                destinationFile.setReadable(true, false)
 
                 Log.i(TAG, "APK downloaded successfully: ${destinationFile.absolutePath} (${destinationFile.length()} bytes)")
 
@@ -211,14 +240,22 @@ class AutoUpdateManager(private val context: Context) {
     }
 
     /**
-     * FileProvider 経由で Android 標準パッケージインストーラーを起動します。
+     * PackageInstaller セッション API (第1優先) または FileProvider (フォールバック) で
+     * Android 標準パッケージインストーラーを確実に起動します。
      */
     fun installApk(file: File) {
         val appContext = context.applicationContext
         try {
+            if (!file.exists() || file.length() == 0L) {
+                Log.e(TAG, "APK file does not exist or is empty: ${file.absolutePath}")
+                return
+            }
+            file.setReadable(true, false)
+
             // Android 8.0+ 未知のアプリ提供元の許可チェック
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (!appContext.packageManager.canRequestPackageInstalls()) {
+                    pendingInstallApkFile = file
                     val manageIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
                         data = Uri.parse("package:${appContext.packageName}")
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -233,23 +270,87 @@ class AutoUpdateManager(private val context: Context) {
                 }
             }
 
-            val apkUri = FileProvider.getUriForFile(
-                appContext,
-                "${appContext.packageName}.fileprovider",
-                file
-            )
-
-            val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(apkUri, "application/vnd.android.package-archive")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+            pendingInstallApkFile = null
+            val launchMsg = appContext.getString(R.string.update_launching_installer)
+            Toast.makeText(appContext, launchMsg, Toast.LENGTH_SHORT).show()
+            if (SerenaScreenReaderService.isServiceRunning()) {
+                SerenaScreenReaderService.instance?.speak(launchMsg, TextToSpeech.QUEUE_FLUSH)
             }
 
-            appContext.startActivity(installIntent)
+            // 1. Android 標準 PackageInstaller Session API の試行 (Android 10+ / 14 / 17 で最も堅牢)
+            val sessionSuccess = tryInstallViaPackageInstallerSession(appContext, file)
+            if (sessionSuccess) {
+                Log.i(TAG, "Successfully launched PackageInstaller session")
+                return
+            }
+
+            // 2. フォールバック: FileProvider 経由の ACTION_VIEW
+            installViaFileProvider(appContext, file)
         } catch (e: Exception) {
-            Log.e(TAG, "Error launching package installer: ${e.message}")
+            Log.e(TAG, "Error launching package installer: ${e.message}", e)
             val failMsg = appContext.getString(R.string.update_install_failed, e.message ?: "")
             Toast.makeText(appContext, failMsg, Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun tryInstallViaPackageInstallerSession(appContext: Context, file: File): Boolean {
+        try {
+            val packageInstaller = appContext.packageManager.packageInstaller
+            val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
+                setSize(file.length())
+                setAppPackageName(appContext.packageName)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED)
+                }
+            }
+            val sessionId = packageInstaller.createSession(params)
+            val session = packageInstaller.openSession(sessionId)
+
+            file.inputStream().use { input ->
+                session.openWrite("package", 0, file.length()).use { output ->
+                    input.copyTo(output)
+                    session.fsync(output)
+                }
+            }
+
+            val intent = Intent(appContext, AutoUpdateInstallReceiver::class.java).apply {
+                action = AutoUpdateInstallReceiver.ACTION_INSTALL_STATUS
+            }
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            val pendingIntent = PendingIntent.getBroadcast(appContext, sessionId, intent, flags)
+            session.commit(pendingIntent.intentSender)
+            session.close()
+            return true
+        } catch (e: Exception) {
+            Log.w(TAG, "PackageInstaller session failed: ${e.message}, falling back to FileProvider")
+            return false
+        }
+    }
+
+    private fun installViaFileProvider(appContext: Context, file: File) {
+        val apkUri = FileProvider.getUriForFile(
+            appContext,
+            "${appContext.packageName}.fileprovider",
+            file
+        )
+
+        val installIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(apkUri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        val resInfoList = appContext.packageManager.queryIntentActivities(installIntent, PackageManager.MATCH_DEFAULT_ONLY)
+        for (resolveInfo in resInfoList) {
+            val pkg = resolveInfo.activityInfo.packageName
+            appContext.grantUriPermission(pkg, apkUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        appContext.startActivity(installIntent)
     }
 
     /**

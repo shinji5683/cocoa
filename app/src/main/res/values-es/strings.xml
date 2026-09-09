@@ -346,6 +346,7 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <string name="update_download_finished">Descarga completada. Abriendo el instalador...</string>
     <string name="update_download_failed">Error al descargar la actualización: %1$s</string>
     <string name="update_permission_required">Permite \'Instalar aplicaciones desconocidas\' para que Serena pueda continuar con la actualización.</string>
+    <string name="update_launching_installer">Iniciando instalador de paquetes...</string>
     <string name="update_install_failed">Error al iniciar el instalador: %1$s</string>
     <string name="update_already_latest">Serena ya está actualizada (v%1$s).</string>
     <string name="update_checking">Buscando actualizaciones...</string>

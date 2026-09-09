@@ -315,6 +315,7 @@
     <string name="update_download_finished">ダウンロードが完了しました。インストーラーを開きます...</string>
     <string name="update_download_failed">アップデートのダウンロードに失敗しました: %1$s</string>
     <string name="update_permission_required">Serenaからのアプリ更新を許可してください。設定画面を開きます。</string>
+    <string name="update_launching_installer">パッケージインストーラーを起動します</string>
     <string name="update_install_failed">インストーラーの起動に失敗しました: %1$s</string>
     <string name="update_already_latest">Serenaは最新バージョン (v%1$s) です。</string>
     <string name="update_checking">アップデートを確認中...</string>

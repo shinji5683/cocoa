@@ -107,6 +107,10 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".update.AutoUpdateInstallReceiver"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

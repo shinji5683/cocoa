@@ -3263,6 +3263,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
+                try {
+                    com.shinji.serena.update.AutoUpdateManager.getInstance(applicationContext).checkAndResumePendingInstall()
+                } catch (_: Exception) {}
+
                 val currentlyLocked = isKeyguardLocked()
                 if (wasKeyguardLocked && !currentlyLocked) {
                     wasKeyguardLocked = false
@@ -3290,6 +3294,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                try {
+                    com.shinji.serena.update.AutoUpdateManager.getInstance(applicationContext).checkAndResumePendingInstall()
+                } catch (_: Exception) {}
+
                 val currentlyLocked = isKeyguardLocked()
                 if (wasKeyguardLocked && !currentlyLocked) {
                     wasKeyguardLocked = false
