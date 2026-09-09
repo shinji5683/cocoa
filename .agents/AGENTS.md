@@ -63,3 +63,15 @@
 - Dependency Auto-Update Policy (ライブラリ・Kotlin・ML Kitの常時自動最新化の鉄則):
   - Proactively monitor and keep all libraries, SDKs, and build tools at their bleeding-edge latest releases (Kotlin, AGP, Google ML Kit, AndroidX, Jetpack Compose, Gemini Nano, CameraX, etc.).
   - Whenever a newer stable/beta version of any dependency is released or detected, automatically update `build.gradle.kts`, verify with local compilation (`compileDebugKotlin`), and deploy seamlessly so Serena is always running on the newest and most optimized technology stack.
+- Strict String Resource Externalization & Zero Hardcoding Policy (文字列ハードコード絶対禁止・全文字列strings.xml外部化と完全ローカライズの鉄則):
+  - NEVER hardcode any user-facing strings, spoken TTS messages, status announcements, toast messages, or dialog texts in Kotlin/Java source code under any circumstances!
+  - Every single spoken message, notification, and UI label MUST be defined as an Android string resource (`R.string.<key>`) and retrieved dynamically using `getString(R.string.<key>)` with proper format arguments.
+  - Whenever any new string is introduced or updated, it MUST be comprehensively localized across ALL 6 supported locale resource directories simultaneously:
+    - `res/values-ja/strings.xml` (Japanese)
+    - `res/values-en/strings.xml` (English)
+    - `res/values-es/strings.xml` (Spanish)
+    - `res/values-tl/strings.xml` (Tagalog)
+    - `res/values-nl/strings.xml` (Dutch)
+    - `res/values/strings.xml` (Default fallback / English)
+  - This guarantees that visually impaired users globally always receive spoken feedback in their native device language without disruptive language mismatches.
+
