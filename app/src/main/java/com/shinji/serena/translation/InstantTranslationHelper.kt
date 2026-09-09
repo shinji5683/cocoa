@@ -53,11 +53,11 @@ class InstantTranslationHelper(private val context: Context) {
 
     var mode: TranslationMode
         get() {
-            val name = prefs.getString(KEY_TRANSLATION_MODE, null) ?: return TranslationMode.ORIGINAL_THEN_TRANSLATION
+            val name = prefs.getString(KEY_TRANSLATION_MODE, null) ?: return TranslationMode.OFF
             return try {
                 TranslationMode.valueOf(name)
             } catch (_: Exception) {
-                TranslationMode.ORIGINAL_THEN_TRANSLATION
+                TranslationMode.OFF
             }
         }
         set(value) {

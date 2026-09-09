@@ -235,7 +235,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         try {
             tts?.shutdown()
             isTtsReady = false
-            tts = TextToSpeech(this, this)
+            val preferredEngine = try {
+                android.provider.Settings.Secure.getString(contentResolver, android.provider.Settings.Secure.TTS_DEFAULT_SYNTH)
+            } catch (_: Exception) { null }
+            Log.i(TAG, "Initializing TTS with preferred engine: $preferredEngine")
+            tts = if (!preferredEngine.isNullOrEmpty()) {
+                TextToSpeech(this, this, preferredEngine)
+            } else {
+                TextToSpeech(this, this)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "initTts error: ${e.message}")
         }
@@ -281,9 +289,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 })
 
-                val result = tts?.setLanguage(Locale.JAPANESE)
+                val defaultLocale = Locale.getDefault()
+                val result = tts?.setLanguage(defaultLocale)
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    tts?.language = Locale.getDefault()
+                    val fallback = Locale.ENGLISH
+                    val fbResult = tts?.setLanguage(fallback)
+                    if (fbResult == TextToSpeech.LANG_MISSING_DATA || fbResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        tts?.language = Locale.JAPANESE
+                    }
                 }
                 updateTtsSettings()
                 isTtsReady = true
@@ -1953,156 +1966,156 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val snapshotRoot = try { rootInActiveWindow } catch (e: Exception) { null }
         val snapshotFocused = node ?: getAccessibilityFocusedNode()
         soundHelper?.playMenuOpen()
-        val curtainLabel = if (screenCurtainHelper?.isCurtainEnabled == true) "🌑 スクリーンカーテンを解除" else "🌑 スクリーンカーテン (画面非表示・節電)"
+        val curtainLabel = if (screenCurtainHelper?.isCurtainEnabled == true) "☀️ ${getString(R.string.menu_item_screen_curtain)}" else "🌑 ${getString(R.string.menu_item_screen_curtain)}"
         val isTalkBackMode = prefs.getBoolean(KEY_TALKBACK_MODE, false)
-        val modeLabel = if (isTalkBackMode) "🔄 モード切替 (現在: TalkBack互換モード)" else "🔄 モード切替 (現在: serenaオリジナルモード)"
-        val filterName = notificationFilterHelper?.detailLevel?.displayName ?: "すべて読み上げ"
+        val modeLabel = getString(R.string.menu_item_mode_switch, if (isTalkBackMode) "TalkBack" else "Serena")
+        val filterName = notificationFilterHelper?.detailLevel?.displayName ?: "All"
         val items = listOf(
-            serenaMenuItem("💡", "画面スマート要約 (画面の全体構造・項目数・詳細解説)") {
+            serenaMenuItem("💡", getString(R.string.menu_item_smart_summary)) {
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     val summary = com.shinji.serena.ai.SmartScreenSummaryEngine(this).generateDetailedSummary(snapshotRoot, snapshotFocused)
                     Log.i(TAG, "Generated Smart Screen Summary: $summary")
                     speak(summary, TextToSpeech.QUEUE_FLUSH)
                 }, 300)
             },
-            serenaMenuItem("🎙️", "serena AI Voice Assistant (音声対話アシスタント)") {
+            serenaMenuItem("🎙️", getString(R.string.menu_item_ai_assistant)) {
                 launchAiAssistant()
             },
             serenaMenuItem("🔄", modeLabel) {
                 toggleTalkBackMode()
             },
-            serenaMenuItem("📊", "スマホ状態 & 現在地 (バッテリー/電波/Wi-Fi/時刻/現在地)") {
+            serenaMenuItem("📊", getString(R.string.menu_item_phone_status)) {
                 announceFullStatus()
             },
-            serenaMenuItem("📍", "現在地読み上げ精度 (現在: ${statusHelper?.locationHelper?.getPrecisionDisplayName() ?: "市区町村・町名まで"})") {
+            serenaMenuItem("📍", getString(R.string.menu_item_location_precision, statusHelper?.locationHelper?.getPrecisionDisplayName() ?: "")) {
                 val exact = statusHelper?.locationHelper?.togglePrecision() ?: false
                 soundHelper?.playActionDone()
-                val name = if (exact) "番地まで詳細" else "市区町村・町名まで（プライバシー保護）"
-                speak("現在地読み上げ精度を $name に変更しました", TextToSpeech.QUEUE_FLUSH)
+                val name = if (exact) "Street level" else "City level"
+                speak("Location precision: $name", TextToSpeech.QUEUE_FLUSH)
             },
-            serenaMenuItem("🌍", "国名読み上げ設定 (現在: ${statusHelper?.locationHelper?.getCountrySettingDisplayName() ?: "スマート"})") {
+            serenaMenuItem("🌍", getString(R.string.menu_item_country_setting, statusHelper?.locationHelper?.getCountrySettingDisplayName() ?: "")) {
                 val always = statusHelper?.locationHelper?.toggleAlwaysIncludeCountry() ?: false
                 soundHelper?.playActionDone()
-                val name = if (always) "常時国名付き（例: 日本、岐阜県...）" else "スマート（国内は省略、海外は国名付き）"
-                speak("国名読み上げ設定を $name に変更しました", TextToSpeech.QUEUE_FLUSH)
+                val name = if (always) "Always include country" else "Smart"
+                speak("Country setting: $name", TextToSpeech.QUEUE_FLUSH)
             },
-            serenaMenuItem("🎛️", "読み上げコントロール (現在: ${currentGranularity.displayName})") {
+            serenaMenuItem("🎛️", getString(R.string.menu_item_reading_control, currentGranularity.displayName)) {
                 cycleGranularity(forward = true)
             },
-            serenaMenuItem("📋", "クリップボード履歴 (過去のコピー)") {
+            serenaMenuItem("📋", getString(R.string.menu_item_clipboard_history)) {
                 showClipboardHistoryDialog(null)
             },
-            serenaMenuItem("💌", "通知・着信読み上げ設定 (現在: ${notificationFilterHelper?.detailLevel?.displayName ?: "すべて読み上げ"})") {
+            serenaMenuItem("💌", getString(R.string.menu_item_notification_filter, notificationFilterHelper?.detailLevel?.displayName ?: filterName)) {
                 cycleNotificationFilterMode()
             },
-            serenaMenuItem("🎧", "3D空間サウンドステージ (現在: ${if (soundHelper?.isSpatialSoundstageEnabled == true) "ON" else "OFF"})") {
+            serenaMenuItem("🎧", getString(R.string.menu_item_spatial_soundstage, if (soundHelper?.isSpatialSoundstageEnabled == true) "ON" else "OFF")) {
                 toggleSpatialSoundstage()
             },
-            serenaMenuItem("🎵", "音楽オーディオダッキング (現在: ${if (soundHelper?.isAudioDuckingEnabled == true) "ON" else "OFF"})") {
+            serenaMenuItem("🎵", getString(R.string.menu_item_audio_ducking, if (soundHelper?.isAudioDuckingEnabled == true) "ON" else "OFF")) {
                 toggleAudioDucking()
             },
-            serenaMenuItem("🌙", "深夜ささやきモード (現在: ${soundHelper?.whisperScheduleMode?.displayName ?: "夜間自動"})") {
+            serenaMenuItem("🌙", getString(R.string.menu_item_whisper_mode, soundHelper?.whisperScheduleMode?.displayName ?: "Auto")) {
                 cycleNightWhisperMode()
             },
-            serenaMenuItem("⌨️", "キー入力方式 (現在: ${if (isKeyboardLiftToType) "指を離して入力" else "ダブルタップ入力"})") {
+            serenaMenuItem("⌨️", getString(R.string.menu_item_keyboard_mode, if (isKeyboardLiftToType) "Lift to Type" else "Double Tap")) {
                 cycleKeyboardTypingMode()
             },
-            serenaMenuItem("🎙️", "Serena 音声入力 (入力欄へ直接音声入力)") {
+            serenaMenuItem("🎙️", getString(R.string.menu_item_voice_input)) {
                 launchVoiceInput()
             },
-            serenaMenuItem("🌏", "Serena 音声翻訳 (指定言語へ翻訳して入力/読み上げ)") {
+            serenaMenuItem("🌏", getString(R.string.menu_item_voice_translation)) {
                 launchVoiceTranslation()
             },
-            serenaMenuItem("🌐", "リアルタイム翻訳のデフォルト言語 (現在: ${instantTranslationHelper?.defaultTargetLanguageCode?.uppercase() ?: "EN"})") {
+            serenaMenuItem("🌐", getString(R.string.menu_item_translation_lang, instantTranslationHelper?.defaultTargetLanguageCode?.uppercase() ?: "EN")) {
                 cycleTranslationDefaultLanguage()
             },
-            serenaMenuItem("🖼️", "画像・写真 AIディープエクスプレイヤー (詳細な情景解説)") {
+            serenaMenuItem("🖼️", getString(R.string.menu_item_image_explainer)) {
                 explainCurrentImageOrScreen()
             },
-            serenaMenuItem("📳", "環境音・危険音・呼びかけ検知 (現在: ${soundRecognitionHelper?.detailLevel?.spokenLabel ?: "オフ"})") {
+            serenaMenuItem("📳", getString(R.string.menu_item_sound_recognition, soundRecognitionHelper?.detailLevel?.spokenLabel ?: "OFF")) {
                 val nextLevel = soundRecognitionHelper?.cycleDetailLevel() ?: com.shinji.serena.sound.SoundAlertDetailLevel.DISABLED
                 soundHelper?.playActionDone()
-                speak("環境音・危険音検知を ${nextLevel.displayName} に変更しました", TextToSpeech.QUEUE_FLUSH)
+                speak("Sound recognition: ${nextLevel.displayName}", TextToSpeech.QUEUE_FLUSH)
             },
-            serenaMenuItem("👀", "Serena Eyes (リアルタイムAI視覚＆実況カメラ)") {
+            serenaMenuItem("👀", getString(R.string.menu_item_eyes_camera)) {
                 launchSerenaEyes()
             },
-            serenaMenuItem("👁️‍🗨️", "常駐見守りアイズ (動体・性別・表情検知) (現在: ${if (sentinelEyesManager?.isSentinelActive() == true) "ON" else "OFF"})") {
+            serenaMenuItem("👁️‍🗨️", getString(R.string.menu_item_sentinel_eyes, if (sentinelEyesManager?.isSentinelActive() == true) "ON" else "OFF")) {
                 toggleSentinelEyes()
             },
-            serenaMenuItem("👗", "ファッション＆衣服カラー情景スキャナー (温度・質感・印象の実況)") {
+            serenaMenuItem("👗", getString(R.string.menu_item_fashion_scanner)) {
                 launchFashionScanner()
             },
-            serenaMenuItem("🧠", "AI画面要約 (クイックブリーフィング)") {
+            serenaMenuItem("🧠", getString(R.string.menu_item_screen_summary)) {
                 summarizeCurrentScreen()
             },
-            serenaMenuItem("📬", "スマート通知ダイジェスト (未読・重要通知の要約)") {
+            serenaMenuItem("📬", getString(R.string.menu_item_notification_digest)) {
                 announceNotificationDigest()
             },
-            serenaMenuItem("📡", "3D空間オーディオ・周辺マップ＆紛失防止レーダー") {
+            serenaMenuItem("📡", getString(R.string.menu_item_surrounding_radar)) {
                 toggleSurroundingRadar()
             },
-            serenaMenuItem("🔔", "時報チャイム音の変更 (NHKラジオ風 / ポップ / 和風)") {
+            serenaMenuItem("🔔", getString(R.string.menu_item_hourly_chime)) {
                 cycleChimeStyle()
             },
             serenaMenuItem(if (screenCurtainHelper?.isCurtainEnabled == true) "☀️" else "🌑", curtainLabel) {
                 toggleScreenCurtain()
             },
-            serenaMenuItem("🎨", "カラー・照明・お日様チェッカー (部屋の明るさ・太陽・色の判定)") {
+            serenaMenuItem("🎨", getString(R.string.menu_item_light_checker)) {
                 announceColorAndLightReport()
             },
-            serenaMenuItem("🧭", "3D空間オーディオ・コンパス案内 (左右立体音響 & 方角アナウンス)") {
+            serenaMenuItem("🧭", getString(R.string.menu_item_compass_audio)) {
                 toggleSpatialCompassAudio()
             },
-            serenaMenuItem("🦇", "3D空間オーディオ・障害物＆段差検知ソナー (ステレオ立体音響)") {
+            serenaMenuItem("🦇", getString(R.string.menu_item_sonar_radar)) {
                 toggleSpatialObstacleSonar()
             },
-            serenaMenuItem("🏠", "インドア空間ナビ ＆ 屋内リアルタイム実況 (正面・左右・足元案内)") {
+            serenaMenuItem("🏠", getString(R.string.menu_item_indoor_nav)) {
                 launchIndoorNavigation()
             },
-            serenaMenuItem("🗺️", "ストリート名＆交差点・空間ナビ (現在の通り・前方交差点アラート)") {
+            serenaMenuItem("🗺️", getString(R.string.menu_item_street_nav)) {
                 announceStreetAndIntersections()
             },
-            serenaMenuItem("🚶‍♂️", "徒歩ナビ・現在地と目的地案内") {
+            serenaMenuItem("🚶‍♂️", getString(R.string.menu_item_walk_nav)) {
                 announceCurrentLocationAndNav()
             },
-            serenaMenuItem("🥫", "食品＆賞味期限スキャナー (缶詰・調味料・飲料・日付の自動判別)") {
+            serenaMenuItem("🥫", getString(R.string.menu_item_food_scanner)) {
                 launchFoodExpirationScanner()
             },
-            serenaMenuItem("🚦", "歩行・信号＆点字ブロックナビ (青信号/赤信号・誘導ブロック案内)") {
+            serenaMenuItem("🚦", getString(R.string.menu_item_transit_nav)) {
                 launchWalkTransitNav()
             },
-            serenaMenuItem("📄", "バーコード＆書類・レシート読み取り (合計金額・期日・商品コード)") {
+            serenaMenuItem("📄", getString(R.string.menu_item_barcode_scanner)) {
                 launchBarcodeDocScanner()
             },
-            serenaMenuItem("📖", "漢字詳細読み上げ (現在の文字を「信じるの信」等で解説)") {
+            serenaMenuItem("📖", getString(R.string.menu_item_kanji_detail)) {
                 explainCurrentFocusedKanji()
             },
-            serenaMenuItem("⚡", "読み上げ速度の変更 (トグル切り替え)") {
+            serenaMenuItem("⚡", getString(R.string.menu_item_speech_rate)) {
                 toggleSpeechRateQuick()
             },
-            serenaMenuItem("📄", "次のページへ移動 (本めくり)") {
+            serenaMenuItem("📄", getString(R.string.menu_item_page_next)) {
                 scrollHorizontalForward()
             },
-            serenaMenuItem("📄", "前のページへ移動 (本めくり)") {
+            serenaMenuItem("📄", getString(R.string.menu_item_page_prev)) {
                 scrollHorizontalBackward()
             },
-            serenaMenuItem("📖", "画面の一番上から読む") {
+            serenaMenuItem("📖", getString(R.string.menu_item_read_from_top)) {
                 readFromTop()
             },
-            serenaMenuItem("📞", "開発者(${BuildConfig.DEVELOPER_NAME})へ電話をかける") {
+            serenaMenuItem("📞", getString(R.string.menu_item_call_dev, BuildConfig.DEVELOPER_NAME)) {
                 callDeveloper()
             },
-            serenaMenuItem("✉️", "開発者(${BuildConfig.DEVELOPER_NAME})へメールを送る") {
+            serenaMenuItem("✉️", getString(R.string.menu_item_email_dev, BuildConfig.DEVELOPER_NAME)) {
                 emailDeveloper()
             },
-            serenaMenuItem("🐛", "開発者(${BuildConfig.DEVELOPER_NAME})へ動作診断・ログ送信") {
+            serenaMenuItem("🐛", getString(R.string.menu_item_diagnostics, BuildConfig.DEVELOPER_NAME)) {
                 sendTelemetryLog()
             },
-            serenaMenuItem("⚙️", "serenaの設定") {
+            serenaMenuItem("⚙️", getString(R.string.menu_item_settings)) {
                 openserenaSettings()
             },
-            serenaMenuItem("❓", "serenaのHelp") {
+            serenaMenuItem("❓", getString(R.string.menu_item_help)) {
                 showHelp()
             }
         )
@@ -2112,7 +2125,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         
         // メニューオープン音とほぼ同時に超高速レスポンスでナレーション開始！
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            speak("セレナメニュー、全${totalCount}項目。1番目、${firstTitle}", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.menu_spoken_header, totalCount, firstTitle), TextToSpeech.QUEUE_FLUSH)
         }, 40)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {
@@ -2122,7 +2135,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 dialog.show()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to show dialog: ${e.message}")
-                Toast.makeText(this, "セレナメニュー: 全${items.size}項目", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Serena Menu: $totalCount items", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -2131,7 +2144,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val node = targetNode ?: getAccessibilityFocusedNode()
         val items = mutableListOf<serenaMenuItem>()
 
-        items.add(serenaMenuItem("👆", "要素を長押し (ロングタップ)") {
+        items.add(serenaMenuItem("👆", getString(R.string.menu_long_click)) {
             node?.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
         })
 
@@ -2145,22 +2158,22 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 targetPkg
             }
 
-            items.add(serenaMenuItem("🗑️", "「$appLabel」をアンインストール") {
+            items.add(serenaMenuItem("🗑️", getString(R.string.menu_uninstall_app, appLabel)) {
                 launchUninstallApp(targetPkg)
             })
-            items.add(serenaMenuItem("ℹ️", "「$appLabel」のアプリ情報を開く") {
+            items.add(serenaMenuItem("ℹ️", getString(R.string.menu_app_info, appLabel)) {
                 launchAppDetailsSettings(targetPkg)
             })
         } else {
-            items.add(serenaMenuItem("🗑️", "アプリのアンインストール (設定から選択)") {
+            items.add(serenaMenuItem("🗑️", getString(R.string.menu_uninstall_from_settings)) {
                 try {
                     val intent = Intent(android.provider.Settings.ACTION_APPLICATION_SETTINGS).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     startActivity(intent)
-                    speak("アプリ一覧設定を開きました。アンインストールするアプリを選択してください", TextToSpeech.QUEUE_FLUSH)
+                    speak("Settings opened. Select app to uninstall.", TextToSpeech.QUEUE_FLUSH)
                 } catch (e: Exception) {
-                    speak("アプリ設定を開けませんでした", TextToSpeech.QUEUE_FLUSH)
+                    speak("Failed to open app settings", TextToSpeech.QUEUE_FLUSH)
                 }
             })
         }
@@ -2178,7 +2191,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
 
         soundHelper?.playMenuOpen()
-        speak("アクションメニューを開きました。全${items.size}項目。", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.menu_actions_spoken_header, items.size), TextToSpeech.QUEUE_FLUSH)
         try {
             val dialog = serenaMenuDialog(this, false, items)
             activeMenuDialog = dialog
@@ -2407,12 +2420,20 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (winType == android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD) return true
 
         val pkg = node.packageName?.toString()?.lowercase() ?: ""
+        val cls = node.className?.toString()?.lowercase() ?: ""
+        val viewId = node.viewIdResourceName?.lowercase() ?: ""
+
+        // Serena 内部のソフトウェアキーボード（SerenaKeyboardView等）のみをキーボードとして許可
+        // 通常のActivity（MainActivity）やメニューダイアログ（SerenaMenuDialog）は絶対にキーボードと誤認させない！
+        if (pkg == "com.shinji.serena") {
+            return cls.contains("serenakeyboardview") || cls.contains("softkeyboard") ||
+                    viewId.contains("keyboard_key") || viewId.contains("ime_key")
+        }
+
+        // サードパーティ製ソフトキーボード（Gboard, LatinIME, ATOK, Simeji 等）
         if (pkg.contains("inputmethod") || pkg.contains("gboard") ||
             pkg.contains("keyboard") || pkg.contains("latin") ||
-            pkg.contains("simeji") || pkg.contains("atok") ||
-            pkg.contains("com.shinji.serena")) {
-            val cls = node.className?.toString()?.lowercase() ?: ""
-            val viewId = node.viewIdResourceName?.lowercase() ?: ""
+            pkg.contains("simeji") || pkg.contains("atok")) {
             if (cls.contains("key") || cls.contains("button") ||
                 viewId.contains("key") || viewId.contains("btn") ||
                 node.isClickable) {
@@ -3542,6 +3563,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val parts = mutableListOf<String>()
 
+        val comma = if (Locale.getDefault().language == "ja") "、" else ", "
+        val windowWord = getString(R.string.role_window)
+        val lockScreenWord = getString(R.string.role_lock_screen)
+
         // 0. ウィンドウ遷移検知 (ウィンドウが切り替わった時にウィンドウ名やSystemUIを先頭でアナウンス)
         if (currentWinId != lastFocusedWindowId && currentWinId != -1) {
             lastFocusedWindowId = currentWinId
@@ -3559,11 +3584,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val winName = when {
                 winTitle.isNotEmpty() -> winTitle
                 pkg.contains("systemui", ignoreCase = true) || winType == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM -> "SystemUI"
-                winType == 4 /* TYPE_KEYGUARD */ || isKeyguardLocked() -> "画面ロック"
+                winType == 4 /* TYPE_KEYGUARD */ || isKeyguardLocked() -> lockScreenWord
                 else -> ""
             }
             if (winName.isNotEmpty()) {
-                parts.add("ウィンドウ $winName")
+                parts.add("$windowWord $winName")
             }
         }
 
@@ -3588,9 +3613,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
 
         if (text.isNotEmpty()) {
-            val formattedText = text.replace(Regex("[\\r\\n]+"), "、")
-                .replace(Regex("、+"), "、")
-                .trim('、', ' ')
+            val formattedText = text.replace(Regex("[\\r\\n]+"), comma)
+                .replace(Regex("${Regex.escape(comma)}+"), comma)
+                .trim(comma[0], ' ')
             if (formattedText.isNotEmpty()) parts.add(formattedText)
         }
 
@@ -3608,7 +3633,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             return ""
         }
 
-        return parts.joinToString("、")
+        return parts.joinToString(comma)
     }
 
     private fun findCheckableOrSwitchNode(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
@@ -3706,7 +3731,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             if (node.isClickable || node.isCheckable || target != null) {
                 val role = getNodeRole(node)
-                return if (role.isNotEmpty()) role else "ボタン"
+                return if (role.isNotEmpty()) role else getString(R.string.role_button)
             }
 
             return ""
@@ -3799,31 +3824,31 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             className.contains("LauncherAppWidgetHostView", ignoreCase = true) ||
             className.contains("AppWidgetHostView", ignoreCase = true) ||
             className.contains("GlanceAppWidget", ignoreCase = true) ||
-            viewId.contains("appwidget") -> "ウィジェット"
-            hasExpand || viewId.contains("expand_button") || viewId.contains("chevron") -> "展開ボタン"
-            hasCollapse || viewId.contains("collapse_button") -> "折りたたみボタン"
-            className.contains("Switch", ignoreCase = true) || className.contains("ToggleButton", ignoreCase = true) -> "スイッチ"
-            className.contains("CheckBox", ignoreCase = true) -> "チェックボックス"
-            className.contains("RadioButton", ignoreCase = true) -> "ラジオボタン"
-            className.contains("Button", ignoreCase = true) -> "ボタン"
+            viewId.contains("appwidget") -> getString(R.string.role_widget)
+            hasExpand || viewId.contains("expand_button") || viewId.contains("chevron") -> getString(R.string.role_expand_button)
+            hasCollapse || viewId.contains("collapse_button") -> getString(R.string.role_collapse_button)
+            className.contains("Switch", ignoreCase = true) || className.contains("ToggleButton", ignoreCase = true) -> getString(R.string.role_switch)
+            className.contains("CheckBox", ignoreCase = true) -> getString(R.string.role_checkbox)
+            className.contains("RadioButton", ignoreCase = true) -> getString(R.string.role_radio_button)
+            className.contains("Button", ignoreCase = true) -> getString(R.string.role_button)
             node.isPassword || isPass || className.contains("PasswordTextView", ignoreCase = true) ||
             className.contains("EditText", ignoreCase = true) || node.isEditable -> {
                 val inputType = node.inputType
                 when {
-                    isPin -> "PIN入力欄"
-                    isPass -> "パスワード入力欄"
-                    (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_NUMBER -> "数字入力欄"
-                    (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_PHONE -> "電話番号入力欄"
-                    (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS -> "メールアドレス入力欄"
-                    (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_URI -> "URL入力欄"
-                    else -> "テキスト入力欄"
+                    isPin -> getString(R.string.role_pin_entry)
+                    isPass -> getString(R.string.role_password_entry)
+                    (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_NUMBER -> getString(R.string.role_number_entry)
+                    (inputType and android.text.InputType.TYPE_MASK_CLASS) == android.text.InputType.TYPE_CLASS_PHONE -> getString(R.string.role_phone_entry)
+                    (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS -> getString(R.string.role_email_entry)
+                    (inputType and android.text.InputType.TYPE_MASK_VARIATION) == android.text.InputType.TYPE_TEXT_VARIATION_URI -> getString(R.string.role_url_entry)
+                    else -> getString(R.string.role_edit_text)
                 }
             }
-            className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> if (node.isClickable) "ボタン" else "画像"
-            className.contains("SeekBar", ignoreCase = true) -> "スライダー"
-            target.isCheckable -> "スイッチ"
-            className.contains("TextView", ignoreCase = true) -> if (node.isClickable) "ボタン" else ""
-            node.isClickable -> "ボタン"
+            className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> if (node.isClickable) getString(R.string.role_button) else getString(R.string.role_image)
+            className.contains("SeekBar", ignoreCase = true) -> getString(R.string.role_slider)
+            target.isCheckable -> getString(R.string.role_switch)
+            className.contains("TextView", ignoreCase = true) -> if (node.isClickable) getString(R.string.role_button) else ""
+            node.isClickable -> getString(R.string.role_button)
             else -> ""
         }
     }
@@ -3842,32 +3867,33 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val hasExpandAction = node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_EXPAND.id }
             val hasCollapseAction = node.actionList.any { it.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_COLLAPSE.id }
             if (hasExpandAction) {
-                states.add("折りたたまれています")
+                states.add(getString(R.string.state_collapsed))
             } else if (hasCollapseAction) {
-                states.add("展開されています")
+                states.add(getString(R.string.state_expanded))
             }
         }
 
         // 2. チェック・スイッチ状態判定
         if (target.isCheckable || isSwitch || isCheckBox || isRadio) {
             if (isSwitch) {
-                states.add(if (target.isChecked) "オン" else "オフ")
+                states.add(if (target.isChecked) getString(R.string.state_on) else getString(R.string.state_off))
             } else if (isCheckBox) {
-                states.add(if (target.isChecked) "チェック済み" else "チェックなし")
+                states.add(if (target.isChecked) getString(R.string.state_checked) else getString(R.string.state_not_checked))
             } else if (isRadio) {
-                states.add(if (target.isChecked) "選択中" else "未選択")
+                states.add(if (target.isChecked) getString(R.string.state_selected) else getString(R.string.state_not_selected))
             } else {
-                states.add(if (target.isChecked) "オン" else "オフ")
+                states.add(if (target.isChecked) getString(R.string.state_on) else getString(R.string.state_off))
             }
         }
-        if (node.isSelected && !states.contains("選択中")) {
-            states.add("選択中")
+        val selectedStr = getString(R.string.state_selected)
+        if (node.isSelected && !states.contains(selectedStr)) {
+            states.add(selectedStr)
         }
 
         // 3. 有効/無効の判定（クリック可能・展開可能な要素に対して誤って「無効」と言わないよう防御）
         val isInteractive = node.isClickable || node.isCheckable || target.isClickable || target.isCheckable
         if (!node.isEnabled && !target.isEnabled && !isInteractive) {
-            states.add("無効")
+            states.add(getString(R.string.state_disabled))
         }
 
         return states.joinToString(" ")
@@ -3964,20 +3990,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun detectLanguage(text: String): Locale {
         val trimmed = text.trim()
-        if (trimmed.isEmpty()) return Locale.JAPANESE
+        val systemLocale = Locale.getDefault()
+        if (trimmed.isEmpty()) return systemLocale
 
-        // 1. 日本語（ひらがな・カタカナ・漢字・全角記号）が1文字でも含まれていれば絶対に日本語！
-        if (trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF\\u3000-\\u303F].*"))) {
-            return Locale.JAPANESE
-        }
-
-        // 2. タガログ語判定（単語単位・決まり文句で厳密マッチ）
+        // 1. タガログ語判定（Serenaのアイデンティティ挨拶 "Magandang araw po! Handa na si Serena. Ingat lagi at Mabuhay!" 等）
         val lower = trimmed.lowercase()
         val tagalogDistinctPhrases = listOf(
-            "magandang araw", "handa na si serena", "mabuhay", "maraming salamat", "kumusta", "kamusta"
+            "magandang araw", "handa na si serena", "ingat lagi", "mabuhay", "maraming salamat", "kumusta", "kamusta"
         )
         val tagalogWords = setOf(
-            "kamusta", "kumusta", "salamat", "magandang", "mabuhay", "asawa", "handa", "walang", "opo"
+            "kamusta", "kumusta", "salamat", "magandang", "mabuhay", "asawa", "handa", "walang", "opo", "ingat"
         )
         val tokens = lower.split(Regex("[^a-zA-Z]+")).filter { it.isNotEmpty() }
         val isTagalog = tagalogDistinctPhrases.any { lower.contains(it) } || tokens.any { tagalogWords.contains(it) }
@@ -3988,19 +4010,34 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             if (availability >= TextToSpeech.LANG_AVAILABLE) {
                 return tagalogLocale
             }
-            return Locale.JAPANESE
         }
 
-        // 3. 英語判定（日本語を含まず、アルファベットの英単語で構成されている場合）
-        if (trimmed.matches(Regex("^[a-zA-Z0-9\\s\\p{Punct}]+$")) && trimmed.any { it.isLetter() }) {
-            val englishLocale = Locale.ENGLISH
-            val availability = tts?.isLanguageAvailable(englishLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-            if (availability >= TextToSpeech.LANG_AVAILABLE) {
-                return englishLocale
+        // 2. 日本語判定（ひらがな・カタカナ・漢字・全角記号が含まれている場合）
+        val hasJapanese = trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FAF\\u3000-\\u303F].*"))
+        if (hasJapanese) {
+            val jaAvailability = tts?.isLanguageAvailable(Locale.JAPANESE) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (jaAvailability >= TextToSpeech.LANG_AVAILABLE) {
+                return Locale.JAPANESE
             }
         }
 
-        return Locale.JAPANESE
+        // 3. ユーザーの端末デフォルト言語を最優先（オランダ語 Dutch, ドイツ語, フランス語, スペイン語, 英語, etc.）
+        val sysLang = systemLocale.language.lowercase()
+        if (sysLang != "ja" || hasJapanese) {
+            val sysAvail = tts?.isLanguageAvailable(systemLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+            if (sysAvail >= TextToSpeech.LANG_AVAILABLE) {
+                return systemLocale
+            }
+        }
+
+        // 4. 英語判定およびフォールバック
+        val englishLocale = Locale.ENGLISH
+        val engAvail = tts?.isLanguageAvailable(englishLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+        if (engAvail >= TextToSpeech.LANG_AVAILABLE) {
+            return englishLocale
+        }
+
+        return systemLocale
     }
 
     private var isSpeechPaused = false

@@ -66,9 +66,9 @@ class serenaMenuDialog(
         scrollMenuItems = findViewById(R.id.scrollMenuItems)
 
         val titleText = if (isEditTextFocus) {
-            "✏️ serena 編集アシスト"
+            context.getString(R.string.menu_edit_title)
         } else {
-            "🌸 serena メニュー"
+            context.getString(R.string.menu_serena_title)
         }
         tvTitle.text = titleText
         tvTitle.contentDescription = titleText
@@ -89,7 +89,7 @@ class serenaMenuDialog(
             tvItemTitle.text = item.title
             tvIcon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             val cleanTitle = item.title.stripMenuEmojis()
-            val accessibleText = "${index + 1}番目、${cleanTitle}"
+            val accessibleText = context.getString(R.string.menu_item_accessible, index + 1, cleanTitle)
             itemView.contentDescription = accessibleText
             itemView.isFocusable = true
 
@@ -102,8 +102,12 @@ class serenaMenuDialog(
             container.addView(itemView)
         }
 
-        btnClose?.setOnClickListener {
-            dismiss()
+        btnClose?.apply {
+            text = context.getString(R.string.menu_close)
+            contentDescription = context.getString(R.string.menu_close)
+            setOnClickListener {
+                dismiss()
+            }
         }
 
         if (btnClose != null) {
@@ -172,7 +176,7 @@ class serenaMenuDialog(
         } else {
             // 閉じるボタン
             service?.soundHelper?.playActionDone()
-            service?.speak("セレナメニューを閉じました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            service?.speak(context.getString(R.string.menu_closed), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return true
         }
     }
@@ -181,9 +185,9 @@ class serenaMenuDialog(
         return if (currentIndex in items.indices) {
             val item = items[currentIndex]
             val cleanTitle = item.title.stripMenuEmojis()
-            "${currentIndex + 1}番目、${cleanTitle}"
+            context.getString(R.string.menu_item_accessible, currentIndex + 1, cleanTitle)
         } else {
-            "閉じる ボタン"
+            "${context.getString(R.string.menu_close)} ${context.getString(R.string.role_button)}"
         }
     }
 
@@ -214,9 +218,9 @@ class serenaMenuDialog(
         val textToSpeak = if (index < items.size) {
             val item = items[index]
             val cleanTitle = item.title.stripMenuEmojis()
-            "${index + 1}番目、${cleanTitle}"
+            context.getString(R.string.menu_item_accessible, index + 1, cleanTitle)
         } else {
-            "閉じる ボタン"
+            "${context.getString(R.string.menu_close)} ${context.getString(R.string.role_button)}"
         }
 
         service.speak(textToSpeak, android.speech.tts.TextToSpeech.QUEUE_FLUSH)

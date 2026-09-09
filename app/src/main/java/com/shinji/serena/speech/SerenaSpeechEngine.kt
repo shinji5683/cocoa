@@ -37,7 +37,7 @@ class SerenaSpeechEngine(
         }
         currentGranularity = values[nextIndex]
         service.soundHelper?.playActionDone()
-        service.speak("読み上げコントロール: ${currentGranularity.displayName}", TextToSpeech.QUEUE_FLUSH)
+        service.speak(service.getString(com.shinji.serena.R.string.granularity_spoken_header, currentGranularity.displayName), TextToSpeech.QUEUE_FLUSH)
     }
 
     fun setGranularity(mode: GranularityMode) {
