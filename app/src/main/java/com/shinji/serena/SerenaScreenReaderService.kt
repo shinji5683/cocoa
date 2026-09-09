@@ -2479,42 +2479,58 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     fun cycleKeyboardTypingMode() {
         isKeyboardLiftToType = !isKeyboardLiftToType
         soundHelper?.playActionDone()
-        val modeName = if (isKeyboardLiftToType) "指を離して入力（Lift to Type）" else "ダブルタップして入力（Double Tap）"
-        speak("キー入力方式を $modeName に変更しました", TextToSpeech.QUEUE_FLUSH)
+        val modeStr = getString(if (isKeyboardLiftToType) R.string.keyboard_mode_lift else R.string.keyboard_mode_double_tap)
+        speak(getString(R.string.keyboard_mode_changed_fmt, modeStr), TextToSpeech.QUEUE_FLUSH)
     }
+
+    private var lastKeyboardHoverNode: AccessibilityNodeInfo? = null
+    private var lastKeyboardHoverTimeMs = 0L
+    private var lastKeyboardHoverExitTimeMs = 0L
+    private var lastLiftToTypeTimeMs = 0L
 
     private fun isKeyboardNode(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
         val winType = try { node.window?.type } catch (_: Exception) { null }
-        if (winType == android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD) return true
+        val isImeWindow = (winType == android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD)
+
+        val isClickable = node.isClickable || node.actionList.any { it.id == AccessibilityNodeInfo.ACTION_CLICK }
+        if (!isClickable) return false
 
         val pkg = node.packageName?.toString()?.lowercase() ?: ""
         val cls = node.className?.toString()?.lowercase() ?: ""
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
+        val hasContent = !node.text.isNullOrBlank() || !node.contentDescription.isNullOrBlank()
+        val isKeyLike = cls.contains("key") || cls.contains("button") ||
+                viewId.contains("key") || viewId.contains("btn") ||
+                cls.contains("imageview") || cls.contains("textview")
 
-        // Serena 内部のソフトウェアキーボード（SerenaKeyboardView等）のみをキーボードとして許可
-        // 通常のActivity（MainActivity）やメニューダイアログ（SerenaMenuDialog）は絶対にキーボードと誤認させない！
+        // IMEウィンドウ内であれば、クリック可能かつテキスト/説明がある、またはキー/ボタン形状のノードをキーとして認定
+        if (isImeWindow) {
+            return hasContent || isKeyLike
+        }
+
+        // Serena 内部のソフトウェアキーボード（SerenaKeyboardView等）
         if (pkg == "com.shinji.serena") {
             return cls.contains("serenakeyboardview") || cls.contains("softkeyboard") ||
-                    viewId.contains("keyboard_key") || viewId.contains("ime_key")
+                    viewId.contains("keyboard_key") || viewId.contains("ime_key") ||
+                    viewId.contains("btn") || isKeyLike
         }
 
         // サードパーティ製ソフトキーボード（Gboard, LatinIME, ATOK, Simeji 等）
         if (pkg.contains("inputmethod") || pkg.contains("gboard") ||
             pkg.contains("keyboard") || pkg.contains("latin") ||
             pkg.contains("simeji") || pkg.contains("atok")) {
-            if (cls.contains("key") || cls.contains("button") ||
-                viewId.contains("key") || viewId.contains("btn") ||
-                node.isClickable) {
-                return true
-            }
+            return hasContent || isKeyLike
         }
         return false
     }
 
     private fun tryPerformLiftToType(node: AccessibilityNodeInfo?) {
         if (!isKeyboardLiftToType || node == null) return
+        val now = System.currentTimeMillis()
+        if (now - lastLiftToTypeTimeMs < 200) return
         if (isKeyboardNode(node)) {
+            lastLiftToTypeTimeMs = now
             soundHelper?.playClick()
             node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
         }
@@ -3284,6 +3300,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 // コンテンツ動的更新時はフォーカス奪取を行わない（誤爆・ループ防止）
             }
 
+            AccessibilityEvent.TYPE_TOUCH_INTERACTION_START -> {
+                lastKeyboardHoverNode = null
+                lastKeyboardHoverExitTimeMs = 0L
+            }
+
             AccessibilityEvent.TYPE_VIEW_HOVER_ENTER -> {
                 val node = event.source ?: return
                 val pkg = node.packageName?.toString() ?: ""
@@ -3304,6 +3325,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val now = System.currentTimeMillis()
                 lastFocusTimeMs = now
                 lastHoveredNode = node
+                if (isKeyboardNode(node)) {
+                    lastKeyboardHoverNode = node
+                    lastKeyboardHoverTimeMs = now
+                    lastKeyboardHoverExitTimeMs = 0L
+                } else {
+                    lastKeyboardHoverNode = null
+                }
                 soundHelper?.playFocusMove()
                 node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
                 if (isTtsReady) {
@@ -3313,13 +3341,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             AccessibilityEvent.TYPE_VIEW_HOVER_EXIT -> {
-                val node = event.source ?: lastHoveredNode
-                tryPerformLiftToType(node)
+                // ホバー移動中（キー探索中）は絶対に入力（クリック）を実行しない！
+                // 指を画面から離した瞬間（TYPE_TOUCH_INTERACTION_END）のみLift to Typeを実行する。
+                val node = event.source
+                if (node != null && (node == lastKeyboardHoverNode || isKeyboardNode(node))) {
+                    lastKeyboardHoverExitTimeMs = System.currentTimeMillis()
+                }
             }
 
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> {
-                val node = lastHoveredNode
-                tryPerformLiftToType(node)
+                val now = System.currentTimeMillis()
+                val targetKey = lastKeyboardHoverNode
+                // 指を離した瞬間：キー上で指を離した場合のみ入力実行（離してからの猶予400ms以内）
+                val exitDelta = if (lastKeyboardHoverExitTimeMs > 0L) now - lastKeyboardHoverExitTimeMs else 0L
+                if (targetKey != null && (now - lastKeyboardHoverTimeMs < 10000) && exitDelta < 400) {
+                    tryPerformLiftToType(targetKey)
+                }
+                lastKeyboardHoverNode = null
+                lastKeyboardHoverExitTimeMs = 0L
             }
 
             AccessibilityEvent.TYPE_VIEW_FOCUSED,
