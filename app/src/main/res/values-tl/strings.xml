@@ -530,4 +530,104 @@
     <string name="permission_dialog_default_msg">Humihiling ng pahintulot.</string>
     <string name="permission_dialog_hint">Nakatambad ang kahon ng pahintulot. Mag-swipe pakaliwa o pakanan para pumili.</string>
     <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
+
+    <!-- Mga pagkilos, pag-navigate at operasyon -->
+    <string name="action_page_next">Lumipat sa susunod na pahina</string>
+    <string name="action_page_prev">Lumipat sa nakaraang pahina</string>
+    <string name="action_scroll_down">Nag-scroll pababa</string>
+    <string name="action_scroll_up">Nag-scroll pataas</string>
+    <string name="action_open_apps">Binubuksan ang listahan ng app</string>
+    <string name="action_open_notifications">Binubuksan ang mga abiso</string>
+    <string name="action_unlocking">Ina-unlock ang screen</string>
+    <string name="action_no_focus">Walang naka-focus na item</string>
+    <string name="action_default_double_tap">Default. I-double tap para i-activate.</string>
+    <string name="action_custom_action_fmt">Aksyon: %1$s. I-double tap para isagawa.</string>
+    <string name="action_not_found_fmt">Hindi nahanap ang %1$s</string>
+    <string name="action_executed_fmt">Isinagawa ang %1$s</string>
+    <string name="action_execute_fmt">Isagawa ang %1$s</string>
+    <string name="action_select_fmt">Napili ang %1$s</string>
+    <string name="action_mode_changed_fmt">Binago ang navigation mode sa %1$s</string>
+    <string name="action_clipboard_empty">Walang laman ang clipboard history</string>
+    <string name="action_clipboard_opened">Binuksan ang clipboard history</string>
+    <string name="action_clipboard_pasted_fmt">Na-paste ang \"%1$s\"</string>
+    <string name="action_clipboard_copied_fmt">Na-kopya ang \"%1$s\"</string>
+    <string name="action_status_unavailable">Hindi makuha ang impormasyon ng katayuan</string>
+    <string name="action_screen_curtain_enabled">Naka-enable ang screen curtain. Nakatago ang display.</string>
+    <string name="action_screen_curtain_disabled">Naka-disable ang screen curtain.</string>
+
+    <!-- Paghahanap ng lugar at gabay ng AI -->
+    <string name="places_found_fmt">May nakitang %2$d %1$s sa malapit. Una, %3$s</string>
+    <string name="places_searching_fmt">Naghahanap ng %1$s sa malapit...</string>
+    <string name="places_not_found_fmt">Walang nakitang %1$s sa malapit</string>
+    <string name="places_destination_set_fmt">Itinakda ang patutunguhan sa %1$s. %2$s</string>
+    <string name="places_phone_search_fmt">Naghahanap ng numero ng telepono para sa %1$s</string>
+    <string name="places_phone_failed">Hindi mabuksan ang phone app</string>
+    <string name="places_web_search_fmt">Binubuksan ang web info para sa %1$s</string>
+    <string name="places_browser_failed">Hindi mabuksan ang browser</string>
+    <string name="places_nav_unavailable">Hindi magamit ang walking navigation</string>
+    <string name="service_ai_deep_explaining">Sinusuri ang larawan gamit ang AI Deep Explainer...</string>
+    <string name="service_ai_deep_result_fmt">Paliwanag ng eksena: %1$s</string>
+    <string name="service_kanji_detail_fmt">Detalye ng karakter: %1$s</string>
+    <string name="service_launch_chrome_auth">Binubuksan ang Google Chrome para sa pagpapatunay</string>
+    <string name="service_send_telemetry">Inihahanda ang diagnostic report para sa developer na si Shinji</string>
+    <string name="service_uninstall_dialog_opened">Binuksan ang kumpirmasyon sa pag-uninstall</string>
+    <string name="service_uninstall_dialog_failed">Hindi mabuksan ang screen sa pag-uninstall</string>
+
+    <!-- Pag-uninstall, Mga Setting at Mode ng Pagpapatakbo -->
+    <string name="uninstall_settings_opened">Binuksan ang mga setting. Pumili ng app na ia-uninstall.</string>
+    <string name="uninstall_settings_failed">Hindi mabuksan ang mga setting ng app</string>
+    <string name="mode_talkback_compat">Mode ng Pagkakatugma sa TalkBack</string>
+    <string name="mode_serena_original">Orihinal na Mode ng Serena</string>
+    <string name="action_clipboard_preview_history_fmt">Kasaysayan: %1$s</string>
+    <string name="notification_speech_level_fmt">Pahayag ng Notipikasyon at Tawag: %1$s</string>
+
+    <!-- Menu ng Paglalakad at Mga Lugar -->
+    <string name="places_destination_cleared">Natapos na ang gabay sa patutunguhan</string>
+    <string name="places_menu_opened_fmt">%1$s. Binuksan ang menu ng gabay sa paglalakad at kalapit na mga lugar. Kabuuang %2$d aytem. Una: %3$s</string>
+    <string name="places_address_fmt">Ang address ng %1$s ay \"%2$s\". Humigit-kumulang %3$d metro mula sa kasalukuyang lokasyon.</string>
+    <string name="places_detail_menu_opened_fmt">Binuksan ang menu ng detalye para sa \"%1$s\". Kabuuang %2$d aytem. Una: %3$s</string>
+    <string name="places_menu_start_nav_fmt">Simulan ang gabay sa paglalakad dito (humigit-kumulang %1$dm)</string>
+    <string name="places_menu_call">Tawagan</string>
+    <string name="places_menu_web">Buksan ang website at impormasyon</string>
+    <string name="places_menu_address">Kumpirmahin ang buong address</string>
+
+    <!-- Tulong, Suporta at Bilis ng Pagsasalita -->
+    <string name="tts_rate_changed_fmt">Binago ang bilis ng pagsasalita sa %1$.1fx</string>
+    <string name="support_call_dev_fmt">Binubuksan ang dialer para tawagan ang developer na si %1$s (%2$s)</string>
+    <string name="support_email_dev_fmt">Binubuksan ang email app para sa developer na si %1$s</string>
+    <string name="support_menu_opened">Binuksan ang Serena Tulong at Direktang Suporta ng Developer menu</string>
+    <string name="support_basic_guide">Pangunahing gabay: Mag-swipe pataas/pababa para baguhin ang granularity ng pagbasa, mag-swipe pakaliwa/pakanan para ilipat ang focus, 3-daliri 3-tap para sa estado ng telepono, 2-daliri dobleng tap para buksan ang Serena menu.</string>
+    <string name="support_version_info_fmt">Serena Screen Reader bersyon %1$s, developer %2$s, kontak %3$s</string>
+    <string name="support_contact_fmt">Tulong: Telepono %1$s, Email %2$s</string>
+
+    <!-- Tulong sa Pag-edit at Tuloy-tuloy na Pagbasa -->
+    <string name="edit_menu_opened">Binuksan ang menu ng Tulong sa Pag-edit</string>
+    <string name="edit_select_all_copied">Pinili lahat at kinopya</string>
+    <string name="edit_pasted">Na-paste na</string>
+    <string name="edit_cleared_all">Binura ang lahat ng teksto</string>
+    <string name="edit_current_content_fmt">Kasalukuyang laman ng input: %1$s</string>
+    <string name="edit_empty">Walang laman ang input field</string>
+    <string name="edit_phrase_inserted_fmt">Inilagay ang template na parirala \"%1$s\"</string>
+    <string name="read_from_top_started">Sinisimulan ang pagbasa mula sa itaas ng screen</string>
+    <string name="read_no_text_found">Walang nahanap na mababasang teksto</string>
+
+    <!-- 3D Audio Compass, Sonar at Mga Setting -->
+    <string name="compass_unavailable">Hindi magagamit ang compass feature</string>
+    <string name="compass_started_fmt">%1$s. Sinimulan ang 3D spatial audio compass. Ituro ang telepono sa totoong hilaga upang marinig ang malinaw na tunog sa gitna ng dalawang tainga. I-tap muli ang menu para ihinto.</string>
+    <string name="compass_stopped">Inihinto ang 3D spatial audio compass.</string>
+    <string name="sonar_unavailable">Hindi magagamit ang obstacle sonar</string>
+    <string name="sonar_started">Sinimulan ang 3D spatial obstacle sonar. Ang stereo sound at vibration ang gagabay sa distansya sa paparating na mga pader o hakbang. I-tap muli ang menu o sabihing stop sonar para umalis.</string>
+    <string name="sonar_stopped">Inihinto ang 3D spatial obstacle sonar.</string>
+    <string name="settings_launching">Binubuksan ang mga setting ng Serena</string>
+
+    <!-- Mga Tawag, Tunog at Asistente -->
+    <string name="call_incoming_fmt">[Papasok na Tawag] %1$s</string>
+    <string name="app_switch_granularity_fmt">Paglipat ng App: %1$s mode</string>
+    <string name="call_app_incoming_fmt">%1$s papasok na tawag: %2$s</string>
+    <string name="call_started_fmt">Nagsimula ang tawag sa %1$s. Oras ng pagsisimula: %2$s.</string>
+    <string name="call_ended_fmt">Natapos ang tawag sa %1$s. Tagal: %2$s. Oras ng pagtatapos: %3$s.</string>
+    <string name="chime_sound_changed_fmt">Pinalitan ang tunog ng chime bawat oras sa %1$s</string>
+    <string name="camera_live_launch_failed">Nabigong ilunsad ang real-time commentary camera.</string>
+    <string name="clipboard_latest_fmt">Pinakabagong kasaysayan ng clipboard: %1$s</string>
+    <string name="assistant_menu_opened">Binuksan ang menu ng Serena Asistente</string>
 </resources>

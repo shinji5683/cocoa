@@ -546,4 +546,104 @@
     <string name="permission_dialog_default_msg">Toestemmingsverzoek.</string>
     <string name="permission_dialog_hint">Toestemmingsvenster wordt weergegeven. Veeg naar links of rechts om te kiezen.</string>
     <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
+
+    <!-- Gebaren, navigatie en bewerkingen -->
+    <string name="action_page_next">Naar volgende pagina verplaatst</string>
+    <string name="action_page_prev">Naar vorige pagina verplaatst</string>
+    <string name="action_scroll_down">Omlaag gescrold</string>
+    <string name="action_scroll_up">Omhoog gescrold</string>
+    <string name="action_open_apps">App-overzicht openen</string>
+    <string name="action_open_notifications">Meldingen openen</string>
+    <string name="action_unlocking">Scherm ontgrendelen</string>
+    <string name="action_no_focus">Geen item gefocust</string>
+    <string name="action_default_double_tap">Standaard. Dubbeltik om te activeren.</string>
+    <string name="action_custom_action_fmt">Actie: %1$s. Dubbeltik om uit te voeren.</string>
+    <string name="action_not_found_fmt">%1$s niet gevonden</string>
+    <string name="action_executed_fmt">%1$s uitgevoerd</string>
+    <string name="action_execute_fmt">%1$s uitvoeren</string>
+    <string name="action_select_fmt">%1$s geselecteerd</string>
+    <string name="action_mode_changed_fmt">Navigatiemodus gewijzigd in %1$s</string>
+    <string name="action_clipboard_empty">Klembordgeschiedenis is leeg</string>
+    <string name="action_clipboard_opened">Klembordgeschiedenis geopend</string>
+    <string name="action_clipboard_pasted_fmt">\"%1$s\" geplakt</string>
+    <string name="action_clipboard_copied_fmt">\"%1$s\" gekopieerd</string>
+    <string name="action_status_unavailable">Kon statusinformatie niet ophalen</string>
+    <string name="action_screen_curtain_enabled">Schermgordijn ingeschakeld. Scherm is verborgen.</string>
+    <string name="action_screen_curtain_disabled">Schermgordijn uitgeschakeld.</string>
+
+    <!-- Plaatsen zoeken en AI-gids -->
+    <string name="places_found_fmt">%2$d %1$s in de buurt gevonden. Eerste, %3$s</string>
+    <string name="places_searching_fmt">Zoeken naar %1$s in de buurt...</string>
+    <string name="places_not_found_fmt">Geen %1$s in de buurt gevonden</string>
+    <string name="places_destination_set_fmt">Bestemming ingesteld op %1$s. %2$s</string>
+    <string name="places_phone_search_fmt">Telefoonnummer zoeken voor %1$s</string>
+    <string name="places_phone_failed">Kon telefoon-app niet starten</string>
+    <string name="places_web_search_fmt">Webdetails openen voor %1$s</string>
+    <string name="places_browser_failed">Kon browser niet openen</string>
+    <string name="places_nav_unavailable">Voetgangersnavigatie niet beschikbaar</string>
+    <string name="service_ai_deep_explaining">Afbeelding analyseren met AI Deep Explainer...</string>
+    <string name="service_ai_deep_result_fmt">Scènebeschrijving: %1$s</string>
+    <string name="service_kanji_detail_fmt">Teken details: %1$s</string>
+    <string name="service_launch_chrome_auth">Google Chrome starten voor verificatie</string>
+    <string name="service_send_telemetry">Diagnostisch rapport voorbereiden voor ontwikkelaar Shinji</string>
+    <string name="service_uninstall_dialog_opened">Bevestiging voor verwijderen geopend</string>
+    <string name="service_uninstall_dialog_failed">Kon verwijderscherm niet openen</string>
+
+    <!-- Verwijderen, Instellingen en Bedrijfsmodi -->
+    <string name="uninstall_settings_opened">Instellingen geopend. Selecteer een app om te verwijderen.</string>
+    <string name="uninstall_settings_failed">Kan app-instellingen niet openen</string>
+    <string name="mode_talkback_compat">TalkBack-compatibiliteitsmodus</string>
+    <string name="mode_serena_original">Serena Originele modus</string>
+    <string name="action_clipboard_preview_history_fmt">Geschiedenis: %1$s</string>
+    <string name="notification_speech_level_fmt">Aankondiging van meldingen en oproepen: %1$s</string>
+
+    <!-- Navigatie &amp; Locaties Menu -->
+    <string name="places_destination_cleared">Bestemmingsbegeleiding beëindigd</string>
+    <string name="places_menu_opened_fmt">%1$s. Wandelnavigatie- en nabijgelegen locatiesmenu geopend. Totaal %2$d items. 1e: %3$s</string>
+    <string name="places_address_fmt">Het adres van %1$s is \"%2$s\". Ongeveer %3$d meter van huidige locatie.</string>
+    <string name="places_detail_menu_opened_fmt">Detailmenu geopend voor \"%1$s\". Totaal %2$d items. 1e: %3$s</string>
+    <string name="places_menu_start_nav_fmt">Wandelnavigatie hierheen starten (ongeveer %1$dm)</string>
+    <string name="places_menu_call">Locatie bellen</string>
+    <string name="places_menu_web">Website &amp; info openen</string>
+    <string name="places_menu_address">Volledig adres bevestigen</string>
+
+    <!-- Hulp, Ondersteuning &amp; Spraaksnelheid -->
+    <string name="tts_rate_changed_fmt">Spraaksnelheid gewijzigd naar %1$.1fx</string>
+    <string name="support_call_dev_fmt">Telefoonkiezer openen voor ontwikkelaar %1$s (%2$s)</string>
+    <string name="support_email_dev_fmt">E-mailapp openen voor ontwikkelaar %1$s</string>
+    <string name="support_menu_opened">Serena Help- en directe ontwikkelaarsondersteuningsmenu geopend</string>
+    <string name="support_basic_guide">Basisgids: Veeg omhoog/omlaag voor leesgranulariteit, veeg links/rechts om focus te verplaatsen, 3 vingers driemaal tikken voor telefoonstatus, 2 vingers dubbeltikken voor Serena-menu.</string>
+    <string name="support_version_info_fmt">Serena Schermlezer versie %1$s, ontwikkelaar %2$s, contact %3$s</string>
+    <string name="support_contact_fmt">Help: Telefoon %1$s, E-mail %2$s</string>
+
+    <!-- Bewerkingshulp &amp; Continu Lezen -->
+    <string name="edit_menu_opened">Bewerkingshulpmenu geopend</string>
+    <string name="edit_select_all_copied">Alles geselecteerd en gekopieerd</string>
+    <string name="edit_pasted">Geplakt</string>
+    <string name="edit_cleared_all">Alle tekst gewist</string>
+    <string name="edit_current_content_fmt">Huidige invoerinhoud: %1$s</string>
+    <string name="edit_empty">Invoerveld is leeg</string>
+    <string name="edit_phrase_inserted_fmt">Sjabloonzin ingevoegd \"%1$s\"</string>
+    <string name="read_from_top_started">Starten met lezen vanaf de bovenkant van het scherm</string>
+    <string name="read_no_text_found">Geen leesbare tekst gevonden</string>
+
+    <!-- 3D-audiokompas, Sonar &amp; Instellingen -->
+    <string name="compass_unavailable">Kompasfunctie niet beschikbaar</string>
+    <string name="compass_started_fmt">%1$s. 3D ruimtelijk audiokompas gestart. Richt de telefoon op het ware noorden om een heldere toon tussen beide oren te horen. Tik nogmaals op het menu om te stoppen.</string>
+    <string name="compass_stopped">3D ruimtelijk audiokompas gestopt.</string>
+    <string name="sonar_unavailable">Obstakelsonar niet beschikbaar</string>
+    <string name="sonar_started">3D ruimtelijke obstakelsonar gestart. Stereogeluid en trillingen geven de afstand aan tot muren of treden. Tik nogmaals op het menu of zeg sonar stoppen om af te sluiten.</string>
+    <string name="sonar_stopped">3D ruimtelijke obstakelsonar gestopt.</string>
+    <string name="settings_launching">Serena-instellingen openen</string>
+
+    <!-- Oproepen, Klok &amp; Assistent -->
+    <string name="call_incoming_fmt">[Inkomende oproep] %1$s</string>
+    <string name="app_switch_granularity_fmt">App-wissel: %1$s modus</string>
+    <string name="call_app_incoming_fmt">%1$s inkomende oproep: %2$s</string>
+    <string name="call_started_fmt">Oproep gestart op %1$s. Starttijd is %2$s.</string>
+    <string name="call_ended_fmt">Oproep beëindigd op %1$s. Duur was %2$s. Eindtijd is %3$s.</string>
+    <string name="chime_sound_changed_fmt">Uursignaalgeluid gewijzigd naar %1$s</string>
+    <string name="camera_live_launch_failed">Kan live commentaarcamera niet starten.</string>
+    <string name="clipboard_latest_fmt">Meest recente klembordgeschiedenis: %1$s</string>
+    <string name="assistant_menu_opened">Serena Assistent-menu geopend</string>
 </resources>

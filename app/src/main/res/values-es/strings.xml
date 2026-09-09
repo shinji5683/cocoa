@@ -577,4 +577,104 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <string name="permission_dialog_default_msg">Solicitud de permiso.</string>
     <string name="permission_dialog_hint">Se muestra el diálogo de permisos. Deslice a la izquierda o derecha para seleccionar.</string>
     <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
+
+    <!-- Gestos, navegación y operaciones -->
+    <string name="action_page_next">Página siguiente</string>
+    <string name="action_page_prev">Página anterior</string>
+    <string name="action_scroll_down">Desplazado hacia abajo</string>
+    <string name="action_scroll_up">Desplazado hacia arriba</string>
+    <string name="action_open_apps">Abriendo cajón de aplicaciones</string>
+    <string name="action_open_notifications">Abriendo notificaciones</string>
+    <string name="action_unlocking">Desbloqueando pantalla</string>
+    <string name="action_no_focus">No hay elemento enfocado</string>
+    <string name="action_default_double_tap">Predeterminado. Toque dos veces para activar.</string>
+    <string name="action_custom_action_fmt">Acción: %1$s. Toque dos veces para ejecutar.</string>
+    <string name="action_not_found_fmt">No se encontró %1$s</string>
+    <string name="action_executed_fmt">%1$s ejecutado</string>
+    <string name="action_execute_fmt">Ejecutar %1$s</string>
+    <string name="action_select_fmt">%1$s seleccionado</string>
+    <string name="action_mode_changed_fmt">Modo de navegación cambiado a %1$s</string>
+    <string name="action_clipboard_empty">El historial del portapapeles está vacío</string>
+    <string name="action_clipboard_opened">Historial del portapapeles abierto</string>
+    <string name="action_clipboard_pasted_fmt">Pegado \"%1$s\"</string>
+    <string name="action_clipboard_copied_fmt">Copiado \"%1$s\"</string>
+    <string name="action_status_unavailable">No se pudo obtener información de estado</string>
+    <string name="action_screen_curtain_enabled">Cortina de pantalla activada. La pantalla está oculta.</string>
+    <string name="action_screen_curtain_disabled">Cortina de pantalla desactivada.</string>
+
+    <!-- Búsqueda de lugares y guía de IA -->
+    <string name="places_found_fmt">Se encontraron %2$d %1$s cercanos. Primero, %3$s</string>
+    <string name="places_searching_fmt">Buscando %1$s cercanos...</string>
+    <string name="places_not_found_fmt">No se encontraron %1$s cercanos</string>
+    <string name="places_destination_set_fmt">Destino establecido en %1$s. %2$s</string>
+    <string name="places_phone_search_fmt">Buscando número de teléfono de %1$s</string>
+    <string name="places_phone_failed">No se pudo iniciar la aplicación de teléfono</string>
+    <string name="places_web_search_fmt">Abriendo detalles web de %1$s</string>
+    <string name="places_browser_failed">No se pudo abrir el navegador</string>
+    <string name="places_nav_unavailable">Navegación a pie no disponible</string>
+    <string name="service_ai_deep_explaining">Analizando imagen con AI Deep Explainer...</string>
+    <string name="service_ai_deep_result_fmt">Descripción de la escena: %1$s</string>
+    <string name="service_kanji_detail_fmt">Detalles del carácter: %1$s</string>
+    <string name="service_launch_chrome_auth">Iniciando Google Chrome para autenticación</string>
+    <string name="service_send_telemetry">Preparando reporte de diagnóstico para el desarrollador Shinji</string>
+    <string name="service_uninstall_dialog_opened">Confirmación de desinstalación abierta</string>
+    <string name="service_uninstall_dialog_failed">No se pudo abrir la pantalla de desinstalación</string>
+
+    <!-- Desinstalación, Ajustes y Modos de Operación -->
+    <string name="uninstall_settings_opened">Ajustes abiertos. Selecciona una app para desinstalar.</string>
+    <string name="uninstall_settings_failed">No se pudo abrir los ajustes de la app</string>
+    <string name="mode_talkback_compat">Modo compatibilidad TalkBack</string>
+    <string name="mode_serena_original">Modo original Serena</string>
+    <string name="action_clipboard_preview_history_fmt">Historial: %1$s</string>
+    <string name="notification_speech_level_fmt">Anuncio de notificaciones y llamadas: %1$s</string>
+
+    <!-- Menú de Navegación y Lugares -->
+    <string name="places_destination_cleared">Guía de destino finalizada</string>
+    <string name="places_menu_opened_fmt">%1$s. Menú de navegación a pie y lugares cercanos abierto. Total %2$d elementos. 1.º: %3$s</string>
+    <string name="places_address_fmt">La dirección de %1$s es \"%2$s\". A unos %3$d metros de la ubicación actual.</string>
+    <string name="places_detail_menu_opened_fmt">Menú de detalles abierto para \"%1$s\". Total %2$d elementos. 1.º: %3$s</string>
+    <string name="places_menu_start_nav_fmt">Iniciar navegación a pie aquí (aprox. %1$dm)</string>
+    <string name="places_menu_call">Llamar</string>
+    <string name="places_menu_web">Abrir sitio web e info</string>
+    <string name="places_menu_address">Confirmar dirección completa</string>
+
+    <!-- Ayuda, Soporte y Velocidad de Voz -->
+    <string name="tts_rate_changed_fmt">Velocidad de voz cambiada a %1$.1fx</string>
+    <string name="support_call_dev_fmt">Abriendo marcador para llamar al desarrollador %1$s (%2$s)</string>
+    <string name="support_email_dev_fmt">Abriendo app de correo para el desarrollador %1$s</string>
+    <string name="support_menu_opened">Menú de ayuda de Serena y soporte directo al desarrollador abierto</string>
+    <string name="support_basic_guide">Guía básica: Desliza arriba/abajo para cambiar granularidad, izquierda/derecha para mover foco, triple toque con 3 dedos para estado del teléfono, doble toque con 2 dedos para abrir menú Serena.</string>
+    <string name="support_version_info_fmt">Lector de pantalla Serena versión %1$s, desarrollador %2$s, contacto %3$s</string>
+    <string name="support_contact_fmt">Ayuda: Teléfono %1$s, Correo %2$s</string>
+
+    <!-- Asistente de Edición y Lectura Continua -->
+    <string name="edit_menu_opened">Menú de asistencia de edición abierto</string>
+    <string name="edit_select_all_copied">Todo seleccionado y copiado</string>
+    <string name="edit_pasted">Pegado</string>
+    <string name="edit_cleared_all">Todo el texto borrado</string>
+    <string name="edit_current_content_fmt">Contenido actual: %1$s</string>
+    <string name="edit_empty">El campo de entrada está vacío</string>
+    <string name="edit_phrase_inserted_fmt">Frase plantilla insertada \"%1$s\"</string>
+    <string name="read_from_top_started">Iniciando lectura desde la parte superior de la pantalla</string>
+    <string name="read_no_text_found">No se encontró texto legible</string>
+
+    <!-- Brújula 3D, Sonar y Ajustes -->
+    <string name="compass_unavailable">Función de brújula no disponible</string>
+    <string name="compass_started_fmt">%1$s. Brújula de audio espacial 3D iniciada. Apunta el teléfono al norte real para oír un tono claro centrado entre ambos oídos. Toca el menú de nuevo para detener.</string>
+    <string name="compass_stopped">Brújula de audio espacial 3D detenida.</string>
+    <string name="sonar_unavailable">Sonar de obstáculos no disponible</string>
+    <string name="sonar_started">Sonar de obstáculos 3D iniciado. El sonido estéreo y la vibración guían la distancia hacia paredes o desniveles. Toca el menú de nuevo o di detener sonar para salir.</string>
+    <string name="sonar_stopped">Sonar de obstáculos 3D detenido.</string>
+    <string name="settings_launching">Abriendo ajustes de Serena</string>
+
+    <!-- Llamadas, Campana y Asistente -->
+    <string name="call_incoming_fmt">[Llamada entrante] %1$s</string>
+    <string name="app_switch_granularity_fmt">Cambio de app: modo %1$s</string>
+    <string name="call_app_incoming_fmt">%1$s llamada entrante: %2$s</string>
+    <string name="call_started_fmt">Llamada iniciada en %1$s. Hora de inicio: %2$s.</string>
+    <string name="call_ended_fmt">Llamada finalizada en %1$s. Duración: %2$s. Hora de fin: %3$s.</string>
+    <string name="chime_sound_changed_fmt">Sonido de campana horaria cambiado a %1$s</string>
+    <string name="camera_live_launch_failed">Error al iniciar la cámara de relato en tiempo real.</string>
+    <string name="clipboard_latest_fmt">Último historial de portapapeles: %1$s</string>
+    <string name="assistant_menu_opened">Menú del Asistente Serena abierto</string>
 </resources>

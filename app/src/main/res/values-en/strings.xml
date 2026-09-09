@@ -546,4 +546,104 @@
     <string name="permission_dialog_default_msg">Permission request.</string>
     <string name="permission_dialog_hint">Permission dialog is displayed. Swipe left or right to choose.</string>
     <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
+
+    <!-- Gestures, Navigation & Operations -->
+    <string name="action_page_next">Moved to next page</string>
+    <string name="action_page_prev">Moved to previous page</string>
+    <string name="action_scroll_down">Scrolled down</string>
+    <string name="action_scroll_up">Scrolled up</string>
+    <string name="action_open_apps">Opening app drawer</string>
+    <string name="action_open_notifications">Opening notifications</string>
+    <string name="action_unlocking">Unlocking screen</string>
+    <string name="action_no_focus">No item focused</string>
+    <string name="action_default_double_tap">Default. Double-tap to activate.</string>
+    <string name="action_custom_action_fmt">Action: %1$s. Double-tap to execute.</string>
+    <string name="action_not_found_fmt">%1$s not found</string>
+    <string name="action_executed_fmt">Executed %1$s</string>
+    <string name="action_execute_fmt">Execute %1$s</string>
+    <string name="action_select_fmt">%1$s selected</string>
+    <string name="action_mode_changed_fmt">Navigation mode changed to %1$s</string>
+    <string name="action_clipboard_empty">Clipboard history is empty</string>
+    <string name="action_clipboard_opened">Opened clipboard history</string>
+    <string name="action_clipboard_pasted_fmt">Pasted \"%1$s\"</string>
+    <string name="action_clipboard_copied_fmt">Copied \"%1$s\"</string>
+    <string name="action_status_unavailable">Could not retrieve status info</string>
+    <string name="action_screen_curtain_enabled">Screen curtain enabled. Display is hidden.</string>
+    <string name="action_screen_curtain_disabled">Screen curtain disabled.</string>
+
+    <!-- Places & AI Search Guidance -->
+    <string name="places_found_fmt">Found %2$d %1$s nearby. First, %3$s</string>
+    <string name="places_searching_fmt">Searching nearby %1$s...</string>
+    <string name="places_not_found_fmt">No %1$s found nearby</string>
+    <string name="places_destination_set_fmt">Destination set to %1$s. %2$s</string>
+    <string name="places_phone_search_fmt">Searching phone number for %1$s</string>
+    <string name="places_phone_failed">Could not launch phone app</string>
+    <string name="places_web_search_fmt">Opening web details for %1$s</string>
+    <string name="places_browser_failed">Could not open browser</string>
+    <string name="places_nav_unavailable">Walking navigation unavailable</string>
+    <string name="service_ai_deep_explaining">Analyzing image with AI Deep Explainer...</string>
+    <string name="service_ai_deep_result_fmt">Scene description: %1$s</string>
+    <string name="service_kanji_detail_fmt">Character details: %1$s</string>
+    <string name="service_launch_chrome_auth">Launching Google Chrome for authentication</string>
+    <string name="service_send_telemetry">Preparing diagnostic report for developer Shinji</string>
+    <string name="service_uninstall_dialog_opened">Uninstall confirmation opened</string>
+    <string name="service_uninstall_dialog_failed">Could not open uninstall screen</string>
+
+    <!-- Uninstall, Settings, and Operation Modes -->
+    <string name="uninstall_settings_opened">Settings opened. Select an app to uninstall.</string>
+    <string name="uninstall_settings_failed">Failed to open app settings</string>
+    <string name="mode_talkback_compat">TalkBack Compatibility Mode</string>
+    <string name="mode_serena_original">Serena Original Mode</string>
+    <string name="action_clipboard_preview_history_fmt">History: %1$s</string>
+    <string name="notification_speech_level_fmt">Notification &amp; Call Announcement: %1$s</string>
+
+    <!-- Navigation & Places Menu -->
+    <string name="places_destination_cleared">Destination guidance ended</string>
+    <string name="places_menu_opened_fmt">%1$s. Walking navigation &amp; nearby places menu opened. Total %2$d items. 1st: %3$s</string>
+    <string name="places_address_fmt">The address of %1$s is \"%2$s\". Approx %3$d meters from current location.</string>
+    <string name="places_detail_menu_opened_fmt">Opened detail menu for \"%1$s\". Total %2$d items. 1st: %3$s</string>
+    <string name="places_menu_start_nav_fmt">Start walking navigation here (Approx %1$dm)</string>
+    <string name="places_menu_call">Call place</string>
+    <string name="places_menu_web">Open website &amp; facility info</string>
+    <string name="places_menu_address">Confirm full address</string>
+
+    <!-- Help, Support & Speech Rate -->
+    <string name="tts_rate_changed_fmt">Speech rate changed to %1$.1fx</string>
+    <string name="support_call_dev_fmt">Opening phone dialer for developer %1$s (%2$s)</string>
+    <string name="support_email_dev_fmt">Opening email app for developer %1$s</string>
+    <string name="support_menu_opened">Opened Serena Help and Direct Developer Support menu</string>
+    <string name="support_basic_guide">Basic guide: Swipe up/down to change reading granularity, swipe left/right to move focus, 3-finger triple tap for phone status, 2-finger double tap to open Serena menu.</string>
+    <string name="support_version_info_fmt">Serena Screen Reader version %1$s, developer %2$s, contact %3$s</string>
+    <string name="support_contact_fmt">Help: Phone %1$s, Email %2$s</string>
+
+    <!-- Editing Assist & Continuous Reading -->
+    <string name="edit_menu_opened">Opened Edit Assist menu</string>
+    <string name="edit_select_all_copied">Selected all and copied</string>
+    <string name="edit_pasted">Pasted</string>
+    <string name="edit_cleared_all">Cleared all text</string>
+    <string name="edit_current_content_fmt">Current input content: %1$s</string>
+    <string name="edit_empty">Input field is empty</string>
+    <string name="edit_phrase_inserted_fmt">Inserted template phrase \"%1$s\"</string>
+    <string name="read_from_top_started">Starting read from the top of the screen</string>
+    <string name="read_no_text_found">No readable text found</string>
+
+    <!-- 3D Audio Compass, Sonar & Settings -->
+    <string name="compass_unavailable">Compass feature unavailable</string>
+    <string name="compass_started_fmt">%1$s. Started 3D spatial audio compass. Point phone true north to hear clear tone centered between both ears. Tap menu again to stop.</string>
+    <string name="compass_stopped">Stopped 3D spatial audio compass.</string>
+    <string name="sonar_unavailable">Obstacle sonar unavailable</string>
+    <string name="sonar_started">Started 3D spatial obstacle sonar. Stereo sound and vibration guide distance to upcoming walls or steps. Tap menu again or say stop sonar to exit.</string>
+    <string name="sonar_stopped">Stopped 3D spatial obstacle sonar.</string>
+    <string name="settings_launching">Opening Serena settings</string>
+
+    <!-- Calls, Chime & Assistant -->
+    <string name="call_incoming_fmt">[Incoming Call] %1$s</string>
+    <string name="app_switch_granularity_fmt">App Switch: %1$s mode</string>
+    <string name="call_app_incoming_fmt">%1$s incoming call: %2$s</string>
+    <string name="call_started_fmt">Call started on %1$s. Start time is %2$s.</string>
+    <string name="call_ended_fmt">Call ended on %1$s. Duration was %2$s. End time is %3$s.</string>
+    <string name="chime_sound_changed_fmt">Hourly chime sound changed to %1$s</string>
+    <string name="camera_live_launch_failed">Failed to launch live commentary camera.</string>
+    <string name="clipboard_latest_fmt">Latest clipboard history: %1$s</string>
+    <string name="assistant_menu_opened">Opened Serena Assistant menu</string>
 </resources>

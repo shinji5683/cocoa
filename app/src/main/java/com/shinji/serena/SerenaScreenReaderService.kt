@@ -1171,7 +1171,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastScrollTime = now
 
         soundHelper?.playScroll(isForward = true)
-        if (isOperationActionsAnnounceEnabled(this)) speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+        if (isOperationActionsAnnounceEnabled(this)) speak(getString(R.string.action_page_next), TextToSpeech.QUEUE_FLUSH)
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
         Log.i(TAG, "scrollHorizontalForward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
@@ -1206,7 +1206,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastScrollTime = now
 
         soundHelper?.playScroll(isForward = false)
-        if (isOperationActionsAnnounceEnabled(this)) speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+        if (isOperationActionsAnnounceEnabled(this)) speak(getString(R.string.action_page_prev), TextToSpeech.QUEUE_FLUSH)
 
         val scrollNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
         Log.i(TAG, "scrollHorizontalBackward: scrollNode=${scrollNode?.viewIdResourceName} class=${scrollNode?.className}")
@@ -1248,7 +1248,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = true)
         if (scrollNode != null && focusNavigator?.performScroll(scrollNode, forward = true) == true) {
-            if (isOperationActionsAnnounceEnabled(this)) speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) speak(getString(R.string.action_scroll_down), TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = true, horizontal = false)
@@ -1263,12 +1263,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         // ホーム画面で下スクロール（2本指上スワイプ）された場合はアプリ一覧ドロワーを展開
         if (isLauncher && !isAllAppsOpen()) {
-            speak("アプリ一覧を開きます", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_open_apps), TextToSpeech.QUEUE_FLUSH)
             performOpenAllAppsGesture()
             return true
         }
 
-        if (isOperationActionsAnnounceEnabled(this)) speak("下へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+        if (isOperationActionsAnnounceEnabled(this)) speak(getString(R.string.action_scroll_down), TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = true, horizontal = false)
         return true
     }
@@ -1286,7 +1286,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         val scrollNode = focusNavigator?.findScrollableNode(forward = false)
         if (scrollNode != null && focusNavigator?.performScroll(scrollNode, forward = false) == true) {
-            if (isOperationActionsAnnounceEnabled(this)) speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) speak(getString(R.string.action_scroll_up), TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 val newNodes = collectAccessibleNodes()
                 val target = findBestVisibleNodeAfterScroll(newNodes, forward = false, horizontal = false)
@@ -1301,12 +1301,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         // ホーム画面で上スクロール（2本指下スワイプ）された場合は通知シェードを展開
         if (isLauncher && !isAllAppsOpen()) {
-            speak("通知を開きます", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_open_notifications), TextToSpeech.QUEUE_FLUSH)
             performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
             return true
         }
 
-        if (isOperationActionsAnnounceEnabled(this)) speak("上へスクロールしました", TextToSpeech.QUEUE_FLUSH)
+        if (isOperationActionsAnnounceEnabled(this)) speak(getString(R.string.action_scroll_up), TextToSpeech.QUEUE_FLUSH)
         performPhysical2FingerScroll(forward = false, horizontal = false)
         return true
     }
@@ -1509,7 +1509,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastUnlockTime = now
 
         soundHelper?.playActionDone()
-        speak("ロックを解除しています", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.action_unlocking), TextToSpeech.QUEUE_FLUSH)
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
@@ -1653,14 +1653,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun navigateCustomActions(forward: Boolean) {
         val node = getAccessibilityFocusedNode()
         if (node == null) {
-            speak("フォーカスされている項目がありません", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_no_focus), TextToSpeech.QUEUE_FLUSH)
             return
         }
         val customActions = getAvailableCustomActions(node)
         val totalCount = 1 + customActions.size
         if (totalCount <= 1) {
             selectedCustomActionIndex = 0
-            speak("デフォルト。ダブルタップで有効化します", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_default_double_tap), TextToSpeech.QUEUE_FLUSH)
             return
         }
         selectedCustomActionIndex = if (forward) {
@@ -1670,10 +1670,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
         soundHelper?.playFocusMove()
         if (selectedCustomActionIndex == 0) {
-            speak("デフォルト。ダブルタップで有効化します", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_default_double_tap), TextToSpeech.QUEUE_FLUSH)
         } else {
             val actionItem = customActions[selectedCustomActionIndex - 1]
-            speak("アクション: ${actionItem.action.label}。実行するにはダブルタップします", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_custom_action_fmt, actionItem.action.label), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -1794,7 +1794,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val filteredNodes = allNodes.filter { filter(it) }
 
         if (filteredNodes.isEmpty()) {
-            speak("${currentGranularity.displayName}は見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_not_found_fmt, currentGranularity.getDisplayName(this)), TextToSpeech.QUEUE_FLUSH)
             return
         }
 
@@ -1814,7 +1814,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         currentFocus?.performAction(AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS)
         val success = targetNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
         if (success) {
-            speak("${currentGranularity.displayName}: ", TextToSpeech.QUEUE_FLUSH)
+            speak("${currentGranularity.getDisplayName(this)}: ", TextToSpeech.QUEUE_FLUSH)
             announceNode(targetNode)
         }
     }
@@ -1880,7 +1880,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val action = customActions[actionIdx]
                 if (focusedNode.performAction(action.id)) {
                     soundHelper?.playActionDone()
-                    speak("${action.label} を実行しました", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.action_executed_fmt, action.label), TextToSpeech.QUEUE_FLUSH)
                     return
                 }
             }
@@ -1909,7 +1909,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             if (logicalSuccess) {
                 if (isOperationActionsAnnounceEnabled(this) && text.isNotEmpty()) {
-                    speak("$text を実行", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.action_execute_fmt, text), TextToSpeech.QUEUE_FLUSH)
                 }
                 return
             }
@@ -1922,7 +1922,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
                     val text = getNodeText(focusedNode)
                     if (isOperationActionsAnnounceEnabled(this) && text.isNotEmpty()) {
-                        speak("$text を実行", TextToSpeech.QUEUE_FLUSH)
+                        speak(getString(R.string.action_execute_fmt, text), TextToSpeech.QUEUE_FLUSH)
                     }
                     return
                 }
@@ -1934,7 +1934,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (focusedNode.performAction(AccessibilityNodeInfo.ACTION_SELECT)) {
             val text = getNodeText(focusedNode)
             if (isOperationActionsAnnounceEnabled(this) && text.isNotEmpty()) {
-                speak("$text 選択", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.action_select_fmt, text), TextToSpeech.QUEUE_FLUSH)
             }
             return
         }
@@ -2262,9 +2262,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     startActivity(intent)
-                    speak("Settings opened. Select app to uninstall.", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.uninstall_settings_opened), TextToSpeech.QUEUE_FLUSH)
                 } catch (e: Exception) {
-                    speak("Failed to open app settings", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.uninstall_settings_failed), TextToSpeech.QUEUE_FLUSH)
                 }
             })
         }
@@ -2332,7 +2332,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             startActivity(intent)
-            speak("アンインストール確認画面を開きました", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.service_uninstall_dialog_opened), TextToSpeech.QUEUE_FLUSH)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch uninstall: ${e.message}")
             try {
@@ -2343,7 +2343,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
                 startActivity(intent)
             } catch (e2: Exception) {
-                speak("アンインストール画面を開けませんでした", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.service_uninstall_dialog_failed), TextToSpeech.QUEUE_FLUSH)
             }
         }
     }
@@ -2365,8 +2365,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val next = !current
         prefs.edit().putBoolean(KEY_TALKBACK_MODE, next).apply()
         soundHelper?.playActionDone()
-        val modeName = if (next) "TalkBack互換モード" else "serenaオリジナルモード"
-        speak("操作モードを $modeName に変更しました", TextToSpeech.QUEUE_FLUSH)
+        val modeName = if (next) getString(R.string.mode_talkback_compat) else getString(R.string.mode_serena_original)
+        speak(getString(R.string.action_mode_changed_fmt, modeName), TextToSpeech.QUEUE_FLUSH)
         return next
     }
 
@@ -2374,12 +2374,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val history = clipboardHelper?.getHistory() ?: emptyList()
         if (history.isEmpty()) {
             soundHelper?.playActionDone()
-            speak("クリップボード履歴は空です", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_clipboard_empty), TextToSpeech.QUEUE_FLUSH)
             return
         }
 
         soundHelper?.playMenuOpen()
-        speak("クリップボード履歴を開きました", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.action_clipboard_opened), TextToSpeech.QUEUE_FLUSH)
         val items = history.mapIndexed { index, text ->
             val preview = if (text.length > 20) text.take(20) + "..." else text
             serenaMenuItem("📋", "${index + 1}. $preview") {
@@ -2388,12 +2388,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     val arguments = Bundle()
                     arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
                     targetNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
-                    speak("「$preview」を貼り付けました", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.action_clipboard_pasted_fmt, preview), TextToSpeech.QUEUE_FLUSH)
                 } else {
                     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                     val clip = android.content.ClipData.newPlainText("serenaClip", text)
                     clipboard?.setPrimaryClip(clip)
-                    speak("「$preview」をコピーしました", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.action_clipboard_copied_fmt, preview), TextToSpeech.QUEUE_FLUSH)
                 }
             }
         }
@@ -2401,14 +2401,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val dialog = serenaMenuDialog(this, false, items)
             dialog.show()
         } catch (e: Exception) {
-            speak("履歴: " + history.take(3).joinToString(", "), TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_clipboard_preview_history_fmt, history.take(3).joinToString(", ")), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
     fun cycleNotificationFilterMode() {
         val level = notificationFilterHelper?.cycleDetailLevel()
         soundHelper?.playActionDone()
-        speak("通知・着信読み上げ: ${level?.displayName}", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.notification_speech_level_fmt, level?.displayName ?: ""), TextToSpeech.QUEUE_FLUSH)
     }
 
     fun announceFullStatus() {
@@ -2419,7 +2419,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 speak(fullText, TextToSpeech.QUEUE_FLUSH)
             }
         } else {
-            speak("ステータス情報を取得できませんでした", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_status_unavailable), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -2428,9 +2428,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val enabled = helper.toggleCurtain()
         soundHelper?.playActionDone()
         if (enabled) {
-            speak("スクリーンカーテンを有効にしました。画面が非表示になりました。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_screen_curtain_enabled), TextToSpeech.QUEUE_FLUSH)
         } else {
-            speak("スクリーンカーテンを解除しました。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.action_screen_curtain_disabled), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -2610,11 +2610,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun explainCurrentImageOrScreen() {
         soundHelper?.playActionDone()
-        speak("AIディープエクスプレイヤーで画像を解析中...", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_ai_deep_explaining), TextToSpeech.QUEUE_FLUSH)
         val focused = getAccessibilityFocusedNode()
         val text = focused?.contentDescription?.toString() ?: focused?.text?.toString() ?: ""
         val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: getString(R.string.service_screen_analysis_failed)
-        speak("情景解説: $summary", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_ai_deep_result_fmt, summary), TextToSpeech.QUEUE_FLUSH)
     }
 
     fun launchAiAssistant() {
@@ -2702,7 +2702,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             ?: ""
         if (text.isNotBlank()) {
             val explanation = com.shinji.serena.ai.KanjiExplainerHelper.explainWord(text)
-            speak("漢字詳細読み: $explanation", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.service_kanji_detail_fmt, explanation), TextToSpeech.QUEUE_FLUSH)
         } else {
             speak(getString(R.string.service_focused_kanji_not_found), TextToSpeech.QUEUE_FLUSH)
         }
@@ -2710,13 +2710,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun launchChromeAuthPage(url: String) {
         soundHelper?.playClick()
-        speak("Google Chrome を強制起動して認証ページを開きます", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_launch_chrome_auth), TextToSpeech.QUEUE_FLUSH)
         ChromeAuthHelper.openChromeAuth(this, url)
     }
 
     private fun sendTelemetryLog() {
         soundHelper?.playClick()
-        speak("動作診断レポートを作成し、開発者 Shinji への送信画面を開きます", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_send_telemetry), TextToSpeech.QUEUE_FLUSH)
         AlphaTelemetryHelper.getInstance(this).sendReportViaEmail(this)
     }
 
@@ -2806,11 +2806,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 stopOsmValhallaNavigation()
                 nav.clearDestination()
                 soundHelper?.playActionDone()
-                speak("目的地の案内を終了しました", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.places_destination_cleared), TextToSpeech.QUEUE_FLUSH)
             }
         )
 
-        speak("${currentSummary}。徒歩ナビ・周辺施設メニューを開きました。全${items.size}項目。1番目、${items[0].title}", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.places_menu_opened_fmt, currentSummary, items.size, items[0].title), TextToSpeech.QUEUE_FLUSH)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             try {
@@ -2825,18 +2825,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun searchAndShowPlaces(category: String, icon: String) {
         val nav = walkingNavigator ?: run {
-            speak("徒歩ナビゲーション機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.places_nav_unavailable), TextToSpeech.QUEUE_FLUSH)
             return
         }
         soundHelper?.playActionDone()
-        speak("現在地周辺の${category}を検索中...", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.places_searching_fmt, category), TextToSpeech.QUEUE_FLUSH)
         Thread {
             val places = nav.searchNearbyPlaces(category)
             android.os.Handler(android.os.Looper.getMainLooper()).post {
                 if (places.isNotEmpty()) {
                     showNearbyPlacesListDialog(category, icon, places, nav)
                 } else {
-                    speak("現在地周辺の${category}が見つかりませんでした", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.places_not_found_fmt, category), TextToSpeech.QUEUE_FLUSH)
                 }
             }
         }.start()
@@ -2854,7 +2854,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        speak("周辺の${categoryTitle}、${items.size}件見つかりました。1番目、${items[0].title}", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.places_found_fmt, categoryTitle, items.size, items[0].title), TextToSpeech.QUEUE_FLUSH)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             try {
@@ -2874,15 +2874,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val items = mutableListOf<serenaMenuItem>()
 
         // 1. 目的地に設定して徒歩ナビ開始
-        items.add(serenaMenuItem("🎯", "ここへ徒歩ナビを開始（約${place.distanceMeters}m）") {
+        items.add(serenaMenuItem("🎯", getString(R.string.places_menu_start_nav_fmt, place.distanceMeters)) {
             nav.setDestinationCoordinates(place.name, place.latitude, place.longitude)
             soundHelper?.playActionDone()
             val guidance = nav.getNavigationGuidance()
-            speak("目的地を「${place.name}」に設定しました。$guidance", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.places_destination_set_fmt, place.name, guidance), TextToSpeech.QUEUE_FLUSH)
         })
 
         // 2. 電話をかける
-        items.add(serenaMenuItem("📞", "電話をかける") {
+        items.add(serenaMenuItem("📞", getString(R.string.places_menu_call)) {
             soundHelper?.playClick()
             if (place.phone.isNotEmpty()) {
                 try {
@@ -2891,11 +2891,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                     startActivity(intent)
                 } catch (_: Exception) {
-                    speak("電話アプリを起動できませんでした", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.places_phone_failed), TextToSpeech.QUEUE_FLUSH)
                 }
             } else {
                 // 電話番号検索
-                speak("「${place.name}」の電話番号検索を開きます", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.places_phone_search_fmt, place.name), TextToSpeech.QUEUE_FLUSH)
                 try {
                     val searchUri = Uri.parse("https://www.google.com/search?q=${java.net.URLEncoder.encode("${place.name} 電話番号", "UTF-8")}")
                     val browserIntent = Intent(Intent.ACTION_VIEW, searchUri).apply {
@@ -2907,25 +2907,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         })
 
         // 3. ホームページ・詳細情報を開く
-        items.add(serenaMenuItem("🌐", "ホームページ・施設情報を開く") {
+        items.add(serenaMenuItem("🌐", getString(R.string.places_menu_web)) {
             soundHelper?.playClick()
-            speak("「${place.name}」のWeb詳細情報を開きます", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.places_web_search_fmt, place.name), TextToSpeech.QUEUE_FLUSH)
             try {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(place.website)).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
                 startActivity(browserIntent)
             } catch (_: Exception) {
-                speak("ブラウザを開けませんでした", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.places_browser_failed), TextToSpeech.QUEUE_FLUSH)
             }
         })
 
         // 4. 詳しい住所の読み上げ
-        items.add(serenaMenuItem("📍", "詳しい住所の確認") {
-            speak("${place.name}の住所は「${place.address}」です。現在地から約${place.distanceMeters}メートルです。", TextToSpeech.QUEUE_FLUSH)
+        items.add(serenaMenuItem("📍", getString(R.string.places_menu_address)) {
+            speak(getString(R.string.places_address_fmt, place.name, place.address, place.distanceMeters), TextToSpeech.QUEUE_FLUSH)
         })
 
-        speak("「${place.name}」の詳細メニューを開きました。全${items.size}項目。1番目、${items[0].title}", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.places_detail_menu_opened_fmt, place.name, items.size, items[0].title), TextToSpeech.QUEUE_FLUSH)
 
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             try {
@@ -2948,12 +2948,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         prefs.edit().putFloat(KEY_SPEECH_RATE, newRate).apply()
         updateTtsSettings()
         soundHelper?.playActionDone()
-        speak("読み上げ速度を ${newRate} 倍に変更しました", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.tts_rate_changed_fmt, newRate), TextToSpeech.QUEUE_FLUSH)
     }
 
     private fun callDeveloper() {
         soundHelper?.playClick()
-        speak("開発者 ${BuildConfig.DEVELOPER_NAME} (${BuildConfig.DEVELOPER_PHONE_DISPLAY}) への電話発線画面を起動します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.support_call_dev_fmt, BuildConfig.DEVELOPER_NAME, BuildConfig.DEVELOPER_PHONE_DISPLAY), TextToSpeech.QUEUE_FLUSH)
         try {
             val intent = Intent(Intent.ACTION_DIAL).apply {
                 data = Uri.parse("tel:${BuildConfig.DEVELOPER_PHONE}")
@@ -2968,7 +2968,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun emailDeveloper() {
         soundHelper?.playClick()
-        speak("開発者 ${BuildConfig.DEVELOPER_NAME} へのメールアプリを起動します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.support_email_dev_fmt, BuildConfig.DEVELOPER_NAME), TextToSpeech.QUEUE_FLUSH)
         try {
             val intent = Intent(Intent.ACTION_SENDTO).apply {
                 data = Uri.parse("mailto:${BuildConfig.DEVELOPER_EMAIL}")
@@ -2984,7 +2984,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun showHelp() {
         soundHelper?.playMenuOpen()
-        speak("serena ヘルプと開発者直通サポートメニューを開きました", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.support_menu_opened), TextToSpeech.QUEUE_FLUSH)
         val items = listOf(
             serenaMenuItem("📞", "開発者(${BuildConfig.DEVELOPER_NAME})へ電話で直通相談 (${BuildConfig.DEVELOPER_PHONE_DISPLAY})") {
                 callDeveloper()
@@ -2997,24 +2997,24 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             },
             serenaMenuItem("📖", "serena の使い方音声ガイド") {
                 soundHelper?.playActionDone()
-                speak("使い方の基本: 上下スワイプで読み上げ単位の変更、左右スワイプで項目の移動、2本指3回タップでスマホ状態の確認、2本指ダブルタップでserenaメニューを開きます。", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.support_basic_guide), TextToSpeech.QUEUE_FLUSH)
             },
             serenaMenuItem("ℹ️", "アプリ情報 (v1.0.0-alpha01)") {
                 soundHelper?.playActionDone()
-                speak("serena スクリーンリーダー バージョン 1.0.0-alpha01、開発者 ${BuildConfig.DEVELOPER_NAME}、お問い合わせ ${BuildConfig.DEVELOPER_EMAIL}", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.support_version_info_fmt, "1.0.0-alpha01", BuildConfig.DEVELOPER_NAME, BuildConfig.DEVELOPER_EMAIL), TextToSpeech.QUEUE_FLUSH)
             }
         )
         try {
             val dialog = serenaMenuDialog(this, false, items)
             dialog.show()
         } catch (e: Exception) {
-            speak("ヘルプ: 電話 ${BuildConfig.DEVELOPER_PHONE_DISPLAY}、メール ${BuildConfig.DEVELOPER_EMAIL}", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.support_contact_fmt, BuildConfig.DEVELOPER_PHONE_DISPLAY, BuildConfig.DEVELOPER_EMAIL), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
     private fun showEditTextAssistMenu(node: AccessibilityNodeInfo) {
         soundHelper?.playMenuOpen()
-        speak("編集アシストメニューを開きました", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.edit_menu_opened), TextToSpeech.QUEUE_FLUSH)
         val items = listOf(
             serenaMenuItem("💬", "定型文:「今移動中です」") {
                 insertPhrase(node, "今移動中です。")
@@ -3039,27 +3039,27 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, currentText.length)
                 node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, args)
                 node.performAction(AccessibilityNodeInfo.ACTION_COPY)
-                speak("全選択してコピーしました", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.edit_select_all_copied), TextToSpeech.QUEUE_FLUSH)
             },
             serenaMenuItem("📋", "貼り付け") {
                 soundHelper?.playActionDone()
                 node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-                speak("貼り付けました", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.edit_pasted), TextToSpeech.QUEUE_FLUSH)
             },
             serenaMenuItem("🧹", "テキスト全消去") {
                 soundHelper?.playActionDone()
                 val arguments = Bundle()
                 arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "")
                 node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
-                speak("テキストを全消去しました", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.edit_cleared_all), TextToSpeech.QUEUE_FLUSH)
             },
             serenaMenuItem("🔊", "入力中テキストの読み上げ") {
                 soundHelper?.playClick()
                 val currentText = getNodeText(node)
                 if (currentText.isNotEmpty()) {
-                    speak("現在の入力内容: $currentText", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.edit_current_content_fmt, currentText), TextToSpeech.QUEUE_FLUSH)
                 } else {
-                    speak("入力欄は空です", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.edit_empty), TextToSpeech.QUEUE_FLUSH)
                 }
             },
             serenaMenuItem("☕", "通常メニューを開く") {
@@ -3083,19 +3083,19 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val arguments = Bundle()
         arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, newText)
         node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
-        speak("定型文「$phrase」を入力しました", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.edit_phrase_inserted_fmt, phrase), TextToSpeech.QUEUE_FLUSH)
     }
 
     private fun readFromTop() {
         val root = rootInActiveWindow ?: return
         soundHelper?.playActionDone()
-        speak("画面の一番上から読み上げを開始します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.read_from_top_started), TextToSpeech.QUEUE_FLUSH)
 
         val textList = mutableListOf<String>()
         collectAllNodeText(root, textList)
 
         if (textList.isEmpty()) {
-            speak("読み上げ可能なテキストが見つかりませんでした", TextToSpeech.QUEUE_ADD)
+            speak(getString(R.string.read_no_text_found), TextToSpeech.QUEUE_ADD)
             return
         }
 
@@ -3114,29 +3114,29 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     fun toggleSpatialCompassAudio() {
         soundHelper?.playActionDone()
         val helper = compassHelper ?: run {
-            speak("コンパス機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.compass_unavailable), TextToSpeech.QUEUE_FLUSH)
             return
         }
         val isEnabled = helper.toggleSpatialAudio()
         if (isEnabled) {
             val heading = helper.getDirectionAnnouncement()
-            speak("${heading}。3D空間オーディオコンパスを開始しました。スマホを真北に向けると両耳の中央で澄んだ音が鳴ります。終了するにはもう一度メニューからタップしてください。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.compass_started_fmt, heading), TextToSpeech.QUEUE_FLUSH)
         } else {
-            speak("3D空間オーディオコンパスを停止しました。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.compass_stopped), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
     fun toggleSpatialObstacleSonar() {
         soundHelper?.playActionDone()
         val helper = spatialObstacleSonarHelper ?: run {
-            speak("障害物ソナー機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.sonar_unavailable), TextToSpeech.QUEUE_FLUSH)
             return
         }
         val isRunning = helper.toggleSonar()
         if (isRunning) {
-            speak("3D空間障害物ソナーを開始しました。前方の壁や段差に近づくとステレオ立体音響と振動で距離を案内します。終了するにはもう一度メニューからタップするか、音声でソナー停止と言ってください。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.sonar_started), TextToSpeech.QUEUE_FLUSH)
         } else {
-            speak("3D空間障害物ソナーを停止しました。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.sonar_stopped), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -3160,7 +3160,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun openserenaSettings() {
         soundHelper?.playClick()
-        speak("serena の設定画面を開きます", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.settings_launching), TextToSpeech.QUEUE_FLUSH)
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -3251,7 +3251,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (result != null && result.shouldAnnounce) {
                     if (result.isIncomingCall) {
                         soundHelper?.playFocusMove()
-                        speak("【着信】" + result.formattedAnnouncement, TextToSpeech.QUEUE_FLUSH)
+                        speak(getString(R.string.call_incoming_fmt, result.formattedAnnouncement), TextToSpeech.QUEUE_FLUSH)
                     } else {
                         soundHelper?.playScroll()
                         speak(result.formattedAnnouncement, TextToSpeech.QUEUE_ADD)
@@ -3316,14 +3316,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val suggestedGranularity = appProfileHelper?.getSuggestedGranularity(pkgName)
                 if (suggestedGranularity != null && suggestedGranularity != currentGranularity) {
                     currentGranularity = suggestedGranularity
-                    speak("アプリ切替: ${suggestedGranularity.displayName}モード", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.app_switch_granularity_fmt, suggestedGranularity.getDisplayName(this)), TextToSpeech.QUEUE_FLUSH)
                 }
 
                 if (isCallRelatedPackage(pkgName)) {
                     val callerInfo = parseCallerFromRootNode()
                     if (callerInfo.isNotEmpty() && !isCallActive) {
                         val appName = getMessagingAppName(pkgName)
-                        speak("${appName}着信中: $callerInfo", TextToSpeech.QUEUE_FLUSH)
+                        speak(getString(R.string.call_app_incoming_fmt, appName, callerInfo), TextToSpeech.QUEUE_FLUSH)
                         return
                     }
                 }
@@ -3626,7 +3626,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             callStartTimeMs = System.currentTimeMillis()
             val calendar = Calendar.getInstance()
             val timeStr = "${calendar.get(Calendar.HOUR_OF_DAY)}時${calendar.get(Calendar.MINUTE)}分"
-            speak("${activeCallApp}の通話を開始しました。開始時刻は ${timeStr} です。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.call_started_fmt, activeCallApp, timeStr), TextToSpeech.QUEUE_FLUSH)
             Log.i(TAG, "Call started ($activeCallApp) at $callStartTimeMs")
         } else if (!isCurrentlyInCall && isCallActive) {
             isCallActive = false
@@ -3636,7 +3636,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val calendar = Calendar.getInstance()
             val timeStr = "${calendar.get(Calendar.HOUR_OF_DAY)}時${calendar.get(Calendar.MINUTE)}分"
             AlphaTelemetryHelper.getInstance(this).recordCallCompleted(elapsedMs / 1000)
-            speak("${appLabel}の通話が終了しました。通話時間は ${durationText} です。終了時刻は ${timeStr} です。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.call_ended_fmt, appLabel, durationText, timeStr), TextToSpeech.QUEUE_FLUSH)
             Log.i(TAG, "$appLabel ended. Duration: $durationText, EndTime: $timeStr")
             activeCallApp = ""
         }
@@ -4480,7 +4480,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 "和風・お寺の鐘風"
             }
         }
-        speak("時報チャイム音を $name に変更しました", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.chime_sound_changed_fmt, name), TextToSpeech.QUEUE_FLUSH)
     }
 
     override fun onDestroy() {
@@ -4533,18 +4533,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch LiveVisionActivity: ${e.message}")
-            speak("リアルタイム実況カメラの起動に失敗しました。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.camera_live_launch_failed), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
     fun showClipboardHistoryQuickly() {
-        val lastText = clipboardHelper?.getHistory()?.firstOrNull() ?: "履歴はありません"
-        speak("最新のクリップボード履歴: $lastText", TextToSpeech.QUEUE_FLUSH)
+        val lastText = clipboardHelper?.getHistory()?.firstOrNull() ?: getString(R.string.action_clipboard_empty)
+        speak(getString(R.string.clipboard_latest_fmt, lastText), TextToSpeech.QUEUE_FLUSH)
     }
 
     fun showSerenaAssistantDialog() {
         soundHelper?.playMenuOpen()
-        speak("serena アシスタントメニューを開きました", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.assistant_menu_opened), TextToSpeech.QUEUE_FLUSH)
         val items = listOf(
             serenaMenuItem("🧠", "画面のスマートAI要約 (オンデバイス解析)") {
                 summarizeCurrentScreen()
