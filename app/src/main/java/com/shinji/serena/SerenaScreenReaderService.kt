@@ -2490,39 +2490,46 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     private fun isKeyboardNode(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
+
+        // 1. ウィンドウタイプが TYPE_INPUT_METHOD (ソフトウェアキーボードウィンドウ) であることを最優先確認
         val winType = try { node.window?.type } catch (_: Exception) { null }
         val isImeWindow = (winType == android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD)
 
-        val isClickable = node.isClickable || node.actionList.any { it.id == AccessibilityNodeInfo.ACTION_CLICK }
-        if (!isClickable) return false
+        // ウィンドウ情報が取れる場合、TYPE_INPUT_METHOD 以外（通常アプリ・ダイアログ・ランチャー等）は絶対にキーボードではない！
+        if (winType != null && !isImeWindow) {
+            return false
+        }
 
         val pkg = node.packageName?.toString()?.lowercase() ?: ""
         val cls = node.className?.toString()?.lowercase() ?: ""
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
-        val hasContent = !node.text.isNullOrBlank() || !node.contentDescription.isNullOrBlank()
-        val isKeyLike = cls.contains("key") || cls.contains("button") ||
-                viewId.contains("key") || viewId.contains("btn") ||
-                cls.contains("imageview") || cls.contains("textview")
 
-        // IMEウィンドウ内であれば、クリック可能かつテキスト/説明がある、またはキー/ボタン形状のノードをキーとして認定
-        if (isImeWindow) {
-            return hasContent || isKeyLike
-        }
-
-        // Serena 内部のソフトウェアキーボード（SerenaKeyboardView等）
+        // Serena の通常のActivity（MainActivityやメニューダイアログ等）は絶対にキーボードとして判定しない！
         if (pkg == "com.shinji.serena") {
+            // IMEウィンドウであり、かつ SerenaKeyboardView 内の要素のみ許可
+            if (!isImeWindow) return false
             return cls.contains("serenakeyboardview") || cls.contains("softkeyboard") ||
-                    viewId.contains("keyboard_key") || viewId.contains("ime_key") ||
-                    viewId.contains("btn") || isKeyLike
+                    viewId.contains("keyboard_key") || viewId.contains("ime_key")
         }
+
+        // クリック可能であること
+        val isClickable = node.isClickable || node.actionList.any { it.id == AccessibilityNodeInfo.ACTION_CLICK }
+        if (!isClickable) return false
 
         // サードパーティ製ソフトキーボード（Gboard, LatinIME, ATOK, Simeji 等）
-        if (pkg.contains("inputmethod") || pkg.contains("gboard") ||
-            pkg.contains("keyboard") || pkg.contains("latin") ||
-            pkg.contains("simeji") || pkg.contains("atok")) {
-            return hasContent || isKeyLike
+        val isImePackage = pkg.contains("inputmethod") || pkg.contains("gboard") ||
+                pkg.contains("keyboard") || pkg.contains("latin") ||
+                pkg.contains("simeji") || pkg.contains("atok")
+
+        // IMEウィンドウまたはIMEパッケージに属していない通常のUI要素は絶対に除外！
+        if (!isImeWindow && !isImePackage) {
+            return false
         }
-        return false
+
+        val hasContent = !node.text.isNullOrBlank() || !node.contentDescription.isNullOrBlank()
+        val isKeyLike = cls.contains("key") || cls.contains("button") ||
+                viewId.contains("key") || viewId.contains("btn")
+        return hasContent || isKeyLike
     }
 
     private fun tryPerformLiftToType(node: AccessibilityNodeInfo?) {
