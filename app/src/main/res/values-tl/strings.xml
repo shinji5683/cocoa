@@ -524,4 +524,10 @@
 
     <!-- Auto Update Background Notification -->
     <string name="update_new_version_available_fmt">May bagong bersyon ang Serena, %1$s. Maaari kang mag-update anumang oras mula sa Serena Menu.</string>
+
+    <!-- Mga anunsyo sa kahon ng pahintulot -->
+    <string name="permission_dialog_tag">Kumpirmasyon</string>
+    <string name="permission_dialog_default_msg">Humihiling ng pahintulot.</string>
+    <string name="permission_dialog_hint">Nakatambad ang kahon ng pahintulot. Mag-swipe pakaliwa o pakanan para pumili.</string>
+    <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
 </resources>

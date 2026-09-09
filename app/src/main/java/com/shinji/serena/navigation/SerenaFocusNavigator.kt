@@ -21,6 +21,13 @@ class SerenaFocusNavigator(
 ) {
     companion object {
         private const val TAG = "SerenaFocusNavigator"
+
+        fun isPermissionOrSecurityPackage(pkg: String): Boolean {
+            val p = pkg.lowercase()
+            return p.contains("permission") || p.contains("packageinstaller") ||
+                   p.contains("safetycenter") || p.contains("securitycenter") ||
+                   p.contains("safecenter") || p.contains("securitypermission")
+        }
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -45,16 +52,19 @@ class SerenaFocusNavigator(
             return if (root != null) listOf(root) else emptyList()
         }
 
-        // 2. システム権限ダイアログ（PermissionController, PackageInstaller, SafetyCenter）を最優先検知！
+        // 2. システム権限ダイアログ（Pixel, Samsung, Xiaomi, OPPO, Vivo, Moto等 全OEM対応）を最優先・完全隔離！
         try {
             val wins = service.windows
             if (!wins.isNullOrEmpty()) {
-                // ウィンドウ群から権限ダイアログを検出（最優先！）
                 for (w in wins) {
                     val r = w.root ?: continue
-                    val pkg = r.packageName?.toString()?.lowercase() ?: ""
-                    if (pkg.contains("permissioncontroller") || pkg.contains("packageinstaller") || pkg.contains("safetycenter")) {
-                        return listOf(r)
+                    val pkg = r.packageName?.toString() ?: ""
+                    if (isPermissionOrSecurityPackage(pkg)) {
+                        val isolated = mutableListOf<AccessibilityNodeInfo>()
+                        val imeWin = wins.find { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+                        imeWin?.root?.let { isolated.add(it) }
+                        isolated.add(r)
+                        return isolated
                     }
                 }
             }
@@ -62,8 +72,8 @@ class SerenaFocusNavigator(
 
         val activeRoot = service.rootInActiveWindow
         if (activeRoot != null) {
-            val activePkg = activeRoot.packageName?.toString()?.lowercase() ?: ""
-            if (activePkg.contains("permissioncontroller") || activePkg.contains("packageinstaller") || activePkg.contains("safetycenter")) {
+            val activePkg = activeRoot.packageName?.toString() ?: ""
+            if (isPermissionOrSecurityPackage(activePkg)) {
                 return listOf(activeRoot)
             }
         }
@@ -77,9 +87,13 @@ class SerenaFocusNavigator(
                 // 1. 権限ダイアログ / パッケージインストーラー / セーフティセンターを絶対最優先
                 for (w in wins) {
                     val r = w.root ?: continue
-                    val pkg = r.packageName?.toString()?.lowercase() ?: ""
-                    if (pkg.contains("permissioncontroller") || pkg.contains("packageinstaller") || pkg.contains("safetycenter")) {
-                        return listOf(r)
+                    val pkg = r.packageName?.toString() ?: ""
+                    if (isPermissionOrSecurityPackage(pkg)) {
+                        val isolated = mutableListOf<AccessibilityNodeInfo>()
+                        val imeWin = wins.find { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+                        imeWin?.root?.let { isolated.add(it) }
+                        isolated.add(r)
+                        return isolated
                     }
                 }
 
@@ -97,7 +111,7 @@ class SerenaFocusNavigator(
                 } else null
 
                 // 最前面モーダルが存在する場合、背後画面を隔離してダイアログ内の要素のみを返す（フォーカス抜けを完全防止！）
-                if (topModalWin != null && topModalWin.layer > 1) {
+                if (topModalWin != null && modalWins.size > 1) {
                     val modalRoot = topModalWin.root
                     if (modalRoot != null) {
                         val isolatedRoots = mutableListOf<AccessibilityNodeInfo>()
@@ -527,6 +541,7 @@ class SerenaFocusNavigator(
                 val c = targetNode.getChild(i) ?: continue
                 if (c.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)) {
                     handled = true
+                    syncTouchExplorationIndex(c)
                     break
                 }
             }
@@ -534,11 +549,14 @@ class SerenaFocusNavigator(
                 var p = targetNode.parent
                 while (p != null) {
                     if (p.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)) {
+                        syncTouchExplorationIndex(p)
                         break
                     }
                     p = p.parent
                 }
             }
+        } else {
+            syncTouchExplorationIndex(targetNode)
         }
     }
 

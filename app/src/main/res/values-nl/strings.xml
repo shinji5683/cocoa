@@ -540,4 +540,10 @@
 
     <!-- Auto Update Background Notification -->
     <string name="update_new_version_available_fmt">Er is een nieuwe versie van Serena beschikbaar, %1$s. U kunt op elk moment updaten via het Serena-menu.</string>
+
+    <!-- Meldingen van toestemmingsvenster -->
+    <string name="permission_dialog_tag">Bevestiging</string>
+    <string name="permission_dialog_default_msg">Toestemmingsverzoek.</string>
+    <string name="permission_dialog_hint">Toestemmingsvenster wordt weergegeven. Veeg naar links of rechts om te kiezen.</string>
+    <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
 </resources>

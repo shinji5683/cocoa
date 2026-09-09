@@ -540,4 +540,10 @@
 
     <!-- 自動アップデート定期チェック通知 -->
     <string name="update_new_version_available_fmt">Serenaの新しいバージョン %1$s が公開されています。セレナメニューからいつでも更新できます。</string>
+
+    <!-- パーミッションダイアログ案内 -->
+    <string name="permission_dialog_tag">確認</string>
+    <string name="permission_dialog_default_msg">権限の許可を求めています。</string>
+    <string name="permission_dialog_hint">権限の確認ダイアログが表示されています。左右スワイプで選択できます。</string>
+    <string name="permission_dialog_announcement_fmt">【%1$s】%2$s</string>
 </resources>

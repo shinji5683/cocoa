@@ -3178,23 +3178,30 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 } ?: nodes.find { !it.isClickable && getNodeText(it).isNotEmpty() }
 
                 val rawMsg = if (msgNode != null) getNodeText(msgNode) else ""
-                val msgText = if (rawMsg.isNotEmpty()) rawMsg else "権限の許可を求めています。"
+                val defaultMsg = getString(R.string.permission_dialog_default_msg)
+                val msgText = if (rawMsg.isNotEmpty()) rawMsg else defaultMsg
 
-                val firstButton = nodes.find {
+                val tag = getString(R.string.permission_dialog_tag)
+                val fullAnnouncement = getString(R.string.permission_dialog_announcement_fmt, tag, msgText)
+
+                val primaryButton = nodes.find {
+                    val id = it.viewIdResourceName?.lowercase() ?: ""
+                    it.isClickable && (id.contains("allow_foreground") || id.contains("allow_always") || id.contains("allow_button") || id.contains("grant") || id.contains("ok"))
+                } ?: nodes.find {
                     it.isClickable && (it.className?.toString()?.contains("Button") == true)
                 } ?: nodes.find { it.isClickable } ?: nodes[0]
 
-                focusNavigator?.setFocusAndShowOnScreen(firstButton)
+                focusNavigator?.setFocusAndShowOnScreen(primaryButton)
                 if (isTtsReady) {
-                    speak("【確認】$msgText", TextToSpeech.QUEUE_FLUSH)
-                    announceNode(firstButton, TextToSpeech.QUEUE_ADD)
+                    speak(fullAnnouncement, TextToSpeech.QUEUE_FLUSH)
+                    announceNode(primaryButton, TextToSpeech.QUEUE_ADD)
                 }
             } else {
                 if (attempt < 3) {
                     announcePermissionDialogWithRetry(attempt + 1)
                 } else {
                     if (isTtsReady) {
-                        speak("【確認】権限の確認ダイアログが表示されています。左右スワイプで選択できます。", TextToSpeech.QUEUE_FLUSH)
+                        speak(getString(R.string.permission_dialog_hint), TextToSpeech.QUEUE_FLUSH)
                     }
                 }
             }
@@ -3267,6 +3274,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
                 if (activeMenuDialog != null) return
                 if (!isKeyguardLocked()) {
+                    try {
+                        val wins = windows
+                        val hasPermWin = wins?.any { w ->
+                            val p = w.root?.packageName?.toString() ?: ""
+                            com.shinji.serena.navigation.SerenaFocusNavigator.isPermissionOrSecurityPackage(p)
+                        } == true
+                        if (hasPermWin) {
+                            announcePermissionDialogWithRetry(attempt = 1)
+                            return
+                        }
+                    } catch (_: Exception) {}
                     handleWindowFocusTransition(windowTitle = "", isDialog = true, delayMs = 150)
                 }
             }
@@ -3310,7 +3328,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
-                val isPermission = pkgName.contains("permissioncontroller") || pkgName.contains("packageinstaller") || pkgName.contains("safetycenter")
+                val isPermission = com.shinji.serena.navigation.SerenaFocusNavigator.isPermissionOrSecurityPackage(pkgName)
                 if (isPermission) {
                     announcePermissionDialogWithRetry(attempt = 1)
                     return
