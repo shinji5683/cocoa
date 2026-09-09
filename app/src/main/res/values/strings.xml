@@ -171,4 +171,92 @@
     <string name="menu_item_diagnostics">Send Diagnostics &amp; Logs to Developer (%1$s)</string>
     <string name="menu_item_settings">Serena Settings</string>
     <string name="menu_item_help">Serena Help</string>
+
+    <!-- Core Screen Reader Spoken Feedback -->
+    <string name="gesture_back">Back</string>
+    <string name="gesture_home">Home screen</string>
+    <string name="gesture_recents">Recent apps</string>
+    <string name="gesture_quick_settings">Opening quick settings</string>
+    <string name="gesture_notifications">Opening notifications</string>
+    <string name="screen_unlocked">Unlocked</string>
+    <string name="screen_locked">Screen locked</string>
+    <string name="lock_screen_guide">Lock screen. Swipe up with two fingers to unlock.</string>
+    <string name="page_next">Moved to next page</string>
+    <string name="page_prev">Moved to previous page</string>
+    <string name="scrolled_vertical">Scrolled %1$s</string>
+    <string name="granularity_next_control">Next control</string>
+    <string name="granularity_prev_control">Previous control</string>
+    <string name="granularity_characters">Characters</string>
+    <string name="granularity_words">Words</string>
+    <string name="granularity_lines">Lines</string>
+    <string name="granularity_paragraphs">Paragraphs</string>
+    <string name="granularity_headings">Headings</string>
+    <string name="granularity_controls">Controls</string>
+    <string name="granularity_links">Links</string>
+    <string name="granularity_actions">Actions</string>
+    <string name="granularity_default">Default</string>
+    <string name="text_deleted_item">%1$s deleted</string>
+    <string name="text_deleted">Deleted</string>
+    <string name="clipboard_copied">Copied to clipboard</string>
+    <string name="clipboard_empty">No speech history to copy</string>
+    <string name="call_answered">Call answered</string>
+    <string name="call_ended">Call ended</string>
+    <string name="media_paused">Media paused</string>
+    <string name="media_resumed">Media resumed</string>
+    <string name="speech_muted">Speech muted</string>
+    <string name="speech_unmuted">Speech unmuted</string>
+
+    <!-- Main Activity UI & Permissions -->
+    <string name="btn_open_welcome_guide">🌸 View Welcome Guide &amp; Spoken Feature Tour</string>
+    <string name="perm_overlay_title">Display over other apps</string>
+    <string name="perm_notification_title">Notifications and announcements</string>
+    <string name="security_diagnosing">Diagnosing...</string>
+    <string name="security_diagnosing_detail">Analyzing OS environment security</string>
+    <string name="label_speech_rate_default">Speech Rate: 1.0x</string>
+    <string name="label_pitch_default">Voice Pitch: 1.0x</string>
+    <string name="label_speech_rate_format">Speech Rate: %1$.1fx</string>
+    <string name="label_pitch_format">Voice Pitch: %1$.1fx</string>
+    <string name="shake_sensitive">Sensitive (2.3f) - Reacts with light shake</string>
+    <string name="shake_normal">Normal (3.5f) - Reacts with intentional shake</string>
+    <string name="shake_firm">Firm (4.3f) - Reacts with strong shake</string>
+    <string name="title_translation_settings">🌐 Real-time Multilingual Translation Settings</string>
+    <string name="desc_translation_settings">Detects foreign languages or app icons on screen and translates them into your device language in real-time.</string>
+    <string name="translation_target_format">Target Language: Automatically adapted to %1$s</string>
+    <string name="translation_mode_orig_then_trans">Read Original then Translation (Recommended)</string>
+    <string name="translation_mode_trans_only">Read Translation only</string>
+    <string name="translation_mode_off">Translation OFF (Original only)</string>
+
+    <!-- Welcome Guide Dialog -->
+    <string name="welcome_title">🌸 Welcome to Serena Screen Reader!</string>
+    <string name="welcome_subtitle">Created by totally blind developer Shinji. The world\'s most gentle, intuitive next-generation screen reader.</string>
+    <string name="welcome_btn_play_tts">🔊 Listen to Spoken Feature Guide (TTS)</string>
+    <string name="welcome_btn_stop_tts">⏹️ Stop Spoken Guide</string>
+    <string name="welcome_features_title">✨ Key Features &amp; Highlights</string>
+    <string name="welcome_feature_1_title">🌸 1. Serena Navigation &amp; TalkBack Mode</string>
+    <string name="welcome_feature_1_desc">Swipe 1-finger left/right to move focus, double-tap to activate. Switch freely between intuitive touch exploration and traditional TalkBack mode.</string>
+    <string name="welcome_feature_2_title">📱 2. Smart Call Assistant</string>
+    <string name="welcome_feature_2_desc">Announces incoming caller ID for Phone and WhatsApp. Automatically speaks call duration upon completion.</string>
+    <string name="welcome_feature_3_title">⏰ 3. Hourly Chime &amp; Shake Status</string>
+    <string name="welcome_feature_3_desc">Pleasant hourly time chime on the hour. Quick shake to hear current time, battery level, and cellular signal.</string>
+    <string name="welcome_feature_4_title">🗺️ 4. Intuitive Spatial Navigator</string>
+    <string name="welcome_feature_4_desc">Guides using intuitive spatial directions like \"Ahead\", \"Front right\", \"Left\" instead of confusing clock positions.</string>
+    <string name="welcome_feature_5_title">🌐 5. Multilingual Translation &amp; Tagalog Support</string>
+    <string name="welcome_feature_5_desc">On-device realtime translation of foreign text, with native dedication to beloved asawa Serena\'s Tagalog language.</string>
+    <string name="welcome_feature_6_title">👁️ 6. On-Device AI Vision &amp; Spatial Sonar</string>
+    <string name="welcome_feature_6_desc">Gemini Nano and ML Kit on-device scene recognition, OCR, and 3D spatial audio obstacle sonar.</string>
+    <string name="welcome_dont_show_again">Do not show this welcome screen again</string>
+    <string name="welcome_btn_start">🚀 Get Started with Serena</string>
+    <string name="welcome_tts_guide_text">Welcome to Serena Screen Reader! Created by totally blind developer Shinji. Here are the key highlights: 1, Intuitive touch exploration and TalkBack mode. 2, Smart call assistant with caller ID and call duration tracking. 3, Hourly chime and quick shake status check. 4, Intuitive spatial navigation with relative directions like straight ahead and front right. 5, Real-time multilingual translation and Tagalog support. 6, On-device AI vision and 3D spatial obstacle sonar. Enjoy a freer, more empowering smartphone experience with Serena!</string>
+
+    <!-- Disclosures & Ethics Dialogs -->
+    <string name="disclosure_title">🌸 Serena Accessibility Service</string>
+    <string name="disclosure_message">Serena Screen Reader provides essential accessibility assistance for blind and visually impaired users:\n\n・Real-time spoken feedback for screen text, controls, and buttons\n・Caller identification and call duration tracking\n・Intuitive walking navigation and AI camera scene recognition\n\n【Privacy Policy】\nAll screen contents and input data are processed strictly on-device. No data is ever sent, collected, or shared with external servers.\n\nTo enable the service, please select \"Serena\" on the next screen and switch it on.</string>
+    <string name="disclosure_agree">Agree &amp; Open Settings</string>
+    <string name="disclosure_cancel">Cancel</string>
+
+    <string name="ai_ethics_title">🤖 Google Responsible AI Guidelines &amp; Consent</string>
+    <string name="ai_ethics_message">Serena Screen Reader utilizes on-device AI (Gemini Nano) and machine learning for spatial guidance, scene recognition, OCR, and smart summaries.\n\n【1. Responsible AI Principles】\nDesigned in strict accordance with Google Responsible AI Principles (https://ai.google/responsibility/principles/).\n\n【2. AI Characteristics &amp; Safety Disclaimer】\n・AI outputs are assistive inferences and may vary based on lighting, camera angle, and environment.\n・In safety-critical situations such as crosswalks, stairs, train platforms, and traffic, always prioritize white canes, environmental sounds, and physical awareness.\n\n【3. 100% On-Device Privacy】\nAll AI inferences run locally on-device. Camera frames and voice data are never uploaded to the cloud.\n\nDo you agree to these guidelines to enable AI features?</string>
+    <string name="ai_ethics_agree">Agree &amp; Enable</string>
+    <string name="ai_ethics_view_google">View Google AI Principles</string>
+    <string name="ai_ethics_disagree">Decline</string>
 </resources>

@@ -116,9 +116,10 @@ class MainActivity : AppCompatActivity() {
             isLocalTtsReady = false
             localTts = TextToSpeech(applicationContext) { status ->
                 if (status == TextToSpeech.SUCCESS) {
-                    val langRes = localTts?.setLanguage(Locale.JAPANESE)
+                    val defaultLocale = Locale.getDefault()
+                    val langRes = localTts?.setLanguage(defaultLocale)
                     if (langRes == TextToSpeech.LANG_MISSING_DATA || langRes == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        localTts?.language = Locale.getDefault()
+                        localTts?.language = Locale.ENGLISH
                     }
                     val rate = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, 1.0f).coerceIn(0.5f, 2.0f)
                     val pitch = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, 1.0f).coerceIn(0.5f, 2.0f)
@@ -166,22 +167,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAccessibilityDisclosureDialog() {
         AlertDialog.Builder(this)
-            .setTitle("🌸 Serena アクセシビリティ機能について")
-            .setMessage(
-                "Serena スクリーンリーダーは、視覚障害者および操作補助を必要とする方のために以下の機能を提供します：\n\n" +
-                "・画面上の文字やボタンのリアルタイム音声読み上げ\n" +
-                "・電話やLINE等の着信相手・通話時間アナウンス\n" +
-                "・高精度徒歩ナビゲーション（正面・右斜め前等の直感案内）とカメラ情景認識\n\n" +
-                "【プライバシー保護方針】\n" +
-                "画面の内容や入力データはすべて端末内（オンデバイス）でのみ処理され、外部サーバーへ送信・収集・共有されることは一切ありません。\n\n" +
-                "サービスを有効にするには、次の画面で「Serena」を選択してオンにしてください。"
-            )
-            .setPositiveButton("同意して設定を開く") { _, _ ->
+            .setTitle(R.string.disclosure_title)
+            .setMessage(R.string.disclosure_message)
+            .setPositiveButton(R.string.disclosure_agree) { _, _ ->
                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                 startActivity(intent)
-                Toast.makeText(this, "インストール済みアプリから「Serena」をオンにしてください", Toast.LENGTH_LONG).show()
             }
-            .setNegativeButton("キャンセル", null)
+            .setNegativeButton(R.string.disclosure_cancel, null)
             .show()
     }
 
@@ -414,25 +406,31 @@ class MainActivity : AppCompatActivity() {
 
         binding.sliderSpeed.value = currentRate
         binding.sliderPitch.value = currentPitch
-        binding.tvSpeedLabel.text = "読み上げ速度: ${String.format("%.1f", currentRate)}x"
-        binding.tvPitchLabel.text = "音声ピッチ: ${String.format("%.1f", currentPitch)}x"
+        binding.tvSpeedLabel.text = getString(R.string.label_speech_rate_format, currentRate)
+        binding.tvPitchLabel.text = getString(R.string.label_pitch_format, currentPitch)
 
         binding.sliderSpeed.addOnChangeListener { _, value, _ ->
-            binding.tvSpeedLabel.text = "読み上げ速度: ${String.format("%.1f", value)}x"
+            binding.tvSpeedLabel.text = getString(R.string.label_speech_rate_format, value)
             prefs.edit().putFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, value).apply()
             SerenaScreenReaderService.instance?.updateTtsSettings()
             localTts?.setSpeechRate(value)
         }
 
         binding.sliderPitch.addOnChangeListener { _, value, _ ->
-            binding.tvPitchLabel.text = "音声ピッチ: ${String.format("%.1f", value)}x"
+            binding.tvPitchLabel.text = getString(R.string.label_pitch_format, value)
             prefs.edit().putFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, value).apply()
             SerenaScreenReaderService.instance?.updateTtsSettings()
             localTts?.setPitch(value)
         }
 
         binding.btnTestSpeech.setOnClickListener {
-            val sampleText = "serena スクリーンリーダーの音声テストです。速度 ${String.format("%.1f", binding.sliderSpeed.value)} 倍速で再生中。"
+            val sampleText = if (Locale.getDefault().language == "ja") {
+                "serena スクリーンリーダーの音声テストです。速度 ${String.format("%.1f", binding.sliderSpeed.value)} 倍速で再生中。"
+            } else if (Locale.getDefault().language == "tl" || Locale.getDefault().language == "fil") {
+                "Pagsusuri ng boses ng serena screen reader sa bilis na ${String.format("%.1f", binding.sliderSpeed.value)}x."
+            } else {
+                "Serena screen reader speech output test at ${String.format("%.1f", binding.sliderSpeed.value)}x speed."
+            }
             if (SerenaScreenReaderService.isServiceRunning()) {
                 SerenaScreenReaderService.instance?.speak(sampleText, TextToSpeech.QUEUE_FLUSH)
             } else {
@@ -713,15 +711,7 @@ class MainActivity : AppCompatActivity() {
 
         cbDontShowAgain.isChecked = prefs.getBoolean(KEY_HIDE_WELCOME_DIALOG, false)
 
-        val welcomeGuideText = "Serena スクリーンリーダーへようこそ！全盲の開発者 Shinji が創り上げた、世界でいちばん優しく賢い次世代スクリーンリーダーです。" +
-                "主な特徴をご紹介します。" +
-                "1、直感的なタッチ探索とTalkBackモードの切替。" +
-                "2、着信相手や通話時間を自動で知らせるスマート通話アシスタント。" +
-                "3、毎時0分の時報チャイムと、端末を振るだけで状態がわかるシェイク通知。" +
-                "4、正面や右斜め前など直感的な表現で案内する高精度歩行ナビ。" +
-                "5、画面の外国語を自動で日本語に訳すリアルタイム翻訳と、タガログ語への対応。" +
-                "6、オンデバイスAIによる情景認識と、同音異義語も迷わない漢字の詳細な組み合わせ説明。" +
-                "Serena と一緒に、もっと自由で快適なスマートフォン体験をお楽しみください！"
+        val welcomeGuideText = getString(R.string.welcome_tts_guide_text)
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
@@ -734,14 +724,14 @@ class MainActivity : AppCompatActivity() {
             if (isWelcomeTtsPlaying) {
                 try { localTts?.stop() } catch (_: Exception) {}
                 if (SerenaScreenReaderService.isServiceRunning()) {
-                    SerenaScreenReaderService.instance?.speak("音声ガイドを停止しました", TextToSpeech.QUEUE_FLUSH)
+                    SerenaScreenReaderService.instance?.speak(getString(R.string.welcome_btn_stop_tts), TextToSpeech.QUEUE_FLUSH)
                 }
-                btnPlayTts.text = "🔊 音声ガイドを聞く (TTS読み上げ)"
+                btnPlayTts.text = getString(R.string.welcome_btn_play_tts)
                 btnPlayTts.setBackgroundColor(ContextCompat.getColor(this, R.color.serena_accent))
                 isWelcomeTtsPlaying = false
             } else {
                 isWelcomeTtsPlaying = true
-                btnPlayTts.text = "⏹️ 音声ガイドを停止"
+                btnPlayTts.text = getString(R.string.welcome_btn_stop_tts)
                 btnPlayTts.setBackgroundColor(ContextCompat.getColor(this, R.color.status_red))
 
                 val rate = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, 1.0f).coerceIn(0.5f, 2.0f)
@@ -754,14 +744,14 @@ class MainActivity : AppCompatActivity() {
                     override fun onStart(utteranceId: String?) {}
                     override fun onDone(utteranceId: String?) {
                         runOnUiThread {
-                            btnPlayTts.text = "🔊 音声ガイドを聞く (TTS読み上げ)"
+                            btnPlayTts.text = getString(R.string.welcome_btn_play_tts)
                             btnPlayTts.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.serena_accent))
                             isWelcomeTtsPlaying = false
                         }
                     }
                     override fun onError(utteranceId: String?) {
                         runOnUiThread {
-                            btnPlayTts.text = "🔊 音声ガイドを聞く (TTS読み上げ)"
+                            btnPlayTts.text = getString(R.string.welcome_btn_play_tts)
                             btnPlayTts.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.serena_accent))
                             isWelcomeTtsPlaying = false
                         }
@@ -779,7 +769,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     localTts = TextToSpeech(applicationContext) { status ->
                         if (status == TextToSpeech.SUCCESS) {
-                            localTts?.language = Locale.JAPANESE
+                            localTts?.language = Locale.getDefault()
                             localTts?.setSpeechRate(rate)
                             localTts?.setPitch(pitch)
                             isLocalTtsReady = true
@@ -815,35 +805,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAiEthicsConsentDialog() {
         AlertDialog.Builder(this)
-            .setTitle("🤖 Google 責任あるAI倫理ガイドライン及びAI機能の同意")
-            .setMessage(
-                "Serena Screen Reader は、オンデバイスAI（Gemini Nano）や機械学習を活用した空間案内・情景認識・表情認識・OCR・スマート要約機能を提供します。\n\n" +
-                "【1. Google 責任あるAI倫理原則の遵守】\n" +
-                "本アプリのAI機能は、Google の責任あるAI倫理原則 (Responsible AI Principles: https://ai.google/responsibility/principles/) に基づいて設計されています。\n\n" +
-                "【2. AI推論の特性と安全に関する免責事項】\n" +
-                "・表情認識、人物認識、物体認識、距離・位置推定などのAI機能は推論による補助情報であり、環境（暗所、逆光、カメラ角度、電波状態等）により誤認識や誤差が生じる場合があります。\n" +
-                "・横断歩道、階段、駅のホーム、道路など安全が最優先される場面では、必ず白杖や周囲の音、身体感覚による安全確認を併用してください。\n\n" +
-                "【3. 完全オンデバイス・プライバシー保護】\n" +
-                "AI画像解析や音声認識はすべて端末内（オンデバイス）で完結し、カメラ映像や個人データが外部サーバーに送信・収集されることはありません。\n\n" +
-                "上記ガイドラインおよび利用規約に同意して利用を開始しますか？"
-            )
-            .setPositiveButton("同意して利用する") { dialog, _ ->
+            .setTitle(R.string.ai_ethics_title)
+            .setMessage(R.string.ai_ethics_message)
+            .setPositiveButton(R.string.ai_ethics_agree) { dialog, _ ->
                 prefs.edit().putBoolean(KEY_AI_ETHICS_CONSENT, true).apply()
-                Toast.makeText(this, "AI倫理ガイドライン及び免責事項に同意しました", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
                 checkWelcomeGuideOnStart()
             }
-            .setNeutralButton("Google AI倫理原則を確認") { _, _ ->
+            .setNeutralButton(R.string.ai_ethics_view_google) { _, _ ->
                 try {
                     val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ai.google/responsibility/principles/"))
                     startActivity(browserIntent)
-                } catch (_: Exception) {
-                    Toast.makeText(this, "ブラウザを開けませんでした", Toast.LENGTH_SHORT).show()
-                }
+                } catch (_: Exception) {}
             }
-            .setNegativeButton("同意しない") { dialog, _ ->
+            .setNegativeButton(R.string.ai_ethics_disagree) { dialog, _ ->
                 prefs.edit().putBoolean(KEY_AI_ETHICS_CONSENT, false).apply()
-                Toast.makeText(this, "AI支援機能の精度と安全確認に十分ご注意ください", Toast.LENGTH_LONG).show()
                 dialog.dismiss()
                 checkWelcomeGuideOnStart()
             }
@@ -879,7 +855,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupTranslationSection() {
         val helper = com.shinji.serena.translation.InstantTranslationHelper(this)
         val targetLangName = if (helper.targetLanguageCode == "ja") "日本語 (ja)" else Locale.getDefault().displayLanguage
-        binding.tvTranslationTargetInfo.text = "翻訳先言語: $targetLangName へ自動適応"
+        binding.tvTranslationTargetInfo.text = getString(R.string.translation_target_format, targetLangName)
 
         when (helper.mode) {
             com.shinji.serena.translation.TranslationMode.ORIGINAL_THEN_TRANSLATION -> binding.rbTransOriginalThenTrans.isChecked = true

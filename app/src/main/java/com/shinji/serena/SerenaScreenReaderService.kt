@@ -23,16 +23,22 @@ import android.widget.Toast
 import java.util.Calendar
 import java.util.Locale
 
-enum class GranularityMode(val displayName: String) {
-    CHARACTERS("文字"),
-    WORDS("単語"),
-    LINES("行"),
-    PARAGRAPHS("段落"),
-    HEADINGS("見出し"),
-    CONTROLS("コントロール"),
-    LINKS("リンク"),
-    ACTIONS("アクション"),
-    DEFAULT("デフォルト")
+enum class GranularityMode(val resId: Int, val displayName: String) {
+    CHARACTERS(R.string.granularity_characters, "文字"),
+    WORDS(R.string.granularity_words, "単語"),
+    LINES(R.string.granularity_lines, "行"),
+    PARAGRAPHS(R.string.granularity_paragraphs, "段落"),
+    HEADINGS(R.string.granularity_headings, "見出し"),
+    CONTROLS(R.string.granularity_controls, "コントロール"),
+    LINKS(R.string.granularity_links, "リンク"),
+    ACTIONS(R.string.granularity_actions, "アクション"),
+    DEFAULT(R.string.granularity_default, "デフォルト");
+
+    fun getDisplayName(context: Context): String = try {
+        context.getString(resId)
+    } catch (_: Exception) {
+        displayName
+    }
 }
 
 class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitListener {
@@ -550,11 +556,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     activeMenuDialog = null
                     try { menu.dismiss() } catch (_: Exception) {}
                     soundHelper?.playActionDone()
-                    speak("セレナメニューを閉じました", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.menu_closed), TextToSpeech.QUEUE_FLUSH)
                     return true
                 }
                 soundHelper?.playClick()
-                speak("戻る", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.gesture_back), TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_BACK)
                 return true
             }
@@ -566,7 +572,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     try { menu.dismiss() } catch (_: Exception) {}
                 }
                 soundHelper?.playClick()
-                speak("ホーム画面", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.gesture_home), TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_HOME)
                 return true
             }
@@ -578,14 +584,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     try { menu.dismiss() } catch (_: Exception) {}
                 }
                 soundHelper?.playClick()
-                speak("最近使ったアプリ", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.gesture_recents), TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_RECENTS)
                 return true
             }
             // 右→下スワイプ (44): クイック設定
             GESTURE_SWIPE_RIGHT_AND_DOWN, 44 -> {
                 soundHelper?.playClick()
-                speak("クイック設定パネルを開きます", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.gesture_quick_settings), TextToSpeech.QUEUE_FLUSH)
                 performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
                 return true
             }
@@ -608,21 +614,21 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
         currentGranularity = values[nextIndex]
         soundHelper?.playActionDone()
-        val dirLabel = if (forward) "次のコントロール" else "前のコントロール"
-        speak("${dirLabel}: ${currentGranularity.displayName}", TextToSpeech.QUEUE_FLUSH)
+        val dirLabel = if (forward) getString(R.string.granularity_next_control) else getString(R.string.granularity_prev_control)
+        speak("${dirLabel}: ${currentGranularity.getDisplayName(this)}", TextToSpeech.QUEUE_FLUSH)
     }
 
     fun copyLastSpokenTextToClipboard() {
         val text = lastSpokenText ?: ""
         if (text.isEmpty()) {
-            speak("コピーする読み上げ履歴がありません", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.clipboard_empty), TextToSpeech.QUEUE_FLUSH)
             return
         }
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
         val clip = android.content.ClipData.newPlainText("Serena", text)
         cm?.setPrimaryClip(clip)
         soundHelper?.playActionDone()
-        val analysis = clipboardHelper?.addClip(text) ?: "クリップボードにコピーしました"
+        val analysis = clipboardHelper?.addClip(text) ?: getString(R.string.clipboard_copied)
         speak(analysis, TextToSpeech.QUEUE_FLUSH)
     }
 
@@ -630,7 +636,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = true)
         if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = true) == true) {
             soundHelper?.playScroll(isForward = true)
-            if (isOperationActionsAnnounceEnabled(this)) speak("次のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) speak(getString(R.string.page_next), TextToSpeech.QUEUE_FLUSH)
             onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ it(true) }, 350) }
             return
         }
@@ -651,7 +657,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val horizontalNode = focusNavigator?.findHorizontalScrollableNode(forward = false)
         if (horizontalNode != null && focusNavigator?.performHorizontalScroll(horizontalNode, forward = false) == true) {
             soundHelper?.playScroll(isForward = false)
-            if (isOperationActionsAnnounceEnabled(this)) speak("前のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+            if (isOperationActionsAnnounceEnabled(this)) speak(getString(R.string.page_prev), TextToSpeech.QUEUE_FLUSH)
             onComplete?.let { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ it(true) }, 350) }
             return
         }
@@ -702,7 +708,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 } else {
                     val dirStr = if (swipeUp) "次" else "前"
                     if (isOperationActionsAnnounceEnabled(this@SerenaScreenReaderService)) {
-                        speak("${dirStr}へ縦スクロールしました", TextToSpeech.QUEUE_FLUSH)
+                        speak(getString(R.string.scrolled_vertical, dirStr), TextToSpeech.QUEUE_FLUSH)
                     }
                 }
             }
@@ -736,9 +742,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (onComplete != null) {
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(onComplete, 350)
                 } else {
-                    val pageStr = if (swipeLeft) "次" else "前"
+                    val pageMsg = if (swipeLeft) getString(R.string.page_next) else getString(R.string.page_prev)
                     if (isOperationActionsAnnounceEnabled(this@SerenaScreenReaderService)) {
-                        speak("${pageStr}のページへ移動しました", TextToSpeech.QUEUE_FLUSH)
+                        speak(pageMsg, TextToSpeech.QUEUE_FLUSH)
                     }
                 }
             }
@@ -3146,7 +3152,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (wasKeyguardLocked && !currentlyLocked) {
                     wasKeyguardLocked = false
                     soundHelper?.playActionDone()
-                    speak("ロックを解除しました", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.screen_unlocked), TextToSpeech.QUEUE_FLUSH)
                 } else if (currentlyLocked) {
                     wasKeyguardLocked = true
                 }
@@ -3162,7 +3168,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (wasKeyguardLocked && !currentlyLocked) {
                     wasKeyguardLocked = false
                     soundHelper?.playActionDone()
-                    speak("ロックを解除しました", TextToSpeech.QUEUE_FLUSH)
+                    speak(getString(R.string.screen_unlocked), TextToSpeech.QUEUE_FLUSH)
                 } else if (currentlyLocked) {
                     wasKeyguardLocked = true
                 }
@@ -3399,9 +3405,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                             ""
                         }
                         if (deletedText.isNotEmpty()) {
-                            speak("$deletedText を削除", TextToSpeech.QUEUE_FLUSH)
+                            speak(getString(R.string.text_deleted_item, deletedText), TextToSpeech.QUEUE_FLUSH)
                         } else {
-                            speak("削除", TextToSpeech.QUEUE_FLUSH)
+                            speak(getString(R.string.text_deleted), TextToSpeech.QUEUE_FLUSH)
                         }
                     } else if (text.isNotEmpty()) {
                         speak(text, TextToSpeech.QUEUE_FLUSH)
@@ -3905,14 +3911,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         if (isRinging) {
             soundHelper?.playActionDone()
-            speak("通話に応答しました", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.call_answered), TextToSpeech.QUEUE_FLUSH)
             simulateMediaKey(KeyEvent.KEYCODE_HEADSETHOOK)
             return
         }
 
         if (isCallActive || audioManager?.mode == AudioManager.MODE_IN_CALL || audioManager?.mode == AudioManager.MODE_IN_COMMUNICATION) {
             soundHelper?.playActionDone()
-            speak("通話を終了しました", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.call_ended), TextToSpeech.QUEUE_FLUSH)
             endCallDirectly()
             return
         }
@@ -3921,11 +3927,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val isPlaying = audioManager?.isMusicActive == true
         if (isPlaying) {
             soundHelper?.playActionDone()
-            speak("メディアを一時停止しました", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.media_paused), TextToSpeech.QUEUE_FLUSH)
             simulateMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
         } else {
             soundHelper?.playActionDone()
-            speak("メディアを再生しました", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.media_resumed), TextToSpeech.QUEUE_FLUSH)
             simulateMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
         }
     }
@@ -4049,18 +4055,18 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         if (!isMuted) {
             // ミュート（消音）へ移行
             soundHelper?.playActionDone()
-            speak("音声をミュートしました", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.speech_muted), TextToSpeech.QUEUE_FLUSH)
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 isMuted = true
                 stopSpeech()
-                Toast.makeText(this, "🔇 音声ミュート中（2本指トリプルタップで解除）", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "🔇 " + getString(R.string.speech_muted), Toast.LENGTH_SHORT).show()
             }, 1200)
         } else {
             // ミュート解除へ移行
             isMuted = false
             soundHelper?.playActionDone()
-            speak("音声のミュートを解除しました", TextToSpeech.QUEUE_FLUSH)
-            Toast.makeText(this, "🔊 音声ミュート解除", Toast.LENGTH_SHORT).show()
+            speak(getString(R.string.speech_unmuted), TextToSpeech.QUEUE_FLUSH)
+            Toast.makeText(this, "🔊 " + getString(R.string.speech_unmuted), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -4174,12 +4180,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     Intent.ACTION_TIME_TICK -> checkHourlyChime()
                     Intent.ACTION_SCREEN_OFF -> {
                         soundHelper?.playClick()
-                        speak("画面がロックされました", TextToSpeech.QUEUE_FLUSH)
+                        speak(getString(R.string.screen_locked), TextToSpeech.QUEUE_FLUSH)
                     }
                     Intent.ACTION_SCREEN_ON -> {
                         if (isKeyguardLocked()) {
                             soundHelper?.playFocusMove()
-                            speak("ロック画面です。2本指で上にスワイプして解除してください。", TextToSpeech.QUEUE_FLUSH)
+                            speak(getString(R.string.lock_screen_guide), TextToSpeech.QUEUE_FLUSH)
                             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                                 autoFocusPinKeypadIfPresent(force = true)
                             }, 250)
@@ -4187,7 +4193,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                     Intent.ACTION_USER_PRESENT -> {
                         soundHelper?.playActionDone()
-                        speak("ロックを解除しました", TextToSpeech.QUEUE_FLUSH)
+                        speak(getString(R.string.screen_unlocked), TextToSpeech.QUEUE_FLUSH)
                     }
                     Intent.ACTION_USER_UNLOCKED -> {
                         Log.i(TAG, "Device unlocked from Direct Boot. Reloading storage & TTS.")

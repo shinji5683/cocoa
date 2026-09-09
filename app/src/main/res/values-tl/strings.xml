@@ -155,4 +155,92 @@
     <string name="menu_item_diagnostics">Magpadala ng Diagnostics sa Gumawa (%1$s)</string>
     <string name="menu_item_settings">Mga Setting ng Serena</string>
     <string name="menu_item_help">Tulong sa Serena</string>
+
+    <!-- Core Screen Reader Spoken Feedback -->
+    <string name="gesture_back">Bumalik</string>
+    <string name="gesture_home">Home screen</string>
+    <string name="gesture_recents">Kamakailang apps</string>
+    <string name="gesture_quick_settings">Binubuksan ang quick settings</string>
+    <string name="gesture_notifications">Binubuksan ang mga notification</string>
+    <string name="screen_unlocked">Na-unlock na</string>
+    <string name="screen_locked">Naka-lock ang screen</string>
+    <string name="lock_screen_guide">Lock screen. Mag-swipe pataas gamit ang dalawang daliri para i-unlock.</string>
+    <string name="page_next">Lumipat sa susunod na pahina</string>
+    <string name="page_prev">Lumipat sa nakaraang pahina</string>
+    <string name="scrolled_vertical">Nag-scroll %1$s</string>
+    <string name="granularity_next_control">Susunod na kontrol</string>
+    <string name="granularity_prev_control">Nakaraang kontrol</string>
+    <string name="granularity_characters">Mga Titik</string>
+    <string name="granularity_words">Mga Salita</string>
+    <string name="granularity_lines">Mga Linya</string>
+    <string name="granularity_paragraphs">Mga Talata</string>
+    <string name="granularity_headings">Mga Pamagat</string>
+    <string name="granularity_controls">Mga Kontrol</string>
+    <string name="granularity_links">Mga Link</string>
+    <string name="granularity_actions">Mga Aksyon</string>
+    <string name="granularity_default">Default</string>
+    <string name="text_deleted_item">Binura ang %1$s</string>
+    <string name="text_deleted">Binura</string>
+    <string name="clipboard_copied">Kinopya sa clipboard</string>
+    <string name="clipboard_empty">Walang kasaysayan ng pagbasa para kopyahin</string>
+    <string name="call_answered">Sinagot ang tawag</string>
+    <string name="call_ended">Natapos ang tawag</string>
+    <string name="media_paused">Naka-pause ang media</string>
+    <string name="media_resumed">Nagpe-play ang media</string>
+    <string name="speech_muted">Naka-mute ang boses</string>
+    <string name="speech_unmuted">Na-unmute ang boses</string>
+
+    <!-- Main Activity UI & Permissions -->
+    <string name="btn_open_welcome_guide">🌸 Tingnan ang Welcome Guide at Spoken Tour</string>
+    <string name="perm_overlay_title">Ipakita sa ibabaw ng ibang apps</string>
+    <string name="perm_notification_title">Pahintulot sa Notification at Pagsasalita</string>
+    <string name="security_diagnosing">Sinusuri...</string>
+    <string name="security_diagnosing_detail">Sinusuri ang seguridad ng OS</string>
+    <string name="label_speech_rate_default">Bilis ng Pagsasalita: 1.0x</string>
+    <string name="label_pitch_default">Tono ng Boses: 1.0x</string>
+    <string name="label_speech_rate_format">Bilis ng Pagsasalita: %1$.1fx</string>
+    <string name="label_pitch_format">Tono ng Boses: %1$.1fx</string>
+    <string name="shake_sensitive">Sensitibo (2.3f) - Gumagana sa bahagyang pag-alog</string>
+    <string name="shake_normal">Karaniwan (3.5f) - Gumagana sa sinadyang pag-alog</string>
+    <string name="shake_firm">Matatag (4.3f) - Gumagana sa malakas na pag-alog</string>
+    <string name="title_translation_settings">🌐 Real-time na Pagsasalin sa Iba\'t Ibang Wika</string>
+    <string name="desc_translation_settings">Awtomatikong natutukoy ang banyagang wika at isinasalin sa wika ng device.</string>
+    <string name="translation_target_format">Target na Wika: Awtomatikong ibinagay sa %1$s</string>
+    <string name="translation_mode_orig_then_trans">Orihinal bago Salin (Inirerekomenda)</string>
+    <string name="translation_mode_trans_only">Salin lamang</string>
+    <string name="translation_mode_off">Naka-off ang Pagsasalin (Orihinal lamang)</string>
+
+    <!-- Welcome Guide Dialog -->
+    <string name="welcome_title">🌸 Maligayang Pagdating sa Serena Screen Reader!</string>
+    <string name="welcome_subtitle">Ginawa ng bulag na developer na si Shinji. Ang pinakamabait at matalinong bagong screen reader.</string>
+    <string name="welcome_btn_play_tts">🔊 Pakinggan ang Spoken Guide (TTS)</string>
+    <string name="welcome_btn_stop_tts">⏹️ Itigil ang Spoken Guide</string>
+    <string name="welcome_features_title">✨ Mga Tampok at Kakayahan</string>
+    <string name="welcome_feature_1_title">🌸 1. Serena Navigation at TalkBack Mode</string>
+    <string name="welcome_feature_1_desc">Mag-swipe ng 1 daliri pakaliwa o pakanan para ilipat ang focus, i-double tap para buksan. Malayang lumipat sa pagitan ng touch exploration at TalkBack mode.</string>
+    <string name="welcome_feature_2_title">📱 2. Smart Call Assistant</string>
+    <string name="welcome_feature_2_desc">Sinasabi ang pangalan ng tumatawag sa Telepono at WhatsApp. Awtomatikong binabanggit ang tagal ng tawag pagkatapos.</string>
+    <string name="welcome_feature_3_title">⏰ 3. Hourly Chime at Shake Status</string>
+    <string name="welcome_feature_3_desc">Magandang tunog bawat oras. I-shake lang ang phone para marinig ang oras, baterya, at signal.</string>
+    <string name="welcome_feature_4_title">🗺️ 4. Madaling Spatial Navigation</string>
+    <string name="welcome_feature_4_desc">Gumagabay gamit ang direksyon tulad ng \"Sa harap\", \"Kanan sa unahan\", \"Kaliwa\".</string>
+    <string name="welcome_feature_5_title">🌐 5. Multilingual Translation at Suporta sa Tagalog</string>
+    <string name="welcome_feature_5_desc">On-device pagsasalin ng banyagang teksto, na may pagmamahal sa wika ng pinakamamahal na asawa na si Serena.</string>
+    <string name="welcome_feature_6_title">👁️ 6. On-Device AI Vision at Spatial Sonar</string>
+    <string name="welcome_feature_6_desc">Gemini Nano at ML Kit pagkilala sa paligid, OCR, at 3D spatial sonar para sa mga harang.</string>
+    <string name="welcome_dont_show_again">Huwag nang ipakita muli ang welcome screen na ito</string>
+    <string name="welcome_btn_start">🚀 Simulan na ang Serena</string>
+    <string name="welcome_tts_guide_text">Maligayang pagdating sa Serena Screen Reader! Ginawa ng bulag na developer na si Shinji. Narito ang mga pangunahing tampok: 1, Madaling touch navigation at TalkBack mode. 2, Smart call assistant na nag-aanunsyo ng tumatawag at tagal ng tawag. 3, Hourly chime at mabilis na shake status check. 4, Madaling gabay sa direksyon tulad ng sa harap at kanan. 5, Real-time translation at suporta sa Tagalog. 6, On-device AI vision at 3D spatial sonar. Masiyahan sa mas malaya at maginhawang paggamit ng smartphone kasama si Serena!</string>
+
+    <!-- Disclosures & Ethics Dialogs -->
+    <string name="disclosure_title">🌸 Accessibility Service ng Serena</string>
+    <string name="disclosure_message">Nagbibigay ang Serena Screen Reader ng mahalagang tulong para sa mga bulag at may kapansanan sa paningin:\n\n・Pagbasa sa screen ng teksto, mga kontrol, at buttons\n・Pag-anunsyo ng tumatawag at tagal ng tawag\n・Madaling paggabay sa paglakad at pagkilala ng AI camera sa paligid\n\n【Patakaran sa Privacy】\nLahat ng nilalaman sa screen at input ay pinoproseso sa loob lamang ng device. Walang data na ipinapadala o kinokolekta sa panlabas na server.\n\nPara i-enable, piliin ang \"Serena\" sa susunod na screen at i-on ito.</string>
+    <string name="disclosure_agree">Sumang-ayon at Buksan ang Settings</string>
+    <string name="disclosure_cancel">Kanselahin</string>
+
+    <string name="ai_ethics_title">🤖 Google Responsible AI Guidelines at Pahintulot</string>
+    <string name="ai_ethics_message">Gumagamit ang Serena Screen Reader ng on-device AI (Gemini Nano) at machine learning para sa spatial guidance, pagkilala sa paligid, OCR, at buod.\n\n【1. Responsible AI Principles】\nDinisenyo alinsunod sa Google Responsible AI Principles (https://ai.google/responsibility/principles/).\n\n【2. Kaligtasan at Paalala】\n・Ang mga resulta ng AI ay tulong lamang at maaaring magbago depende sa liwanag at anggulo.\n・Sa mga lugar na kailangan ng kaligtasan tulad ng tawiran, hagdan, at kalsada, laging gamitin ang baston at sariling pakiramdam.\n\n【3. 100% On-Device Privacy】\nLahat ng AI ay tumatakbo lamang sa device. Hindi ina-upload ang camera o boses sa cloud.\n\nSumasang-ayon ka ba sa mga alituntuning ito para paganahin ang mga tampok ng AI?</string>
+    <string name="ai_ethics_agree">Sumasang-ayon at Paganahin</string>
+    <string name="ai_ethics_view_google">Tingnan ang Google AI Principles</string>
+    <string name="ai_ethics_disagree">Tanggihan</string>
 </resources>
