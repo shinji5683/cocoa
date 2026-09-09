@@ -1,9 +1,11 @@
 package com.shinji.serena
 
+import java.util.Locale
+
 class EmojiAndKaomojiHelper {
 
     companion object {
-        private val EMOJI_MAP = mapOf(
+        private val EMOJI_MAP_JA = mapOf(
             "🌸" to "桜",
             "🦯" to "白杖",
             "🪷" to "ハス",
@@ -38,7 +40,6 @@ class EmojiAndKaomojiHelper {
             "😌" to "ホッとした顔",
             "😍" to "目がハートの笑顔",
             "🥰" to "愛に満ちた笑顔",
-            "小" to "",
             "😘" to "投げキス顔",
             "😋" to "舌を出した顔",
             "😎" to "サングラス顔",
@@ -65,10 +66,84 @@ class EmojiAndKaomojiHelper {
             "📞" to "電話",
             "✉️" to "手紙・メール",
             "☀️" to "太陽",
-            "🌑" to "黒い画面・月"
+            "🌑" to "黒い画面・月",
+            "🚀" to "ロケット",
+            "✏️" to "編集",
+            "⏰" to "時報・時計",
+            "🗺️" to "地図",
+            "👁️" to "AIビジョン"
         )
 
-        private val KAOMOJI_PATTERNS = listOf(
+        private val EMOJI_MAP_EN = mapOf(
+            "🌸" to "cherry blossom",
+            "🦯" to "white cane",
+            "🪷" to "lotus",
+            "🧭" to "compass",
+            "💡" to "light bulb",
+            "👥" to "people",
+            "🚶‍♂️" to "walking navigation",
+            "📷" to "camera",
+            "👤" to "profile",
+            "📦" to "package",
+            "🌐" to "globe",
+            "⚡" to "speed",
+            "📄" to "page",
+            "📖" to "reading",
+            "🐛" to "report bug",
+            "⚙️" to "settings",
+            "❓" to "help",
+            "🗑️" to "delete",
+            "ℹ️" to "info",
+            "💬" to "message",
+            "✂️" to "cut",
+            "🧹" to "clear",
+            "🔊" to "audio",
+            "😊" to "smiling face",
+            "😃" to "grinning face",
+            "😄" to "happy face",
+            "😁" to "beaming face",
+            "😆" to "laughing face",
+            "😅" to "sweat smile",
+            "😂" to "tears of joy",
+            "🤣" to "rolling laughing",
+            "😌" to "relieved face",
+            "😍" to "heart eyes",
+            "🥰" to "smiling face with hearts",
+            "😘" to "blowing kiss",
+            "😋" to "delicious face",
+            "😎" to "sunglasses face",
+            "😭" to "loudly crying face",
+            "😢" to "crying face",
+            "🥺" to "pleading face",
+            "😱" to "screaming face",
+            "😡" to "pouting face",
+            "😠" to "angry face",
+            "🤔" to "thinking face",
+            "😴" to "sleeping face",
+            "👍" to "thumbs up",
+            "👎" to "thumbs down",
+            "👏" to "clapping hands",
+            "🙌" to "raising hands",
+            "🙏" to "folded hands",
+            "🎉" to "party popper",
+            "☕" to "coffee",
+            "❤️" to "red heart",
+            "💕" to "two hearts",
+            "✨" to "sparkles",
+            "🌟" to "glowing star",
+            "📱" to "mobile phone",
+            "📞" to "phone call",
+            "✉️" to "envelope",
+            "☀️" to "sun",
+            "🌑" to "dark screen",
+            "🚀" to "rocket",
+            "✏️" to "edit",
+            "⏰" to "alarm clock",
+            "🗺️" to "map",
+            "👁️" to "vision AI"
+        )
+
+        private val KAOMOJI_PATTERNS_JA = listOf(
             Regex("[(（][*＊]?´[ωω]｀[*＊]?[)）]") to "ほほえみ顔文字",
             Regex("[(（]T[__]?T[)）]") to "泣き顔文字",
             Regex("[(（]\\^[oO0]\\^[)）]") to "大笑い顔文字",
@@ -78,29 +153,44 @@ class EmojiAndKaomojiHelper {
             Regex("[(（]´;ω;`[)）]") to "うるうる泣き顔文字",
             Regex("[(（]m[_ ]_m[)）]") to "ぺこりお辞儀顔文字"
         )
+
+        private val KAOMOJI_PATTERNS_EN = listOf(
+            Regex("[(（][*＊]?´[ωω]｀[*＊]?[)）]") to "smile emoticon",
+            Regex("[(（]T[__]?T[)）]") to "crying emoticon",
+            Regex("[(（]\\^[oO0]\\^[)）]") to "laughing emoticon",
+            Regex("[(（];[;]?Wait[)）]") to "sweat emoticon",
+            Regex("[(（]>_<[)）]") to "troubled emoticon",
+            Regex("[(（]・∀・[)）]") to "happy emoticon",
+            Regex("[(（]´;ω;`[)）]") to "sniffling emoticon",
+            Regex("[(（]m[_ ]_m[)）]") to "bowing emoticon"
+        )
     }
 
-    fun translateEmojiAndKaomoji(text: String): String {
+    fun translateEmojiAndKaomoji(text: String, locale: Locale = Locale.getDefault()): String {
         if (text.isBlank()) return text
+
+        val isJapanese = locale.language.lowercase() == "ja"
+        val emojiMap = if (isJapanese) EMOJI_MAP_JA else EMOJI_MAP_EN
+        val kaomojiList = if (isJapanese) KAOMOJI_PATTERNS_JA else KAOMOJI_PATTERNS_EN
+        val emojiTag = if (isJapanese) "絵文字" else "emoji"
+        val kaomojiTag = if (isJapanese) "顔文字" else "emoticon"
 
         var result = text
 
         // 1. 絵文字の置換
-        for ((emoji, desc) in EMOJI_MAP) {
+        for ((emoji, desc) in emojiMap) {
             if (desc.isNotEmpty() && result.contains(emoji)) {
-                result = result.replace(emoji, " [絵文字: $desc] ")
+                result = result.replace(emoji, " [$emojiTag: $desc] ")
             }
         }
 
         // 2. 顔文字の置換
-        for ((pattern, desc) in KAOMOJI_PATTERNS) {
+        for ((pattern, desc) in kaomojiList) {
             if (pattern.containsMatchIn(result)) {
-                result = pattern.replace(result, " [顔文字: $desc] ")
+                result = pattern.replace(result, " [$kaomojiTag: $desc] ")
             }
         }
 
         return result.replace(Regex("\\s+"), " ").trim()
     }
 }
-
-

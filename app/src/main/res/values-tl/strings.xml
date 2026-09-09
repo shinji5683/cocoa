@@ -350,4 +350,45 @@
     <string name="ai_voice_assistant_launching">Sinisimulan ang AI voice assistant</string>
     <string name="action_executed_format">Isinagawa ang %1$s</string>
     <string name="status_location_format">Kasalukuyang lokasyon: %1$s</string>
+
+    <!-- Status Announcement Localized Strings -->
+    <string name="status_separator">, </string>
+    <string name="status_greeting_night_rest">Magandang gabi po, salamat sa sipag mo ngayon!</string>
+    <string name="status_battery_ac">mabilis na pag-charge sa AC</string>
+    <string name="status_battery_usb">pag-charge sa USB</string>
+    <string name="status_battery_wireless">wireless na pag-charge</string>
+    <string name="status_battery_dock">pag-charge sa smart dock</string>
+    <string name="status_battery_charging">nagcha-charge</string>
+    <string name="status_battery_discharging">baterya ang gamit</string>
+    <string name="status_battery_full_fmt">Baterya 100%% puno na (%1$s)</string>
+    <string name="status_battery_charging_fmt">Baterya %1$d%% (%2$s)</string>
+    <string name="status_battery_fmt">Baterya %1$d%%</string>
+    <string name="status_bluetooth_on">Naka-on ang Bluetooth</string>
+    <string name="status_bluetooth_off">Naka-off ang Bluetooth</string>
+    <string name="status_cellular_label">Cellular</string>
+    <string name="status_signal_4">Signal 4 bars puno</string>
+    <string name="status_signal_3">Signal 3 bars maayos</string>
+    <string name="status_signal_2">Signal 2 bars katamtaman</string>
+    <string name="status_signal_1">Signal 1 bar mahina</string>
+    <string name="status_signal_0">Walang signal o napakahina</string>
+    <string name="status_cellular_fmt">Cellular: %1$s %2$s, %3$s</string>
+    <string name="status_os_with_model_fmt">OS: %1$s (%2$s)</string>
+    <string name="status_os_fmt">OS: %1$s</string>
+    <string name="status_network_5g_mmwave">5G mmWave</string>
+    <string name="status_network_4g_plus">4G+</string>
+
+    <!-- Smart Notification Filter Localized Strings -->
+    <string name="notification_incoming_call_app_only">Papasok na tawag mula sa %1$s</string>
+    <string name="notification_incoming_call_from_caller">Papasok na tawag sa %1$s mula kay %2$s</string>
+    <string name="notification_unknown_caller">Hindi kilalang tumatawag</string>
+    <string name="notification_auth_code_app">Verification code mula sa %1$s</string>
+    <string name="notification_format_app_only">Abiso mula sa %1$s</string>
+    <string name="notification_format_sender">%1$s, mula kay %2$s</string>
+    <string name="notification_format_new">Bagong abiso mula sa %1$s</string>
+    <string name="notification_format_full">%1$s, mula kay %2$s: \"%3$s\"</string>
+    <string name="notification_format_full_body_only">%1$s: \"%2$s\"</string>
+    <string name="notification_format_has_notifications">May mga abiso ang %1$s</string>
+    <string name="notification_truncated_suffix">, pinutol</string>
+    <string name="notification_digest_empty">Walang hindi pa nababasang abiso sa ngayon.</string>
+    <string name="notification_digest_fmt">Buod ng abiso: %1$d sa kabuuan. Kamakailan: %2$s</string>
 </resources>

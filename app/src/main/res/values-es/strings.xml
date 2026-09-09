@@ -397,4 +397,45 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <string name="ai_voice_assistant_launching">Iniciando asistente de voz con IA</string>
     <string name="action_executed_format">Ejecutado %1$s</string>
     <string name="status_location_format">Ubicación actual: %1$s</string>
+
+    <!-- Status Announcement Localized Strings -->
+    <string name="status_separator">, </string>
+    <string name="status_greeting_night_rest">¡Buen trabajo hoy!</string>
+    <string name="status_battery_ac">Carga rápida por CA</string>
+    <string name="status_battery_usb">Cargando por USB</string>
+    <string name="status_battery_wireless">Carga inalámbrica</string>
+    <string name="status_battery_dock">Cargando en dock inteligente</string>
+    <string name="status_battery_charging">Cargando</string>
+    <string name="status_battery_discharging">Con batería</string>
+    <string name="status_battery_full_fmt">Batería 100%% Carga completa (%1$s)</string>
+    <string name="status_battery_charging_fmt">Batería al %1$d%% (%2$s)</string>
+    <string name="status_battery_fmt">Batería al %1$d%%</string>
+    <string name="status_bluetooth_on">Bluetooth activado</string>
+    <string name="status_bluetooth_off">Bluetooth desactivado</string>
+    <string name="status_cellular_label">Red móvil</string>
+    <string name="status_signal_4">Señal 4 barras máxima</string>
+    <string name="status_signal_3">Señal 3 barras buena</string>
+    <string name="status_signal_2">Señal 2 barras regular</string>
+    <string name="status_signal_1">Señal 1 barra débil</string>
+    <string name="status_signal_0">Sin señal o muy débil</string>
+    <string name="status_cellular_fmt">Red móvil: %1$s %2$s, %3$s</string>
+    <string name="status_os_with_model_fmt">SO: %1$s (%2$s)</string>
+    <string name="status_os_fmt">SO: %1$s</string>
+    <string name="status_network_5g_mmwave">5G mmWave</string>
+    <string name="status_network_4g_plus">4G+</string>
+
+    <!-- Smart Notification Filter Localized Strings -->
+    <string name="notification_incoming_call_app_only">Llamada entrante de %1$s</string>
+    <string name="notification_incoming_call_from_caller">Llamada de %1$s de %2$s</string>
+    <string name="notification_unknown_caller">Número desconocido</string>
+    <string name="notification_auth_code_app">Código de verificación de %1$s</string>
+    <string name="notification_format_app_only">Notificación de %1$s</string>
+    <string name="notification_format_sender">%1$s, de %2$s</string>
+    <string name="notification_format_new">Nueva notificación de %1$s</string>
+    <string name="notification_format_full">%1$s, de %2$s: \"%3$s\"</string>
+    <string name="notification_format_full_body_only">%1$s: \"%2$s\"</string>
+    <string name="notification_format_has_notifications">%1$s tiene notificaciones</string>
+    <string name="notification_truncated_suffix">, truncado</string>
+    <string name="notification_digest_empty">No hay notificaciones no leídas en este momento.</string>
+    <string name="notification_digest_fmt">Resumen de notificaciones: %1$d en total. Recientes: %2$s</string>
 </resources>

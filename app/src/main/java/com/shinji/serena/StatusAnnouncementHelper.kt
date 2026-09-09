@@ -67,10 +67,10 @@ class StatusAnnouncementHelper(private val context: Context) {
     @SuppressLint("NewApi")
     private fun parseDisplayInfo(displayInfo: TelephonyDisplayInfo): String {
         return when (displayInfo.overrideNetworkType) {
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED -> "5Gミリ波"
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED -> context.getString(R.string.status_network_5g_mmwave)
             TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA -> "5G"
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA -> "4Gプラス"
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO -> "4Gプラス"
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA -> context.getString(R.string.status_network_4g_plus)
+            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO -> context.getString(R.string.status_network_4g_plus)
             else -> {
                 when (displayInfo.networkType) {
                     TelephonyManager.NETWORK_TYPE_NR -> "5G"
@@ -90,7 +90,7 @@ class StatusAnnouncementHelper(private val context: Context) {
             in 5..10 -> "Magandang umaga po! Ingat lagi! 🌸"
             in 11..17 -> "Magandang araw po! Ingat lagi! ☀️"
             in 18..22 -> "Magandang gabi po! Ingat lagi! 🌙"
-            else -> "Magandang gabi po! ✨ 遅くまでお疲れさまっ！"
+            else -> "Magandang gabi po! ✨ " + context.getString(R.string.status_greeting_night_rest)
         }
     }
 
@@ -100,7 +100,7 @@ class StatusAnnouncementHelper(private val context: Context) {
         // 0. Serena Warm Tagalog Greeting
         parts.add(getGreetingPrefix())
 
-        // 1. 現在時刻
+        // 1. 現在時刻 (ロケール・24時間設定に応じたスマート表記)
         val timeStr = getCurrentTimeText()
         if (timeStr.isNotEmpty()) parts.add(timeStr)
 
@@ -124,7 +124,8 @@ class StatusAnnouncementHelper(private val context: Context) {
         val osStr = getOsVersionAndCodenameText()
         if (osStr.isNotEmpty()) parts.add(osStr)
 
-        val baseStatus = parts.joinToString("、")
+        val separator = context.getString(R.string.status_separator)
+        val baseStatus = parts.joinToString(separator)
 
         if (callback != null) {
             callback(baseStatus)
@@ -132,7 +133,7 @@ class StatusAnnouncementHelper(private val context: Context) {
             locationHelper.getCurrentLocationAddress { locStr ->
                 if (locStr.isNotEmpty()) {
                     val svc = SerenaScreenReaderService.instance
-                    val msg = svc?.getString(R.string.status_location_format, locStr) ?: "現在地: $locStr"
+                    val msg = svc?.getString(R.string.status_location_format, locStr) ?: "Location: $locStr"
                     svc?.speak(msg, android.speech.tts.TextToSpeech.QUEUE_ADD)
                 }
             }
@@ -142,16 +143,14 @@ class StatusAnnouncementHelper(private val context: Context) {
     }
 
     private fun getCurrentTimeText(): String {
-        val calendar = Calendar.getInstance()
-        val hour24 = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
-        val periodStr = if (hour24 < 12) "午前" else "午後"
-        val hour12 = when {
-            hour24 == 0 -> 12
-            hour24 > 12 -> hour24 - 12
-            else -> hour24
+        return try {
+            android.text.format.DateFormat.getTimeFormat(context).format(java.util.Date())
+        } catch (_: Exception) {
+            val calendar = Calendar.getInstance()
+            val hour24 = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            "${hour24}:${if (minute < 10) "0$minute" else "$minute"}"
         }
-        return "${periodStr}${hour12}時${minute}分"
     }
 
     private fun getBatteryText(): String {
@@ -168,20 +167,20 @@ class StatusAnnouncementHelper(private val context: Context) {
             val isFull = status == BatteryManager.BATTERY_STATUS_FULL || pct == 100
 
             val chargingType = when (plugged) {
-                BatteryManager.BATTERY_PLUGGED_AC -> "コンセントから急速充電中"
-                BatteryManager.BATTERY_PLUGGED_USB -> "USB充電中"
-                BatteryManager.BATTERY_PLUGGED_WIRELESS -> "ワイヤレス充電中"
-                4 -> "スマートドック充電中"
-                else -> if (isCharging) "充電中" else "バッテリー駆動"
+                BatteryManager.BATTERY_PLUGGED_AC -> context.getString(R.string.status_battery_ac)
+                BatteryManager.BATTERY_PLUGGED_USB -> context.getString(R.string.status_battery_usb)
+                BatteryManager.BATTERY_PLUGGED_WIRELESS -> context.getString(R.string.status_battery_wireless)
+                4 -> context.getString(R.string.status_battery_dock)
+                else -> if (isCharging) context.getString(R.string.status_battery_charging) else context.getString(R.string.status_battery_discharging)
             }
 
             if (pct >= 0) {
                 if (isFull && isCharging) {
-                    "バッテリー100% 満充電（${chargingType}）"
+                    context.getString(R.string.status_battery_full_fmt, chargingType)
                 } else if (isCharging) {
-                    "バッテリー残り${pct}%（${chargingType}）"
+                    context.getString(R.string.status_battery_charging_fmt, pct, chargingType)
                 } else {
-                    "バッテリー残り${pct}%"
+                    context.getString(R.string.status_battery_fmt, pct)
                 }
             } else {
                 ""
@@ -206,7 +205,11 @@ class StatusAnnouncementHelper(private val context: Context) {
                 BluetoothAdapter.getDefaultAdapter()?.isEnabled == true
             }
 
-            if (isEnabled) "Bluetoothオン" else "Bluetoothオフ"
+            if (isEnabled) {
+                context.getString(R.string.status_bluetooth_on)
+            } else {
+                context.getString(R.string.status_bluetooth_off)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Bluetooth info error: ${e.message}")
             ""
@@ -218,7 +221,7 @@ class StatusAnnouncementHelper(private val context: Context) {
         return try {
             val tm = telephonyManager ?: return ""
             val carrierName = tm.networkOperatorName?.trim()
-            val carrierLabel = if (!carrierName.isNullOrEmpty()) carrierName else "携帯電波"
+            val carrierLabel = if (!carrierName.isNullOrEmpty()) carrierName else context.getString(R.string.status_cellular_label)
 
             // 1. 最新のリアルタイム 5G / 4G+ / 4G 判定
             var netTypeStr = latestNetworkGeneration
@@ -247,14 +250,14 @@ class StatusAnnouncementHelper(private val context: Context) {
             }
 
             val antennaStr = when (signalLevel) {
-                4 -> "電波4本最強"
-                3 -> "電波3本良好"
-                2 -> "電波2本普通"
-                1 -> "電波1本やや弱い"
-                else -> "圏外または微弱"
+                4 -> context.getString(R.string.status_signal_4)
+                3 -> context.getString(R.string.status_signal_3)
+                2 -> context.getString(R.string.status_signal_2)
+                1 -> context.getString(R.string.status_signal_1)
+                else -> context.getString(R.string.status_signal_0)
             }
 
-            "携帯通信: ${carrierLabel} ${netTypeStr}、${antennaStr}"
+            context.getString(R.string.status_cellular_fmt, carrierLabel, netTypeStr, antennaStr)
         } catch (e: Exception) {
             Log.e(TAG, "Carrier info error: ${e.message}")
             ""
@@ -270,24 +273,24 @@ class StatusAnnouncementHelper(private val context: Context) {
         val model = Build.MODEL ?: ""
 
         val codename = when {
-            sdk >= 10000 -> "Android 17 (Cinnamon Bun シナモン・バン / Canary プレビュー API 10000)"
-            release.startsWith("17") -> "Android 17 (Cinnamon Bun シナモン・バン)"
-            sdk == 36 || release.startsWith("16") -> "Android 16 (Baklava バクラヴァ)"
-            sdk == 35 || release.startsWith("15") -> "Android 15 (Vanilla Ice Cream バニラアイスクリーム)"
-            sdk == 34 || release.startsWith("14") -> "Android 14 (Upside Down Cake アップサイドダウンケーキ)"
-            sdk == 33 || release.startsWith("13") -> "Android 13 (Tiramisu ティラミス)"
-            sdk in 31..32 || release.startsWith("12") -> "Android 12 (Snow Cone スノーコーン)"
-            sdk == 30 || release.startsWith("11") -> "Android 11 (Red Velvet Cake レッドベルベットケーキ)"
-            sdk == 29 || release.startsWith("10") -> "Android 10 (Quince Tart クインスタート)"
-            sdk == 28 || release.startsWith("9") -> "Android 9 (Pie パイ)"
-            sdk in 26..27 || release.startsWith("8") -> "Android 8 (Oreo オレオ)"
+            sdk >= 10000 -> "Android 17 (Cinnamon Bun / Canary API 10000)"
+            release.startsWith("17") -> "Android 17 (Cinnamon Bun)"
+            sdk == 36 || release.startsWith("16") -> "Android 16 (Baklava)"
+            sdk == 35 || release.startsWith("15") -> "Android 15 (Vanilla Ice Cream)"
+            sdk == 34 || release.startsWith("14") -> "Android 14 (Upside Down Cake)"
+            sdk == 33 || release.startsWith("13") -> "Android 13 (Tiramisu)"
+            sdk in 31..32 || release.startsWith("12") -> "Android 12 (Snow Cone)"
+            sdk == 30 || release.startsWith("11") -> "Android 11 (Red Velvet Cake)"
+            sdk == 29 || release.startsWith("10") -> "Android 10 (Quince Tart)"
+            sdk == 28 || release.startsWith("9") -> "Android 9 (Pie)"
+            sdk in 26..27 || release.startsWith("8") -> "Android 8 (Oreo)"
             else -> "Android $release"
         }
 
         return if (model.isNotEmpty()) {
-            "OS: $codename (${model})"
+            context.getString(R.string.status_os_with_model_fmt, codename, model)
         } else {
-            "OS: $codename"
+            context.getString(R.string.status_os_fmt, codename)
         }
     }
 }

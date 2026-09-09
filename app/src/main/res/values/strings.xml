@@ -366,4 +366,44 @@
     <string name="ai_voice_assistant_launching">Starting AI voice assistant</string>
     <string name="action_executed_format">Executed %1$s</string>
     <string name="status_location_format">Current location: %1$s</string>
+    <!-- Status Announcement Localized Strings -->
+    <string name="status_separator">, </string>
+    <string name="status_greeting_night_rest">Great work today!</string>
+    <string name="status_battery_ac">AC fast charging</string>
+    <string name="status_battery_usb">USB charging</string>
+    <string name="status_battery_wireless">Wireless charging</string>
+    <string name="status_battery_dock">Smart dock charging</string>
+    <string name="status_battery_charging">Charging</string>
+    <string name="status_battery_discharging">On battery</string>
+    <string name="status_battery_full_fmt">Battery 100%% fully charged (%1$s)</string>
+    <string name="status_battery_charging_fmt">Battery %1$d%% (%2$s)</string>
+    <string name="status_battery_fmt">Battery %1$d%%</string>
+    <string name="status_bluetooth_on">Bluetooth on</string>
+    <string name="status_bluetooth_off">Bluetooth off</string>
+    <string name="status_cellular_label">Cellular</string>
+    <string name="status_signal_4">Signal 4 bars full</string>
+    <string name="status_signal_3">Signal 3 bars good</string>
+    <string name="status_signal_2">Signal 2 bars fair</string>
+    <string name="status_signal_1">Signal 1 bar weak</string>
+    <string name="status_signal_0">No service or very weak</string>
+    <string name="status_cellular_fmt">Cellular: %1$s %2$s, %3$s</string>
+    <string name="status_os_with_model_fmt">OS: %1$s (%2$s)</string>
+    <string name="status_os_fmt">OS: %1$s</string>
+    <string name="status_network_5g_mmwave">5G mmWave</string>
+    <string name="status_network_4g_plus">4G+</string>
+
+    <!-- Smart Notification Filter Localized Strings -->
+    <string name="notification_incoming_call_app_only">Incoming call from %1$s</string>
+    <string name="notification_incoming_call_from_caller">%1$s incoming call from %2$s</string>
+    <string name="notification_unknown_caller">Unknown caller</string>
+    <string name="notification_auth_code_app">%1$s verification code</string>
+    <string name="notification_format_app_only">Notification from %1$s</string>
+    <string name="notification_format_sender">%1$s, from %2$s</string>
+    <string name="notification_format_new">New notification from %1$s</string>
+    <string name="notification_format_full">%1$s, from %2$s: \"%3$s\"</string>
+    <string name="notification_format_full_body_only">%1$s: \"%2$s\"</string>
+    <string name="notification_format_has_notifications">%1$s has notifications</string>
+    <string name="notification_truncated_suffix">, truncated</string>
+    <string name="notification_digest_empty">No unread notifications at this time.</string>
+    <string name="notification_digest_fmt">Notification digest: %1$d total. Recent: %2$s</string>
 </resources>

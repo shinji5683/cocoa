@@ -304,10 +304,10 @@ class SmartNotificationFilterHelper(private val context: Context) {
 
         // 1. 着信の場合
         if (isCall) {
-            val callerName = if (cleanTitle.isNotEmpty()) cleanTitle else if (cleanText.isNotEmpty()) cleanText else "不明な発信者"
+            val callerName = if (cleanTitle.isNotEmpty()) cleanTitle else if (cleanText.isNotEmpty()) cleanText else context.getString(R.string.notification_unknown_caller)
             return when (level) {
-                NotificationReadDetailLevel.APP_NAME_ONLY -> "${appDisplayName}の着信です"
-                else -> "${appDisplayName}着信、${callerName}さんから"
+                NotificationReadDetailLevel.APP_NAME_ONLY -> context.getString(R.string.notification_incoming_call_app_only, appDisplayName)
+                else -> context.getString(R.string.notification_incoming_call_from_caller, appDisplayName, callerName)
             }
         }
 
@@ -317,37 +317,37 @@ class SmartNotificationFilterHelper(private val context: Context) {
         val aiResult = nanoEngine.analyzeNotificationIntelligence(appDisplayName, cleanTitle, cleanText)
         if (aiResult.category == com.shinji.serena.ai.GeminiNanoEngine.NotificationCategory.TWO_FACTOR_AUTH) {
             return when (level) {
-                NotificationReadDetailLevel.APP_NAME_ONLY -> "${appDisplayName}の認証コード通知"
+                NotificationReadDetailLevel.APP_NAME_ONLY -> context.getString(R.string.notification_auth_code_app, appDisplayName)
                 else -> aiResult.suggestedAnnouncement
             }
         }
 
         val bodySummary = if (cleanText.length > 60) {
-            cleanText.substring(0, 58) + "、以下省略"
+            cleanText.substring(0, 58) + context.getString(R.string.notification_truncated_suffix)
         } else {
             cleanText
         }
 
         return when (level) {
             NotificationReadDetailLevel.APP_NAME_ONLY -> {
-                "${appDisplayName}の通知"
+                context.getString(R.string.notification_format_app_only, appDisplayName)
             }
             NotificationReadDetailLevel.SENDER_ONLY -> {
                 if (cleanTitle.isNotEmpty()) {
-                    "${appDisplayName}、${cleanTitle}さんから"
+                    context.getString(R.string.notification_format_sender, appDisplayName, cleanTitle)
                 } else {
-                    "${appDisplayName}の新しい通知"
+                    context.getString(R.string.notification_format_new, appDisplayName)
                 }
             }
             NotificationReadDetailLevel.FULL -> {
                 if (cleanTitle.isNotEmpty() && bodySummary.isNotEmpty()) {
-                    "${appDisplayName}、${cleanTitle}さんから「${bodySummary}」"
+                    context.getString(R.string.notification_format_full, appDisplayName, cleanTitle, bodySummary)
                 } else if (cleanTitle.isNotEmpty()) {
-                    "${appDisplayName}、${cleanTitle}"
+                    context.getString(R.string.notification_format_sender, appDisplayName, cleanTitle)
                 } else if (bodySummary.isNotEmpty()) {
-                    "${appDisplayName}、「${bodySummary}」"
+                    context.getString(R.string.notification_format_full_body_only, appDisplayName, bodySummary)
                 } else {
-                    "${appDisplayName}の通知があります"
+                    context.getString(R.string.notification_format_has_notifications, appDisplayName)
                 }
             }
             else -> ""
@@ -365,13 +365,15 @@ class SmartNotificationFilterHelper(private val context: Context) {
 
     fun buildNotificationDigest(): String {
         if (recentNotifications.isEmpty()) {
-            return "現在、未読の重要通知はありません。"
+            return context.getString(R.string.notification_digest_empty)
         }
         val count = recentNotifications.size
+        val separator = context.getString(R.string.status_separator)
+        val defaultNotifLabel = context.getString(R.string.notification_format_app_only, "")
         val topNotifs = recentNotifications.take(3).map {
-            val senderPart = if (it.senderOrTitle.isNotEmpty()) it.senderOrTitle else "通知"
-            "${it.appDisplayName}（$senderPart）"
-        }.joinToString("、")
-        return "通知ダイジェスト全${count}件。直近の通知: ${topNotifs}などがあります。"
+            val senderPart = if (it.senderOrTitle.isNotEmpty()) it.senderOrTitle else defaultNotifLabel
+            "${it.appDisplayName} ($senderPart)"
+        }.joinToString(separator)
+        return context.getString(R.string.notification_digest_fmt, count, topNotifs)
     }
 }

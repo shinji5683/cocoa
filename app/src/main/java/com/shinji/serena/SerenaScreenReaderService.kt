@@ -4257,14 +4257,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
         soundHelper?.requestDuckAudioFocus()
 
-        val processedText = emojiHelper?.translateEmojiAndKaomoji(text) ?: text
+        val targetLocale = forcedLocale ?: detectLanguage(text)
+        val processedText = emojiHelper?.translateEmojiAndKaomoji(text, targetLocale) ?: text
         lastSpokenText = processedText
         lastSpokenTime = System.currentTimeMillis()
         currentSpeakingUtterance = processedText
         isSpeechPaused = false
 
         try {
-            val targetLocale = forcedLocale ?: detectLanguage(processedText)
             if (tts?.language?.language != targetLocale.language || tts?.language?.country != targetLocale.country) {
                 tts?.language = targetLocale
             }

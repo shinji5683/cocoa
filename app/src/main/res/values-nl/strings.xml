@@ -366,4 +366,45 @@
     <string name="ai_voice_assistant_launching">AI-spraakassistent starten</string>
     <string name="action_executed_format">%1$s uitgevoerd</string>
     <string name="status_location_format">Huidige locatie: %1$s</string>
+
+    <!-- Status Announcement Localized Strings -->
+    <string name="status_separator">, </string>
+    <string name="status_greeting_night_rest">Goed gewerkt vandaag!</string>
+    <string name="status_battery_ac">snelladen via netstroom</string>
+    <string name="status_battery_usb">opladen via USB</string>
+    <string name="status_battery_wireless">draadloos opladen</string>
+    <string name="status_battery_dock">opladen via smartdock</string>
+    <string name="status_battery_charging">opladen</string>
+    <string name="status_battery_discharging">op batterijvoeding</string>
+    <string name="status_battery_full_fmt">Batterij 100%% volledig opgeladen (%1$s)</string>
+    <string name="status_battery_charging_fmt">Batterij %1$d%% (%2$s)</string>
+    <string name="status_battery_fmt">Batterij %1$d%%</string>
+    <string name="status_bluetooth_on">Bluetooth ingeschakeld</string>
+    <string name="status_bluetooth_off">Bluetooth uitgeschakeld</string>
+    <string name="status_cellular_label">Mobiel netwerk</string>
+    <string name="status_signal_4">Signaal 4 streepjes maximaal</string>
+    <string name="status_signal_3">Signaal 3 streepjes goed</string>
+    <string name="status_signal_2">Signaal 2 streepjes redelijk</string>
+    <string name="status_signal_1">Signaal 1 streepje zwak</string>
+    <string name="status_signal_0">Geen bereik of zeer zwak</string>
+    <string name="status_cellular_fmt">Mobiel netwerk: %1$s %2$s, %3$s</string>
+    <string name="status_os_with_model_fmt">OS: %1$s (%2$s)</string>
+    <string name="status_os_fmt">OS: %1$s</string>
+    <string name="status_network_5g_mmwave">5G mmWave</string>
+    <string name="status_network_4g_plus">4G+</string>
+
+    <!-- Smart Notification Filter Localized Strings -->
+    <string name="notification_incoming_call_app_only">Inkomende oproep van %1$s</string>
+    <string name="notification_incoming_call_from_caller">Inkomende %1$s-oproep van %2$s</string>
+    <string name="notification_unknown_caller">Onbekende beller</string>
+    <string name="notification_auth_code_app">%1$s verificatiecode</string>
+    <string name="notification_format_app_only">Melding van %1$s</string>
+    <string name="notification_format_sender">%1$s, van %2$s</string>
+    <string name="notification_format_new">Nieuwe melding van %1$s</string>
+    <string name="notification_format_full">%1$s, van %2$s: \"%3$s\"</string>
+    <string name="notification_format_full_body_only">%1$s: \"%2$s\"</string>
+    <string name="notification_format_has_notifications">%1$s heeft meldingen</string>
+    <string name="notification_truncated_suffix">, ingekort</string>
+    <string name="notification_digest_empty">Geen ongelezen meldingen op dit moment.</string>
+    <string name="notification_digest_fmt">Meldingenoverzicht: %1$d in totaal. Recent: %2$s</string>
 </resources>

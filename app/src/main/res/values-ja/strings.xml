@@ -366,4 +366,45 @@
     <string name="ai_voice_assistant_launching">AIボイスアシスタントを起動します</string>
     <string name="action_executed_format">%1$s を実行しました</string>
     <string name="status_location_format">現在地: %1$s</string>
+
+    <!-- Status Announcement Localized Strings -->
+    <string name="status_separator">、</string>
+    <string name="status_greeting_night_rest">遅くまでお疲れさまっ！</string>
+    <string name="status_battery_ac">コンセントから急速充電中</string>
+    <string name="status_battery_usb">USB充電中</string>
+    <string name="status_battery_wireless">ワイヤレス充電中</string>
+    <string name="status_battery_dock">スマートドック充電中</string>
+    <string name="status_battery_charging">充電中</string>
+    <string name="status_battery_discharging">バッテリー駆動</string>
+    <string name="status_battery_full_fmt">バッテリー100%% 満充電（%1$s）</string>
+    <string name="status_battery_charging_fmt">バッテリー残り%1$d%%（%2$s）</string>
+    <string name="status_battery_fmt">バッテリー残り%1$d%%</string>
+    <string name="status_bluetooth_on">Bluetoothオン</string>
+    <string name="status_bluetooth_off">Bluetoothオフ</string>
+    <string name="status_cellular_label">携帯電波</string>
+    <string name="status_signal_4">電波4本最強</string>
+    <string name="status_signal_3">電波3本良好</string>
+    <string name="status_signal_2">電波2本普通</string>
+    <string name="status_signal_1">電波1本やや弱い</string>
+    <string name="status_signal_0">圏外または微弱</string>
+    <string name="status_cellular_fmt">携帯通信: %1$s %2$s、%3$s</string>
+    <string name="status_os_with_model_fmt">OS: %1$s (%2$s)</string>
+    <string name="status_os_fmt">OS: %1$s</string>
+    <string name="status_network_5g_mmwave">5Gミリ波</string>
+    <string name="status_network_4g_plus">4Gプラス</string>
+
+    <!-- Smart Notification Filter Localized Strings -->
+    <string name="notification_incoming_call_app_only">%1$sの着信です</string>
+    <string name="notification_incoming_call_from_caller">%1$s着信、%2$sさんから</string>
+    <string name="notification_unknown_caller">不明な発信者</string>
+    <string name="notification_auth_code_app">%1$sの認証コード通知</string>
+    <string name="notification_format_app_only">%1$sの通知</string>
+    <string name="notification_format_sender">%1$s、%2$sさんから</string>
+    <string name="notification_format_new">%1$sの新しい通知</string>
+    <string name="notification_format_full">%1$s、%2$sさんから「%3$s」</string>
+    <string name="notification_format_full_body_only">%1$s、「%2$s」</string>
+    <string name="notification_format_has_notifications">%1$sの通知があります</string>
+    <string name="notification_truncated_suffix">、以下省略</string>
+    <string name="notification_digest_empty">現在、未読の重要通知はありません。</string>
+    <string name="notification_digest_fmt">通知ダイジェスト全%1$d件。直近の通知: %2$sなどがあります。</string>
 </resources>
