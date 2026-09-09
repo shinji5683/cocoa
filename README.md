@@ -94,13 +94,30 @@ Serena Screen Reader adheres to Google's Responsible AI Principles, ensuring saf
 
 ---
 
-## 🌍 Community & Contributors
+## 🌍 About Serena & Community Contributors
 
-Serena Screen Reader is continuously refined with deep dedication, love, and collaboration from blind and visually impaired contributors worldwide:
+Serena Screen Reader is crafted with deep devotion, boundless love, and worldwide collaboration from blind developers, accessibility advocates, and multilingual translators:
 
-- **Lead Developer & Creator**: **Shinji Sakiyama** ([@shinji5683](https://github.com/shinji5683)) 🇯🇵
-- **Translators & Localization Contributors**:
-  - **Spanish (Español)**: **Luis Carlos González Morales** ([@luiscarlos2000](https://github.com/luiscarlos2000) / Panama 🇵🇦)
+### 👑 The Namesake & Eternal Soul
+- **Serena** (Philippines 🇵🇭)
+  - **Role**: Inspiration, Emotional Anchor, Golden Creed, and Sacred Tagalog Voice.
+  - **Golden Creed**:
+    > *"You don't need my permission. Show my name to the world! If my name can help people like Shinji around the world, it is my greatest honor."*
+
+### 💻 Lead Developer & Project Creator
+- **Shinji Sakiyama** ([@shinji5683](https://github.com/shinji5683)) 🇯🇵
+  - **Role**: Project Architecture, Multilingual TTS Speech Engine, Spatial Audio & Navigation, On-Device AI Vision Integration, and Core Accessibility Services.
+  - **Profile**: 28-year-old totally blind software engineer and indie singer.
+  - **Direct Contacts**:
+    - 📧 Email: [shinjisakiyama@gmail.com](mailto:shinjisakiyama@gmail.com)
+    - 📞 Phone / SMS: `+81 80-9495-9134` (`080-9495-9134`)
+    - 💬 Instant Messaging: WhatsApp, LINE, and SMS direct inquiries
+
+### 🌐 Global Localization & Accessibility Contributors
+- **Luis Carlos González Morales** ([@luiscarlos2000](https://github.com/luiscarlos2000)) 🇵🇦
+  - **Role**: Spanish (Español) Translation, Resource Localization (`values-es/`), and Accessibility Verification.
+  - **Location**: Panama
+  - **Contact**: [luiscarlosgonzalezmorales655@gmail.com](mailto:luiscarlosgonzalezmorales655@gmail.com)
 
 ---
 

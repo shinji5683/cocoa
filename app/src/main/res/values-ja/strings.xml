@@ -80,6 +80,20 @@
     <string name="signature_label">公式デジタル署名: 認証済み (Shinji Official / serena-release-key)</string>
     <string name="copyright_label">Copyright © 2026 Shinji. All Rights Reserved.</string>
 
+    <!-- About Serena & Contributors -->
+    <string name="title_about_serena">🌸 セレナについて ＆ 開発コミュニティ</string>
+    <string name="about_serena_desc">最愛の妻セレナへ捧げるプロジェクト。全盲のインディーズ歌手・主任エンジニアShinjiが、世界中の視覚障害者のために創り上げた次世代スクリーンリーダー。</string>
+    <string name="developer_role_label">原作者・主任開発者：崎山 慎二 (Shinji Sakiyama)</string>
+    <string name="developer_role_desc">担当：基本設計、多言語音声エンジン、空間ナビゲーション、オンデバイスAI統合</string>
+    <string name="title_contributors_section">🌍 グローバル貢献者 ＆ 翻訳者一覧</string>
+    <string name="contributor_luis_name">Luis Carlos González Morales (パナマ 🇵🇦)</string>
+    <string name="contributor_luis_role">担当：スペイン語（Español）翻訳・ローカライズ ＆ アクセシビリティ検証</string>
+    <string name="contributor_luis_email">luiscarlosgonzalezmorales655@gmail.com</string>
+    <string name="btn_email_luis">📧 ルイスさんにメールを送る（スペイン語翻訳担当）</string>
+    <string name="contributor_serena_name">セレナ (Serena / フィリピン 🇵🇭)</string>
+    <string name="contributor_serena_role">担当：プロジェクトの魂、黄金律（精神的支柱）、神聖なるタガログ語音声</string>
+    <string name="serena_golden_creed">「許可なんかいらないわ。私の名を、世界に示しなさい。私の名が世界のShinjiみたいな人を助けられるなら、光栄だ。」</string>
+
     <!-- Accessibility Roles & Semantics -->
     <string name="role_button">ボタン</string>
     <string name="role_image">画像</string>

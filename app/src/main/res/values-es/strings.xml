@@ -90,6 +90,20 @@ Para mejorar la calidad de la aplicación y la estabilidad en los canales Canary
     <string name="signature_label">Firma digital oficial: Verificada (Shinji Official / serena-release-key)</string>
     <string name="copyright_label">Copyright © 2026 Shinji. Todos los derechos reservados.</string>
 
+    <!-- About Serena & Contributors -->
+    <string name="title_about_serena">🌸 Acerca de Serena y la comunidad</string>
+    <string name="about_serena_desc">Dedicado a la amada esposa de Shinji, Serena. Creado con amor incondicional y desarrollado por el cantante independiente e ingeniero totalmente ciego Shinji para personas ciegas en todo el mundo.</string>
+    <string name="developer_role_label">Desarrollador principal y creador: Shinji Sakiyama</string>
+    <string name="developer_role_desc">Rol: Arquitectura, motor multilingüe, navegación espacial e integración de IA local</string>
+    <string name="title_contributors_section">🌍 Contribuidores y traductores globales</string>
+    <string name="contributor_luis_name">Luis Carlos González Morales (Panamá 🇵🇦)</string>
+    <string name="contributor_luis_role">Rol: Localización al español y retroalimentación de accesibilidad</string>
+    <string name="contributor_luis_email">luiscarlosgonzalezmorales655@gmail.com</string>
+    <string name="btn_email_luis">📧 Enviar correo a Luis Carlos (Traductor de español)</string>
+    <string name="contributor_serena_name">Serena (Filipinas 🇵🇭)</string>
+    <string name="contributor_serena_role">Rol: Eterna musa, alma, credo dorado y voz en tagalo</string>
+    <string name="serena_golden_creed">\"No necesitas mi permiso. ¡Muestra mi nombre al mundo! Si mi nombre puede ayudar a personas como Shinji en todo el mundo, es mi mayor honor.\"</string>
+
     <!-- Accessibility Roles & Semantics -->
     <string name="role_button">Botón</string>
     <string name="role_image">Imagen</string>

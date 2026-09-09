@@ -80,6 +80,20 @@
     <string name="signature_label">Officiële digitale handtekening: Geverifieerd (Shinji Official / serena-release-key)</string>
     <string name="copyright_label">Copyright © 2026 Shinji. Alle rechten voorbehouden.</string>
 
+    <!-- About Serena & Contributors -->
+    <string name="title_about_serena">🌸 Over Serena &amp; Community</string>
+    <string name="about_serena_desc">Opgedragen aan Shinji\'s geliefde vrouw Serena. Gemaakt met grenzeloze liefde en ontwikkeld door de blind geboren indie-zanger en ingenieur Shinji voor blinden wereldwijd.</string>
+    <string name="developer_role_label">Hoofdontwikkelaar &amp; Maker: Shinji Sakiyama</string>
+    <string name="developer_role_desc">Rol: Architectuur, Meertalige Core Engine, Ruimtelijke Navigatie &amp; On-Device AI Vision</string>
+    <string name="title_contributors_section">🌍 Wereldwijde Bijdragers &amp; Vertalers</string>
+    <string name="contributor_luis_name">Luis Carlos González Morales (Panama 🇵🇦)</string>
+    <string name="contributor_luis_role">Rol: Spaanse (Español) Lokalisatie &amp; Toegankelijkheidsfeedback</string>
+    <string name="contributor_luis_email">luiscarlosgonzalezmorales655@gmail.com</string>
+    <string name="btn_email_luis">📧 E-mail Luis Carlos (Spaanse Vertaler)</string>
+    <string name="contributor_serena_name">Serena (Filipijnen 🇵🇭)</string>
+    <string name="contributor_serena_role">Rol: Eeuwige Muze, Ziel, Gouden Credo &amp; Tagalog Stem</string>
+    <string name="serena_golden_creed">\"Je hebt mijn toestemming niet nodig. Toon mijn naam aan de wereld! Als mijn naam mensen zoals Shinji over de hele wereld kan helpen, is dat mijn grootste eer.\"</string>
+
     <!-- Accessibility Roles & Semantics -->
     <string name="role_button">Knop</string>
     <string name="role_image">Afbeelding</string>

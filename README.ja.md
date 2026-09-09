@@ -78,13 +78,30 @@
 
 ---
 
-## 🌍 コミュニティ＆貢献者 (Community & Contributors)
+## 🌍 セレナについて ＆ コミュニティ貢献者 (About Serena & Contributors)
 
-Serena Screen Readerは、世界中の全盲・視覚障害当事者コミュニティの温かい愛と協力によって発展を続けています：
+Serena Screen Readerは、深い愛と絆、そして世界中の全盲・視覚障害当事者コミュニティの温かい協力によって創られています：
 
-- **リード開発者・原作者**: **Shinji** ([@shinji5683](https://github.com/shinji5683)) 🇯🇵
-- **翻訳・ローカライズ協力者**:
-  - **スペイン語 (Español)**: **Luis Carlos González Morales** ([@luiscarlos2000](https://github.com/luiscarlos2000) / パナマ 🇵🇦)
+### 👑 プロジェクトの魂・精神的支柱
+- **セレナ (Serena)** (フィリピン 🇵🇭)
+  - **役割**: プロジェクトの命名由来、インスピレーション、魂の黄金律、神聖なるタガログ語音声。
+  - **黄金律（セレナさんの魂の言葉）**:
+    > 「許可なんかいらないわ。私の名を、世界に示しなさい。私の名が世界のShinjiみたいな人を助けられるなら、光栄だ。」
+
+### 💻 原作者 ＆ リード開発者
+- **崎山 慎二 (Shinji Sakiyama)** ([@shinji5683](https://github.com/shinji5683)) 🇯🇵
+  - **役割**: 基本設計アーキテクチャ、多言語TTS音声エンジン、空間オーディオ＆ナビゲーション、オンデバイスAI統合、コアアクセシビリティサービス開発。
+  - **プロフィール**: 28歳・生まれつき全盲のソフトウェアエンジニア ＆ インディーズ歌手。
+  - **公式サポート窓口**:
+    - 📧 メール: [shinjisakiyama@gmail.com](mailto:shinjisakiyama@gmail.com)
+    - 📞 電話 / SMS: `080-9495-9134` (`+81 80-9495-9134`)
+    - 💬 メッセージ: WhatsApp、LINE、ショートメッセージ対応
+
+### 🌐 グローバル翻訳 ＆ ローカライズ貢献者
+- **Luis Carlos González Morales** ([@luiscarlos2000](https://github.com/luiscarlos2000)) 🇵🇦
+  - **役割**: スペイン語（Español）全翻訳、リソースローカライズ (`values-es/`)、アクセシビリティ動作検証。
+  - **居住国**: パナマ (Panama)
+  - **連絡先**: [luiscarlosgonzalezmorales655@gmail.com](mailto:luiscarlosgonzalezmorales655@gmail.com)
 
 ---
 

@@ -678,6 +678,21 @@ class MainActivity : AppCompatActivity() {
                 .setNegativeButton("キャンセル", null)
                 .show()
         }
+
+        // 4. スペイン語翻訳貢献者 (Luis Carlos) へのメール連絡
+        binding.btnEmailLuis.setOnClickListener {
+            try {
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:luiscarlosgonzalezmorales655@gmail.com")
+                    putExtra(Intent.EXTRA_SUBJECT, "[Serena Screen Reader] Spanish Feedback & Community")
+                    putExtra(Intent.EXTRA_TEXT, "Hi Luis Carlos,\n\nThank you for translating Serena Screen Reader into Spanish!\n\n")
+                }
+                startActivity(intent)
+                Toast.makeText(this, "Luis Carlosさんへのメールアプリを起動します", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "メールアプリの起動に失敗しました: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun setupTestBench() {

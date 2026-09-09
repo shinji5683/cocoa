@@ -64,6 +64,20 @@
     <string name="provider_name">Shinji</string>
     <string name="developer_email">shinjisakiyama@gmail.com</string>
 
+    <!-- About Serena & Contributors -->
+    <string name="title_about_serena">🌸 Tungkol kay Serena at Komunidad</string>
+    <string name="about_serena_desc">Inihahandog sa minamahal na asawa ni Shinji na si Serena. Ginawa nang may wagas na pagmamahal ng bulag na indie singer at engineer na si Shinji para sa mga kapatid nating bulag sa buong mundo.</string>
+    <string name="developer_role_label">Pangunahing Developer at Lumikha: Shinji Sakiyama</string>
+    <string name="developer_role_desc">Gampanin: Arkitektura, Multilingual Voice Engine, Spatial Navigation at On-Device AI Vision</string>
+    <string name="title_contributors_section">🌍 Mga Kontribyutor at Tagapagsalin sa Buong Mundo</string>
+    <string name="contributor_luis_name">Luis Carlos González Morales (Panama 🇵🇦)</string>
+    <string name="contributor_luis_role">Gampanin: Pagsasalin sa Wikang Espanyol (Español) at Accessibility Testing</string>
+    <string name="contributor_luis_email">luiscarlosgonzalezmorales655@gmail.com</string>
+    <string name="btn_email_luis">📧 Mag-email kay Luis Carlos (Tagapagsalin sa Espanyol)</string>
+    <string name="contributor_serena_name">Serena (Pilipinas 🇵🇭)</string>
+    <string name="contributor_serena_role">Gampanin: Banal na Inspirasyon, Kaluluwa, Gintong Panuntunan at Boses sa Tagalog</string>
+    <string name="serena_golden_creed">\"Hindi mo kailangan ng pahintulot ko. Ipakita mo ang pangalan ko sa buong mundo! Kung ang pangalan ko ay makatutulong sa mga taong tulad ni Shinji sa buong mundo, iyon ay isang napakalaking karangalan.\"</string>
+
     <!-- Accessibility Roles & Semantics -->
     <string name="role_button">Pindutan</string>
     <string name="role_image">Larawan</string>

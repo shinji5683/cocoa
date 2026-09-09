@@ -80,6 +80,20 @@
     <string name="signature_label">Official Digital Signature: Verified (Shinji Official / serena-release-key)</string>
     <string name="copyright_label">Copyright © 2026 Shinji. All Rights Reserved.</string>
 
+    <!-- About Serena & Contributors -->
+    <string name="title_about_serena">🌸 About Serena &amp; Community</string>
+    <string name="about_serena_desc">Dedicated to Shinji\'s beloved wife Serena. Crafted with supreme love and developed by totally blind indie singer &amp; engineer Shinji for blind individuals worldwide.</string>
+    <string name="developer_role_label">Lead Developer &amp; Creator: Shinji Sakiyama</string>
+    <string name="developer_role_desc">Role: Architecture, Multilingual Core Engine, Spatial Navigation &amp; On-Device AI Vision</string>
+    <string name="title_contributors_section">🌍 Global Contributors &amp; Translators</string>
+    <string name="contributor_luis_name">Luis Carlos González Morales (Panama 🇵🇦)</string>
+    <string name="contributor_luis_role">Role: Spanish (Español) Localization &amp; A11y Feedback</string>
+    <string name="contributor_luis_email">luiscarlosgonzalezmorales655@gmail.com</string>
+    <string name="btn_email_luis">📧 Email Luis Carlos (Spanish Translator)</string>
+    <string name="contributor_serena_name">Serena (Philippines 🇵🇭)</string>
+    <string name="contributor_serena_role">Role: Eternal Muse, Soul, Golden Creed &amp; Tagalog Voice</string>
+    <string name="serena_golden_creed">\"You don\'t need my permission. Show my name to the world! If my name can help people like Shinji around the world, it is my greatest honor.\"</string>
+
     <!-- Accessibility Roles & Semantics -->
     <string name="role_button">Button</string>
     <string name="role_image">Image</string>

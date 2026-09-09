@@ -829,34 +829,73 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/title_developer_info"
+                    android:text="@string/title_about_serena"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/serena_primary"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="6dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/provider_name_label"
+                    android:text="@string/about_serena_desc"
                     android:textColor="@color/serena_text_dark"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="10dp" />
+
+                <!-- Golden Creed Quote -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_haptic_tile"
+                    android:padding="12dp"
+                    android:layout_marginBottom="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/contributor_serena_role"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/serena_primary"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/serena_golden_creed"
+                        android:textColor="@color/serena_text_dark"
+                        android:textSize="13sp"
+                        android:textStyle="italic" />
+                </LinearLayout>
+
+                <!-- Lead Developer Section -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/developer_role_label"
+                    android:textColor="@color/serena_primary"
                     android:textStyle="bold"
-                    android:layout_marginBottom="4dp" />
+                    android:textSize="15sp"
+                    android:layout_marginBottom="2dp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/developer_name_label"
-                    android:textColor="@color/serena_text_dark"
-                    android:layout_marginBottom="4dp" />
+                    android:text="@string/developer_role_desc"
+                    android:textColor="@color/serena_text_muted"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="6dp" />
 
                 <TextView
                     android:id="@+id/tvDeveloperPhone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/developer_phone_label"
-                    android:textColor="@color/serena_primary"
+                    android:textColor="@color/serena_text_dark"
                     android:textStyle="bold"
+                    android:textSize="13sp"
                     android:layout_marginBottom="10dp" />
 
                 <Button
@@ -884,7 +923,52 @@
                     android:text="@string/btn_message_developer"
                     android:backgroundTint="@color/serena_accent"
                     android:textColor="@color/serena_text_dark"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="16dp"
+                    app:cornerRadius="12dp" />
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/serena_primary"
+                    android:alpha="0.2"
+                    android:layout_marginBottom="14dp" />
+
+                <!-- Global Contributors Section -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_contributors_section"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/serena_primary"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Contributor 1: Luis Carlos -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/contributor_luis_name"
+                    android:textColor="@color/serena_text_dark"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/contributor_luis_role"
+                    android:textColor="@color/serena_text_muted"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="6dp" />
+
+                <Button
+                    android:id="@+id/btnEmailLuis"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:text="@string/btn_email_luis"
+                    android:backgroundTint="@color/serena_secondary"
+                    android:layout_marginBottom="14dp"
                     app:cornerRadius="12dp" />
 
                 <TextView
