@@ -85,13 +85,14 @@ jobs:
               app-serena-release.apk \
               app-serena-debug.apk \
               --clobber
+            gh release edit "$TARGET_TAG" --latest --prerelease=false
           else
-            echo "Creating new release $TARGET_TAG..."
+            echo "Creating new release $TARGET_TAG as latest release..."
             gh release create "$TARGET_TAG" \
               app-serena-release.apk \
               app-serena-debug.apk \
               --title "Serena $TARGET_TAG" \
               --generate-notes \
-              --prerelease
+              --latest
           fi
           echo "GitHub Release action completed successfully!"
