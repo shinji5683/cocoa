@@ -15,6 +15,14 @@ class VisualAudioDescriptionHelper(private val context: Context) {
     private val selfHealingEngine = SelfHealingA11yEngine(context)
     private val descriptionCache = mutableMapOf<String, String>()
 
+    private val isJapaneseDevice: Boolean
+        get() = try {
+            val loc = context.resources.configuration.locales[0]
+            loc.language.lowercase() == "ja"
+        } catch (_: Exception) {
+            java.util.Locale.getDefault().language.lowercase() == "ja"
+        }
+
     /**
      * ノードの「視覚的な形状・デザイン（絵柄）」のみを生成する。
      * 例: Watch -> "腕時計アイコン", Spotify -> "緑色の音波アイコン", Meet -> "4色のビデオ通話カメラアイコン"
@@ -25,6 +33,37 @@ class VisualAudioDescriptionHelper(private val context: Context) {
         val contentDesc = node.contentDescription?.toString()?.trim()?.lowercase() ?: ""
         val text = (if (nodeText.isNotEmpty()) nodeText else node.text?.toString()?.trim() ?: "").lowercase()
         val combined = "$viewId $contentDesc $text"
+
+        // 英語環境（Shinjiの端末等）では、既にテキストがある要素に日本語の視覚解説を絶対に付加しない！
+        if (!isJapaneseDevice) {
+            if (nodeText.isNotEmpty() || text.isNotEmpty()) return ""
+            return when {
+                combined.contains("search") || combined.contains("find") || combined.contains("magnif") -> "Search"
+                combined.contains("menu") || combined.contains("nav") || combined.contains("drawer") -> "Menu"
+                combined.contains("overflow") || combined.contains("more") || combined.contains("dots") -> "More options"
+                combined.contains("back") || combined.contains("arrow_back") -> "Back"
+                combined.contains("next") || combined.contains("forward") -> "Next"
+                combined.contains("close") || combined.contains("clear") || combined.contains("dismiss") -> "Close"
+                combined.contains("delete") || combined.contains("trash") -> "Delete"
+                combined.contains("add") || combined.contains("plus") || combined.contains("create") -> "Add"
+                combined.contains("share") -> "Share"
+                combined.contains("favorite") || combined.contains("heart") -> "Favorite"
+                combined.contains("star") -> "Star"
+                combined.contains("mic") -> "Microphone"
+                combined.contains("play") -> "Play"
+                combined.contains("pause") -> "Pause"
+                combined.contains("stop") -> "Stop"
+                combined.contains("volume") || combined.contains("speaker") -> "Volume"
+                combined.contains("mute") -> "Mute"
+                combined.contains("download") -> "Download"
+                combined.contains("upload") -> "Upload"
+                combined.contains("bell") || combined.contains("notification") -> "Notification"
+                combined.contains("profile") || combined.contains("avatar") || combined.contains("account") || combined.contains("user") -> "Account"
+                combined.contains("setting") || combined.contains("gear") -> "Settings"
+                combined.contains("camera") -> "Camera"
+                else -> ""
+            }
+        }
 
         return when {
             // ==========================================
@@ -174,6 +213,10 @@ class VisualAudioDescriptionHelper(private val context: Context) {
         // 1. 形状解説から推定（虫眼鏡なら「検索ボタン」など）
         val shape = getVisualShapeDescription(node)
         if (shape.isNotEmpty()) {
+            if (!isJapaneseDevice) {
+                val clean = shape.replace(" icon", "", ignoreCase = true)
+                return if (isClickable) "$clean button" else "$clean icon"
+            }
             val baseName = shape.replace("アイコン", "").replace("マーク", "").replace("ロゴ", "")
             return if (isClickable) "${baseName}ボタン" else shape
         }

@@ -3745,9 +3745,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             if (formattedText.isNotEmpty()) parts.add(formattedText)
         }
 
-        // 3. アイコン形状解説（textと重複しない、視覚的デザイン）を付与
-        // 例: Watch -> "腕時計アイコン", 設定 -> "歯車アイコン"
-        if (shapeDesc.isNotEmpty() && !text.contains(shapeDesc) && !text.contains(shapeDesc.replace("アイコン", "").replace("マーク", ""))) {
+        // 3. アイコン形状解説（textが空で、視覚的デザインしか情報がない要素のみに限定付与）
+        // 既に「Gmail, 4 notifications」などの明確なラベルがある場合は、視覚解説の重複付加で言語汚染・冗長化させない！
+        if (text.isEmpty() && shapeDesc.isNotEmpty()) {
             parts.add(shapeDesc)
         }
 
@@ -4139,7 +4139,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun detectLanguage(
         text: String,
         contextPackage: String? = currentActivePackage,
-        isKeyboard: Boolean = (lastKeyboardHoverNode != null)
+        isKeyboard: Boolean = false
     ): Locale {
         val trimmed = text.trim()
         val systemLocale = Locale.getDefault()

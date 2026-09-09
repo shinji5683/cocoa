@@ -576,14 +576,31 @@ class GeminiNanoEngine(private val context: Context) {
         val hasKana = trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF].*"))
         val hasKanji = trimmed.matches(Regex(".*[\\u4E00-\\u9FAF].*"))
         val hasLatin = trimmed.matches(Regex(".*[a-zA-Z].*"))
+        val latinCount = trimmed.count { it in 'a'..'z' || it in 'A'..'Z' }
+        val japaneseCount = trimmed.count { it in '\u3040'..'\u309F' || it in '\u30A0'..'\u30FF' || it in '\u4E00'..'\u9FAF' }
 
+        // 端末言語が英語（en）の場合の厳格な保護:
+        // 英語端末では、UIやテキストが英語主体（例: "Gmail, 4 notifications"）であれば絶対に英語TTS（systemLocale）を維持！
+        if (sysLang == "en") {
+            if (japaneseCount == 0) {
+                return systemLocale
+            }
+            // 英文主体のテキスト（ラテン文字が日本語文字を上回る場合）は英語TTSを維持
+            if (latinCount > japaneseCount) {
+                return systemLocale
+            }
+            // 漢字・かなが明確に主体のテキスト（日本のWebページや日本語ツイート・メッセージ等）のみ日本語TTSへ切り替え
+            return Locale.JAPANESE
+        }
+
+        // 端末言語が日本語（ja）の場合:
         // かな（ひらがな・カタカナ）が含まれている場合は100%日本語
         if (hasKana) {
             return Locale.JAPANESE
         }
 
         // 漢字が含まれている場合（「確定」「検索」「設定」「東京」等）:
-        // 英語TTSは漢字を一切発音できないため、英語端末であっても確実に日本語TTSにルーティング！
+        // 英語TTSは漢字を一切発音できないため、日本語TTSにルーティング！
         if (hasKanji) {
             return Locale.JAPANESE
         }
