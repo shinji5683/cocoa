@@ -288,4 +288,52 @@
     <string name="update_install_failed">Kan installatieprogramma niet starten: %1$s</string>
     <string name="update_already_latest">Serena is up-to-date (v%1$s).</string>
     <string name="update_checking">Controleren op updates...</string>
+
+    <!-- Universal Externalized Spoken Announcements (Zero-Hardcoding) -->
+    <string name="wifi_connected">Verbonden met wifi. %1$s</string>
+    <string name="wifi_disconnected_cellular">Wifi verbroken. Overgeschakeld naar mobiele data.</string>
+    <string name="wifi_signal_strength_4">Signaalsterkte 4 streepjes, maximaal</string>
+    <string name="wifi_signal_strength_3">Signaalsterkte 3 streepjes, goed</string>
+    <string name="wifi_signal_strength_2">Signaalsterkte 2 streepjes, redelijk</string>
+    <string name="wifi_signal_strength_1">Signaalsterkte 1 streepje, zwak</string>
+    <string name="wifi_signal_strength_0">Signaal zeer zwak</string>
+    <string name="wifi_status_named">Netwerknaam: %1$s, %2$s</string>
+    <string name="wifi_status_brief">Wifi: %1$s, %2$s</string>
+    <string name="wifi_status_connected">Verbonden met wifi, %1$s</string>
+    <string name="wifi_status_disconnected">Geen wifi-verbinding</string>
+
+    <string name="battery_charging_started">%1$s gestart. Batterijniveau is %2$d procent.</string>
+    <string name="battery_discharging_started">Oplader ontkoppeld. Overgeschakeld naar batterijvoeding. Batterijniveau is %1$d procent.</string>
+    <string name="battery_fully_charged">Batterij is 100 procent volledig opgeladen. U kunt de oplader loskoppelen.</string>
+    <string name="battery_overheat_warning">Waarschuwing. Batterijtemperatuur is hoog met %1$d graden. Koppel de oplader los of laat uw apparaat rusten.</string>
+    <string name="battery_source_ac">netstroom</string>
+    <string name="battery_source_usb">USB</string>
+    <string name="battery_source_wireless">draadloze oplader</string>
+    <string name="battery_source_dock">oplaaddock</string>
+    <string name="battery_source_generic">oplader</string>
+    <string name="battery_speed_fast">snelladen</string>
+    <string name="battery_speed_standard">normaal laden</string>
+    <string name="battery_speed_slow">langzaam laden</string>
+    <string name="battery_speed_generic">opladen</string>
+    <string name="battery_details_format">%2$s via %1$s</string>
+
+    <string name="call_started">%1$s-oproep gestart%2$s.</string>
+    <string name="call_ended_with_duration">%1$s-oproep beëindigd. Totale gespreksduur was %2$s.</string>
+    <string name="call_incoming_named">Inkomende %1$s-oproep van %2$s</string>
+    <string name="call_incoming_generic">Inkomende oproep van %1$s</string>
+    <string name="call_periodic_elapsed">Huidige gespreksduur: %1$s</string>
+    <string name="call_no_active">Geen actieve oproep op dit moment</string>
+    <string name="call_current_duration">Huidige duur van %1$s-oproep: %2$s</string>
+    <string name="call_btn_answer_not_found">Beantwoordknop niet gevonden</string>
+    <string name="call_btn_hangup_not_found">Ophangknop niet gevonden</string>
+    <string name="duration_hour">%1$d uur</string>
+    <string name="duration_minute">%1$d min</string>
+    <string name="duration_second">%1$d sec</string>
+    <string name="call_app_phone">Telefoon</string>
+
+    <string name="braille_connected">Brailleleesregel %1$s verbonden</string>
+    <string name="braille_disconnected">Brailleleesregel %1$s verbroken</string>
+    <string name="ai_voice_assistant_launching">AI-spraakassistent starten</string>
+    <string name="action_executed_format">%1$s uitgevoerd</string>
+    <string name="status_location_format">Huidige locatie: %1$s</string>
 </resources>

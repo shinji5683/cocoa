@@ -5,6 +5,7 @@ import android.os.SystemClock
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import com.shinji.serena.GranularityMode
+import com.shinji.serena.R
 import com.shinji.serena.SerenaScreenReaderService
 
 /**
@@ -169,13 +170,13 @@ class SerenaGestureDispatcher(
             // 1本指 L字角形ジェスチャー
             AccessibilityService.GESTURE_SWIPE_RIGHT_AND_DOWN -> {
                 service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS)
-                service.speak("通知領域を開きました", TextToSpeech.QUEUE_FLUSH)
+                service.speak(service.getString(R.string.gesture_notifications), TextToSpeech.QUEUE_FLUSH)
                 return true
             }
             AccessibilityService.GESTURE_SWIPE_UP_AND_LEFT -> {
                 service.dismissActiveMenu()
                 service.soundHelper?.playClick()
-                service.speak("ホーム画面", TextToSpeech.QUEUE_FLUSH)
+                service.speak(service.getString(R.string.gesture_home), TextToSpeech.QUEUE_FLUSH)
                 service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
                 return true
             }
@@ -184,7 +185,7 @@ class SerenaGestureDispatcher(
                     return true
                 }
                 service.soundHelper?.playClick()
-                service.speak("戻る", TextToSpeech.QUEUE_FLUSH)
+                service.speak(service.getString(R.string.gesture_back), TextToSpeech.QUEUE_FLUSH)
                 service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
                 return true
             }

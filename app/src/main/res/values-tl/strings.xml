@@ -272,4 +272,52 @@
     <string name="update_install_failed">Nabigong buksan ang installer: %1$s</string>
     <string name="update_already_latest">Ang Serena ay napapanahon na (v%1$s).</string>
     <string name="update_checking">Sinusuri ang mga update...</string>
+
+    <!-- Universal Externalized Spoken Announcements (Zero-Hardcoding) -->
+    <string name="wifi_connected">Konektado na sa Wi-Fi. %1$s</string>
+    <string name="wifi_disconnected_cellular">Nadiskonekta ang Wi-Fi. Lumipat sa mobile data.</string>
+    <string name="wifi_signal_strength_4">Lakas ng signal 4 na bar, pinakamalakas</string>
+    <string name="wifi_signal_strength_3">Lakas ng signal 3 bar, maganda</string>
+    <string name="wifi_signal_strength_2">Lakas ng signal 2 bar, katamtaman</string>
+    <string name="wifi_signal_strength_1">Lakas ng signal 1 bar, mahina</string>
+    <string name="wifi_signal_strength_0">Napakainang signal</string>
+    <string name="wifi_status_named">Pangalan ng network: %1$s, %2$s</string>
+    <string name="wifi_status_brief">Wi-Fi: %1$s, %2$s</string>
+    <string name="wifi_status_connected">Konektado sa Wi-Fi, %1$s</string>
+    <string name="wifi_status_disconnected">Hindi konektado sa Wi-Fi</string>
+
+    <string name="battery_charging_started">Nagsimula ang %1$s. Antas ng baterya ay %2$d porsyento.</string>
+    <string name="battery_discharging_started">Tinanggal ang charger. Lumipat sa lakas ng baterya. Antas ng baterya ay %1$d porsyento.</string>
+    <string name="battery_fully_charged">Puno na ang baterya sa 100 porsyento. Maaari mo nang tanggalin ang charger.</string>
+    <string name="battery_overheat_warning">Babala. Mataas ang temperatura ng baterya sa %1$d na grado. Paki-unplug ang charger o pahingahin ang device.</string>
+    <string name="battery_source_ac">AC power</string>
+    <string name="battery_source_usb">USB</string>
+    <string name="battery_source_wireless">wireless charger</string>
+    <string name="battery_source_dock">dock</string>
+    <string name="battery_source_generic">charger</string>
+    <string name="battery_speed_fast">mabilis na pag-charge</string>
+    <string name="battery_speed_standard">karaniwang pag-charge</string>
+    <string name="battery_speed_slow">mababang bilis ng pag-charge</string>
+    <string name="battery_speed_generic">nagcha-charge</string>
+    <string name="battery_details_format">%2$s sa pamamagitan ng %1$s</string>
+
+    <string name="call_started">Nagsimula ang tawag sa %1$s%2$s.</string>
+    <string name="call_ended_with_duration">Natapos ang tawag sa %1$s. Ang kabuuang tagal ay %2$s.</string>
+    <string name="call_incoming_named">Papasok na tawag sa %1$s mula kay %2$s</string>
+    <string name="call_incoming_generic">Papasok na tawag mula sa %1$s</string>
+    <string name="call_periodic_elapsed">Kasalukuyang tagal ng tawag: %1$s</string>
+    <string name="call_no_active">Walang aktibong tawag sa ngayon</string>
+    <string name="call_current_duration">Kasalukuyang tagal ng tawag sa %1$s: %2$s</string>
+    <string name="call_btn_answer_not_found">Hindi nahanap ang button para sumagot</string>
+    <string name="call_btn_hangup_not_found">Hindi nahanap ang button para ibaba ang tawag</string>
+    <string name="duration_hour">%1$d oras</string>
+    <string name="duration_minute">%1$d min</string>
+    <string name="duration_second">%1$d seg</string>
+    <string name="call_app_phone">Telepono</string>
+
+    <string name="braille_connected">Konektado na ang braille display na %1$s</string>
+    <string name="braille_disconnected">Nadiskonekta ang braille display na %1$s</string>
+    <string name="ai_voice_assistant_launching">Sinisimulan ang AI voice assistant</string>
+    <string name="action_executed_format">Isinagawa ang %1$s</string>
+    <string name="status_location_format">Kasalukuyang lokasyon: %1$s</string>
 </resources>

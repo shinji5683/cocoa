@@ -11,6 +11,7 @@ import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
+import com.shinji.serena.R
 import com.shinji.serena.SerenaScreenReaderService
 import com.shinji.serena.getSafeSharedPreferences
 import com.shinji.serena.speech.SerenaSpeechEngine
@@ -100,13 +101,13 @@ class SerenaCallManager(
     fun onCallStarted(appName: String, extraInfo: String = "") {
         if (isCallActive) return
         isCallActive = true
-        activeCallApp = if (appName.isNotEmpty()) appName else "電話"
+        activeCallApp = if (appName.isNotEmpty()) appName else service.getString(R.string.call_app_phone)
         callStartTimeMs = SystemClock.elapsedRealtime()
         lastAnnouncedMinute = 0L
         service.soundHelper?.playActionDone()
 
         val extra = if (extraInfo.isNotEmpty()) "（${extraInfo}）" else ""
-        service.speak("${activeCallApp}の通話を開始しました${extra}。", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        service.speak(service.getString(R.string.call_started, activeCallApp, extra), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
         Log.i(TAG, "onCallStarted: $activeCallApp at $callStartTimeMs")
     }
 
@@ -115,10 +116,10 @@ class SerenaCallManager(
         isCallActive = false
         val elapsedMs = (SystemClock.elapsedRealtime() - callStartTimeMs).coerceAtLeast(1000L)
         val durationText = formatDuration(elapsedMs)
-        val appLabel = if (appName.isNotEmpty()) appName else if (activeCallApp.isNotEmpty()) activeCallApp else "電話"
+        val appLabel = if (appName.isNotEmpty()) appName else if (activeCallApp.isNotEmpty()) activeCallApp else service.getString(R.string.call_app_phone)
         
         service.soundHelper?.playActionDone()
-        service.speak("${appLabel}の通話が終了しました。合計通話時間は ${durationText} でした。", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        service.speak(service.getString(R.string.call_ended_with_duration, appLabel, durationText), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
         Log.i(TAG, "onCallEnded: $appLabel. Duration: $durationText")
 
         activeCallApp = ""
@@ -156,9 +157,9 @@ class SerenaCallManager(
             callerName = extractNameFromText(windowText)
             val appLabel = getMessagingAppName(pkgName)
             if (callerName.isNotEmpty()) {
-                service.speak("${appLabel}で${callerName}さんから着信です", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+                service.speak(service.getString(R.string.call_incoming_named, appLabel, callerName), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             } else {
-                service.speak("${appLabel}から着信です", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+                service.speak(service.getString(R.string.call_incoming_generic, appLabel), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             }
         }
 
@@ -177,7 +178,7 @@ class SerenaCallManager(
                 if (currentMinutes > 0 && currentMinutes > lastAnnouncedMinute) {
                     lastAnnouncedMinute = currentMinutes
                     val timeToAnnounce = formatDuration(elapsedMs)
-                    service.speak("現在、通話時間 ${timeToAnnounce} 経過しています", android.speech.tts.TextToSpeech.QUEUE_ADD)
+                    service.speak(service.getString(R.string.call_periodic_elapsed, timeToAnnounce), android.speech.tts.TextToSpeech.QUEUE_ADD)
                 }
             }
         }
@@ -189,12 +190,12 @@ class SerenaCallManager(
 
     fun announceCurrentCallDuration() {
         if (!isCallActive || callStartTimeMs <= 0L) {
-            service.speak("現在、アクティブな通話はありません", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            service.speak(service.getString(R.string.call_no_active), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return
         }
         val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
         val durationText = formatDuration(elapsedMs)
-        service.speak("現在、${activeCallApp}の通話時間は ${durationText} 経過しています", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        service.speak(service.getString(R.string.call_current_duration, activeCallApp, durationText), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
     }
 
     fun isCallActive(): Boolean = isCallActive
@@ -234,7 +235,7 @@ class SerenaCallManager(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && telecomManager != null) {
                 if (audioManager?.mode == AudioManager.MODE_RINGTONE || telecomManager.isInCall) {
                     telecomManager.acceptRingingCall()
-                    service.speak("通話を応答しました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+                    service.speak(service.getString(R.string.call_answered), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
                     return true
                 }
             }
@@ -256,11 +257,11 @@ class SerenaCallManager(
                 }
             }
 
-            service.speak("通話を応答しました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            service.speak(service.getString(R.string.call_answered), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return true
         }
 
-        service.speak("応答ボタンが見つかりませんでした", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        service.speak(service.getString(R.string.call_btn_answer_not_found), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
         return false
     }
 
@@ -269,7 +270,7 @@ class SerenaCallManager(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && telecomManager != null) {
                 if (isCallActive || audioManager?.mode == AudioManager.MODE_IN_CALL) {
                     if (telecomManager.endCall()) {
-                        service.speak("通話を終了しました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+                        service.speak(service.getString(R.string.call_ended), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
                         return true
                     }
                 }
@@ -292,11 +293,11 @@ class SerenaCallManager(
                 }
             }
 
-            service.speak("通話を終了しました", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+            service.speak(service.getString(R.string.call_ended), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
             return true
         }
 
-        service.speak("切断ボタンが見つかりませんでした", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        service.speak(service.getString(R.string.call_btn_hangup_not_found), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
         return false
     }
 
@@ -331,9 +332,9 @@ class SerenaCallManager(
         val seconds = totalSeconds % 60
 
         val parts = mutableListOf<String>()
-        if (hours > 0) parts.add("${hours}時間")
-        if (minutes > 0 || hours > 0) parts.add("${minutes}分")
-        parts.add("${seconds}秒")
+        if (hours > 0) parts.add(service.getString(R.string.duration_hour, hours))
+        if (minutes > 0 || hours > 0) parts.add(service.getString(R.string.duration_minute, minutes))
+        parts.add(service.getString(R.string.duration_second, seconds))
 
         return parts.joinToString(" ")
     }

@@ -131,7 +131,9 @@ class StatusAnnouncementHelper(private val context: Context) {
             // 位置情報は非同期で取得でき次第、追加通知（ブロック完全排除）
             locationHelper.getCurrentLocationAddress { locStr ->
                 if (locStr.isNotEmpty()) {
-                    SerenaScreenReaderService.instance?.speak("現在地: $locStr", android.speech.tts.TextToSpeech.QUEUE_ADD)
+                    val svc = SerenaScreenReaderService.instance
+                    val msg = svc?.getString(R.string.status_location_format, locStr) ?: "現在地: $locStr"
+                    svc?.speak(msg, android.speech.tts.TextToSpeech.QUEUE_ADD)
                 }
             }
         }

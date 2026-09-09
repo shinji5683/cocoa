@@ -47,13 +47,13 @@ class BatteryStateHelper(
                 Intent.ACTION_POWER_CONNECTED -> {
                     service.soundHelper?.playActionDone()
                     val chargingDetails = getChargingDetailsDesc(intent, plugged)
-                    service.speak("${chargingDetails}を開始しました。バッテリー残量は${pct}パーセントです。", TextToSpeech.QUEUE_FLUSH)
+                    service.speak(service.getString(R.string.battery_charging_started, chargingDetails, pct), TextToSpeech.QUEUE_FLUSH)
                     lastChargingState = true
                     lastPluggedType = plugged
                 }
                 Intent.ACTION_POWER_DISCONNECTED -> {
                     service.soundHelper?.playFocusMove()
-                    service.speak("充電器が外れました。バッテリー駆動に切り替わりました。バッテリー残量は${pct}パーセントです。", TextToSpeech.QUEUE_FLUSH)
+                    service.speak(service.getString(R.string.battery_discharging_started, pct), TextToSpeech.QUEUE_FLUSH)
                     lastChargingState = false
                     lastPluggedType = -1
                     hasAnnouncedFull = false
@@ -65,7 +65,7 @@ class BatteryStateHelper(
                         lastPluggedType = plugged
                         val chargingDetails = getChargingDetailsDesc(intent, plugged)
                         service.soundHelper?.playActionDone()
-                        service.speak("${chargingDetails}を開始しました。バッテリー残量は${pct}パーセントです。", TextToSpeech.QUEUE_ADD)
+                        service.speak(service.getString(R.string.battery_charging_started, chargingDetails, pct), TextToSpeech.QUEUE_ADD)
                     } else if (!isCharging && lastChargingState) {
                         lastChargingState = false
                         lastPluggedType = -1
@@ -76,7 +76,7 @@ class BatteryStateHelper(
                     if (isFull && isCharging && !hasAnnouncedFull) {
                         hasAnnouncedFull = true
                         service.soundHelper?.playFullChargeJingle()
-                        service.speak("バッテリーが100パーセント満充電になりました。充電器を取り外せます。", TextToSpeech.QUEUE_ADD)
+                        service.speak(service.getString(R.string.battery_fully_charged), TextToSpeech.QUEUE_ADD)
                     }
 
                     // バッテリー発熱警告（45℃以上）
@@ -86,7 +86,7 @@ class BatteryStateHelper(
                         if (tempCelsius >= 45 && !hasAnnouncedOverheat) {
                             hasAnnouncedOverheat = true
                             service.soundHelper?.playWarningSound()
-                            service.speak("警告。バッテリー温度が${tempCelsius}度と高温になっています。充電器を外すか、端末を休ませてください。", TextToSpeech.QUEUE_ADD)
+                            service.speak(service.getString(R.string.battery_overheat_warning, tempCelsius), TextToSpeech.QUEUE_ADD)
                         } else if (tempCelsius < 40) {
                             hasAnnouncedOverheat = false
                         }
@@ -129,15 +129,15 @@ class BatteryStateHelper(
 
     private fun getChargingDetailsDesc(intent: Intent, plugged: Int): String {
         val source = when (plugged) {
-            BatteryManager.BATTERY_PLUGGED_AC -> "AC電源"
-            BatteryManager.BATTERY_PLUGGED_USB -> "USB"
-            BatteryManager.BATTERY_PLUGGED_WIRELESS -> "ワイヤレス"
-            4 -> "専用ドック"
-            else -> "充電器"
+            BatteryManager.BATTERY_PLUGGED_AC -> service.getString(R.string.battery_source_ac)
+            BatteryManager.BATTERY_PLUGGED_USB -> service.getString(R.string.battery_source_usb)
+            BatteryManager.BATTERY_PLUGGED_WIRELESS -> service.getString(R.string.battery_source_wireless)
+            4 -> service.getString(R.string.battery_source_dock)
+            else -> service.getString(R.string.battery_source_generic)
         }
 
         // 充電速度判定 (急速 / 普通 / 低速)
-        var speed = "普通充電"
+        var speed = service.getString(R.string.battery_speed_standard)
         try {
             val bm = service.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
             var currentMicroAmps = intent.getIntExtra("max_charging_current", -1)
@@ -150,31 +150,31 @@ class BatteryStateHelper(
             if (currentMicroAmps > 0 && voltageMicroVolts > 0) {
                 val watts = (currentMicroAmps / 1_000_000.0) * (voltageMicroVolts / 1_000_000.0)
                 speed = when {
-                    watts >= 15.0 -> "急速充電"
-                    watts >= 7.0 -> "普通充電"
-                    else -> "低速充電"
+                    watts >= 15.0 -> service.getString(R.string.battery_speed_fast)
+                    watts >= 7.0 -> service.getString(R.string.battery_speed_standard)
+                    else -> service.getString(R.string.battery_speed_slow)
                 }
             } else if (currentMicroAmps > 0) {
                 val milliamps = kotlin.math.abs(currentMicroAmps) / 1000
                 speed = when {
-                    milliamps >= 2000 -> "急速充電"
-                    milliamps >= 1000 -> "普通充電"
-                    else -> "低速充電"
+                    milliamps >= 2000 -> service.getString(R.string.battery_speed_fast)
+                    milliamps >= 1000 -> service.getString(R.string.battery_speed_standard)
+                    else -> service.getString(R.string.battery_speed_slow)
                 }
             } else {
                 // 電流取得不可時のフォールバック
                 speed = when (plugged) {
-                    BatteryManager.BATTERY_PLUGGED_AC -> "急速充電"
-                    BatteryManager.BATTERY_PLUGGED_WIRELESS -> "普通充電"
-                    BatteryManager.BATTERY_PLUGGED_USB -> "低速充電"
-                    else -> "充電"
+                    BatteryManager.BATTERY_PLUGGED_AC -> service.getString(R.string.battery_speed_fast)
+                    BatteryManager.BATTERY_PLUGGED_WIRELESS -> service.getString(R.string.battery_speed_standard)
+                    BatteryManager.BATTERY_PLUGGED_USB -> service.getString(R.string.battery_speed_slow)
+                    else -> service.getString(R.string.battery_speed_generic)
                 }
             }
         } catch (_: Exception) {
-            speed = if (plugged == BatteryManager.BATTERY_PLUGGED_AC) "急速充電" else "充電"
+            speed = if (plugged == BatteryManager.BATTERY_PLUGGED_AC) service.getString(R.string.battery_speed_fast) else service.getString(R.string.battery_speed_generic)
         }
 
-        return "${source}から${speed}"
+        return service.getString(R.string.battery_details_format, source, speed)
     }
 
     private fun getBatteryPercentage(intent: Intent): Int {

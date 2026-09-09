@@ -251,11 +251,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 override fun onBrailleConnectionStateChanged(connected: Boolean, deviceName: String) {
                     if (connected) {
                         soundHelper?.playActionDone()
-                        speak("点字ディスプレイ $deviceName に接続しました", TextToSpeech.QUEUE_FLUSH)
+                        speak(getString(R.string.braille_connected, deviceName), TextToSpeech.QUEUE_FLUSH)
                     } else {
                         soundHelper?.playScroll()
                         if (deviceName.isNotEmpty()) {
-                            speak("点字ディスプレイ $deviceName が切断されました", TextToSpeech.QUEUE_FLUSH)
+                            speak(getString(R.string.braille_disconnected, deviceName), TextToSpeech.QUEUE_FLUSH)
                         }
                     }
                 }
@@ -581,7 +581,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             // 3本指左フリック (31): Serena AI Voice アシスタントを即時起動！
             31 -> {
                 soundHelper?.playActionDone()
-                speak("AIボイスアシスタントを起動します", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.ai_voice_assistant_launching), TextToSpeech.QUEUE_FLUSH)
                 launchAiAssistant()
                 return true
             }
@@ -840,7 +840,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val success = node.performAction(actionItem.action.id)
             if (success) {
                 soundHelper?.playActionDone()
-                speak("${actionItem.action.label} を実行しました", TextToSpeech.QUEUE_FLUSH)
+                speak(getString(R.string.action_executed_format, actionItem.action.label ?: ""), TextToSpeech.QUEUE_FLUSH)
                 return true
             }
         }

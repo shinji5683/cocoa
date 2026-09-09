@@ -319,4 +319,52 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <string name="update_install_failed">Error al iniciar el instalador: %1$s</string>
     <string name="update_already_latest">Serena ya está actualizada (v%1$s).</string>
     <string name="update_checking">Buscando actualizaciones...</string>
+
+    <!-- Universal Externalized Spoken Announcements (Zero-Hardcoding) -->
+    <string name="wifi_connected">Conectado a Wi-Fi. %1$s</string>
+    <string name="wifi_disconnected_cellular">Wi-Fi desconectado. Cambiado a datos móviles.</string>
+    <string name="wifi_signal_strength_4">Señal de 4 barras, máxima</string>
+    <string name="wifi_signal_strength_3">Señal de 3 barras, buena</string>
+    <string name="wifi_signal_strength_2">Señal de 2 barras, regular</string>
+    <string name="wifi_signal_strength_1">Señal de 1 barra, débil</string>
+    <string name="wifi_signal_strength_0">Señal muy débil</string>
+    <string name="wifi_status_named">Nombre de red: %1$s, %2$s</string>
+    <string name="wifi_status_brief">Wi-Fi: %1$s, %2$s</string>
+    <string name="wifi_status_connected">Conectado a Wi-Fi, %1$s</string>
+    <string name="wifi_status_disconnected">Wi-Fi no conectado</string>
+
+    <string name="battery_charging_started">Se inició %1$s. Nivel de batería al %2$d por ciento.</string>
+    <string name="battery_discharging_started">Cargador desconectado. Cambiado a energía de batería. Nivel de batería al %1$d por ciento.</string>
+    <string name="battery_fully_charged">La batería está completamente cargada al 100 por ciento. Puede desconectar el cargador.</string>
+    <string name="battery_overheat_warning">Advertencia. La temperatura de la batería es alta a %1$d grados. Desconecte el cargador o deje descansar el dispositivo.</string>
+    <string name="battery_source_ac">corriente CA</string>
+    <string name="battery_source_usb">USB</string>
+    <string name="battery_source_wireless">cargador inalámbrico</string>
+    <string name="battery_source_dock">base de carga</string>
+    <string name="battery_source_generic">cargador</string>
+    <string name="battery_speed_fast">carga rápida</string>
+    <string name="battery_speed_standard">carga estándar</string>
+    <string name="battery_speed_slow">carga lenta</string>
+    <string name="battery_speed_generic">cargando</string>
+    <string name="battery_details_format">%2$s mediante %1$s</string>
+
+    <string name="call_started">Se inició llamada de %1$s%2$s.</string>
+    <string name="call_ended_with_duration">Llamada de %1$s finalizada. La duración total fue %2$s.</string>
+    <string name="call_incoming_named">Llamada entrante de %1$s de %2$s</string>
+    <string name="call_incoming_generic">Llamada entrante de %1$s</string>
+    <string name="call_periodic_elapsed">Duración actual de la llamada: %1$s</string>
+    <string name="call_no_active">No hay ninguna llamada activa en este momento</string>
+    <string name="call_current_duration">Duración actual de la llamada de %1$s: %2$s</string>
+    <string name="call_btn_answer_not_found">No se encontró el botón de responder</string>
+    <string name="call_btn_hangup_not_found">No se encontró el botón de colgar</string>
+    <string name="duration_hour">%1$d h</string>
+    <string name="duration_minute">%1$d min</string>
+    <string name="duration_second">%1$d seg</string>
+    <string name="call_app_phone">Teléfono</string>
+
+    <string name="braille_connected">Pantalla braille %1$s conectada</string>
+    <string name="braille_disconnected">Pantalla braille %1$s desconectada</string>
+    <string name="ai_voice_assistant_launching">Iniciando asistente de voz con IA</string>
+    <string name="action_executed_format">Ejecutado %1$s</string>
+    <string name="status_location_format">Ubicación actual: %1$s</string>
 </resources>

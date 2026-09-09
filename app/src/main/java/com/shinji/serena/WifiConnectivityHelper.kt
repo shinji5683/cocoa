@@ -60,29 +60,39 @@ class WifiConnectivityHelper(
                         @Suppress("DEPRECATION")
                         WifiManager.calculateSignalLevel(rssi, 5)
                     }
-                    val levelText = getLevelDescription(level)
+                    val levelText = getLevelDescription(level, context)
                     val rawSsid = info?.ssid?.replace("\"", "")?.trim()
 
                     if (!rawSsid.isNullOrEmpty() && rawSsid != "<unknown ssid>" && rawSsid != "0x") {
-                        "Wi-Fi: ${rawSsid}、${levelText}"
+                        context.getString(R.string.wifi_status_brief, rawSsid, levelText)
                     } else {
-                        "Wi-Fi接続中、${levelText}"
+                        context.getString(R.string.wifi_status_connected, levelText)
                     }
                 } else {
-                    "Wi-Fi未接続"
+                    context.getString(R.string.wifi_status_disconnected)
                 }
             } catch (e: Exception) {
-                "Wi-Fi未接続"
+                context.getString(R.string.wifi_status_disconnected)
             }
         }
 
-        fun getLevelDescription(level: Int): String {
+        fun getLevelDescription(level: Int, context: Context? = null): String {
+            if (context != null) {
+                val resId = when (level) {
+                    4 -> R.string.wifi_signal_strength_4
+                    3 -> R.string.wifi_signal_strength_3
+                    2 -> R.string.wifi_signal_strength_2
+                    1 -> R.string.wifi_signal_strength_1
+                    else -> R.string.wifi_signal_strength_0
+                }
+                return context.getString(resId)
+            }
             return when (level) {
-                4 -> "電波4本最強"
-                3 -> "電波3本良好"
-                2 -> "電波2本普通"
-                1 -> "電波1本やや弱い"
-                else -> "電波微弱"
+                4 -> "4"
+                3 -> "3"
+                2 -> "2"
+                1 -> "1"
+                else -> "0"
             }
         }
     }
@@ -101,7 +111,7 @@ class WifiConnectivityHelper(
             service.soundHelper?.playActionDone()
             val wifiInfo = getRealtimeWifiStatus()
             lastWasConnected = true
-            service.speak("Wi-Fiに接続しました。$wifiInfo", TextToSpeech.QUEUE_ADD)
+            service.speak(service.getString(R.string.wifi_connected, wifiInfo), TextToSpeech.QUEUE_ADD)
         }
 
         override fun onLost(network: Network) {
@@ -110,7 +120,7 @@ class WifiConnectivityHelper(
             if (lastWasConnected) {
                 lastWasConnected = false
                 service.soundHelper?.playFocusMove()
-                service.speak("Wi-Fiが切断されました。モバイル通信に切り替わりました。", TextToSpeech.QUEUE_ADD)
+                service.speak(service.getString(R.string.wifi_disconnected_cellular), TextToSpeech.QUEUE_ADD)
             }
         }
 
@@ -130,7 +140,7 @@ class WifiConnectivityHelper(
                 }
 
                 if (lastSignalLevel >= 0 && Math.abs(level - lastSignalLevel) >= 2) {
-                    val levelDesc = getLevelDescription(level)
+                    val levelDesc = getLevelDescription(level, service)
                     Log.i(TAG, "Wi-Fi signal changed to: $levelDesc")
                 }
                 lastSignalLevel = level
@@ -202,18 +212,18 @@ class WifiConnectivityHelper(
                     WifiManager.calculateSignalLevel(rssi, 5)
                 }
 
-                val levelDesc = getLevelDescription(level)
+                val levelDesc = getLevelDescription(level, service)
                 if (!ssid.isNullOrEmpty() && ssid != "<unknown ssid>" && ssid != "0x") {
-                    "ネットワーク名: ${ssid}、${levelDesc}"
+                    service.getString(R.string.wifi_status_named, ssid, levelDesc)
                 } else {
                     levelDesc
                 }
             } else {
-                "Wi-Fi未接続"
+                service.getString(R.string.wifi_status_disconnected)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting realtime wifi status: ${e.message}")
-            "Wi-Fi未接続"
+            service.getString(R.string.wifi_status_disconnected)
         }
     }
 }

@@ -288,4 +288,52 @@
     <string name="update_install_failed">インストーラーの起動に失敗しました: %1$s</string>
     <string name="update_already_latest">Serenaは最新バージョン (v%1$s) です。</string>
     <string name="update_checking">アップデートを確認中...</string>
+
+    <!-- Universal Externalized Spoken Announcements (Zero-Hardcoding) -->
+    <string name="wifi_connected">Wi-Fiに接続しました。%1$s</string>
+    <string name="wifi_disconnected_cellular">Wi-Fiが切断されました。モバイル通信に切り替わりました。</string>
+    <string name="wifi_signal_strength_4">電波4本最強</string>
+    <string name="wifi_signal_strength_3">電波3本良好</string>
+    <string name="wifi_signal_strength_2">電波2本普通</string>
+    <string name="wifi_signal_strength_1">電波1本やや弱い</string>
+    <string name="wifi_signal_strength_0">電波微弱</string>
+    <string name="wifi_status_named">ネットワーク名: %1$s、%2$s</string>
+    <string name="wifi_status_brief">Wi-Fi: %1$s、%2$s</string>
+    <string name="wifi_status_connected">Wi-Fi接続中、%1$s</string>
+    <string name="wifi_status_disconnected">Wi-Fi未接続</string>
+
+    <string name="battery_charging_started">%1$sを開始しました。バッテリー残量は%2$dパーセントです。</string>
+    <string name="battery_discharging_started">充電器が外れました。バッテリー駆動に切り替わりました。バッテリー残量は%1$dパーセントです。</string>
+    <string name="battery_fully_charged">バッテリーが100パーセント満充電になりました。充電器を取り外せます。</string>
+    <string name="battery_overheat_warning">警告。バッテリー温度が%1$d度と高温になっています。充電器を外すか、端末を休ませてください。</string>
+    <string name="battery_source_ac">AC電源</string>
+    <string name="battery_source_usb">USB</string>
+    <string name="battery_source_wireless">ワイヤレス</string>
+    <string name="battery_source_dock">専用ドック</string>
+    <string name="battery_source_generic">充電器</string>
+    <string name="battery_speed_fast">急速充電</string>
+    <string name="battery_speed_standard">普通充電</string>
+    <string name="battery_speed_slow">低速充電</string>
+    <string name="battery_speed_generic">充電</string>
+    <string name="battery_details_format">%1$sから%2$s</string>
+
+    <string name="call_started">%1$sの通話を開始しました%2$s。</string>
+    <string name="call_ended_with_duration">%1$sの通話が終了しました。合計通話時間は %2$s でした。</string>
+    <string name="call_incoming_named">%1$sで%2$sさんから着信です</string>
+    <string name="call_incoming_generic">%1$sから着信です</string>
+    <string name="call_periodic_elapsed">現在、通話時間 %1$s 経過しています</string>
+    <string name="call_no_active">現在、アクティブな通話はありません</string>
+    <string name="call_current_duration">現在、%1$sの通話時間は %2$s 経過しています</string>
+    <string name="call_btn_answer_not_found">応答ボタンが見つかりませんでした</string>
+    <string name="call_btn_hangup_not_found">切断ボタンが見つかりませんでした</string>
+    <string name="duration_hour">%1$d時間</string>
+    <string name="duration_minute">%1$d分</string>
+    <string name="duration_second">%1$d秒</string>
+    <string name="call_app_phone">電話</string>
+
+    <string name="braille_connected">点字ディスプレイ %1$s に接続しました</string>
+    <string name="braille_disconnected">点字ディスプレイ %1$s が切断されました</string>
+    <string name="ai_voice_assistant_launching">AIボイスアシスタントを起動します</string>
+    <string name="action_executed_format">%1$s を実行しました</string>
+    <string name="status_location_format">現在地: %1$s</string>
 </resources>

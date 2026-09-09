@@ -288,4 +288,52 @@
     <string name="update_install_failed">Failed to launch installer: %1$s</string>
     <string name="update_already_latest">Serena is up to date (v%1$s).</string>
     <string name="update_checking">Checking for updates...</string>
+
+    <!-- Universal Externalized Spoken Announcements (Zero-Hardcoding) -->
+    <string name="wifi_connected">Connected to Wi-Fi. %1$s</string>
+    <string name="wifi_disconnected_cellular">Wi-Fi disconnected. Switched to mobile data.</string>
+    <string name="wifi_signal_strength_4">Signal strength 4 bars, maximum</string>
+    <string name="wifi_signal_strength_3">Signal strength 3 bars, good</string>
+    <string name="wifi_signal_strength_2">Signal strength 2 bars, fair</string>
+    <string name="wifi_signal_strength_1">Signal strength 1 bar, weak</string>
+    <string name="wifi_signal_strength_0">Signal very weak</string>
+    <string name="wifi_status_named">Network name: %1$s, %2$s</string>
+    <string name="wifi_status_brief">Wi-Fi: %1$s, %2$s</string>
+    <string name="wifi_status_connected">Connected to Wi-Fi, %1$s</string>
+    <string name="wifi_status_disconnected">Wi-Fi disconnected</string>
+
+    <string name="battery_charging_started">Started %1$s. Battery level is %2$d percent.</string>
+    <string name="battery_discharging_started">Charger unplugged. Switched to battery power. Battery level is %1$d percent.</string>
+    <string name="battery_fully_charged">Battery is fully charged at 100 percent. You may unplug the charger.</string>
+    <string name="battery_overheat_warning">Warning. Battery temperature is high at %1$d degrees. Please unplug the charger or let your device rest.</string>
+    <string name="battery_source_ac">AC power</string>
+    <string name="battery_source_usb">USB</string>
+    <string name="battery_source_wireless">wireless charger</string>
+    <string name="battery_source_dock">dock</string>
+    <string name="battery_source_generic">charger</string>
+    <string name="battery_speed_fast">fast charging</string>
+    <string name="battery_speed_standard">charging</string>
+    <string name="battery_speed_slow">slow charging</string>
+    <string name="battery_speed_generic">charging</string>
+    <string name="battery_details_format">%2$s via %1$s</string>
+
+    <string name="call_started">Started %1$s call%2$s.</string>
+    <string name="call_ended_with_duration">%1$s call ended. Total duration was %2$s.</string>
+    <string name="call_incoming_named">Incoming %1$s call from %2$s</string>
+    <string name="call_incoming_generic">Incoming call from %1$s</string>
+    <string name="call_periodic_elapsed">Current call duration: %1$s</string>
+    <string name="call_no_active">No active call at the moment</string>
+    <string name="call_current_duration">Current %1$s call duration: %2$s</string>
+    <string name="call_btn_answer_not_found">Answer button not found</string>
+    <string name="call_btn_hangup_not_found">End call button not found</string>
+    <string name="duration_hour">%1$d hr</string>
+    <string name="duration_minute">%1$d min</string>
+    <string name="duration_second">%1$d sec</string>
+    <string name="call_app_phone">Phone</string>
+
+    <string name="braille_connected">Braille display %1$s connected</string>
+    <string name="braille_disconnected">Braille display %1$s disconnected</string>
+    <string name="ai_voice_assistant_launching">Starting AI voice assistant</string>
+    <string name="action_executed_format">Executed %1$s</string>
+    <string name="status_location_format">Current location: %1$s</string>
 </resources>
