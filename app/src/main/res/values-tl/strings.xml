@@ -243,4 +243,19 @@
     <string name="ai_ethics_agree">Sumasang-ayon at Paganahin</string>
     <string name="ai_ethics_view_google">Tingnan ang Google AI Principles</string>
     <string name="ai_ethics_disagree">Tanggihan</string>
+
+    <!-- Auto Update Strings -->
+    <string name="menu_item_check_update">Suriin ang mga Update</string>
+    <string name="update_dialog_title">🚀 May Bagong Update ang Serena: %1$s</string>
+    <string name="update_dialog_message">May mas bagong bersyon ng Serena na magagamit!\n\nKasalukuyang Bersyon: %1$s\nPinakabagong Bersyon: %2$s\n\nMga Pagbabago:\n%3$s\n\nGusto mo bang i-install ang update ngayon?</string>
+    <string name="update_btn_install_now">I-update Ngayon</string>
+    <string name="update_btn_open_github">Tingnan sa GitHub</string>
+    <string name="update_btn_later">Mamaya</string>
+    <string name="update_download_started">Sinisimulan ang pag-download ng update ng Serena...</string>
+    <string name="update_download_finished">Tapos na ang pag-download. Binubuksan ang installer...</string>
+    <string name="update_download_failed">Nabigong i-download ang update: %1$s</string>
+    <string name="update_permission_required">Mangyaring payagan ang \'I-install ang hindi kilalang apps\' para sa Serena upang magpatuloy.</string>
+    <string name="update_install_failed">Nabigong buksan ang installer: %1$s</string>
+    <string name="update_already_latest">Ang Serena ay napapanahon na (v%1$s).</string>
+    <string name="update_checking">Sinusuri ang mga update...</string>
 </resources>

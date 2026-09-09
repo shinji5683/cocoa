@@ -259,4 +259,19 @@
     <string name="ai_ethics_agree">Akkoord en Inschakelen</string>
     <string name="ai_ethics_view_google">Google AI-principes bekijken</string>
     <string name="ai_ethics_disagree">Weigeren</string>
+
+    <!-- Auto Update Strings -->
+    <string name="menu_item_check_update">Controleren op updates</string>
+    <string name="update_dialog_title">🚀 Serena-update beschikbaar: %1$s</string>
+    <string name="update_dialog_message">Er is een nieuwere versie van Serena beschikbaar!\n\nHuidige versie: %1$s\nNieuwste versie: %2$s\n\nWijzigingen:\n%3$s\n\nWilt u de update nu installeren?</string>
+    <string name="update_btn_install_now">Update installeren</string>
+    <string name="update_btn_open_github">Bekijk op GitHub</string>
+    <string name="update_btn_later">Later</string>
+    <string name="update_download_started">Serena-update downloaden...</string>
+    <string name="update_download_finished">Download voltooid. Installatieprogramma openen...</string>
+    <string name="update_download_failed">Downloaden van update mislukt: %1$s</string>
+    <string name="update_permission_required">Geef toestemming voor \'Onbekende apps installeren\' voor Serena om de update uit te voeren.</string>
+    <string name="update_install_failed">Kan installatieprogramma niet starten: %1$s</string>
+    <string name="update_already_latest">Serena is up-to-date (v%1$s).</string>
+    <string name="update_checking">Controleren op updates...</string>
 </resources>

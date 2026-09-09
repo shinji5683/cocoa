@@ -91,6 +91,13 @@ class MainActivity : AppCompatActivity() {
         safeRun("checkPermissionsOnStart") { checkPermissionsOnStart() }
         safeRun("checkTelemetryConsentOnStart") { checkTelemetryConsentOnStart() }
         safeRun("handleGemmaDownloadIntent") { handleGemmaDownloadIntent(intent) }
+        safeRun("checkForUpdatesOnStart") {
+            com.shinji.serena.update.AutoUpdateManager.getInstance(this).checkForUpdate { info ->
+                if (info != null && info.isUpdateAvailable) {
+                    com.shinji.serena.update.AutoUpdateManager.getInstance(this).showUpdateDialog(this, info)
+                }
+            }
+        }
     }
 
     private inline fun safeRun(tag: String, block: () -> Unit) {
@@ -177,6 +184,18 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btnOpenWelcomeGuide.setOnClickListener {
             showWelcomeDialog(isUserTriggered = true)
+        }
+        binding.btnCheckUpdate.setOnClickListener {
+            Toast.makeText(this, getString(R.string.update_checking), Toast.LENGTH_SHORT).show()
+            com.shinji.serena.update.AutoUpdateManager.getInstance(this).checkForUpdate { info ->
+                if (info != null && info.isUpdateAvailable) {
+                    com.shinji.serena.update.AutoUpdateManager.getInstance(this).showUpdateDialog(this, info)
+                } else if (info != null) {
+                    Toast.makeText(this, getString(R.string.update_already_latest, BuildConfig.VERSION_NAME), Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, getString(R.string.update_download_failed, "Network error"), Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 

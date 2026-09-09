@@ -259,4 +259,19 @@
     <string name="ai_ethics_agree">Agree &amp; Enable</string>
     <string name="ai_ethics_view_google">View Google AI Principles</string>
     <string name="ai_ethics_disagree">Decline</string>
+
+    <!-- Auto Update Strings -->
+    <string name="menu_item_check_update">Check for Updates</string>
+    <string name="update_dialog_title">🚀 Serena Update Available: %1$s</string>
+    <string name="update_dialog_message">A newer version of Serena is available!\n\nCurrent Version: %1$s\nLatest Version: %2$s\n\nRelease Notes:\n%3$s\n\nWould you like to install the update now?</string>
+    <string name="update_btn_install_now">Install Update</string>
+    <string name="update_btn_open_github">View on GitHub</string>
+    <string name="update_btn_later">Later</string>
+    <string name="update_download_started">Downloading Serena update APK...</string>
+    <string name="update_download_finished">Download complete. Opening installer...</string>
+    <string name="update_download_failed">Failed to download update: %1$s</string>
+    <string name="update_permission_required">Please allow \'Install unknown apps\' for Serena to proceed with the update.</string>
+    <string name="update_install_failed">Failed to launch installer: %1$s</string>
+    <string name="update_already_latest">Serena is up to date (v%1$s).</string>
+    <string name="update_checking">Checking for updates...</string>
 </resources>

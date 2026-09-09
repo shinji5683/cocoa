@@ -259,4 +259,19 @@
     <string name="ai_ethics_agree">同意して利用する</string>
     <string name="ai_ethics_view_google">Google AI倫理原則を確認</string>
     <string name="ai_ethics_disagree">同意しない</string>
+
+    <!-- Auto Update Strings -->
+    <string name="menu_item_check_update">アップデートを確認</string>
+    <string name="update_dialog_title">🚀 Serenaのアップデートが利用可能です: %1$s</string>
+    <string name="update_dialog_message">Serenaの最新バージョンが公開されています！\n\n現在のバージョン: %1$s\n最新のバージョン: %2$s\n\n更新内容:\n%3$s\n\n今すぐアップデートしますか？</string>
+    <string name="update_btn_install_now">今すぐアップデート</string>
+    <string name="update_btn_open_github">GitHubで確認</string>
+    <string name="update_btn_later">後で</string>
+    <string name="update_download_started">Serena最新版のダウンロードを開始しました...</string>
+    <string name="update_download_finished">ダウンロードが完了しました。インストーラーを開きます...</string>
+    <string name="update_download_failed">アップデートのダウンロードに失敗しました: %1$s</string>
+    <string name="update_permission_required">Serenaからのアプリ更新を許可してください。設定画面を開きます。</string>
+    <string name="update_install_failed">インストーラーの起動に失敗しました: %1$s</string>
+    <string name="update_already_latest">Serenaは最新バージョン (v%1$s) です。</string>
+    <string name="update_checking">アップデートを確認中...</string>
 </resources>

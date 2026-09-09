@@ -92,6 +92,16 @@
                     android:backgroundTint="@color/serena_secondary"
                     app:cornerRadius="12dp" />
 
+                <Button
+                    android:id="@+id/btnCheckUpdate"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/menu_item_check_update"
+                    android:textSize="15sp"
+                    android:backgroundTint="@color/serena_accent"
+                    app:cornerRadius="12dp" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

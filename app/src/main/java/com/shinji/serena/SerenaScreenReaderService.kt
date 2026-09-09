@@ -2166,6 +2166,19 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🐛", getString(R.string.menu_item_diagnostics, BuildConfig.DEVELOPER_NAME)) {
                 sendTelemetryLog()
             },
+            serenaMenuItem("🔄", getString(R.string.menu_item_check_update)) {
+                speak(getString(R.string.update_checking), TextToSpeech.QUEUE_FLUSH)
+                com.shinji.serena.update.AutoUpdateManager.getInstance(this).checkForUpdate { info ->
+                    if (info != null && info.isUpdateAvailable) {
+                        speak(getString(R.string.update_dialog_title, info.latestVersion), TextToSpeech.QUEUE_FLUSH)
+                        com.shinji.serena.update.AutoUpdateManager.getInstance(this).startDownloadAndInstall(info.downloadUrl)
+                    } else if (info != null) {
+                        speak(getString(R.string.update_already_latest, BuildConfig.VERSION_NAME), TextToSpeech.QUEUE_FLUSH)
+                    } else {
+                        speak(getString(R.string.update_download_failed, "Network error"), TextToSpeech.QUEUE_FLUSH)
+                    }
+                }
+            },
             serenaMenuItem("⚙️", getString(R.string.menu_item_settings)) {
                 openserenaSettings()
             },
