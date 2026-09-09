@@ -76,9 +76,13 @@ class InstantTranslationHelper(private val context: Context) {
         get() = Locale.getDefault().language.lowercase()
 
     init {
-        // デフォルトで英語-日本語モデルをウォームアップ
-        getOrCreateTranslator(TranslateLanguage.ENGLISH, TranslateLanguage.JAPANESE)
-        getOrCreateTranslator(TranslateLanguage.JAPANESE, TranslateLanguage.ENGLISH)
+        try {
+            // デフォルトで英語-日本語モデルをウォームアップ
+            getOrCreateTranslator(TranslateLanguage.ENGLISH, TranslateLanguage.JAPANESE)
+            getOrCreateTranslator(TranslateLanguage.JAPANESE, TranslateLanguage.ENGLISH)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error warming up translator models: ${e.message}")
+        }
     }
 
     fun cycleDefaultTargetLanguage(): Pair<String, String> {

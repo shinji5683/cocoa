@@ -126,44 +126,104 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         super.onCreate()
         instance = this
         val safeContext = getSafeContext()
+
+        // 1. 最重要コアコンポーネント（絶対に停止・欠落させてはならない基本機構）の初期化
         try {
             prefs = safeContext.getSafeSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            soundHelper = SoundAndHapticHelper(safeContext)
-            screenCurtainHelper = ScreenCurtainHelper(safeContext)
-            statusHelper = StatusAnnouncementHelper(safeContext)
-            ocrHelper = OcrCameraHelper(this)
-            clipboardHelper = ClipboardHistoryHelper(safeContext)
-            notificationFilterHelper = SmartNotificationFilterHelper(safeContext)
-            appProfileHelper = AppProfileHelper()
-            faceHelper = FaceDetectionHelper(this)
-            objectHelper = ObjectRecognitionHelper(this)
-            assistantHelper = SerenaAiAssistantHelper(this)
-            colorAndLightHelper = ColorAndLightHelper(safeContext)
-            compassHelper = SpatialCompassHelper(safeContext).apply { try { startListening() } catch (_: Exception) {} }
-            spatialObstacleSonarHelper = SpatialObstacleSonarHelper(safeContext)
-            walkingNavigator = com.shinji.serena.navigation.SerenaWalkingNavigator(this, compassHelper).apply { try { startTracking() } catch (_: Exception) {} }
-            osmValhallaNavHelper = com.shinji.serena.location.OsmValhallaNavigationHelper(this, soundHelper) { msg ->
-                speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
-            }
-            spatialSurroundingRadarHelper = com.shinji.serena.location.SpatialSurroundingRadarHelper(this, soundHelper) { msg ->
-                speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
-            }
-            streetIntersectionNavigator = com.shinji.serena.location.StreetIntersectionNavigator(this, soundHelper, com.shinji.serena.location.LocationAddressHelper(safeContext)) { msg ->
-                speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
-            }
-            sentinelEyesManager = com.shinji.serena.ai.SerenaSentinelEyesManager(this) { msg ->
-                speak(msg, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
-            }
-            wifiConnectivityHelper = WifiConnectivityHelper(this).apply { try { startMonitoring() } catch (_: Exception) {} }
-            batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} }
-            aiAutoLabelHelper = AiAutoLabelHelper(safeContext)
-            morningSummaryHelper = MorningSummaryHelper(this)
-            instantTranslationHelper = com.shinji.serena.translation.InstantTranslationHelper(safeContext)
-            soundRecognitionHelper = com.shinji.serena.sound.SoundRecognitionHapticsHelper(safeContext).apply { try { start() } catch (_: Exception) {} }
-            visualAudioDescriptionHelper = com.shinji.serena.ai.VisualAudioDescriptionHelper(safeContext)
-            smartScreenSummaryEngine = com.shinji.serena.ai.SmartScreenSummaryEngine(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing prefs fallback: ${e.message}")
+            prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        }
 
-            // 点字ディスプレイ（Braille Display）コントローラー初期化
+        try {
+            soundHelper = SoundAndHapticHelper(safeContext)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing soundHelper: ${e.message}")
+        }
+
+        try {
+            focusNavigator = com.shinji.serena.navigation.SerenaFocusNavigator(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing focusNavigator: ${e.message}")
+        }
+
+        try {
+            gestureDispatcher = com.shinji.serena.gesture.SerenaGestureDispatcher(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing gestureDispatcher: ${e.message}")
+        }
+
+        try {
+            com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing SerenaFullKanjiDetailDictionary: ${e.message}")
+        }
+
+        // serenaオリジナルモードを正統デフォルトとして初期化
+        try {
+            if (!prefs.contains(KEY_TALKBACK_MODE)) {
+                prefs.edit().putBoolean(KEY_TALKBACK_MODE, false).apply()
+            }
+        } catch (_: Exception) {}
+
+        // 2. 独立した拡張アシスタント・AI・センサー機能群の安全な隔離初期化
+        safeInitHelper("screenCurtain") { screenCurtainHelper = ScreenCurtainHelper(safeContext) }
+        safeInitHelper("statusHelper") { statusHelper = StatusAnnouncementHelper(safeContext) }
+        safeInitHelper("ocrHelper") { ocrHelper = OcrCameraHelper(this) }
+        safeInitHelper("clipboardHelper") { clipboardHelper = ClipboardHistoryHelper(safeContext) }
+        safeInitHelper("notificationFilter") { notificationFilterHelper = SmartNotificationFilterHelper(safeContext) }
+        safeInitHelper("appProfile") { appProfileHelper = AppProfileHelper() }
+        safeInitHelper("faceHelper") { faceHelper = FaceDetectionHelper(this) }
+        safeInitHelper("objectHelper") { objectHelper = ObjectRecognitionHelper(this) }
+        safeInitHelper("assistantHelper") { assistantHelper = SerenaAiAssistantHelper(this) }
+        safeInitHelper("colorAndLight") { colorAndLightHelper = ColorAndLightHelper(safeContext) }
+        safeInitHelper("compassHelper") { compassHelper = SpatialCompassHelper(safeContext).apply { try { startListening() } catch (_: Exception) {} } }
+        safeInitHelper("spatialObstacleSonar") { spatialObstacleSonarHelper = SpatialObstacleSonarHelper(safeContext) }
+        safeInitHelper("walkingNavigator") { walkingNavigator = com.shinji.serena.navigation.SerenaWalkingNavigator(this, compassHelper).apply { try { startTracking() } catch (_: Exception) {} } }
+        safeInitHelper("osmValhallaNav") {
+            osmValhallaNavHelper = com.shinji.serena.location.OsmValhallaNavigationHelper(this, soundHelper) { msg ->
+                speak(msg, TextToSpeech.QUEUE_FLUSH)
+            }
+        }
+        safeInitHelper("spatialSurroundingRadar") {
+            spatialSurroundingRadarHelper = com.shinji.serena.location.SpatialSurroundingRadarHelper(this, soundHelper) { msg ->
+                speak(msg, TextToSpeech.QUEUE_FLUSH)
+            }
+        }
+        safeInitHelper("streetIntersectionNav") {
+            streetIntersectionNavigator = com.shinji.serena.location.StreetIntersectionNavigator(this, soundHelper, com.shinji.serena.location.LocationAddressHelper(safeContext)) { msg ->
+                speak(msg, TextToSpeech.QUEUE_FLUSH)
+            }
+        }
+        safeInitHelper("sentinelEyes") {
+            sentinelEyesManager = com.shinji.serena.ai.SerenaSentinelEyesManager(this) { msg ->
+                speak(msg, TextToSpeech.QUEUE_FLUSH)
+            }
+        }
+        safeInitHelper("wifiConnectivity") { wifiConnectivityHelper = WifiConnectivityHelper(this).apply { try { startMonitoring() } catch (_: Exception) {} } }
+        safeInitHelper("batteryHelper") { batteryHelper = BatteryStateHelper(this).apply { try { start() } catch (_: Exception) {} } }
+        safeInitHelper("aiAutoLabel") { aiAutoLabelHelper = AiAutoLabelHelper(safeContext) }
+        safeInitHelper("morningSummary") { morningSummaryHelper = MorningSummaryHelper(this) }
+        safeInitHelper("instantTranslation") { instantTranslationHelper = com.shinji.serena.translation.InstantTranslationHelper(safeContext) }
+        safeInitHelper("soundRecognition") { soundRecognitionHelper = com.shinji.serena.sound.SoundRecognitionHapticsHelper(safeContext).apply { try { start() } catch (_: Exception) {} } }
+        safeInitHelper("visualAudioDescription") { visualAudioDescriptionHelper = com.shinji.serena.ai.VisualAudioDescriptionHelper(safeContext) }
+        safeInitHelper("smartScreenSummary") { smartScreenSummaryEngine = com.shinji.serena.ai.SmartScreenSummaryEngine(this) }
+        safeInitHelper("spatialHapticTouchMap") {
+            soundHelper?.let {
+                spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
+            }
+        }
+        safeInitHelper("callManager") {
+            callManager = com.shinji.serena.telephony.SerenaCallManager(this, com.shinji.serena.speech.SerenaSpeechEngine(this))
+        }
+        safeInitHelper("shakeDetector") {
+            shakeDetectorHelper = ShakeDetectorHelper(safeContext) {
+                announceFullStatus()
+            }.apply { try { start() } catch (_: Exception) {} }
+        }
+
+        // 点字ディスプレイ（Braille Display）コントローラー初期化
+        safeInitHelper("brailleController") {
             brailleController = com.shinji.serena.braille.BrailleDisplayController(this, object : com.shinji.serena.braille.BrailleDisplayController.BrailleInteractionListener {
                 override fun onBrailleCommand(command: com.shinji.serena.braille.BrailleProtocolHandler.BrailleCommand, routingIndex: Int) {
                     when (command) {
@@ -205,34 +265,22 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }).apply {
                 try {
-                    // ペアリング済みの点字ディスプレイがあれば自動接続を試行
                     connectToPairedBrailleDevice()
                 } catch (_: Exception) {}
             }
-
-            shakeDetectorHelper = ShakeDetectorHelper(safeContext) {
-                announceFullStatus()
-            }.apply { try { start() } catch (_: Exception) {} }
-
-            focusNavigator = com.shinji.serena.navigation.SerenaFocusNavigator(this)
-            soundHelper?.let {
-                spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
-            }
-            callManager = com.shinji.serena.telephony.SerenaCallManager(this, com.shinji.serena.speech.SerenaSpeechEngine(this))
-            gestureDispatcher = com.shinji.serena.gesture.SerenaGestureDispatcher(this)
-            com.shinji.serena.ime.SerenaFullKanjiDetailDictionary.init(safeContext)
-            
-            // serenaオリジナルモードを正統デフォルトとして初期化
-            if (!prefs.contains(KEY_TALKBACK_MODE)) {
-                prefs.edit().putBoolean(KEY_TALKBACK_MODE, false).apply()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error initializing non-core helpers: ${e.message}")
         }
 
         initTts(this)
         registerTimeTickReceiver()
         Log.i(TAG, "serena ScreenReaderService created with fail-safe direct boot resilience.")
+    }
+
+    private inline fun safeInitHelper(name: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing helper [$name]: ${e.message}")
+        }
     }
 
     private val pendingSpeechQueue = mutableListOf<Pair<String, Int>>()

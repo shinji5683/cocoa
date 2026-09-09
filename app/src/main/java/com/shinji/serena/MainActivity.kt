@@ -66,29 +66,38 @@ class MainActivity : AppCompatActivity() {
         try {
             binding = ActivityMainBinding.inflate(layoutInflater)
             setContentView(binding.root)
-
-            prefs = getSafeSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
-
-            initLocalTts()
-            setupStatusSection()
-            setupSecuritySection()
-            setupPermissionsSection()
-            setupTtsControls()
-            setupHourlyChimeSection()
-            setupCallAssistantSection()
-            setupOperationGuideSection()
-            setupShakeSensitivitySection()
-            setupDeveloperCallSection()
-            setupTestBench()
-            setupTelemetrySection()
-            setupTranslationSection()
-
-            checkPreviousCrashOnStart()
-            checkPermissionsOnStart()
-            checkTelemetryConsentOnStart()
-            handleGemmaDownloadIntent(intent)
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Error in onCreate: ${e.message}", e)
+            android.util.Log.e("MainActivity", "Error inflating layout: ${e.message}", e)
+            return
+        }
+
+        prefs = getSafeSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
+
+        safeRun("initLocalTts") { initLocalTts() }
+        safeRun("setupStatusSection") { setupStatusSection() }
+        safeRun("setupSecuritySection") { setupSecuritySection() }
+        safeRun("setupPermissionsSection") { setupPermissionsSection() }
+        safeRun("setupTtsControls") { setupTtsControls() }
+        safeRun("setupHourlyChimeSection") { setupHourlyChimeSection() }
+        safeRun("setupCallAssistantSection") { setupCallAssistantSection() }
+        safeRun("setupOperationGuideSection") { setupOperationGuideSection() }
+        safeRun("setupShakeSensitivitySection") { setupShakeSensitivitySection() }
+        safeRun("setupDeveloperCallSection") { setupDeveloperCallSection() }
+        safeRun("setupTestBench") { setupTestBench() }
+        safeRun("setupTelemetrySection") { setupTelemetrySection() }
+        safeRun("setupTranslationSection") { setupTranslationSection() }
+
+        safeRun("checkPreviousCrashOnStart") { checkPreviousCrashOnStart() }
+        safeRun("checkPermissionsOnStart") { checkPermissionsOnStart() }
+        safeRun("checkTelemetryConsentOnStart") { checkTelemetryConsentOnStart() }
+        safeRun("handleGemmaDownloadIntent") { handleGemmaDownloadIntent(intent) }
+    }
+
+    private inline fun safeRun(tag: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "safeRun error in $tag: ${e.message}", e)
         }
     }
 
@@ -152,7 +161,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        updateServiceStatusDisplay()
+        if (::binding.isInitialized) {
+            try {
+                updateServiceStatusDisplay()
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Error in updateServiceStatusDisplay: ${e.message}")
+            }
+        }
     }
 
     private fun setupStatusSection() {
@@ -404,23 +419,39 @@ class MainActivity : AppCompatActivity() {
         val currentRate = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, 1.0f).coerceIn(0.5f, 2.0f)
         val currentPitch = prefs.getFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, 1.0f).coerceIn(0.5f, 2.0f)
 
-        binding.sliderSpeed.value = currentRate
-        binding.sliderPitch.value = currentPitch
-        binding.tvSpeedLabel.text = getString(R.string.label_speech_rate_format, currentRate)
-        binding.tvPitchLabel.text = getString(R.string.label_pitch_format, currentPitch)
+        try {
+            val stepIndex = Math.round((currentRate - 0.5f) / 0.1f).coerceIn(0, 15)
+            val snappedRate = (0.5f + stepIndex * 0.1f).coerceIn(0.5f, 2.0f)
+            binding.sliderSpeed.value = String.format(Locale.US, "%.1f", snappedRate).toFloat()
+        } catch (_: Exception) {
+            binding.sliderSpeed.value = 1.0f
+        }
+
+        try {
+            val stepIndex = Math.round((currentPitch - 0.5f) / 0.1f).coerceIn(0, 15)
+            val snappedPitch = (0.5f + stepIndex * 0.1f).coerceIn(0.5f, 2.0f)
+            binding.sliderPitch.value = String.format(Locale.US, "%.1f", snappedPitch).toFloat()
+        } catch (_: Exception) {
+            binding.sliderPitch.value = 1.0f
+        }
+
+        binding.tvSpeedLabel.text = getString(R.string.label_speech_rate_format, binding.sliderSpeed.value)
+        binding.tvPitchLabel.text = getString(R.string.label_pitch_format, binding.sliderPitch.value)
 
         binding.sliderSpeed.addOnChangeListener { _, value, _ ->
-            binding.tvSpeedLabel.text = getString(R.string.label_speech_rate_format, value)
-            prefs.edit().putFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, value).apply()
+            val snapped = String.format(Locale.US, "%.1f", value).toFloat()
+            binding.tvSpeedLabel.text = getString(R.string.label_speech_rate_format, snapped)
+            prefs.edit().putFloat(SerenaScreenReaderService.KEY_SPEECH_RATE, snapped).apply()
             SerenaScreenReaderService.instance?.updateTtsSettings()
-            localTts?.setSpeechRate(value)
+            localTts?.setSpeechRate(snapped)
         }
 
         binding.sliderPitch.addOnChangeListener { _, value, _ ->
-            binding.tvPitchLabel.text = getString(R.string.label_pitch_format, value)
-            prefs.edit().putFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, value).apply()
+            val snapped = String.format(Locale.US, "%.1f", value).toFloat()
+            binding.tvPitchLabel.text = getString(R.string.label_pitch_format, snapped)
+            prefs.edit().putFloat(SerenaScreenReaderService.KEY_SPEECH_PITCH, snapped).apply()
             SerenaScreenReaderService.instance?.updateTtsSettings()
-            localTts?.setPitch(value)
+            localTts?.setPitch(snapped)
         }
 
         binding.btnTestSpeech.setOnClickListener {
