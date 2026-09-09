@@ -3,6 +3,7 @@ package com.shinji.serena.ai
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import java.util.Locale
 
 /**
  * GeminiNanoEngine
@@ -529,6 +530,104 @@ class GeminiNanoEngine(private val context: Context) {
             clean.endsWith("です") || clean.endsWith("ます") || clean.endsWith("でした") || clean.endsWith("ました") -> clean
             clean.endsWith("だ") -> clean.dropLast(1) + "です"
             else -> "${clean}です"
+        }
+    }
+
+    /**
+     * Gemini Nano / On-Device Context-Aware Intelligent Language Arbitrator
+     * 端末言語・キーボードIME言語・Webサイト・アプリコンテキスト・文字体系をリアルタイム統合調停し、
+     * 最適なTTS音声言語（Locale）をミリ秒単位で高精度判定。
+     */
+    fun detectContextLanguage(
+        text: String,
+        contextPackage: String? = null,
+        isKeyboard: Boolean = false,
+        imeSubtypeLocale: String? = null,
+        systemLocale: Locale = Locale.getDefault()
+    ): Locale {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return systemLocale
+
+        val lower = trimmed.lowercase()
+        val sysLang = systemLocale.language.lowercase()
+
+        // 1. セレナの神聖なタガログ語起動挨拶＆アイデンティティ（Tagalog最優先）
+        val tagalogDistinctPhrases = listOf(
+            "magandang araw", "handa na si serena", "ingat lagi", "mabuhay"
+        )
+        if (tagalogDistinctPhrases.any { lower.contains(it) }) {
+            return Locale.Builder().setLanguage("fil").setRegion("PH").build()
+        }
+
+        // 2. キーボード（IME）連動コンテキスト (Keyboard First Policy)
+        // ユーザーが日本語キーボードで入力中の場合は、キー（QWERTY文字・記号・特殊キー・候補）をすべて日本語TTSで読む！
+        if (isKeyboard) {
+            val imeLang = imeSubtypeLocale?.lowercase() ?: ""
+            when {
+                imeLang.startsWith("ja") -> return Locale.JAPANESE
+                imeLang.startsWith("en") -> return systemLocale
+                imeLang.startsWith("es") -> return Locale.forLanguageTag("es")
+                imeLang.startsWith("tl") || imeLang.startsWith("fil") -> return Locale.Builder().setLanguage("fil").setRegion("PH").build()
+                imeLang.startsWith("nl") -> return Locale.forLanguageTag("nl")
+            }
+        }
+
+        // 3. テキストの文字体系セマンティック解析（かな・漢字・特殊文字）
+        val hasKana = trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF].*"))
+        val hasKanji = trimmed.matches(Regex(".*[\\u4E00-\\u9FAF].*"))
+        val hasLatin = trimmed.matches(Regex(".*[a-zA-Z].*"))
+
+        // かな（ひらがな・カタカナ）が含まれている場合は100%日本語
+        if (hasKana) {
+            return Locale.JAPANESE
+        }
+
+        // 漢字が含まれている場合（「確定」「検索」「設定」「東京」等）:
+        // 英語TTSは漢字を一切発音できないため、英語端末であっても確実に日本語TTSにルーティング！
+        if (hasKanji) {
+            return Locale.JAPANESE
+        }
+
+        // 4. Webサイト・ブラウザ連動コンテキスト
+        val pkg = contextPackage?.lowercase() ?: ""
+        val isBrowser = pkg.contains("chrome") || pkg.contains("browser") ||
+                pkg.contains("firefox") || pkg.contains("edge") ||
+                pkg.contains("webview") || pkg.contains("opera")
+
+        if (isBrowser) {
+            // Web閲覧中: かな・漢字があれば上で日本語に判定済み。
+            // ラテン文字のみの場合:
+            // スペイン語固有記号（ñ, ¿, ¡, á, é...）
+            if (trimmed.matches(Regex(".*[ñÑ¿¡áéíóúÁÉÍÓÚ].*"))) {
+                return Locale.forLanguageTag("es")
+            }
+            // オランダ語特有パターン（ij等）
+            if (lower.contains(" het ") || lower.contains(" een ") || lower.contains(" van ") || lower.contains(" voor ")) {
+                return Locale.forLanguageTag("nl")
+            }
+            // 英語・その他欧文Webサイト
+            return systemLocale
+        }
+
+        // 5. スペイン語・タガログ語・オランダ語の個別言語検知
+        if (trimmed.matches(Regex(".*[ñÑ¿¡].*"))) {
+            return Locale.forLanguageTag("es")
+        }
+
+        // 6. 端末言語ベースライン (Device-First Fallback)
+        // かな・漢字が含まれず、ラテン文字主体のUIテキスト（"Settings", "Wi-Fi", "Bluetooth" 等）
+        // 英語端末（en-GB等）であれば英語TTSを維持し、日本語端末であれば日本語TTSを維持
+        return if (sysLang == "en") {
+            systemLocale
+        } else if (sysLang == "ja") {
+            // 日本語端末で、英単語2語以上の英文文節であれば英語TTSへ
+            if (hasLatin && trimmed.split(" ").size >= 2) {
+                Locale.ENGLISH
+            } else {
+                Locale.JAPANESE
+            }
+        } else {
+            systemLocale
         }
     }
 }

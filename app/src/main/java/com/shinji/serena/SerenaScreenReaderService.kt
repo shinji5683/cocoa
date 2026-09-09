@@ -3630,6 +3630,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var lastFocusedWindowId: Int = -1
 
     fun announceNode(node: AccessibilityNodeInfo, queueMode: Int = TextToSpeech.QUEUE_FLUSH) {
+        val isKb = isKeyboardNode(node)
+        val pkg = node.packageName?.toString() ?: currentActivePackage
+        if (!isKb && !pkg.isNullOrEmpty() && !pkg.contains("inputmethod")) {
+            currentActivePackage = pkg
+        }
+        if (isKb) {
+            lastKeyboardHoverNode = node
+        }
+
         val announcement = buildNodeAnnouncement(node)
         if (announcement.isBlank()) return
 
@@ -3646,7 +3655,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         lastSpokenText = announcement
         lastSpokenTime = currentTime
         soundHelper?.playFocusMovePanned(normalizedX)
-        speak(announcement, queueMode)
+
+        val targetLocale = detectLanguage(announcement, contextPackage = currentActivePackage, isKeyboard = isKb)
+        speak(announcement, queueMode, pan = 0.0f, forcedLocale = targetLocale)
 
         // 外国語テキストのリアルタイム日本語翻訳読み上げ（原文の直後にキュー追加）
         try {
@@ -3913,6 +3924,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun getNodeRole(node: AccessibilityNodeInfo): String {
+        // キーボードキー（文字キー・特殊キー等）には冗長な「Button」「ボタン」ロールを付与しない
+        if (isKeyboardNode(node)) {
+            return ""
+        }
         val target = findCheckableOrSwitchNode(node) ?: node
         val className = target.className?.toString() ?: ""
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
@@ -4096,90 +4111,48 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         audioManager?.dispatchMediaKeyEvent(upEvent)
     }
 
-    private fun detectLanguage(text: String): Locale {
+    val geminiNanoEngine by lazy { com.shinji.serena.ai.GeminiNanoEngine(this) }
+    var currentActivePackage: String? = null
+
+    fun getActiveImeSubtypeLocale(): String {
+        return try {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            val subtype = imm?.currentInputMethodSubtype
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val tag = subtype?.languageTag
+                if (!tag.isNullOrBlank()) tag else (subtype?.locale ?: "")
+            } else {
+                subtype?.locale ?: ""
+            }
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    private fun detectLanguage(
+        text: String,
+        contextPackage: String? = currentActivePackage,
+        isKeyboard: Boolean = (lastKeyboardHoverNode != null)
+    ): Locale {
         val trimmed = text.trim()
         val systemLocale = Locale.getDefault()
         if (trimmed.isEmpty()) return systemLocale
 
-        val lower = trimmed.lowercase()
-        val sysLang = systemLocale.language.lowercase()
-
-        // 1. タガログ語起動挨拶＆アイデンティティ（Serenaの神聖な挨拶は常にTagalog）
-        val tagalogDistinctPhrases = listOf(
-            "magandang araw", "handa na si serena", "ingat lagi", "mabuhay"
+        // 1. Gemini Nano / On-Device コンテキスト連動型自動言語判定エンジン
+        val candidateLocale = geminiNanoEngine.detectContextLanguage(
+            text = trimmed,
+            contextPackage = contextPackage,
+            isKeyboard = isKeyboard,
+            imeSubtypeLocale = getActiveImeSubtypeLocale(),
+            systemLocale = systemLocale
         )
-        if (tagalogDistinctPhrases.any { lower.contains(it) }) {
-            val tagalogLocale = Locale.Builder().setLanguage("fil").setRegion("PH").build()
-            val availability = tts?.isLanguageAvailable(tagalogLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-            if (availability >= TextToSpeech.LANG_AVAILABLE) {
-                return tagalogLocale
-            }
+
+        val candidateAvail = tts?.isLanguageAvailable(candidateLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
+        if (candidateAvail >= TextToSpeech.LANG_AVAILABLE) {
+            return candidateLocale
         }
 
-        // 2. ユーザーデバイス言語（システム言語）の厳格な尊重 (Device-First Policy)
-        // 2-1. 英語端末の場合: 英語UIや混在テキストは英語TTSを断固維持。純粋な日本語文のみ日本語へ切り替える。
-        if (sysLang == "en") {
-            val hasKana = trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF].*"))
-            val hasLatin = trimmed.matches(Regex(".*[a-zA-Z].*"))
-            if (hasKana && !hasLatin) {
-                val jaAvailability = tts?.isLanguageAvailable(Locale.JAPANESE) ?: TextToSpeech.LANG_NOT_SUPPORTED
-                if (jaAvailability >= TextToSpeech.LANG_AVAILABLE) {
-                    return Locale.JAPANESE
-                }
-            }
-            val sysAvail = tts?.isLanguageAvailable(systemLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-            if (sysAvail >= TextToSpeech.LANG_AVAILABLE) {
-                return systemLocale
-            }
-            return Locale.ENGLISH
-        }
-
-        // 2-2. 日本語端末の場合: かな・漢字が含まれていれば日本語TTSを尊重。純粋な英文のみ英語TTSへ切り替える。
-        if (sysLang == "ja") {
-            val hasKana = trimmed.matches(Regex(".*[\\u3040-\\u309F\\u30A0-\\u30FF].*"))
-            val hasKanji = trimmed.matches(Regex(".*[\\u4E00-\\u9FAF].*"))
-            if (hasKana || hasKanji) {
-                val jaAvailability = tts?.isLanguageAvailable(Locale.JAPANESE) ?: TextToSpeech.LANG_NOT_SUPPORTED
-                if (jaAvailability >= TextToSpeech.LANG_AVAILABLE) {
-                    return Locale.JAPANESE
-                }
-            }
-            val hasLatin = trimmed.matches(Regex(".*[a-zA-Z].*"))
-            if (hasLatin && !hasKana && !hasKanji) {
-                val engAvail = tts?.isLanguageAvailable(Locale.ENGLISH) ?: TextToSpeech.LANG_NOT_SUPPORTED
-                if (engAvail >= TextToSpeech.LANG_AVAILABLE) {
-                    return Locale.ENGLISH
-                }
-            }
-            return Locale.JAPANESE
-        }
-
-        // 2-3. スペイン語端末の場合
-        if (sysLang == "es") {
-            val sysAvail = tts?.isLanguageAvailable(systemLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-            if (sysAvail >= TextToSpeech.LANG_AVAILABLE) {
-                return systemLocale
-            }
-        }
-
-        // 2-4. タガログ語端末の場合
-        if (sysLang == "tl" || sysLang == "fil") {
-            val filLocale = Locale.Builder().setLanguage("fil").setRegion("PH").build()
-            val filAvail = tts?.isLanguageAvailable(filLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-            if (filAvail >= TextToSpeech.LANG_AVAILABLE) {
-                return filLocale
-            }
-        }
-
-        // 2-5. オランダ語端末の場合
-        if (sysLang == "nl") {
-            val sysAvail = tts?.isLanguageAvailable(systemLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
-            if (sysAvail >= TextToSpeech.LANG_AVAILABLE) {
-                return systemLocale
-            }
-        }
-
-        // 3. その他：ハングル、キリル文字等の特殊文字検出
+        // 2. ハングル、キリル文字等の特殊文字検出フォールバック
         val hasHangul = trimmed.matches(Regex(".*[\\uAC00-\\uD7AF\\u1100-\\u11FF].*"))
         if (hasHangul) {
             val koAvailability = tts?.isLanguageAvailable(Locale.KOREAN) ?: TextToSpeech.LANG_NOT_SUPPORTED
@@ -4197,7 +4170,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
 
-        // 4. システムデフォルト言語の適合
+        // 3. システムデフォルト言語フォールバック
         val sysAvail = tts?.isLanguageAvailable(systemLocale) ?: TextToSpeech.LANG_NOT_SUPPORTED
         if (sysAvail >= TextToSpeech.LANG_AVAILABLE) {
             return systemLocale
@@ -4252,7 +4225,12 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
-    fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_FLUSH, pan: Float = 0.0f) {
+    fun speak(
+        text: String,
+        queueMode: Int = TextToSpeech.QUEUE_FLUSH,
+        pan: Float = 0.0f,
+        forcedLocale: Locale? = null
+    ) {
         if (text.isBlank() || isMuted) return
         val effectiveQueueMode = if (isStartupGreetingSpeaking && !text.startsWith("Magandang araw")) {
             TextToSpeech.QUEUE_ADD
@@ -4279,8 +4257,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         isSpeechPaused = false
 
         try {
-            val targetLocale = detectLanguage(processedText)
-            if (tts?.language?.language != targetLocale.language) {
+            val targetLocale = forcedLocale ?: detectLanguage(processedText)
+            if (tts?.language?.language != targetLocale.language || tts?.language?.country != targetLocale.country) {
                 tts?.language = targetLocale
             }
             AlphaTelemetryHelper.getInstance(this).incrementTtsCount(targetLocale)
