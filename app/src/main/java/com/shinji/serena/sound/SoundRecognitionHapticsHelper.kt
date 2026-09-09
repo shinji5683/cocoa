@@ -19,12 +19,18 @@ import kotlin.math.sqrt
 /**
  * 環境音・危険音・呼びかけ検知の5段階詳細度
  */
-enum class SoundAlertDetailLevel(val displayName: String, val spokenLabel: String) {
-    ULTRA_DETAILED("1. 超詳細（音響・材質・人物声解析＋バイブ）", "超詳細実況モード"),
-    STANDARD("2. 標準（危険音＋呼びかけ音声＋バイブ）", "標準モード"),
-    DANGER_VOICE_ONLY("3. 危険音音声＋バイブ（踏切・サイレン・クラクション）", "危険音音声モード"),
-    HAPTIC_ONLY("4. バイブレーションのみ（音声なし）", "バイブのみモード"),
-    DISABLED("5. 無効（オフ）", "オフ")
+enum class SoundAlertDetailLevel(val resId: Int, val displayName: String, val spokenLabel: String) {
+    ULTRA_DETAILED(com.shinji.serena.R.string.sound_alert_ultra, "1. 超詳細（音響・材質・人物声解析＋バイブ）", "超詳細実況モード"),
+    STANDARD(com.shinji.serena.R.string.sound_alert_standard, "2. 標準（危険音＋呼びかけ音声＋バイブ）", "標準モード"),
+    DANGER_VOICE_ONLY(com.shinji.serena.R.string.sound_alert_danger_voice, "3. 危険音音声＋バイブ（踏切・サイレン・クラクション）", "危険音音声モード"),
+    HAPTIC_ONLY(com.shinji.serena.R.string.sound_alert_haptic, "4. バイブレーションのみ（音声なし）", "バイブのみモード"),
+    DISABLED(com.shinji.serena.R.string.sound_alert_disabled, "5. 無効（オフ）", "オフ");
+
+    fun getSpokenLabel(context: Context): String = try {
+        context.getString(resId)
+    } catch (_: Exception) {
+        spokenLabel
+    }
 }
 
 /**

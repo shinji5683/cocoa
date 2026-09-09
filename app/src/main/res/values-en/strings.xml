@@ -125,6 +125,36 @@
     <string name="state_expanded">expanded</string>
     <string name="state_disabled">disabled</string>
 
+    <!-- Menu Status & Settings Values -->
+    <string name="precision_exact_block">Street level (Detailed)</string>
+    <string name="precision_town">City level (Privacy)</string>
+    <string name="precision_changed_fmt">Location precision: %1$s</string>
+    <string name="country_setting_always">Always include country</string>
+    <string name="country_setting_smart">Smart (Omit domestic)</string>
+    <string name="country_changed_fmt">Country setting: %1$s</string>
+    <string name="keyboard_mode_lift">Lift to type</string>
+    <string name="keyboard_mode_double_tap">Double tap</string>
+    <string name="keyboard_mode_changed_fmt">Key input mode: %1$s</string>
+    <string name="notification_level_full">Read all (Full)</string>
+    <string name="notification_level_sender">Sender only</string>
+    <string name="notification_level_app">App name only</string>
+    <string name="notification_level_call">Calls only</string>
+    <string name="notification_level_muted">All muted</string>
+    <string name="notification_level_changed_fmt">Notification announcement: %1$s</string>
+    <string name="sound_alert_ultra">Ultra detailed</string>
+    <string name="sound_alert_standard">Standard</string>
+    <string name="sound_alert_danger_voice">Danger voice alerts</string>
+    <string name="sound_alert_haptic">Haptic only</string>
+    <string name="sound_alert_disabled">Disabled</string>
+    <string name="sound_alert_changed_fmt">Sound recognition: %1$s</string>
+    <string name="whisper_mode_auto">Auto (Night)</string>
+    <string name="whisper_mode_always">Always on</string>
+    <string name="whisper_mode_off">Off</string>
+    <string name="whisper_mode_changed_fmt">Whisper mode: %1$s</string>
+    <string name="mode_serena">Serena</string>
+    <string name="mode_talkback">TalkBack</string>
+
+
     <!-- Serena Menu & Navigation Dialogs -->
     <string name="menu_serena_title">🌸 Serena Menu</string>
     <string name="menu_edit_title">✏️ Serena Edit Assist</string>

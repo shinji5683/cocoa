@@ -11,12 +11,18 @@ import android.view.accessibility.AccessibilityEvent
 /**
  * 読み上げ詳細レベル
  */
-enum class NotificationReadDetailLevel(val displayName: String) {
-    FULL("すべて読み上げ（アプリ名・送信者・内容）"),
-    SENDER_ONLY("送信者まで（内容非表示・プライバシー保護）"),
-    APP_NAME_ONLY("アプリ名のみ"),
-    CALL_ONLY("着信のみ読み上げ（通知はミュート）"),
-    MUTED("通知・着信すべてミュート")
+enum class NotificationReadDetailLevel(val resId: Int, val displayName: String) {
+    FULL(R.string.notification_level_full, "すべて読み上げ（アプリ名・送信者・内容）"),
+    SENDER_ONLY(R.string.notification_level_sender, "送信者まで（内容非表示・プライバシー保護）"),
+    APP_NAME_ONLY(R.string.notification_level_app, "アプリ名のみ"),
+    CALL_ONLY(R.string.notification_level_call, "着信のみ読み上げ（通知はミュート）"),
+    MUTED(R.string.notification_level_muted, "通知・着信すべてミュート");
+
+    fun getDisplayName(context: Context): String = try {
+        context.getString(resId)
+    } catch (_: Exception) {
+        displayName
+    }
 }
 
 /**

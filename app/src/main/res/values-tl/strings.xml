@@ -109,6 +109,36 @@
     <string name="state_expanded">nakabukas</string>
     <string name="state_disabled">hindi pinagana</string>
 
+    <!-- Menu Status & Settings Values -->
+    <string name="precision_exact_block">Antas ng kalye (Detalyado)</string>
+    <string name="precision_town">Antas ng lungsod (Privacy)</string>
+    <string name="precision_changed_fmt">Katumpakan ng lokasyon: %1$s</string>
+    <string name="country_setting_always">Palaging isama ang bansa</string>
+    <string name="country_setting_smart">Smart (Iwanan ang lokal)</string>
+    <string name="country_changed_fmt">Setting ng bansa: %1$s</string>
+    <string name="keyboard_mode_lift">Iangat para mag-type</string>
+    <string name="keyboard_mode_double_tap">Mag-double tap</string>
+    <string name="keyboard_mode_changed_fmt">Paraan ng pag-type: %1$s</string>
+    <string name="notification_level_full">Basahin lahat (Buo)</string>
+    <string name="notification_level_sender">Nagpadala lamang</string>
+    <string name="notification_level_app">Pangalan lang ng app</string>
+    <string name="notification_level_call">Tawag lamang</string>
+    <string name="notification_level_muted">Naka-mute lahat</string>
+    <string name="notification_level_changed_fmt">Pagbasa ng notification: %1$s</string>
+    <string name="sound_alert_ultra">Ultra detalyado</string>
+    <string name="sound_alert_standard">Karaniwan</string>
+    <string name="sound_alert_danger_voice">Boses ng panganib</string>
+    <string name="sound_alert_haptic">Haptic lamang</string>
+    <string name="sound_alert_disabled">Hindi pinagana</string>
+    <string name="sound_alert_changed_fmt">Alerto sa tunog: %1$s</string>
+    <string name="whisper_mode_auto">Awtomatiko (Gabi)</string>
+    <string name="whisper_mode_always">Palaging naka-on</string>
+    <string name="whisper_mode_off">Naka-off</string>
+    <string name="whisper_mode_changed_fmt">Whisper mode: %1$s</string>
+    <string name="mode_serena">Serena</string>
+    <string name="mode_talkback">TalkBack</string>
+
+
     <!-- Serena Menu & Navigation Dialogs -->
     <string name="menu_serena_title">🌸 Serena Menu</string>
     <string name="menu_edit_title">✏️ Serena Gabay sa Pag-edit</string>

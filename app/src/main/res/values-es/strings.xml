@@ -135,6 +135,36 @@ Para mejorar la calidad de la aplicación y la estabilidad en los canales Canary
     <string name="state_expanded">Expandido</string>
     <string name="state_disabled">No disponible</string>
 
+    <!-- Menu Status & Settings Values -->
+    <string name="precision_exact_block">Nivel de calle (Detallado)</string>
+    <string name="precision_town">Nivel de ciudad (Privacidad)</string>
+    <string name="precision_changed_fmt">Precisión de ubicación: %1$s</string>
+    <string name="country_setting_always">Incluir siempre el país</string>
+    <string name="country_setting_smart">Inteligente (Omitir doméstico)</string>
+    <string name="country_changed_fmt">Configuración de país: %1$s</string>
+    <string name="keyboard_mode_lift">Levantar para escribir</string>
+    <string name="keyboard_mode_double_tap">Tocar dos veces</string>
+    <string name="keyboard_mode_changed_fmt">Modo de entrada de teclas: %1$s</string>
+    <string name="notification_level_full">Leer todo (Completo)</string>
+    <string name="notification_level_sender">Solo remitente</string>
+    <string name="notification_level_app">Solo nombre de app</string>
+    <string name="notification_level_call">Solo llamadas</string>
+    <string name="notification_level_muted">Todo silenciado</string>
+    <string name="notification_level_changed_fmt">Anuncio de notificaciones: %1$s</string>
+    <string name="sound_alert_ultra">Ultra detallado</string>
+    <string name="sound_alert_standard">Estándar</string>
+    <string name="sound_alert_danger_voice">Alertas de peligro por voz</string>
+    <string name="sound_alert_haptic">Solo vibración</string>
+    <string name="sound_alert_disabled">Desactivado</string>
+    <string name="sound_alert_changed_fmt">Reconocimiento de sonido: %1$s</string>
+    <string name="whisper_mode_auto">Automático (Noche)</string>
+    <string name="whisper_mode_always">Siempre activado</string>
+    <string name="whisper_mode_off">Desactivado</string>
+    <string name="whisper_mode_changed_fmt">Modo susurro: %1$s</string>
+    <string name="mode_serena">Serena</string>
+    <string name="mode_talkback">TalkBack</string>
+
+
     <!-- Serena Menu & Navigation Dialogs -->
     <string name="menu_serena_title">Menú de serena</string>
     <string name="menu_edit_title">Asistencia de edición de serena</string>

@@ -125,6 +125,36 @@
     <string name="state_expanded">uitgevouwen</string>
     <string name="state_disabled">uitgeschakeld</string>
 
+    <!-- Menu Status & Settings Values -->
+    <string name="precision_exact_block">Straatniveau (Gedetailleerd)</string>
+    <string name="precision_town">Stadsniveau (Privacy)</string>
+    <string name="precision_changed_fmt">Locatieprecisie: %1$s</string>
+    <string name="country_setting_always">Altijd land vermelden</string>
+    <string name="country_setting_smart">Slim (Binnenlands weglaten)</string>
+    <string name="country_changed_fmt">Landinstelling: %1$s</string>
+    <string name="keyboard_mode_lift">Loslaten om te typen</string>
+    <string name="keyboard_mode_double_tap">Dubbeltikken</string>
+    <string name="keyboard_mode_changed_fmt">Toetsinvoermodus: %1$s</string>
+    <string name="notification_level_full">Alles voorlezen (Volledig)</string>
+    <string name="notification_level_sender">Alleen afzender</string>
+    <string name="notification_level_app">Alleen app-naam</string>
+    <string name="notification_level_call">Alleen oproepen</string>
+    <string name="notification_level_muted">Alles gedempt</string>
+    <string name="notification_level_changed_fmt">Meldingsaankondiging: %1$s</string>
+    <string name="sound_alert_ultra">Ultra gedetailleerd</string>
+    <string name="sound_alert_standard">Standaard</string>
+    <string name="sound_alert_danger_voice">Gevaarspraakberichten</string>
+    <string name="sound_alert_haptic">Alleen trillen</string>
+    <string name="sound_alert_disabled">Uitgeschakeld</string>
+    <string name="sound_alert_changed_fmt">Geluidsherkenning: %1$s</string>
+    <string name="whisper_mode_auto">Automatisch (Nacht)</string>
+    <string name="whisper_mode_always">Altijd aan</string>
+    <string name="whisper_mode_off">Uit</string>
+    <string name="whisper_mode_changed_fmt">Fluistermodus: %1$s</string>
+    <string name="mode_serena">Serena</string>
+    <string name="mode_talkback">TalkBack</string>
+
+
     <!-- Serena Menu & Navigation Dialogs -->
     <string name="menu_serena_title">🌸 Serena Menu</string>
     <string name="menu_edit_title">✏️ Serena Bewerkingsassistent</string>

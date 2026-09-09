@@ -125,6 +125,36 @@
     <string name="state_expanded">展開されています</string>
     <string name="state_disabled">無効</string>
 
+    <!-- Menu Status & Settings Values -->
+    <string name="precision_exact_block">番地まで詳細</string>
+    <string name="precision_town">市区町村・町名まで (プライバシー保護)</string>
+    <string name="precision_changed_fmt">現在地読み上げ精度: %1$s</string>
+    <string name="country_setting_always">常時国名付き</string>
+    <string name="country_setting_smart">スマート (国内は省略)</string>
+    <string name="country_changed_fmt">国名読み上げ設定: %1$s</string>
+    <string name="keyboard_mode_lift">指を離して入力 (リフト入力)</string>
+    <string name="keyboard_mode_double_tap">ダブルタップ入力</string>
+    <string name="keyboard_mode_changed_fmt">キー入力方式: %1$s</string>
+    <string name="notification_level_full">すべて読み上げ</string>
+    <string name="notification_level_sender">送信者まで (内容非表示)</string>
+    <string name="notification_level_app">アプリ名のみ</string>
+    <string name="notification_level_call">着信のみ</string>
+    <string name="notification_level_muted">すべてミュート</string>
+    <string name="notification_level_changed_fmt">通知読み上げ設定: %1$s</string>
+    <string name="sound_alert_ultra">超詳細実況モード</string>
+    <string name="sound_alert_standard">標準モード</string>
+    <string name="sound_alert_danger_voice">危険音音声モード</string>
+    <string name="sound_alert_haptic">バイブのみ</string>
+    <string name="sound_alert_disabled">オフ</string>
+    <string name="sound_alert_changed_fmt">環境音検知: %1$s</string>
+    <string name="whisper_mode_auto">夜間自動 (22:00〜07:00)</string>
+    <string name="whisper_mode_always">常時ささやき</string>
+    <string name="whisper_mode_off">オフ</string>
+    <string name="whisper_mode_changed_fmt">ささやきモード: %1$s</string>
+    <string name="mode_serena">セレナ</string>
+    <string name="mode_talkback">TalkBack</string>
+
+
     <!-- Serena Menu & Navigation Dialogs -->
     <string name="menu_serena_title">🌸 serena メニュー</string>
     <string name="menu_edit_title">✏️ serena 編集アシスト</string>

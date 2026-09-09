@@ -396,10 +396,16 @@ class SoundAndHapticHelper(private val context: Context) {
     var isSpatialSoundstageEnabled: Boolean = true
     var isAudioDuckingEnabled: Boolean = true
 
-    enum class WhisperScheduleMode(val displayName: String) {
-        AUTO("夜間自動 (端末時刻 22:00〜07:00)"),
-        ALWAYS_ON("常時ささやき ON"),
-        OFF("オフ (通常音声)")
+    enum class WhisperScheduleMode(val resId: Int, val displayName: String) {
+        AUTO(R.string.whisper_mode_auto, "夜間自動 (端末時刻 22:00〜07:00)"),
+        ALWAYS_ON(R.string.whisper_mode_always, "常時ささやき ON"),
+        OFF(R.string.whisper_mode_off, "オフ (通常音声)");
+
+        fun getDisplayName(context: Context): String = try {
+            context.getString(resId)
+        } catch (_: Exception) {
+            displayName
+        }
     }
 
     var whisperScheduleMode: WhisperScheduleMode = WhisperScheduleMode.AUTO

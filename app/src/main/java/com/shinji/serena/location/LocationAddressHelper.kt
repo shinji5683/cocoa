@@ -60,7 +60,11 @@ class LocationAddressHelper(private val context: Context) {
     }
 
     fun getPrecisionDisplayName(): String {
-        return if (isExactBlockPrecision()) "番地まで詳細" else "市区町村・町名まで（プライバシー保護）"
+        return if (isExactBlockPrecision()) {
+            context.getString(com.shinji.serena.R.string.precision_exact_block)
+        } else {
+            context.getString(com.shinji.serena.R.string.precision_town)
+        }
     }
 
     fun isAlwaysIncludeCountry(): Boolean {
@@ -75,7 +79,11 @@ class LocationAddressHelper(private val context: Context) {
     }
 
     fun getCountrySettingDisplayName(): String {
-        return if (isAlwaysIncludeCountry()) "常時国名付き（例: 日本、岐阜県...）" else "スマート（国内は省略、海外は国名付き）"
+        return if (isAlwaysIncludeCountry()) {
+            context.getString(com.shinji.serena.R.string.country_setting_always)
+        } else {
+            context.getString(com.shinji.serena.R.string.country_setting_smart)
+        }
     }
 
     @SuppressLint("MissingPermission")
