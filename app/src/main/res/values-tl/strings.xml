@@ -391,4 +391,137 @@
     <string name="notification_truncated_suffix">, pinutol</string>
     <string name="notification_digest_empty">Walang hindi pa nababasang abiso sa ngayon.</string>
     <string name="notification_digest_fmt">Buod ng abiso: %1$d sa kabuuan. Kamakailan: %2$s</string>
+
+    <!-- Relative Directions (Clock positions strictly prohibited) -->
+    <string name="dir_front">Sa harap</string>
+    <string name="dir_front_right">Kanan sa harap</string>
+    <string name="dir_front_left">Kaliwa sa harap</string>
+    <string name="dir_right">Sa kanan</string>
+    <string name="dir_left">Sa kaliwa</string>
+    <string name="dir_back_right">Kanan sa likod</string>
+    <string name="dir_back_left">Kaliwa sa likod</string>
+    <string name="dir_back">Sa likod</string>
+    <string name="dir_foot">Sa iyong paanan</string>
+    <string name="dir_ahead">Sa unahan</string>
+
+    <!-- Serena Eyes & Live Vision -->
+    <string name="eyes_mode_ocr">Camera sa pagbasa ng teksto</string>
+    <string name="eyes_mode_face">Camera para sa mukha at tao</string>
+    <string name="eyes_mode_indoor">Indoor spatial navigation</string>
+    <string name="eyes_mode_food">Scanner ng pagkain at expiration</string>
+    <string name="eyes_mode_walk">Navigation sa paglakad at transit</string>
+    <string name="eyes_mode_barcode_doc">Scanner ng barcode at dokumento</string>
+    <string name="eyes_mode_fashion">Scanner ng moda at kulay</string>
+    <string name="eyes_mode_sonar">Sonar radar para sa balakid</string>
+    <string name="eyes_mode_live">Real-time AI vision ng Serena Eyes</string>
+
+    <string name="eyes_start_ocr">Sinimulan ang camera sa pagbasa ng teksto.</string>
+    <string name="eyes_start_face">Sinimulan ang camera sa pagkilala ng mukha at tao.</string>
+    <string name="eyes_start_indoor">Sinimulan ang indoor navigation. Inilalarawan ang mga kasangkapan, pinto, at tao sa iyong paligid.</string>
+    <string name="eyes_start_food">Sinimulan ang scanner ng pagkain at expiration. Itutok ang camera sa pakete o petsa ng expiration.</string>
+    <string name="eyes_start_walk">Sinimulan ang navigation sa paglakad at transit. Itutok ang camera sa daan sa unahan.</string>
+    <string name="eyes_start_barcode_doc">Sinimulan ang scanner ng barcode at dokumento. Itutok sa barcode o resibo.</string>
+    <string name="eyes_start_fashion">Sinimulan ang scanner ng moda at kulay. Itutok sa damit o gamit para malaman ang kulay at vibe.</string>
+    <string name="eyes_start_sonar">Sinimulan ang sonar radar. Ginagabayan ang distansya gamit ang 3D audio at boses.</string>
+    <string name="eyes_start_live">Sinimulan ang real-time AI vision ng Serena Eyes. Dahan-dahang igalaw ang device sa paligid.</string>
+
+    <string name="eyes_end_ocr">Isinara ang camera sa pagbasa ng teksto.</string>
+    <string name="eyes_end_face">Isinara ang camera sa pagkilala ng tao.</string>
+    <string name="eyes_end_indoor">Isinara ang indoor navigation.</string>
+    <string name="eyes_end_food">Isinara ang scanner ng pagkain.</string>
+    <string name="eyes_end_walk">Isinara ang navigation sa paglakad.</string>
+    <string name="eyes_end_barcode_doc">Isinara ang scanner ng barcode.</string>
+    <string name="eyes_end_live">Isinara ang live vision camera.</string>
+
+    <string name="eyes_permission_camera_required">Kailangan ang pahintulot sa camera.</string>
+    <string name="eyes_camera_start_failed">Nabigong simulan ang camera.</string>
+    <string name="eyes_starting_status_fmt">🌸 Sinisimulan ang %1$s…</string>
+
+    <string name="eyes_brightness_bright">Maliwanag na lugar</string>
+    <string name="eyes_brightness_cozy">Kwarto na may maayos na liwanag</string>
+    <string name="eyes_brightness_dim">Medyo madilim na lugar</string>
+    <string name="eyes_brightness_dark">Madilim na lugar</string>
+
+    <string name="eyes_text_detected_fmt">May nakitang teksto: %1$s</string>
+    <string name="eyes_front_clear_checking">%1$s. Walang harang sa harap. Sinusuri ang paligid…</string>
+    <string name="eyes_front_clear">Walang harang sa harap</string>
+    <string name="eyes_person_desc_fmt">%1$s sa %2$s, may %4$s na nakasuot ng %3$s. %5$s</string>
+    <string name="eyes_barcode_detected_fmt">📌 May nakitang %1$s: %2$s</string>
+    <string name="eyes_surrounding_objects_fmt">Mga bagay sa paligid: %1$s</string>
+    <string name="eyes_obj_food">pagkain</string>
+    <string name="eyes_obj_drink">inumin</string>
+    <string name="eyes_obj_cup">tasa</string>
+    <string name="eyes_obj_furniture">kasangkapan</string>
+    <string name="eyes_obj_chair">upuan</string>
+    <string name="eyes_obj_table">mesa</string>
+    <string name="eyes_obj_sofa">sofa</string>
+    <string name="eyes_obj_door">pinto</string>
+    <string name="eyes_obj_plant">halaman</string>
+    <string name="eyes_obj_electronics">electronic na kagamitan</string>
+    <string name="eyes_obj_laptop">laptop</string>
+    <string name="eyes_obj_phone">smartphone</string>
+    <string name="eyes_obj_book">aklat o papel</string>
+    <string name="eyes_obj_bag">bag</string>
+    <string name="eyes_obj_shoe">sapatos</string>
+    <string name="eyes_obj_clock">orasan</string>
+    <string name="eyes_obj_glasses">salamin sa mata</string>
+    <string name="eyes_obj_key">susi</string>
+    <string name="eyes_obj_pen">panulat</string>
+    <string name="eyes_obj_item">bagay</string>
+
+    <!-- Serena Sentinel Eyes -->
+    <string name="sentinel_started">Sinimulan ang Serena Sentinel Eyes. Nagbabantay ng mga tao sa harap mo nang real-time.</string>
+    <string name="sentinel_stopped">Itinigil ang Serena Sentinel Eyes.</string>
+    <string name="sentinel_camera_error">Nabigong simulan ang camera. Pakisuri ang pahintulot sa camera.</string>
+    <string name="sentinel_bind_error">Nabigong ikonekta ang sentinel camera.</string>
+    <string name="sentinel_person_left_view">Umalis ang tao sa paningin ng camera.</string>
+    <string name="sentinel_announce_single_fmt">%1$s sa %2$s, may %4$s na nakasuot ng %3$s. Ekspresyon: %5$s, %6$s.</string>
+    <string name="sentinel_announce_multi_fmt">%1$s, may %2$d tao. Ang pinakamalapit ay %4$s sa %3$s, na may ekspresyong %5$s.</string>
+
+    <!-- Helper Classes -->
+    <string name="obj_summary_none">Walang partikular na bagay na nakita.</string>
+    <string name="obj_summary_fmt">May nakitang %1$s sa screen.</string>
+    <string name="ocr_no_text_found">Walang nakitang teksto.</string>
+    <string name="ocr_error">Nabigong basahin ang teksto.</string>
+    <string name="face_summary_none">Walang taong nakikita.</string>
+    <string name="face_distance_close_50cm">napalapit, mga 50 cm</string>
+    <string name="face_distance_1m">mga 80 cm hanggang 1 metro</string>
+    <string name="face_distance_2m">mga 1.5 hanggang 2 metro</string>
+    <string name="face_distance_3m">mga 2.5 hanggang 3 metro</string>
+    <string name="face_distance_far">mahigit 3 metro ang layo</string>
+
+    <!-- Service Feature Launchers & Toggles -->
+    <string name="service_launch_realtime_camera">Sinisimulan ang real-time live commentary AI camera</string>
+    <string name="service_launch_eyes">Sinisimulan ang Serena Eyes real-time AI vision</string>
+    <string name="service_launch_indoor_nav">Sinisimulan ang indoor spatial navigation</string>
+    <string name="service_launch_food_scanner">Sinisimulan ang scanner ng pagkain at expiration</string>
+    <string name="service_launch_transit_nav">Sinisimulan ang navigation sa paglakad at transit</string>
+    <string name="service_launch_barcode_doc">Sinisimulan ang scanner ng barcode at dokumento</string>
+    <string name="service_spatial_soundstage_fmt">Itinakda ang 3D spatial soundstage sa %1$s</string>
+    <string name="service_audio_ducking_fmt">Itinakda ang audio ducking sa %1$s</string>
+    <string name="service_night_whisper_fmt">Pinalitan ang night whisper mode sa %1$s (%2$s)</string>
+    <string name="service_whisper_active">kasalukuyang bumubulong</string>
+    <string name="service_whisper_normal">kasalukuyang normal na boses</string>
+    <string name="service_translation_lang_fmt">Pinalitan ang default translation language sa %1$s</string>
+    <string name="service_focused_kanji_not_found">Walang nakatutok na karakter na nahanap.</string>
+    <string name="service_screen_analysis_failed">Hindi masuri ang impormasyon ng screen.</string>
+
+    <!-- Walking Nav Submenu -->
+    <string name="nav_menu_radar">3D Audio Map Radar (Simulan/Ihinto)</string>
+    <string name="nav_menu_route_search">Valhalla Walking Route papunta sa destinasyon (Paghahanap gamit ang boses)</string>
+    <string name="nav_menu_route_search_prompt">Paghahanap ng destinasyon gamit ang boses. Magsalita po ngayon!</string>
+    <string name="nav_menu_location_check">Suriin ang kasalukuyang lokasyon at direksyon</string>
+    <string name="nav_menu_convenience">Maghanap ng kalapit na convenience store</string>
+    <string name="nav_menu_station">Maghanap ng kalapit na istasyon</string>
+    <string name="nav_menu_cafe">Maghanap ng kalapit na cafe</string>
+    <string name="nav_menu_fastfood">Maghanap ng kalapit na fast food</string>
+    <string name="nav_menu_restaurant">Maghanap ng kalapit na restawran</string>
+    <string name="nav_menu_supermarket">Maghanap ng kalapit na supermarket</string>
+    <string name="nav_menu_hospital">Maghanap ng kalapit na ospital o parmasya</string>
+    <string name="nav_menu_post_bank">Maghanap ng kalapit na post office o bangko</string>
+    <string name="nav_menu_compass_3d">Simulan ang 3D spatial compass guidance</string>
+    <string name="nav_location_unavailable">Hindi magamit ang mga serbisyo ng lokasyon</string>
+
+    <!-- Auto Update Background Notification -->
+    <string name="update_new_version_available_fmt">May bagong bersyon ang Serena, %1$s. Maaari kang mag-update anumang oras mula sa Serena Menu.</string>
 </resources>

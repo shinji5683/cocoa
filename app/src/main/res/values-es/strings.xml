@@ -438,4 +438,137 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <string name="notification_truncated_suffix">, truncado</string>
     <string name="notification_digest_empty">No hay notificaciones no leídas en este momento.</string>
     <string name="notification_digest_fmt">Resumen de notificaciones: %1$d en total. Recientes: %2$s</string>
+
+    <!-- Relative Directions (Clock positions strictly prohibited) -->
+    <string name="dir_front">Al frente</string>
+    <string name="dir_front_right">Diagonal derecha adelante</string>
+    <string name="dir_front_left">Diagonal izquierda adelante</string>
+    <string name="dir_right">A la derecha</string>
+    <string name="dir_left">A la izquierda</string>
+    <string name="dir_back_right">Diagonal derecha atrás</string>
+    <string name="dir_back_left">Diagonal izquierda atrás</string>
+    <string name="dir_back">Atrás</string>
+    <string name="dir_foot">A tus pies</string>
+    <string name="dir_ahead">Hacia adelante</string>
+
+    <!-- Serena Eyes & Live Vision -->
+    <string name="eyes_mode_ocr">Cámara de lectura de texto</string>
+    <string name="eyes_mode_face">Cámara de rostros y personas</string>
+    <string name="eyes_mode_indoor">Navegación espacial en interiores</string>
+    <string name="eyes_mode_food">Escáner de alimentos y caducidad</string>
+    <string name="eyes_mode_walk">Navegación peatonal y de tránsito</string>
+    <string name="eyes_mode_barcode_doc">Escáner de códigos de barras y documentos</string>
+    <string name="eyes_mode_fashion">Escáner de moda y colores</string>
+    <string name="eyes_mode_sonar">Radar sonar y obstáculos</string>
+    <string name="eyes_mode_live">Visión de IA en tiempo real Serena Eyes</string>
+
+    <string name="eyes_start_ocr">Cámara de lectura de texto iniciada.</string>
+    <string name="eyes_start_face">Cámara de reconocimiento de rostros y personas iniciada.</string>
+    <string name="eyes_start_indoor">Navegación en interiores iniciada. Describiendo muebles, puertas y personas a tu alrededor.</string>
+    <string name="eyes_start_food">Escáner de alimentos y caducidad iniciado. Apunta la cámara a paquetes de alimentos o fechas de caducidad.</string>
+    <string name="eyes_start_walk">Navegación peatonal y de tránsito iniciada. Apunta la cámara hacia el camino enfrente.</string>
+    <string name="eyes_start_barcode_doc">Escáner de códigos y documentos iniciado. Apunta a códigos de barras o facturas.</string>
+    <string name="eyes_start_fashion">Escáner de moda y colores iniciado. Apunta a ropa o prendas para conocer el color y la atmósfera.</string>
+    <string name="eyes_start_sonar">Radar sonar de obstáculos iniciado. Guiando distancia con audio 3D y voz.</string>
+    <string name="eyes_start_live">Visión de IA en tiempo real Serena Eyes iniciada. Mueve el dispositivo suavemente.</string>
+
+    <string name="eyes_end_ocr">Cámara de lectura de texto cerrada.</string>
+    <string name="eyes_end_face">Cámara de reconocimiento de personas cerrada.</string>
+    <string name="eyes_end_indoor">Navegación en interiores cerrada.</string>
+    <string name="eyes_end_food">Escáner de alimentos cerrado.</string>
+    <string name="eyes_end_walk">Navegación peatonal cerrada.</string>
+    <string name="eyes_end_barcode_doc">Escáner de códigos cerrado.</string>
+    <string name="eyes_end_live">Cámara de visión en vivo cerrada.</string>
+
+    <string name="eyes_permission_camera_required">Se requiere permiso de cámara.</string>
+    <string name="eyes_camera_start_failed">No se pudo iniciar la cámara.</string>
+    <string name="eyes_starting_status_fmt">🌸 Iniciando %1$s…</string>
+
+    <string name="eyes_brightness_bright">Lugar muy iluminado</string>
+    <string name="eyes_brightness_cozy">Habitación con luz agradable</string>
+    <string name="eyes_brightness_dim">Lugar con poca luz</string>
+    <string name="eyes_brightness_dark">Lugar oscuro</string>
+
+    <string name="eyes_text_detected_fmt">Texto detectado: %1$s</string>
+    <string name="eyes_front_clear_checking">%1$s. Al frente despejado. Explorando entorno…</string>
+    <string name="eyes_front_clear">Al frente despejado</string>
+    <string name="eyes_person_desc_fmt">%1$s a %2$s, %4$s con vestimenta %3$s. %5$s</string>
+    <string name="eyes_barcode_detected_fmt">📌 Detectado %1$s: %2$s</string>
+    <string name="eyes_surrounding_objects_fmt">Objetos alrededor: %1$s</string>
+    <string name="eyes_obj_food">alimento</string>
+    <string name="eyes_obj_drink">bebida</string>
+    <string name="eyes_obj_cup">taza</string>
+    <string name="eyes_obj_furniture">mueble</string>
+    <string name="eyes_obj_chair">silla</string>
+    <string name="eyes_obj_table">mesa</string>
+    <string name="eyes_obj_sofa">sofá</string>
+    <string name="eyes_obj_door">puerta</string>
+    <string name="eyes_obj_plant">planta</string>
+    <string name="eyes_obj_electronics">dispositivo electrónico</string>
+    <string name="eyes_obj_laptop">portátil</string>
+    <string name="eyes_obj_phone">teléfono inteligente</string>
+    <string name="eyes_obj_book">libro o documento</string>
+    <string name="eyes_obj_bag">bolso</string>
+    <string name="eyes_obj_shoe">zapatos</string>
+    <string name="eyes_obj_clock">reloj</string>
+    <string name="eyes_obj_glasses">gafas</string>
+    <string name="eyes_obj_key">llave</string>
+    <string name="eyes_obj_pen">bolígrafo</string>
+    <string name="eyes_obj_item">objeto</string>
+
+    <!-- Serena Sentinel Eyes -->
+    <string name="sentinel_started">Serena Sentinel Eyes iniciado. Vigila personas frente a ti en tiempo real.</string>
+    <string name="sentinel_stopped">Serena Sentinel Eyes detenido.</string>
+    <string name="sentinel_camera_error">Error al iniciar la cámara. Verifica los permisos de cámara.</string>
+    <string name="sentinel_bind_error">Error al vincular la cámara de vigilancia.</string>
+    <string name="sentinel_person_left_view">La persona salió del campo de visión.</string>
+    <string name="sentinel_announce_single_fmt">%1$s a %2$s, %4$s con vestimenta %3$s. Expresión: %5$s, %6$s.</string>
+    <string name="sentinel_announce_multi_fmt">%1$s, %2$d personas. La más cercana es %4$s a %3$s, con expresión %5$s.</string>
+
+    <!-- Helper Classes -->
+    <string name="obj_summary_none">No se detectó ningún objeto en particular.</string>
+    <string name="obj_summary_fmt">Detectado %1$s en pantalla.</string>
+    <string name="ocr_no_text_found">No se encontró texto.</string>
+    <string name="ocr_error">Error al leer el texto.</string>
+    <string name="face_summary_none">No hay personas a la vista.</string>
+    <string name="face_distance_close_50cm">muy cerca, a unos 50 cm</string>
+    <string name="face_distance_1m">a unos 80 cm a 1 metro</string>
+    <string name="face_distance_2m">a unos 1.5 a 2 metros</string>
+    <string name="face_distance_3m">a unos 2.5 a 3 metros</string>
+    <string name="face_distance_far">a más de 3 metros</string>
+
+    <!-- Service Feature Launchers & Toggles -->
+    <string name="service_launch_realtime_camera">Iniciando cámara de narración en vivo con IA</string>
+    <string name="service_launch_eyes">Iniciando visión de IA en tiempo real Serena Eyes</string>
+    <string name="service_launch_indoor_nav">Iniciando navegación espacial en interiores</string>
+    <string name="service_launch_food_scanner">Iniciando escáner de alimentos y caducidad</string>
+    <string name="service_launch_transit_nav">Iniciando navegación peatonal y de tránsito</string>
+    <string name="service_launch_barcode_doc">Iniciando escáner de códigos y documentos</string>
+    <string name="service_spatial_soundstage_fmt">Escenario de sonido espacial 3D establecido en %1$s</string>
+    <string name="service_audio_ducking_fmt">Atenuación de audio establecida en %1$s</string>
+    <string name="service_night_whisper_fmt">Modo susurro nocturno cambiado a %1$s (%2$s)</string>
+    <string name="service_whisper_active">susurrando actualmente</string>
+    <string name="service_whisper_normal">voz normal actualmente</string>
+    <string name="service_translation_lang_fmt">Idioma de traducción predeterminado cambiado a %1$s</string>
+    <string name="service_focused_kanji_not_found">No se encontró ningún carácter enfocado.</string>
+    <string name="service_screen_analysis_failed">No se pudo analizar la información de la pantalla.</string>
+
+    <!-- Walking Nav Submenu -->
+    <string name="nav_menu_radar">Radar de mapa 3D (Iniciar/Detener)</string>
+    <string name="nav_menu_route_search">Ruta peatonal Valhalla hacia destino (Búsqueda por voz)</string>
+    <string name="nav_menu_route_search_prompt">Búsqueda por voz para destino. ¡Hable ahora!</string>
+    <string name="nav_menu_location_check">Comprobar ubicación y orientación actual</string>
+    <string name="nav_menu_convenience">Buscar tiendas de conveniencia cercanas</string>
+    <string name="nav_menu_station">Buscar estaciones cercanas</string>
+    <string name="nav_menu_cafe">Buscar cafeterías cercanas</string>
+    <string name="nav_menu_fastfood">Buscar comida rápida cercana</string>
+    <string name="nav_menu_restaurant">Buscar restaurantes cercanos</string>
+    <string name="nav_menu_supermarket">Buscar supermercados cercanos</string>
+    <string name="nav_menu_hospital">Buscar clínicas y farmacias cercanas</string>
+    <string name="nav_menu_post_bank">Buscar oficinas postales y bancos cercanos</string>
+    <string name="nav_menu_compass_3d">Iniciar brújula de audio espacial 3D</string>
+    <string name="nav_location_unavailable">Servicios de ubicación no disponibles</string>
+
+    <!-- Auto Update Background Notification -->
+    <string name="update_new_version_available_fmt">Una nueva versión de Serena, %1$s, está disponible. Puede actualizar en cualquier momento desde el menú Serena.</string>
 </resources>

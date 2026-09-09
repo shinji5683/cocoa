@@ -93,28 +93,27 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         val modeTitle = when (mode) {
-            "OCR" -> "文字読み取りカメラ"
-            "FACE" -> "表情・人物認識カメラ"
-            "INDOOR" -> "🏠 インドア空間ナビ ＆ 屋内実況"
-            "FOOD_EXPIRATION" -> "🥫 食品＆賞味期限スキャナー"
-            "WALK_TRANSIT" -> "🚦 歩行・信号＆点字ブロックナビ"
-            "BARCODE_DOC" -> "📄 バーコード＆書類・レシート読み取り"
-            "FASHION" -> "👗 ファッション＆衣服カラー情景スキャナー"
-            "SONAR" -> "🦇 空間障害物＆ドア・段差ソナー"
-            "EYES", "LIVE" -> "👀 Serena Eyes リアルタイムAI視覚＆実況"
-            else -> "👀 Serena Eyes リアルタイムAI視覚＆実況"
+            "OCR" -> getString(R.string.eyes_mode_ocr)
+            "FACE" -> getString(R.string.eyes_mode_face)
+            "INDOOR" -> getString(R.string.eyes_mode_indoor)
+            "FOOD_EXPIRATION" -> getString(R.string.eyes_mode_food)
+            "WALK_TRANSIT" -> getString(R.string.eyes_mode_walk)
+            "BARCODE_DOC" -> getString(R.string.eyes_mode_barcode_doc)
+            "FASHION" -> getString(R.string.eyes_mode_fashion)
+            "SONAR" -> getString(R.string.eyes_mode_sonar)
+            else -> getString(R.string.eyes_mode_live)
         }
-        tvStatus.text = "🌸 $modeTitle 起動中…"
+        tvStatus.text = getString(R.string.eyes_starting_status_fmt, modeTitle)
         val startAnnounce = when (mode) {
-            "INDOOR" -> "インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。"
-            "FOOD_EXPIRATION" -> "食品と賞味期限スキャナーを起動しました。食品パッケージや賞味期限の印字をゆっくり映してください。"
-            "WALK_TRANSIT" -> "歩行・信号および点字ブロックナビを起動しました。正面の道路や信号機を映してください。"
-            "BARCODE_DOC" -> "バーコードおよび書類スキャナーを起動しました。商品バーコードやレシート、請求書を映してください。"
-            "FASHION" -> "ファッション＆衣服カラー情景スキャナーを起動しました。服や靴下、身の回りのものをカメラに映してください。色や温度感、雰囲気を実況します。"
-            "SONAR" -> "空間障害物およびドア、段差ソナーを起動しました。歩行中の障害物やドアまでの距離を、立体音響ソナーパルス音と音声で案内します。"
-            "OCR" -> "文字読み取りカメラを起動しました。"
-            "FACE" -> "表情・人物認識カメラを起動しました。"
-            else -> "Serena Eyes（リアルタイムAI視覚）を起動しました。周囲をゆっくり映してください。"
+            "INDOOR" -> getString(R.string.eyes_start_indoor)
+            "FOOD_EXPIRATION" -> getString(R.string.eyes_start_food)
+            "WALK_TRANSIT" -> getString(R.string.eyes_start_walk)
+            "BARCODE_DOC" -> getString(R.string.eyes_start_barcode_doc)
+            "FASHION" -> getString(R.string.eyes_start_fashion)
+            "SONAR" -> getString(R.string.eyes_start_sonar)
+            "OCR" -> getString(R.string.eyes_start_ocr)
+            "FACE" -> getString(R.string.eyes_start_face)
+            else -> getString(R.string.eyes_start_live)
         }
         speak(startAnnounce)
 
@@ -131,7 +130,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            tts?.language = Locale.JAPANESE
+            tts?.language = Locale.getDefault()
             tts?.setSpeechRate(1.05f)
             isTtsReady = true
         }
@@ -164,7 +163,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             if (allPermissionsGranted()) {
                 startCamera()
             } else {
-                speak("カメラの権限が必要です。")
+                speak(getString(R.string.eyes_permission_camera_required))
                 finish()
             }
         }
@@ -195,7 +194,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "CameraX binding failed: ${e.message}")
-                speak("カメラの起動に失敗しました。")
+                speak(getString(R.string.eyes_camera_start_failed))
             }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -240,13 +239,13 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
             val avg = if (count > 0) sum / count else 128
             when {
-                avg >= 150 -> "明るい場所"
-                avg in 60..149 -> "落ち着いた明るさの部屋"
-                avg in 20..59 -> "薄暗い場所"
-                else -> "暗い場所"
+                avg >= 150 -> getString(R.string.eyes_brightness_bright)
+                avg in 60..149 -> getString(R.string.eyes_brightness_cozy)
+                avg in 20..59 -> getString(R.string.eyes_brightness_dim)
+                else -> getString(R.string.eyes_brightness_dark)
             }
         } else {
-            "明るい場所"
+            getString(R.string.eyes_brightness_bright)
         }
 
         when (mode) {
@@ -258,9 +257,9 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             lastSpokenText = text
                             lastSpokenTime = currentTime
                             runOnUiThread {
-                                tvStatus.text = "📝 読み取り: $text"
+                                tvStatus.text = "📝 $text"
                             }
-                            speak("文字を検出: $text", TextToSpeech.QUEUE_FLUSH)
+                            speak(getString(R.string.eyes_text_detected_fmt, text), TextToSpeech.QUEUE_FLUSH)
                         }
                     }
                     .addOnCompleteListener {
@@ -274,11 +273,11 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             val face = faces[0]
                             val centerXRatio = face.boundingBox.centerX().toFloat() / imgWidth
                             val dirStr = when {
-                                centerXRatio < 0.25f -> "左"
-                                centerXRatio in 0.25f..0.40f -> "左斜め前"
-                                centerXRatio in 0.40f..0.60f -> "正面"
-                                centerXRatio in 0.60f..0.75f -> "右斜め前"
-                                else -> "右"
+                                centerXRatio < 0.25f -> getString(R.string.dir_left)
+                                centerXRatio in 0.25f..0.40f -> getString(R.string.dir_front_left)
+                                centerXRatio in 0.40f..0.60f -> getString(R.string.dir_front)
+                                centerXRatio in 0.60f..0.75f -> getString(R.string.dir_front_right)
+                                else -> getString(R.string.dir_right)
                             }
                             val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
                                 face = face,
@@ -287,7 +286,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 mediaImage = mediaImage,
                                 bitmap = null
                             )
-                            val desc = "${dirStr} ${attrs.estimatedDistanceMeters}に、${attrs.clothingDescription}を着た${attrs.genderAndAge}がいます。${attrs.emotion.fullDescription}"
+                            val desc = getString(R.string.eyes_person_desc_fmt, dirStr, attrs.estimatedDistanceMeters, attrs.clothingDescription, attrs.genderAndAge, attrs.emotion.fullDescription)
                             if (desc != lastSpokenText || currentTime - lastSpokenTime > 4000) {
                                 lastSpokenText = desc
                                 lastSpokenTime = currentTime
@@ -566,7 +565,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         } else {
                             if (currentTime - lastSpokenTime > 4000) {
                                 lastSpokenTime = currentTime
-                                val clearMsg = if (Locale.getDefault().language.lowercase() == "ja") "前方クリアです" else "Front is clear"
+                                val clearMsg = getString(R.string.eyes_front_clear)
                                 runOnUiThread {
                                     tvStatus.text = "🦇 $clearMsg"
                                 }
@@ -586,11 +585,11 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             val box = face.boundingBox
                             val centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1)
                             val pos = when {
-                                centerX < 0.25f -> "左"
-                                centerX in 0.25f..0.40f -> "左斜め前"
-                                centerX in 0.40f..0.60f -> "正面"
-                                centerX in 0.60f..0.75f -> "右斜め前"
-                                else -> "右"
+                                centerX < 0.25f -> getString(R.string.dir_left)
+                                centerX in 0.25f..0.40f -> getString(R.string.dir_front_left)
+                                centerX in 0.40f..0.60f -> getString(R.string.dir_front)
+                                centerX in 0.60f..0.75f -> getString(R.string.dir_front_right)
+                                else -> getString(R.string.dir_right)
                             }
                             val attrs = com.shinji.serena.ai.AiVisionFeatureHelper.analyzePersonAttributes(
                                 face = face,
@@ -619,11 +618,11 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     val box = obj.boundingBox
                                     val centerX = box.centerX().toFloat() / imgWidth.coerceAtLeast(1)
                                     val pos = when {
-                                        centerX < 0.25f -> "左"
-                                        centerX in 0.25f..0.40f -> "左斜め前"
-                                        centerX in 0.40f..0.60f -> "正面"
-                                        centerX in 0.60f..0.75f -> "右斜め前"
-                                        else -> "右"
+                                        centerX < 0.25f -> getString(R.string.dir_left)
+                                        centerX in 0.25f..0.40f -> getString(R.string.dir_front_left)
+                                        centerX in 0.40f..0.60f -> getString(R.string.dir_front)
+                                        centerX in 0.60f..0.75f -> getString(R.string.dir_front_right)
+                                        else -> getString(R.string.dir_right)
                                     }
                                     val widthRatio = box.width().toFloat() / imgWidth.coerceAtLeast(1)
                                     val dist = when {
@@ -657,11 +656,11 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                             val vibePart = if (p.emotionalMeaning.endsWith("です") || p.emotionalMeaning.endsWith("ます")) p.emotionalMeaning else "${p.emotionalMeaning}です"
                                             "${p.position}（${p.distanceMeters}）に、${clothesPart}${p.genderAndAge}が1人います。${p.gazeAndPose}。表情は${p.expression}で、${vibePart}。"
                                         } else if (objectDetails.isNotEmpty()) {
-                                            "周囲の物体: ${objectDetails.take(2).joinToString("、")}"
+                                            getString(R.string.eyes_surrounding_objects_fmt, objectDetails.take(2).joinToString(getString(R.string.status_separator)))
                                         } else if (recognizedTexts.isNotEmpty()) {
-                                            "文字を検出: ${recognizedTexts.take(2).joinToString("、")}"
+                                            getString(R.string.eyes_text_detected_fmt, recognizedTexts.take(2).joinToString(getString(R.string.status_separator)))
                                         } else {
-                                            "${brightnessLevel}。前方クリアです。周囲を確認中…"
+                                            getString(R.string.eyes_front_clear_checking, brightnessLevel)
                                         }
 
                                         if (finalAnnouncement.isNotEmpty() && (finalAnnouncement != lastSpokenText || currentTime - lastSpokenTime > 3500)) {
@@ -691,39 +690,40 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun translateObjectLabel(label: String): String {
         val lower = label.lowercase()
         return when {
-            lower.contains("food") -> "食品"
-            lower.contains("beverage") || lower.contains("drink") || lower.contains("bottle") -> "ペットボトル・飲み物"
-            lower.contains("cup") || lower.contains("mug") -> "コップ"
-            lower.contains("home good") || lower.contains("furniture") -> "家具"
-            lower.contains("chair") || lower.contains("seat") -> "椅子"
-            lower.contains("table") || lower.contains("desk") -> "机"
-            lower.contains("couch") || lower.contains("sofa") -> "ソファ"
-            lower.contains("door") -> "ドア"
-            lower.contains("plant") || lower.contains("flower") -> "観葉植物"
-            lower.contains("electronic") || lower.contains("gadget") -> "電子機器"
-            lower.contains("laptop") || lower.contains("computer") -> "ノートパソコン"
-            lower.contains("phone") || lower.contains("mobile") -> "スマートフォン"
-            lower.contains("book") || lower.contains("magazine") -> "本・書類"
-            lower.contains("bag") || lower.contains("backpack") -> "カバン"
-            lower.contains("shoe") || lower.contains("footwear") -> "靴"
-            lower.contains("clock") || lower.contains("watch") -> "時計"
-            lower.contains("glasses") -> "メガネ"
-            lower.contains("key") -> "鍵"
+            lower.contains("food") -> getString(R.string.eyes_obj_food)
+            lower.contains("beverage") || lower.contains("drink") || lower.contains("bottle") -> getString(R.string.eyes_obj_drink)
+            lower.contains("cup") || lower.contains("mug") -> getString(R.string.eyes_obj_cup)
+            lower.contains("home good") || lower.contains("furniture") -> getString(R.string.eyes_obj_furniture)
+            lower.contains("chair") || lower.contains("seat") -> getString(R.string.eyes_obj_chair)
+            lower.contains("table") || lower.contains("desk") -> getString(R.string.eyes_obj_table)
+            lower.contains("couch") || lower.contains("sofa") -> getString(R.string.eyes_obj_sofa)
+            lower.contains("door") -> getString(R.string.eyes_obj_door)
+            lower.contains("plant") || lower.contains("flower") -> getString(R.string.eyes_obj_plant)
+            lower.contains("electronic") || lower.contains("gadget") -> getString(R.string.eyes_obj_electronics)
+            lower.contains("laptop") || lower.contains("computer") -> getString(R.string.eyes_obj_laptop)
+            lower.contains("phone") || lower.contains("mobile") -> getString(R.string.eyes_obj_phone)
+            lower.contains("book") || lower.contains("magazine") -> getString(R.string.eyes_obj_book)
+            lower.contains("bag") || lower.contains("backpack") -> getString(R.string.eyes_obj_bag)
+            lower.contains("shoe") || lower.contains("footwear") -> getString(R.string.eyes_obj_shoe)
+            lower.contains("clock") || lower.contains("watch") -> getString(R.string.eyes_obj_clock)
+            lower.contains("glasses") -> getString(R.string.eyes_obj_glasses)
+            lower.contains("key") -> getString(R.string.eyes_obj_key)
+            lower.contains("pen") || lower.contains("pencil") -> getString(R.string.eyes_obj_pen)
             lower.isNotEmpty() -> label
-            else -> "身の回りの物"
+            else -> getString(R.string.eyes_obj_item)
         }
     }
 
     override fun onDestroy() {
         try {
             val endMsg = when (mode) {
-                "OCR" -> "文字読み取りカメラを終了しました。"
-                "FACE" -> "表情・人物認識カメラを終了しました。"
-                "INDOOR" -> "インドア空間ナビを終了しました。"
-                "FOOD_EXPIRATION" -> "食品スキャナーを終了しました。"
-                "WALK_TRANSIT" -> "歩行ナビを終了しました。"
-                "BARCODE_DOC" -> "バーコードスキャナーを終了しました。"
-                else -> "リアルタイムカメラ実況を終了しました。"
+                "OCR" -> getString(R.string.eyes_end_ocr)
+                "FACE" -> getString(R.string.eyes_end_face)
+                "INDOOR" -> getString(R.string.eyes_end_indoor)
+                "FOOD_EXPIRATION" -> getString(R.string.eyes_end_food)
+                "WALK_TRANSIT" -> getString(R.string.eyes_end_walk)
+                "BARCODE_DOC" -> getString(R.string.eyes_end_barcode_doc)
+                else -> getString(R.string.eyes_end_live)
             }
             SerenaScreenReaderService.instance?.speak("🌸 $endMsg", TextToSpeech.QUEUE_FLUSH)
         } catch (_: Exception) {}

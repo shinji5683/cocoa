@@ -16,6 +16,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.shinji.serena.R
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -26,7 +27,6 @@ import java.util.concurrent.Executors
  * バックグラウンドでカメラが静かに見守り、
  * 人が目の前に現れたり、近づいたり、通り過ぎたりした瞬間に
  * 「正面 約1.5mに、白い服を着た笑顔の女性がいます」
- * 「右斜め前に、真剣な表情の男性が近づいています」
  * と、性別・表情・感情・服装・相対方向・距離をリアルタイム実況する安全見守りエンジン。
  */
 class SerenaSentinelEyesManager(
@@ -75,7 +75,7 @@ class SerenaSentinelEyesManager(
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
 
         cameraExecutor = Executors.newSingleThreadExecutor()
-        speakCallback("Serena 常駐見守りアイズを開始しました。目の前に人が現れたら、性別や表情、距離をリアルタイムにお知らせします。")
+        speakCallback(context.getString(R.string.sentinel_started))
 
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
@@ -84,7 +84,7 @@ class SerenaSentinelEyesManager(
                 bindCameraAnalysis()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to get camera provider: ${e.message}")
-                speakCallback("カメラの起動に失敗しました。カメラ権限を確認してください。")
+                speakCallback(context.getString(R.string.sentinel_camera_error))
                 stopSentinelEyes()
             }
         }, ContextCompat.getMainExecutor(context))
@@ -104,7 +104,7 @@ class SerenaSentinelEyesManager(
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping sentinel eyes: ${e.message}")
         }
-        speakCallback("Serena 常駐見守りアイズを停止しました。")
+        speakCallback(context.getString(R.string.sentinel_stopped))
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -147,7 +147,7 @@ class SerenaSentinelEyesManager(
             Log.i(TAG, "Sentinel Eyes camera bound successfully.")
         } catch (e: Exception) {
             Log.e(TAG, "Binding camera error: ${e.message}")
-            speakCallback("見守りカメラのバインドに失敗しました。")
+            speakCallback(context.getString(R.string.sentinel_bind_error))
         }
     }
 
@@ -160,7 +160,7 @@ class SerenaSentinelEyesManager(
             if (lastFaceCount > 0 && now - lastAnnounceTimeMs > 3000) {
                 lastFaceCount = 0
                 mainHandler.post {
-                    speakCallback("人が視野から外れました。")
+                    speakCallback(context.getString(R.string.sentinel_person_left_view))
                 }
             }
             return
@@ -171,11 +171,11 @@ class SerenaSentinelEyesManager(
 
         // 相対方向（時計盤表現は完全禁止！）
         val directionStr = when {
-            centerXRatio < 0.28f -> "左"
-            centerXRatio in 0.28f..0.42f -> "左斜め前"
-            centerXRatio in 0.42f..0.58f -> "正面"
-            centerXRatio in 0.58f..0.72f -> "右斜め前"
-            else -> "右"
+            centerXRatio < 0.28f -> context.getString(R.string.dir_left)
+            centerXRatio in 0.28f..0.42f -> context.getString(R.string.dir_front_left)
+            centerXRatio in 0.42f..0.58f -> context.getString(R.string.dir_front)
+            centerXRatio in 0.58f..0.72f -> context.getString(R.string.dir_front_right)
+            else -> context.getString(R.string.dir_right)
         }
 
         // 性別・年代・服装・表情・感情・距離解析
@@ -188,9 +188,24 @@ class SerenaSentinelEyesManager(
         )
 
         val announcement = if (currentCount == 1) {
-            "${directionStr} ${attrs.estimatedDistanceMeters}に、${attrs.clothingDescription}を着た${attrs.genderAndAge}がいます。表情は${attrs.emotion.category}で、${attrs.emotion.emotionalVibe}。"
+            context.getString(
+                R.string.sentinel_announce_single_fmt,
+                directionStr,
+                attrs.estimatedDistanceMeters,
+                attrs.clothingDescription,
+                attrs.genderAndAge,
+                attrs.emotion.category,
+                attrs.emotion.emotionalVibe
+            )
         } else {
-            "${directionStr}に${currentCount}人の人物がいます。最も近い人は${attrs.estimatedDistanceMeters}の${attrs.genderAndAge}で、${attrs.emotion.category}です。"
+            context.getString(
+                R.string.sentinel_announce_multi_fmt,
+                directionStr,
+                currentCount,
+                attrs.estimatedDistanceMeters,
+                attrs.genderAndAge,
+                attrs.emotion.category
+            )
         }
 
         // アナウンス間隔制御: 人数が変わったか、前回の実況と異なるか、または4秒以上経過

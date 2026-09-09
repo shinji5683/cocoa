@@ -446,6 +446,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 navigateLinearFocus(forward = true)
             }
         }, 3500)
+
+        // バックグラウンド自動アップデート定期チェック (10秒後)
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            checkAutoUpdateInBackground()
+        }, 10000)
+    }
+
+    private fun checkAutoUpdateInBackground() {
+        val now = System.currentTimeMillis()
+        val lastCheck = prefs.getLong(com.shinji.serena.update.AutoUpdateManager.KEY_LAST_CHECK_TIME, 0L)
+        // 前回チェックから12時間以上経過しているか、初回の場合に実行
+        if (now - lastCheck < 12 * 60 * 60 * 1000L) {
+            return
+        }
+        prefs.edit().putLong(com.shinji.serena.update.AutoUpdateManager.KEY_LAST_CHECK_TIME, now).apply()
+
+        com.shinji.serena.update.AutoUpdateManager.getInstance(this).checkForUpdate { info ->
+            if (info != null && info.isUpdateAvailable) {
+                val msg = getString(R.string.update_new_version_available_fmt, info.latestVersion)
+                speak(msg, TextToSpeech.QUEUE_ADD)
+            }
+        }
     }
 
     @Volatile var isInternalGestureDispatching = false
@@ -2432,7 +2454,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun launchRealtimeLiveSceneCommentary() {
         soundHelper?.playActionDone()
-        speak("リアルタイム実況AIカメラを起動します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_launch_realtime_camera), TextToSpeech.QUEUE_FLUSH)
         try {
             val intent = Intent(this, LiveVisionActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -2446,7 +2468,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun summarizeCurrentScreen() {
         soundHelper?.playActionDone()
-        val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: "画面の情報を解析できませんでした。"
+        val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: getString(R.string.service_screen_analysis_failed)
         speak(summary, TextToSpeech.QUEUE_FLUSH)
     }
 
@@ -2458,7 +2480,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun launchSerenaEyes(mode: String = "EYES") {
         soundHelper?.playClick()
-        speak("Serena Eyes（リアルタイムAI視覚）を起動します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_launch_eyes), TextToSpeech.QUEUE_FLUSH)
         try {
             val intent = Intent(this, LiveVisionActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -2556,7 +2578,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     fun cycleTranslationDefaultLanguage() {
         val nextPair = instantTranslationHelper?.cycleDefaultTargetLanguage() ?: ("en" to "英語")
         soundHelper?.playActionDone()
-        speak("デフォルト翻訳先言語を ${nextPair.second} に変更しました", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_translation_lang_fmt, nextPair.second), TextToSpeech.QUEUE_FLUSH)
     }
 
     fun toggleSpatialSoundstage() {
@@ -2564,7 +2586,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             it.isSpatialSoundstageEnabled = !it.isSpatialSoundstageEnabled
             it.playActionDone()
             val state = if (it.isSpatialSoundstageEnabled) "ON" else "OFF"
-            speak("3D空間サウンドステージを $state にしました", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.service_spatial_soundstage_fmt, state), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -2573,7 +2595,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             it.isAudioDuckingEnabled = !it.isAudioDuckingEnabled
             it.playActionDone()
             val state = if (it.isAudioDuckingEnabled) "ON" else "OFF"
-            speak("音楽オーディオダッキングを $state にしました", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.service_audio_ducking_fmt, state), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -2581,8 +2603,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.let {
             val nextMode = it.cycleWhisperScheduleMode()
             it.playActionDone()
-            val effective = if (it.isEffectiveWhisperMode()) "現在ささやき中" else "現在通常音声"
-            speak("深夜ささやきモードを ${nextMode.displayName} に変更しました ($effective)", TextToSpeech.QUEUE_FLUSH)
+            val effective = if (it.isEffectiveWhisperMode()) getString(R.string.service_whisper_active) else getString(R.string.service_whisper_normal)
+            speak(getString(R.string.service_night_whisper_fmt, nextMode.displayName, effective), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -2591,7 +2613,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         speak("AIディープエクスプレイヤーで画像を解析中...", TextToSpeech.QUEUE_FLUSH)
         val focused = getAccessibilityFocusedNode()
         val text = focused?.contentDescription?.toString() ?: focused?.text?.toString() ?: ""
-        val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: "画像情報を検出できませんでした。"
+        val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: getString(R.string.service_screen_analysis_failed)
         speak("情景解説: $summary", TextToSpeech.QUEUE_FLUSH)
     }
 
@@ -2618,7 +2640,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun launchIndoorNavigation() {
         soundHelper?.playClick()
-        speak("インドア空間ナビを起動します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_launch_indoor_nav), TextToSpeech.QUEUE_FLUSH)
         try {
             val intent = Intent(this, LiveVisionActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -2632,7 +2654,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun launchFoodExpirationScanner() {
         soundHelper?.playClick()
-        speak("食品および賞味期限スキャナーを起動します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_launch_food_scanner), TextToSpeech.QUEUE_FLUSH)
         try {
             val intent = Intent(this, LiveVisionActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -2646,7 +2668,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun launchWalkTransitNav() {
         soundHelper?.playClick()
-        speak("歩行・信号および点字ブロックナビを起動します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_launch_transit_nav), TextToSpeech.QUEUE_FLUSH)
         try {
             val intent = Intent(this, LiveVisionActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -2660,7 +2682,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun launchBarcodeDocScanner() {
         soundHelper?.playClick()
-        speak("バーコードおよび書類スキャナーを起動します", TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.service_launch_barcode_doc), TextToSpeech.QUEUE_FLUSH)
         try {
             val intent = Intent(this, LiveVisionActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -2682,7 +2704,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val explanation = com.shinji.serena.ai.KanjiExplainerHelper.explainWord(text)
             speak("漢字詳細読み: $explanation", TextToSpeech.QUEUE_FLUSH)
         } else {
-            speak("フォーカス中の文字が見つかりません。", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.service_focused_kanji_not_found), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -2709,7 +2731,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 showWalkingNavMenu(nav)
             }
         } else {
-            speak("位置情報機能が利用できません", TextToSpeech.QUEUE_FLUSH)
+            speak(getString(R.string.nav_location_unavailable), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -2743,41 +2765,41 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private fun showWalkingNavMenu(nav: com.shinji.serena.navigation.SerenaWalkingNavigator) {
         val currentSummary = nav.getCurrentLocationSummary()
         val items = listOf(
-            serenaMenuItem("📡", "3D音響・周辺マップレーダー (開始/停止)") {
+            serenaMenuItem("📡", getString(R.string.nav_menu_radar)) {
                 toggleSurroundingRadar()
             },
-            serenaMenuItem("🚶‍♂️", "目的地へのValhalla徒歩ルート案内 (音声検索)") {
-                speak("目的地（施設名や駅名など）を音声で検索します。どうぞ！", TextToSpeech.QUEUE_FLUSH)
+            serenaMenuItem("🚶‍♂️", getString(R.string.nav_menu_route_search)) {
+                speak(getString(R.string.nav_menu_route_search_prompt), TextToSpeech.QUEUE_FLUSH)
                 assistantHelper?.startListening()
             },
-            serenaMenuItem("📍", "現在地と方角の確認") {
+            serenaMenuItem("📍", getString(R.string.nav_menu_location_check)) {
                 speak(nav.getCurrentLocationSummary(), TextToSpeech.QUEUE_FLUSH)
             },
-            serenaMenuItem("🏪", "周辺のコンビニを探す") {
+            serenaMenuItem("🏪", getString(R.string.nav_menu_convenience)) {
                 searchAndShowPlaces("コンビニ", "🏪")
             },
-            serenaMenuItem("🚉", "周辺の駅を探す") {
+            serenaMenuItem("🚉", getString(R.string.nav_menu_station)) {
                 searchAndShowPlaces("駅", "🚉")
             },
-            serenaMenuItem("☕", "周辺の喫茶店・カフェを探す") {
+            serenaMenuItem("☕", getString(R.string.nav_menu_cafe)) {
                 searchAndShowPlaces("喫茶店", "☕")
             },
-            serenaMenuItem("🍔", "周辺のファストフード店を探す") {
+            serenaMenuItem("🍔", getString(R.string.nav_menu_fastfood)) {
                 searchAndShowPlaces("ファストフード", "🍔")
             },
-            serenaMenuItem("🍽️", "周辺のレストラン・飲食店を探す") {
+            serenaMenuItem("🍽️", getString(R.string.nav_menu_restaurant)) {
                 searchAndShowPlaces("レストラン", "🍽️")
             },
-            serenaMenuItem("🛍️", "周辺のスーパー・商業施設を探す") {
+            serenaMenuItem("🛍️", getString(R.string.nav_menu_supermarket)) {
                 searchAndShowPlaces("スーパー", "🛍️")
             },
-            serenaMenuItem("🏥", "周辺の病院・薬局を探す") {
+            serenaMenuItem("🏥", getString(R.string.nav_menu_hospital)) {
                 searchAndShowPlaces("病院", "🏥")
             },
-            serenaMenuItem("📮", "周辺の郵便局・銀行を探す") {
+            serenaMenuItem("📮", getString(R.string.nav_menu_post_bank)) {
                 searchAndShowPlaces("郵便局", "📮")
             },
-            serenaMenuItem("🧭", "3D空間オーディオ・コンパス案内を開始") {
+            serenaMenuItem("🧭", getString(R.string.nav_menu_compass_3d)) {
                 toggleSpatialCompassAudio()
             },
             serenaMenuItem("❌", "目的地の案内を終了・解除") {

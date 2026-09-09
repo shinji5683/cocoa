@@ -407,4 +407,137 @@
     <string name="notification_truncated_suffix">, ingekort</string>
     <string name="notification_digest_empty">Geen ongelezen meldingen op dit moment.</string>
     <string name="notification_digest_fmt">Meldingenoverzicht: %1$d in totaal. Recent: %2$s</string>
+
+    <!-- Relative Directions (Clock positions strictly prohibited) -->
+    <string name="dir_front">Recht vooruit</string>
+    <string name="dir_front_right">Schuin rechtsvoor</string>
+    <string name="dir_front_left">Schuin linksvoor</string>
+    <string name="dir_right">Rechts</string>
+    <string name="dir_left">Links</string>
+    <string name="dir_back_right">Schuin rechtsachter</string>
+    <string name="dir_back_left">Schuin linksachter</string>
+    <string name="dir_back">Achter</string>
+    <string name="dir_foot">Bij uw voeten</string>
+    <string name="dir_ahead">Vooruit</string>
+
+    <!-- Serena Eyes & Live Vision -->
+    <string name="eyes_mode_ocr">Tekstleescamera</string>
+    <string name="eyes_mode_face">Gezichts- en personencamera</string>
+    <string name="eyes_mode_indoor">Binnenshuis navigatie</string>
+    <string name="eyes_mode_food">Voedsel- en houdbaarheidsscanner</string>
+    <string name="eyes_mode_walk">Wandel- en transitnavigatie</string>
+    <string name="eyes_mode_barcode_doc">Barcode- en documentscanner</string>
+    <string name="eyes_mode_fashion">Mode- en kleurstemmingsscanner</string>
+    <string name="eyes_mode_sonar">Obstakel- en sonarradar</string>
+    <string name="eyes_mode_live">Serena Eyes realtime AI-visie</string>
+
+    <string name="eyes_start_ocr">Tekstleescamera gestart.</string>
+    <string name="eyes_start_face">Gezichts- en personenherkenningscamera gestart.</string>
+    <string name="eyes_start_indoor">Binnenshuis navigatie gestart. Meubels, deuren en mensen in uw omgeving worden beschreven.</string>
+    <string name="eyes_start_food">Voedsel- en houdbaarheidsscanner gestart. Richt de camera op voedselverpakkingen of houdbaarheidsdata.</string>
+    <string name="eyes_start_walk">Wandel- en transitnavigatie gestart. Richt de camera op het pad voor u.</string>
+    <string name="eyes_start_barcode_doc">Barcode- en documentscanner gestart. Richt op barcodes of facturen.</string>
+    <string name="eyes_start_fashion">Mode- en kleurscanner gestart. Richt op kleding om kleur en sfeer te horen.</string>
+    <string name="eyes_start_sonar">Obstakelsonar gestart. Afstand wordt begeleid met 3D-audio en spraak.</string>
+    <string name="eyes_start_live">Serena Eyes realtime AI-visie gestart. Beweeg uw apparaat rustig rond.</string>
+
+    <string name="eyes_end_ocr">Tekstleescamera gesloten.</string>
+    <string name="eyes_end_face">Personenherkenningscamera gesloten.</string>
+    <string name="eyes_end_indoor">Binnenshuis navigatie gesloten.</string>
+    <string name="eyes_end_food">Voedselscanner gesloten.</string>
+    <string name="eyes_end_walk">Wandelnavigatie gesloten.</string>
+    <string name="eyes_end_barcode_doc">Barcodescanner gesloten.</string>
+    <string name="eyes_end_live">Live visiecamera gesloten.</string>
+
+    <string name="eyes_permission_camera_required">Cameratoestemming is vereist.</string>
+    <string name="eyes_camera_start_failed">Kan camera niet starten.</string>
+    <string name="eyes_starting_status_fmt">🌸 %1$s starten…</string>
+
+    <string name="eyes_brightness_bright">Heldere omgeving</string>
+    <string name="eyes_brightness_cozy">Aangenaam verlichte kamer</string>
+    <string name="eyes_brightness_dim">Gedimd verlichte ruimte</string>
+    <string name="eyes_brightness_dark">Donkere omgeving</string>
+
+    <string name="eyes_text_detected_fmt">Tekst gedetecteerd: %1$s</string>
+    <string name="eyes_front_clear_checking">%1$s. Voorzijde vrij. Omgeving scannen…</string>
+    <string name="eyes_front_clear">Voorzijde vrij</string>
+    <string name="eyes_person_desc_fmt">%1$s op %2$s, %4$s met kleding %3$s. %5$s</string>
+    <string name="eyes_barcode_detected_fmt">📌 Gedetecteerd %1$s: %2$s</string>
+    <string name="eyes_surrounding_objects_fmt">Objecten in de buurt: %1$s</string>
+    <string name="eyes_obj_food">voedsel</string>
+    <string name="eyes_obj_drink">drank</string>
+    <string name="eyes_obj_cup">kop</string>
+    <string name="eyes_obj_furniture">meubilair</string>
+    <string name="eyes_obj_chair">stoel</string>
+    <string name="eyes_obj_table">tafel</string>
+    <string name="eyes_obj_sofa">bank</string>
+    <string name="eyes_obj_door">deur</string>
+    <string name="eyes_obj_plant">kamerplant</string>
+    <string name="eyes_obj_electronics">elektronica</string>
+    <string name="eyes_obj_laptop">laptop</string>
+    <string name="eyes_obj_phone">smartphone</string>
+    <string name="eyes_obj_book">boek of papier</string>
+    <string name="eyes_obj_bag">tas</string>
+    <string name="eyes_obj_shoe">schoenen</string>
+    <string name="eyes_obj_clock">klok</string>
+    <string name="eyes_obj_glasses">bril</string>
+    <string name="eyes_obj_key">sleutel</string>
+    <string name="eyes_obj_pen">schrijfgerei</string>
+    <string name="eyes_obj_item">voorwerp</string>
+
+    <!-- Serena Sentinel Eyes -->
+    <string name="sentinel_started">Serena Sentinel Eyes gestart. Let realtime op personen voor u.</string>
+    <string name="sentinel_stopped">Serena Sentinel Eyes gestopt.</string>
+    <string name="sentinel_camera_error">Kan camera niet starten. Controleer cameratoestemming.</string>
+    <string name="sentinel_bind_error">Kan bewakingscamera niet koppelen.</string>
+    <string name="sentinel_person_left_view">Persoon heeft het beeld verlaten.</string>
+    <string name="sentinel_announce_single_fmt">%1$s op %2$s, %4$s met kleding %3$s. Expressie: %5$s, %6$s.</string>
+    <string name="sentinel_announce_multi_fmt">%1$s, %2$d personen. Dichtstbijzijnde is %4$s op %3$s, met expressie %5$s.</string>
+
+    <!-- Helper Classes -->
+    <string name="obj_summary_none">Geen specifiek object gedetecteerd.</string>
+    <string name="obj_summary_fmt">In beeld gedetecteerd: %1$s.</string>
+    <string name="ocr_no_text_found">Geen tekst gevonden.</string>
+    <string name="ocr_error">Fout bij lezen van tekst.</string>
+    <string name="face_summary_none">Geen personen in zicht.</string>
+    <string name="face_distance_close_50cm">heel dichtbij, circa 50 cm</string>
+    <string name="face_distance_1m">ongeveer 80 cm tot 1 meter afstand</string>
+    <string name="face_distance_2m">ongeveer 1.5 tot 2 meter afstand</string>
+    <string name="face_distance_3m">ongeveer 2.5 tot 3 meter afstand</string>
+    <string name="face_distance_far">meer dan 3 meter afstand</string>
+
+    <!-- Service Feature Launchers & Toggles -->
+    <string name="service_launch_realtime_camera">Realtime live AI-commentaarcamera starten</string>
+    <string name="service_launch_eyes">Serena Eyes realtime AI-visie starten</string>
+    <string name="service_launch_indoor_nav">Binnenshuis ruimtelijke navigatie starten</string>
+    <string name="service_launch_food_scanner">Voedsel- en houdbaarheidsscanner starten</string>
+    <string name="service_launch_transit_nav">Wandel- en transitnavigatie starten</string>
+    <string name="service_launch_barcode_doc">Barcode- en documentscanner starten</string>
+    <string name="service_spatial_soundstage_fmt">3D-ruimtelijk geluidsbeeld ingesteld op %1$s</string>
+    <string name="service_audio_ducking_fmt">Audioducking ingesteld op %1$s</string>
+    <string name="service_night_whisper_fmt">Nachtfluistermodus gewijzigd in %1$s (%2$s)</string>
+    <string name="service_whisper_active">momenteel fluisterend</string>
+    <string name="service_whisper_normal">momenteel normale stem</string>
+    <string name="service_translation_lang_fmt">Standaard vertaaltaal gewijzigd in %1$s</string>
+    <string name="service_focused_kanji_not_found">Geen gefocust teken gevonden.</string>
+    <string name="service_screen_analysis_failed">Kon scherminformatie niet analyseren.</string>
+
+    <!-- Walking Nav Submenu -->
+    <string name="nav_menu_radar">3D-geluidskaartradar (Starten/Stoppen)</string>
+    <string name="nav_menu_route_search">Valhalla wandelroute naar bestemming (Gesproken zoekopdracht)</string>
+    <string name="nav_menu_route_search_prompt">Gesproken zoekopdracht naar bestemming. Spreek nu!</string>
+    <string name="nav_menu_location_check">Huidige locatie en richting controleren</string>
+    <string name="nav_menu_convenience">Buurtwinkels in de buurt zoeken</string>
+    <string name="nav_menu_station">Stations in de buurt zoeken</string>
+    <string name="nav_menu_cafe">Cafés in de buurt zoeken</string>
+    <string name="nav_menu_fastfood">Fastfood in de buurt zoeken</string>
+    <string name="nav_menu_restaurant">Restaurants in de buurt zoeken</string>
+    <string name="nav_menu_supermarket">Supermarkten in de buurt zoeken</string>
+    <string name="nav_menu_hospital">Ziekenhuizen en apotheken in de buurt zoeken</string>
+    <string name="nav_menu_post_bank">Postkantoren en banken in de buurt zoeken</string>
+    <string name="nav_menu_compass_3d">3D-ruimtelijke kompasbegeleiding starten</string>
+    <string name="nav_location_unavailable">Locatieservices niet beschikbaar</string>
+
+    <!-- Auto Update Background Notification -->
+    <string name="update_new_version_available_fmt">Er is een nieuwe versie van Serena beschikbaar, %1$s. U kunt op elk moment updaten via het Serena-menu.</string>
 </resources>

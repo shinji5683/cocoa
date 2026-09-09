@@ -3,6 +3,8 @@ package com.shinji.serena
 import android.content.Context
 import android.util.Log
 
+import androidx.annotation.StringRes
+
 /**
  * Serena Indoor Navigation & Spatial Vision Helper
  * 屋内インドア空間ナビゲーション ＆ リアルタイム実況エンジン (TensorFlow Lite & ML Kit Vision)
@@ -15,14 +17,16 @@ class IndoorNavigationHelper(private val context: Context) {
         private const val TAG = "IndoorNavigationHelper"
     }
 
-    enum class Direction(val label: String) {
-        FRONT("正面"),
-        FRONT_RIGHT("右斜め前"),
-        FRONT_LEFT("左斜め前"),
-        RIGHT("右側"),
-        LEFT("左側"),
-        FOOT("足元"),
-        AHEAD("前方")
+    enum class Direction(@StringRes val resId: Int, val label: String) {
+        FRONT(R.string.dir_front, "正面"),
+        FRONT_RIGHT(R.string.dir_front_right, "右斜め前"),
+        FRONT_LEFT(R.string.dir_front_left, "左斜め前"),
+        RIGHT(R.string.dir_right, "右側"),
+        LEFT(R.string.dir_left, "左側"),
+        FOOT(R.string.dir_foot, "足元"),
+        AHEAD(R.string.dir_ahead, "前方");
+
+        fun getLabel(context: Context): String = context.getString(resId)
     }
 
     data class IndoorObject(
@@ -90,28 +94,28 @@ class IndoorNavigationHelper(private val context: Context) {
 
         // 人物（服装・年代・性別・表情・視線）の詳細実況
         for (p in people) {
-            val distStr = if (p.distanceMeter <= 1.0f) "1メートル付近" else "${p.distanceMeter.toInt()}メートル先"
-            val clothingStr = if (p.clothingColor.isNotEmpty() && !p.clothingColor.contains("不明")) "${p.clothingColor}を着た" else ""
+            val distStr = if (p.distanceMeter <= 1.0f) "1m" else "${p.distanceMeter.toInt()}m"
+            val clothingStr = if (p.clothingColor.isNotEmpty() && !p.clothingColor.contains("不明")) p.clothingColor else ""
             val personLabel = if (p.genderAndAge.isNotEmpty()) p.genderAndAge else p.poseDescription
-            val lookingStr = if (p.isLookingAtCamera) "こちらを見ています" else ""
-            val exprDesc = listOf(p.expression, lookingStr).filter { it.isNotEmpty() }.joinToString("で")
+            val lookingStr = if (p.isLookingAtCamera) "looking" else ""
+            val exprDesc = listOf(p.expression, lookingStr).filter { it.isNotEmpty() }.joinToString(", ")
 
-            parts.add("${p.direction.label} ${distStr}に ${clothingStr}${personLabel}がいます。${exprDesc}")
+            parts.add(context.getString(R.string.eyes_person_desc_fmt, p.direction.getLabel(context), distStr, clothingStr, personLabel, exprDesc))
         }
 
         // 重要家具・扉・足元障害物の実況
         for (obj in objects.take(3)) {
-            val distStr = if (obj.direction == Direction.FOOT) "" else "${obj.distanceMeter.toInt()}メートル先に"
-            val detailStr = if (obj.detail.isNotEmpty()) "（${obj.detail}）" else ""
-            parts.add("${obj.direction.label}に ${distStr}${obj.name}${detailStr}があります")
+            val distStr = if (obj.direction == Direction.FOOT) "" else "${obj.distanceMeter.toInt()}m"
+            val detailStr = if (obj.detail.isNotEmpty()) " (${obj.detail})" else ""
+            parts.add("${obj.direction.getLabel(context)}: ${distStr} ${obj.name}${detailStr}")
         }
 
         // 通路クリアランス判定
         if (isPathClear && objects.none { it.direction == Direction.FOOT || (it.direction == Direction.FRONT && it.distanceMeter < 1.0f) }) {
-            parts.add("前方クリアです。まっすぐ進めます")
+            parts.add(context.getString(R.string.eyes_front_clear))
         }
 
-        return if (parts.isNotEmpty()) parts.joinToString("。") else "周囲を確認中…ゆっくり周囲を映してください。"
+        return if (parts.isNotEmpty()) parts.joinToString("。") else context.getString(R.string.face_summary_none)
     }
 
     /**
@@ -120,23 +124,17 @@ class IndoorNavigationHelper(private val context: Context) {
     fun translateIndoorLabel(label: String): String {
         val lower = label.lowercase()
         return when {
-            lower.contains("door") -> "ドア"
-            lower.contains("stairs") || lower.contains("staircase") -> "階段"
-            lower.contains("table") || lower.contains("desk") -> "机"
-            lower.contains("chair") || lower.contains("seat") -> "椅子"
-            lower.contains("sofa") || lower.contains("couch") -> "ソファ"
-            lower.contains("bed") -> "ベッド"
-            lower.contains("refrigerator") || lower.contains("fridge") -> "冷蔵庫"
-            lower.contains("sink") -> "洗面台・シンク"
-            lower.contains("toilet") -> "トイレ"
-            lower.contains("slipper") || lower.contains("shoe") || lower.contains("footwear") -> "スリッパ・靴"
-            lower.contains("cup") || lower.contains("bottle") -> "コップ・飲み物"
-            lower.contains("laptop") || lower.contains("computer") -> "パソコン"
-            lower.contains("television") || lower.contains("tv") || lower.contains("screen") -> "テレビ"
-            lower.contains("box") || lower.contains("trash") -> "ゴミ箱・箱"
-            lower.contains("shelf") || lower.contains("cabinet") -> "棚・キャビネット"
-            lower.contains("fashion goods") || lower.contains("clothing") -> "洋服"
-            lower.contains("plant") -> "観葉植物"
+            lower.contains("door") -> context.getString(R.string.eyes_obj_door)
+            lower.contains("table") || lower.contains("desk") -> context.getString(R.string.eyes_obj_table)
+            lower.contains("chair") || lower.contains("seat") -> context.getString(R.string.eyes_obj_chair)
+            lower.contains("sofa") || lower.contains("couch") -> context.getString(R.string.eyes_obj_sofa)
+            lower.contains("cup") || lower.contains("bottle") -> context.getString(R.string.eyes_obj_cup)
+            lower.contains("laptop") || lower.contains("computer") -> context.getString(R.string.eyes_obj_laptop)
+            lower.contains("shoe") || lower.contains("footwear") || lower.contains("slipper") -> context.getString(R.string.eyes_obj_shoe)
+            lower.contains("plant") -> context.getString(R.string.eyes_obj_plant)
+            lower.contains("bag") || lower.contains("backpack") -> context.getString(R.string.eyes_obj_bag)
+            lower.contains("phone") -> context.getString(R.string.eyes_obj_phone)
+            lower.contains("book") -> context.getString(R.string.eyes_obj_book)
             else -> label
         }
     }

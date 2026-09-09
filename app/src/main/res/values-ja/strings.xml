@@ -407,4 +407,137 @@
     <string name="notification_truncated_suffix">、以下省略</string>
     <string name="notification_digest_empty">現在、未読の重要通知はありません。</string>
     <string name="notification_digest_fmt">通知ダイジェスト全%1$d件。直近の通知: %2$sなどがあります。</string>
+
+    <!-- 相対方向表現（時計盤表現完全禁止ルール準拠） -->
+    <string name="dir_front">正面</string>
+    <string name="dir_front_right">右斜め前</string>
+    <string name="dir_front_left">左斜め前</string>
+    <string name="dir_right">右</string>
+    <string name="dir_left">左</string>
+    <string name="dir_back_right">右斜め後ろ</string>
+    <string name="dir_back_left">左斜め後ろ</string>
+    <string name="dir_back">真後ろ</string>
+    <string name="dir_foot">足元</string>
+    <string name="dir_ahead">前方</string>
+
+    <!-- Serena Eyes & Live Vision -->
+    <string name="eyes_mode_ocr">文字読み取りカメラ</string>
+    <string name="eyes_mode_face">表情・人物認識カメラ</string>
+    <string name="eyes_mode_indoor">インドア空間ナビ</string>
+    <string name="eyes_mode_food">食品＆賞味期限スキャナー</string>
+    <string name="eyes_mode_walk">歩行・信号＆点字ブロックナビ</string>
+    <string name="eyes_mode_barcode_doc">バーコード＆書類スキャナー</string>
+    <string name="eyes_mode_fashion">ファッション＆衣服カラースキャナー</string>
+    <string name="eyes_mode_sonar">空間障害物＆ソナー</string>
+    <string name="eyes_mode_live">Serena Eyes リアルタイムAI視覚</string>
+
+    <string name="eyes_start_ocr">文字読み取りカメラを起動しました。</string>
+    <string name="eyes_start_face">表情・人物認識カメラを起動しました。</string>
+    <string name="eyes_start_indoor">インドア空間ナビを起動しました。部屋の家具や扉、周囲の人を正面や左右の方向で実況します。</string>
+    <string name="eyes_start_food">食品と賞味期限スキャナーを起動しました。食品パッケージや賞味期限の印字をゆっくり映してください。</string>
+    <string name="eyes_start_walk">歩行・信号および点字ブロックナビを起動しました。正面の道路や信号機を映してください。</string>
+    <string name="eyes_start_barcode_doc">バーコードおよび書類スキャナーを起動しました。商品バーコードやレシート、請求書を映してください。</string>
+    <string name="eyes_start_fashion">ファッション＆衣服カラースキャナーを起動しました。服や靴下、身の回りのものをカメラに映してください。色や温度感、雰囲気を実況します。</string>
+    <string name="eyes_start_sonar">空間障害物およびドア、段差ソナーを起動しました。歩行中の障害物やドアまでの距離を立体音響と音声で案内します。</string>
+    <string name="eyes_start_live">Serena Eyes（リアルタイムAI視覚）を起動しました。周囲をゆっくり映してください。</string>
+
+    <string name="eyes_end_ocr">文字読み取りカメラを終了しました。</string>
+    <string name="eyes_end_face">表情・人物認識カメラを終了しました。</string>
+    <string name="eyes_end_indoor">インドア空間ナビを終了しました。</string>
+    <string name="eyes_end_food">食品スキャナーを終了しました。</string>
+    <string name="eyes_end_walk">歩行ナビを終了しました。</string>
+    <string name="eyes_end_barcode_doc">バーコードスキャナーを終了しました。</string>
+    <string name="eyes_end_live">リアルタイムカメラ実況を終了しました。</string>
+
+    <string name="eyes_permission_camera_required">カメラの権限が必要です。</string>
+    <string name="eyes_camera_start_failed">カメラの起動に失敗しました。</string>
+    <string name="eyes_starting_status_fmt">🌸 %1$s 起動中…</string>
+
+    <string name="eyes_brightness_bright">明るい場所</string>
+    <string name="eyes_brightness_cozy">落ち着いた明るさの部屋</string>
+    <string name="eyes_brightness_dim">薄暗い場所</string>
+    <string name="eyes_brightness_dark">暗い場所</string>
+
+    <string name="eyes_text_detected_fmt">文字を検出: %1$s</string>
+    <string name="eyes_front_clear_checking">%1$s。前方クリアです。周囲を確認中…</string>
+    <string name="eyes_front_clear">前方クリアです</string>
+    <string name="eyes_person_desc_fmt">%1$s %2$sに、%3$sを着た%4$sがいます。%5$s</string>
+    <string name="eyes_barcode_detected_fmt">📌 %1$s を検出: %2$s</string>
+    <string name="eyes_surrounding_objects_fmt">周囲の物体: %1$s</string>
+    <string name="eyes_obj_food">食品</string>
+    <string name="eyes_obj_drink">ペットボトル・飲み物</string>
+    <string name="eyes_obj_cup">コップ</string>
+    <string name="eyes_obj_furniture">家具</string>
+    <string name="eyes_obj_chair">椅子</string>
+    <string name="eyes_obj_table">机</string>
+    <string name="eyes_obj_sofa">ソファ</string>
+    <string name="eyes_obj_door">ドア</string>
+    <string name="eyes_obj_plant">観葉植物</string>
+    <string name="eyes_obj_electronics">電子機器</string>
+    <string name="eyes_obj_laptop">ノートパソコン</string>
+    <string name="eyes_obj_phone">スマートフォン</string>
+    <string name="eyes_obj_book">本・書類</string>
+    <string name="eyes_obj_bag">カバン</string>
+    <string name="eyes_obj_shoe">靴</string>
+    <string name="eyes_obj_clock">時計</string>
+    <string name="eyes_obj_glasses">メガネ</string>
+    <string name="eyes_obj_key">鍵</string>
+    <string name="eyes_obj_pen">筆記具</string>
+    <string name="eyes_obj_item">身の回りの物</string>
+
+    <!-- 常駐見守りアイズ (Serena Sentinel Eyes) -->
+    <string name="sentinel_started">Serena 常駐見守りアイズを開始しました。目の前に人が現れたら、性別や表情、距離をリアルタイムにお知らせします。</string>
+    <string name="sentinel_stopped">Serena 常駐見守りアイズを停止しました。</string>
+    <string name="sentinel_camera_error">カメラの起動に失敗しました。カメラ権限を確認してください。</string>
+    <string name="sentinel_bind_error">見守りカメラのバインドに失敗しました。</string>
+    <string name="sentinel_person_left_view">人が視野から外れました。</string>
+    <string name="sentinel_announce_single_fmt">%1$s %2$sに、%3$sを着た%4$sがいます。表情は%5$sで、%6$s。</string>
+    <string name="sentinel_announce_multi_fmt">%1$sに%2$d人の人物がいます。最も近い人は%3$sの%4$sで、%5$sです。</string>
+
+    <!-- Helper Classes -->
+    <string name="obj_summary_none">特定の物体は検出されませんでした。</string>
+    <string name="obj_summary_fmt">画面内に %1$s を検出しました。</string>
+    <string name="ocr_no_text_found">文字は見つかりませんでした。</string>
+    <string name="ocr_error">文字の読み取りに失敗しました。</string>
+    <string name="face_summary_none">人物は見当たりません。</string>
+    <string name="face_distance_close_50cm">約50cmの至近距離</string>
+    <string name="face_distance_1m">約80cm〜1mの距離</string>
+    <string name="face_distance_2m">約1.5m〜2mの距離</string>
+    <string name="face_distance_3m">約2.5m〜3mの距離</string>
+    <string name="face_distance_far">3m以上先</string>
+
+    <!-- サービス内ランチャー＆トグル音声 -->
+    <string name="service_launch_realtime_camera">リアルタイム実況AIカメラを起動します</string>
+    <string name="service_launch_eyes">Serena Eyes（リアルタイムAI視覚）を起動します</string>
+    <string name="service_launch_indoor_nav">インドア空間ナビを起動します</string>
+    <string name="service_launch_food_scanner">食品および賞味期限スキャナーを起動します</string>
+    <string name="service_launch_transit_nav">歩行・信号および点字ブロックナビを起動します</string>
+    <string name="service_launch_barcode_doc">バーコードおよび書類スキャナーを起動します</string>
+    <string name="service_spatial_soundstage_fmt">3D空間サウンドステージを %1$s にしました</string>
+    <string name="service_audio_ducking_fmt">音楽オーディオダッキングを %1$s にしました</string>
+    <string name="service_night_whisper_fmt">深夜ささやきモードを %1$s に変更しました (%2$s)</string>
+    <string name="service_whisper_active">現在ささやき中</string>
+    <string name="service_whisper_normal">現在通常音声</string>
+    <string name="service_translation_lang_fmt">デフォルト翻訳先言語を %1$s に変更しました</string>
+    <string name="service_focused_kanji_not_found">フォーカス中の文字が見つかりません。</string>
+    <string name="service_screen_analysis_failed">画面の情報を解析できませんでした。</string>
+
+    <!-- 徒歩ナビメニュー項目 -->
+    <string name="nav_menu_radar">3D音響・周辺マップレーダー (開始/停止)</string>
+    <string name="nav_menu_route_search">目的地へのValhalla徒歩ルート案内 (音声検索)</string>
+    <string name="nav_menu_route_search_prompt">目的地（施設名や駅名など）を音声で検索します。どうぞ！</string>
+    <string name="nav_menu_location_check">現在地と方角の確認</string>
+    <string name="nav_menu_convenience">周辺のコンビニを探す</string>
+    <string name="nav_menu_station">周辺の駅を探す</string>
+    <string name="nav_menu_cafe">周辺の喫茶店・カフェを探す</string>
+    <string name="nav_menu_fastfood">周辺のファストフード店を探す</string>
+    <string name="nav_menu_restaurant">周辺のレストラン・飲食店を探す</string>
+    <string name="nav_menu_supermarket">周辺のスーパー・商業施設を探す</string>
+    <string name="nav_menu_hospital">周辺の病院・薬局を探す</string>
+    <string name="nav_menu_post_bank">周辺の郵便局・銀行を探す</string>
+    <string name="nav_menu_compass_3d">3D空間オーディオ・コンパス案内を開始</string>
+    <string name="nav_location_unavailable">位置情報機能が利用できません</string>
+
+    <!-- 自動アップデート定期チェック通知 -->
+    <string name="update_new_version_available_fmt">Serenaの新しいバージョン %1$s が公開されています。セレナメニューからいつでも更新できます。</string>
 </resources>

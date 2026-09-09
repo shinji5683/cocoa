@@ -39,16 +39,16 @@ class OcrCameraHelper(private val context: Context) {
                         lastRecognizedText = text
                         onResult(text)
                     } else {
-                        onResult("文字は見つかりませんでした。")
+                        onResult(context.getString(R.string.ocr_no_text_found))
                     }
                 }
                 .addOnFailureListener { e ->
                     Log.e(TAG, "OCR recognition error: ${e.message}")
-                    onResult("文字の読み取りに失敗しました。")
+                    onResult(context.getString(R.string.ocr_error))
                 }
         } catch (e: Exception) {
             Log.e(TAG, "Exception during OCR: ${e.message}")
-            onResult("文字認識エラーが発生しました。")
+            onResult(context.getString(R.string.ocr_error))
         }
     }
 

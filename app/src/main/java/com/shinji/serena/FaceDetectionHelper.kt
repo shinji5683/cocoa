@@ -44,7 +44,7 @@ class FaceDetectionHelper(private val context: Context) {
         previewHeight: Int = 1920
     ): String {
         if (faceCount <= 0) {
-            return "人物は見当たりません。"
+            return context.getString(R.string.face_summary_none)
         }
 
         val smile = smileProbability ?: 0f
@@ -53,22 +53,22 @@ class FaceDetectionHelper(private val context: Context) {
 
         // 相対方向の判定 (時計盤表現は完全禁止、規約に準拠)
         val directionStr = when {
-            centerXRatio < 0.25f -> "左"
-            centerXRatio in 0.25f..0.40f -> "左斜め前"
-            centerXRatio in 0.40f..0.60f -> "正面"
-            centerXRatio in 0.60f..0.75f -> "右斜め前"
-            else -> "右"
+            centerXRatio < 0.25f -> context.getString(R.string.dir_left)
+            centerXRatio in 0.25f..0.40f -> context.getString(R.string.dir_front_left)
+            centerXRatio in 0.40f..0.60f -> context.getString(R.string.dir_front)
+            centerXRatio in 0.60f..0.75f -> context.getString(R.string.dir_front_right)
+            else -> context.getString(R.string.dir_right)
         }
 
         // 推定距離の計算 (顔の枠の高さ・面積比から算出)
         val distanceStr = if (faceBoundingBox != null && previewHeight > 0) {
             val faceHeightRatio = faceBoundingBox.height().toFloat() / previewHeight
             when {
-                faceHeightRatio > 0.45f -> "約50cmの至近距離"
-                faceHeightRatio in 0.30f..0.45f -> "約80cm〜1mの距離"
-                faceHeightRatio in 0.18f..0.30f -> "約1.5m〜2mの距離"
-                faceHeightRatio in 0.10f..0.18f -> "約2.5m〜3mの距離"
-                else -> "3m以上先"
+                faceHeightRatio > 0.45f -> context.getString(R.string.face_distance_close_50cm)
+                faceHeightRatio in 0.30f..0.45f -> context.getString(R.string.face_distance_1m)
+                faceHeightRatio in 0.18f..0.30f -> context.getString(R.string.face_distance_2m)
+                faceHeightRatio in 0.10f..0.18f -> context.getString(R.string.face_distance_3m)
+                else -> context.getString(R.string.face_distance_far)
             }
         } else {
             ""
