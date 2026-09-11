@@ -257,6 +257,7 @@ class MainActivity : AppCompatActivity() {
                         val clip = android.content.ClipData.newPlainText("Serena Crash Report", crashReport)
                         clipboard.setPrimaryClip(clip)
                         Toast.makeText(this, getString(R.string.main_crash_toast_copied), Toast.LENGTH_LONG).show()
+                        SerenaApp.clearCrashReport(this)
                     }
                     .setNeutralButton(getString(R.string.main_crash_btn_mail)) { _, _ ->
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
@@ -268,8 +269,14 @@ class MainActivity : AppCompatActivity() {
                         try {
                             startActivity(Intent.createChooser(intent, getString(R.string.main_crash_mail_chooser)))
                         } catch (_: Exception) {}
+                        SerenaApp.clearCrashReport(this)
                     }
-                    .setNegativeButton(android.R.string.cancel, null)
+                    .setNegativeButton(android.R.string.cancel) { _, _ ->
+                        SerenaApp.clearCrashReport(this)
+                    }
+                    .setOnDismissListener {
+                        SerenaApp.clearCrashReport(this)
+                    }
                     .show()
             }
         } catch (e: Exception) {

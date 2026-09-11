@@ -2509,11 +2509,23 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var lastKeyboardHoverTimeMs = 0L
     private var lastKeyboardHoverExitTimeMs = 0L
     private var lastLiftToTypeTimeMs = 0L
+    private var lastStatusAnnounceTimeMs = 0L
+
+    private fun getStatusBarHeight(): Int {
+        val resId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (resId > 0) resources.getDimensionPixelSize(resId) else (28 * resources.displayMetrics.density).toInt()
+    }
 
     private fun isKeyboardNode(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
 
-        // 1. ウィンドウタイプが TYPE_INPUT_METHOD (ソフトウェアキーボードウィンドウ) であることを最優先確認
+        // 1. 入力エリア（EditTextや編集可能ノード）は絶対にキーボードキーではない！
+        val cls = node.className?.toString()?.lowercase() ?: ""
+        if (node.isEditable || cls.contains("edittext") || cls.contains("editable")) {
+            return false
+        }
+
+        // 2. ウィンドウタイプが TYPE_INPUT_METHOD (ソフトウェアキーボードウィンドウ) であることを最優先確認
         val winType = try { node.window?.type } catch (_: Exception) { null }
         val isImeWindow = (winType == android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD)
 
@@ -2523,15 +2535,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
 
         val pkg = node.packageName?.toString()?.lowercase() ?: ""
-        val cls = node.className?.toString()?.lowercase() ?: ""
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
 
         // Serena の通常のActivity（MainActivityやメニューダイアログ等）は絶対にキーボードとして判定しない！
         if (pkg == "com.shinji.serena") {
-            // IMEウィンドウであり、かつ SerenaKeyboardView 内の要素のみ許可
             if (!isImeWindow) return false
-            return cls.contains("serenakeyboardview") || cls.contains("softkeyboard") ||
-                    viewId.contains("keyboard_key") || viewId.contains("ime_key")
+            // SerenaKeyboardView内の文字キーのみ許可（言語切替ボタンや音声・点字などのアクションボタンは除外）
+            return viewId.contains("keyboard_key") || viewId.contains("kana_key") || viewId.contains("char_key")
         }
 
         // クリック可能であること
@@ -2543,15 +2553,50 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 pkg.contains("keyboard") || pkg.contains("latin") ||
                 pkg.contains("simeji") || pkg.contains("atok")
 
-        // IMEウィンドウまたはIMEパッケージに属していない通常のUI要素は絶対に除外！
         if (!isImeWindow && !isImePackage) {
             return false
         }
 
-        val hasContent = !node.text.isNullOrBlank() || !node.contentDescription.isNullOrBlank()
-        val isKeyLike = cls.contains("key") || cls.contains("button") ||
-                viewId.contains("key") || viewId.contains("btn")
-        return hasContent || isKeyLike
+        // 3. GboardやIMEの「機能ボタン・メニュー・ツールバー・入力エリア」を完全除外！
+        // これらはLift to Type（指を離して実行）の対象にしてはならず、TalkBack準拠で通常の「ボタン」としてダブルタップで実行させる！
+        val rawText = (node.text?.toString() ?: "").trim()
+        val rawDesc = (node.contentDescription?.toString() ?: "").trim()
+        val label = (if (rawText.isNotEmpty()) rawText else rawDesc).lowercase()
+
+        // 機能メニュー、設定、音声入力、クリップボード、ステッカー、絵文字、入力方法切替等の除外キーワード
+        if (label.contains("メニュー") || label.contains("menu") ||
+            label.contains("機能") || label.contains("feature") ||
+            label.contains("設定") || label.contains("setting") ||
+            label.contains("マイク") || label.contains("音声") || label.contains("voice") || label.contains("mic") ||
+            label.contains("クリップボード") || label.contains("clipboard") ||
+            label.contains("ステッカー") || label.contains("sticker") || label.contains("gif") ||
+            label.contains("絵文字") || label.contains("emoji") ||
+            label.contains("候補") || label.contains("suggestion") ||
+            label.contains("オプション") || label.contains("option") ||
+            label.contains("切り替え") || label.contains("switch") ||
+            label.contains("非表示") || label.contains("hide") || label.contains("閉じる") || label.contains("close") ||
+            viewId.contains("menu") || viewId.contains("more") || viewId.contains("setting") ||
+            viewId.contains("voice") || viewId.contains("mic") || viewId.contains("clipboard") ||
+            viewId.contains("action_bar") || viewId.contains("toolbar") || viewId.contains("tab") ||
+            viewId.contains("suggestion") || viewId.contains("candidate")
+        ) {
+            return false
+        }
+
+        // アクションボタン（確定、完了、検索、Enter、改行、次へ、送信、削除等）も除外して通常のダブルタップボタンとして扱う
+        if (label == "完了" || label == "確定" || label == "検索" || label == "改行" || label == "次へ" || label == "送信" ||
+            label == "done" || label == "enter" || label == "search" || label == "next" || label == "send" || label == "go" ||
+            label.contains("backspace") || label.contains("削除") || label.contains("delete")
+        ) {
+            return false
+        }
+
+        // 4. 文字入力キー（Typing Key）の判定:
+        // 通常の文字キーは1文字（a-z, あ-ん, 0-9, 記号1文字等）、または明示的にキーを表すビュー
+        val isSingleChar = (rawText.length == 1 || rawDesc.length == 1)
+        val isKeyView = cls.contains("softkey") || cls.contains("keyboardview") || viewId.contains("key")
+
+        return isSingleChar || isKeyView
     }
 
     private fun tryPerformLiftToType(node: AccessibilityNodeInfo?) {
@@ -3365,14 +3410,44 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 val className = node.className?.toString() ?: ""
 
-                // 画面全体の背景暗転枠（ScrimView等）で子要素を持つコンテナのみスキップ
-                if (isKeyguardLocked() || pkg.contains("systemui") || pkg.contains("keyguard")) {
+                val rect = android.graphics.Rect()
+                node.getBoundsInScreen(rect)
+                val statusBarHeight = getStatusBarHeight()
+                val isTouchInStatusBarZone = (rect.top <= 0 && rect.bottom <= statusBarHeight * 1.5)
+
+                val isSystemUi = pkg.contains("systemui", ignoreCase = true)
+                val isLauncher = pkg.contains("launcher", ignoreCase = true) || pkg.contains("home", ignoreCase = true)
+
+                // 1. ホーム画面（Launcher）のノードがステータスバー領域でホバーされた場合はホーム画面の内容を読まずステータスバー情報を優先アナウンス！
+                if (!isSystemUi && isLauncher && isTouchInStatusBarZone) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastStatusAnnounceTimeMs > 1200) {
+                        lastStatusAnnounceTimeMs = now
+                        soundHelper?.playFocusMove()
+                        announceFullStatus()
+                    }
+                    return
+                }
+
+                // 2. ステータスバー（SystemUI）の空コンテナに触れた場合もステータスバー情報を優先アナウンス！
+                if (isSystemUi && isTouchInStatusBarZone && getNodeText(node).isEmpty()) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastStatusAnnounceTimeMs > 1200) {
+                        lastStatusAnnounceTimeMs = now
+                        soundHelper?.playFocusMove()
+                        announceFullStatus()
+                    }
+                    return
+                }
+
+                // 画面全体の背景暗転枠（ScrimView等）で子要素を持つコンテナのみスキップ（ステータスバー領域以外）
+                if (isKeyguardLocked() || isSystemUi || pkg.contains("keyguard")) {
                     if (viewId.contains("scrim") || className.contains("ScrimView", ignoreCase = true) ||
                         className.contains("NotificationPanelView", ignoreCase = true) ||
                         className.contains("NotificationShade", ignoreCase = true) ||
                         className.contains("KeyguardRootView", ignoreCase = true)
                     ) {
-                        if (node.childCount > 0) return
+                        if (node.childCount > 0 && !isTouchInStatusBarZone) return
                     }
                 }
 

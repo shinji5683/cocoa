@@ -24,9 +24,10 @@
     - Always prominently maintain the direct download link to the latest release APK (`app-serena-release.apk`) in the "Download & Quick Start" / "ダウンロード＆クイックスタート" section of both `README.md` (English) and `README.ja.md` (Japanese) so blind users globally and in Japan can download and install Serena with a single click/tap without navigation friction.
     - Direct Link URL: `https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-release.apk` and releases URL: `https://github.com/shinji5683/cocoa/releases`.
 
-- Automated Build, Deploy & Accessibility Auto-Activation Workflow:
-  - Whenever completing a build or code modification, automatically proceed to deploy/install the generated APK onto connected Android devices (`adb install -r ...`).
-  - Immediately auto-enable the `serena` Accessibility Service on the target device via ADB so Shinji does not need to manually open settings and toggle it:
+- Build, Cloud Release & User-Requested Deploy Workflow (自動インストール停止・Shinji指示時のみデプロイの鉄則):
+  - Automatic Install STOPPED: Do NOT automatically attempt ADB installs or run `adb install` after builds, as USB cables are often not connected.
+  - Only when Shinji explicitly instructs to install or test on device (e.g. 「ケーブル刺したよ」「インストールして」), then proceed to deploy/install the generated APK (`adb install -r ...`).
+  - Upon explicit deploy instruction, auto-enable the `serena` Accessibility Service on the target device via ADB so Shinji does not need to manually open settings and toggle it:
     - `adb shell settings put secure enabled_accessibility_services com.shinji.serena/.SerenaScreenReaderService`
     - `adb shell settings put secure accessibility_enabled 1`
   - Permissions Policy (ユーザー主導の権限許可):
