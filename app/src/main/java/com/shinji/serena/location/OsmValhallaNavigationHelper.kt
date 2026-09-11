@@ -33,6 +33,27 @@ class OsmValhallaNavigationHelper(
     companion object {
         private const val TAG = "OsmValhallaNav"
 
+        fun getRelativeDirectionResId(relativeBearingDegrees: Double): Int {
+            var norm = relativeBearingDegrees
+            while (norm > 180.0) norm -= 360.0
+            while (norm < -180.0) norm += 360.0
+            return when {
+                norm >= -22.5 && norm <= 22.5 -> com.shinji.serena.R.string.dir_front
+                norm > 22.5 && norm <= 67.5 -> com.shinji.serena.R.string.dir_front_right
+                norm > 67.5 && norm <= 112.5 -> com.shinji.serena.R.string.dir_right
+                norm > 112.5 && norm <= 157.5 -> com.shinji.serena.R.string.dir_back_right
+                norm > 157.5 || norm < -157.5 -> com.shinji.serena.R.string.dir_directly_behind
+                norm >= -157.5 && norm < -112.5 -> com.shinji.serena.R.string.dir_back_left
+                norm >= -112.5 && norm < -67.5 -> com.shinji.serena.R.string.dir_left
+                norm >= -67.5 && norm < -22.5 -> com.shinji.serena.R.string.dir_front_left
+                else -> com.shinji.serena.R.string.dir_front
+            }
+        }
+
+        fun getRelativeDirectionName(context: Context, relativeBearingDegrees: Double): String {
+            return context.getString(getRelativeDirectionResId(relativeBearingDegrees))
+        }
+
         /**
          * 角度（-180 ~ +180度）を直感的相対方向用語に変換
          * クロックポジション（〜時の方向）は完全不使用！
@@ -93,11 +114,11 @@ class OsmValhallaNavigationHelper(
     fun startNavigationToDestination(query: String) {
         val fineLocation = getBestCurrentLocation()
         if (fineLocation == null) {
-            speakCallback("現在地を取得できませんでした。GPSが有効か確認してください。")
+            speakCallback(context.getString(com.shinji.serena.R.string.radar_gps_error))
             return
         }
 
-        speakCallback("${query} への徒歩ルートを探索中...")
+        speakCallback(context.getString(com.shinji.serena.R.string.valhalla_searching_route_fmt, query))
         soundAndHapticHelper?.playFocusMove()
 
         thread {
@@ -106,7 +127,7 @@ class OsmValhallaNavigationHelper(
                 val destCoords = geocodeDestination(query, fineLocation.latitude, fineLocation.longitude)
                 if (destCoords == null) {
                     mainHandler.post {
-                        speakCallback("「$query」の場所が見つかりませんでした。別の名前でお試しください。")
+                        speakCallback(context.getString(com.shinji.serena.R.string.valhalla_not_found_fmt, query))
                     }
                     return@thread
                 }
@@ -120,7 +141,7 @@ class OsmValhallaNavigationHelper(
             } catch (e: Exception) {
                 Log.e(TAG, "startNavigation error: ${e.message}", e)
                 mainHandler.post {
-                    speakCallback("ルートの取得中にエラーが発生しました。")
+                    speakCallback(context.getString(com.shinji.serena.R.string.valhalla_error_route))
                 }
             }
         }
@@ -132,14 +153,14 @@ class OsmValhallaNavigationHelper(
     fun startNavigationToCoordinates(destName: String, lat: Double, lon: Double) {
         val fineLocation = getBestCurrentLocation()
         if (fineLocation == null) {
-            speakCallback("現在地を取得できませんでした。")
+            speakCallback(context.getString(com.shinji.serena.R.string.radar_gps_error))
             return
         }
 
         destinationName = destName
         destinationLat = lat
         destinationLon = lon
-        speakCallback("${destName} への徒歩ルートを計算しています...")
+        speakCallback(context.getString(com.shinji.serena.R.string.valhalla_calculating_fmt, destName))
 
         thread {
             fetchPedestrianRoute(fineLocation.latitude, fineLocation.longitude, destinationLat, destinationLon)
@@ -154,7 +175,7 @@ class OsmValhallaNavigationHelper(
         lastSpokenManeuverIndex = -1
         stopLocationUpdates()
         soundAndHapticHelper?.playActionDone()
-        speakCallback("徒歩ナビゲーションを終了しました。")
+        speakCallback(context.getString(com.shinji.serena.R.string.valhalla_stopped))
     }
 
     @SuppressLint("MissingPermission")
@@ -349,7 +370,7 @@ class OsmValhallaNavigationHelper(
         }
 
         if (parsedManeuvers.isEmpty()) {
-            mainHandler.post { speakCallback("ルート案内データが空でした。") }
+            mainHandler.post { speakCallback(context.getString(com.shinji.serena.R.string.valhalla_empty_data)) }
             return
         }
 
@@ -363,12 +384,12 @@ class OsmValhallaNavigationHelper(
 
         mainHandler.post {
             val distText = if (totalDistanceMeters >= 1000) {
-                String.format("%.1fキロメートル", totalDistanceMeters / 1000.0)
+                String.format(java.util.Locale.US, "%.1f km", totalDistanceMeters / 1000.0)
             } else {
-                "${totalDistanceMeters.toInt()}メートル"
+                "${totalDistanceMeters.toInt()} m"
             }
             soundAndHapticHelper?.playActionDone()
-            val startMsg = "${destinationName} への最新Valhalla歩行者ルートが見つかりました。総距離およそ ${distText}、徒歩 約${totalMinutes}分です。ナビゲーションを開始します。"
+            val startMsg = context.getString(com.shinji.serena.R.string.valhalla_route_found_fmt, destinationName, distText, totalMinutes)
             speakCallback(startMsg)
             announceCurrentStep(true)
         }
@@ -378,7 +399,7 @@ class OsmValhallaNavigationHelper(
         val root = JSONObject(jsonStr)
         val routes = root.optJSONArray("routes")
         if (routes == null || routes.length() == 0) {
-            mainHandler.post { speakCallback("歩行者ルートが見つかりませんでした。") }
+            mainHandler.post { speakCallback(context.getString(com.shinji.serena.R.string.valhalla_no_route)) }
             return
         }
 
@@ -396,7 +417,7 @@ class OsmValhallaNavigationHelper(
             for (s in 0 until steps.length()) {
                 val step = steps.getJSONObject(s)
                 val distance = step.optDouble("distance", 0.0)
-                val street = step.optString("name", "道路")
+                val street = step.optString("name", "")
                 val manObj = step.optJSONObject("maneuver") ?: continue
                 val type = manObj.optString("type", "")
                 val modifier = manObj.optString("modifier", "")
@@ -416,15 +437,15 @@ class OsmValhallaNavigationHelper(
                 }
 
                 val instruction = when (mType) {
-                    ManeuverType.RIGHT -> "右折"
-                    ManeuverType.SLIGHT_RIGHT -> "右斜め前方向へ"
-                    ManeuverType.SHARP_RIGHT -> "大きく右へ曲がります"
-                    ManeuverType.LEFT -> "左折"
-                    ManeuverType.SLIGHT_LEFT -> "左斜め前方向へ"
-                    ManeuverType.SHARP_LEFT -> "大きく左へ曲がります"
-                    ManeuverType.UTURN -> "Uターンします"
-                    ManeuverType.DESTINATION -> "目的地に到着します"
-                    else -> "直進"
+                    ManeuverType.RIGHT -> context.getString(com.shinji.serena.R.string.maneuver_right)
+                    ManeuverType.SLIGHT_RIGHT -> context.getString(com.shinji.serena.R.string.maneuver_slight_right)
+                    ManeuverType.SHARP_RIGHT -> context.getString(com.shinji.serena.R.string.maneuver_sharp_right)
+                    ManeuverType.LEFT -> context.getString(com.shinji.serena.R.string.maneuver_left)
+                    ManeuverType.SLIGHT_LEFT -> context.getString(com.shinji.serena.R.string.maneuver_slight_left)
+                    ManeuverType.SHARP_LEFT -> context.getString(com.shinji.serena.R.string.maneuver_sharp_left)
+                    ManeuverType.UTURN -> context.getString(com.shinji.serena.R.string.maneuver_uturn)
+                    ManeuverType.DESTINATION -> context.getString(com.shinji.serena.R.string.maneuver_destination)
+                    else -> context.getString(com.shinji.serena.R.string.maneuver_straight)
                 }
 
                 parsedManeuvers.add(NavManeuver(instruction, street, distance, mType, stepLat, stepLon))
@@ -439,9 +460,9 @@ class OsmValhallaNavigationHelper(
             isNavigating = true
             startLocationUpdates()
 
-            val distText = if (totalDistance >= 1000) String.format("%.1fキロメートル", totalDistance / 1000.0) else "${totalDistance.toInt()}メートル"
+            val distText = if (totalDistance >= 1000) String.format(java.util.Locale.US, "%.1f km", totalDistance / 1000.0) else "${totalDistance.toInt()} m"
             soundAndHapticHelper?.playActionDone()
-            val startMsg = "${destinationName} へのルートが見つかりました。総距離およそ ${distText}、徒歩 約${totalMinutes}分です。ナビゲーションを開始します。"
+            val startMsg = context.getString(com.shinji.serena.R.string.valhalla_route_found_fmt, destinationName, distText, totalMinutes)
             speakCallback(startMsg)
 
             announceCurrentStep(true)
@@ -452,7 +473,7 @@ class OsmValhallaNavigationHelper(
         if (!isNavigating || maneuvers.isEmpty()) return
 
         val targetManeuver = maneuvers.getOrNull(currentManeuverIndex) ?: run {
-            speakCallback("目的地付近に到着しました。ナビゲーションを終了します。")
+            speakCallback(context.getString(com.shinji.serena.R.string.valhalla_near_destination))
             stopNavigation()
             return
         }
@@ -463,7 +484,7 @@ class OsmValhallaNavigationHelper(
 
         // スマホのコンパス向きに対する相対方向（正面、右斜め前、左など）
         val relativeAngle = bearingToStep - currentHeadingDegrees
-        val relativeDir = getRelativeDirectionName(relativeAngle)
+        val relativeDir = getRelativeDirectionName(context, relativeAngle)
 
         // 次のステップに到達判定 (< 15メートル)
         if (distToStep < 15.0) {
@@ -471,7 +492,7 @@ class OsmValhallaNavigationHelper(
             soundAndHapticHelper?.performKeyClickHaptic()
             if (currentManeuverIndex >= maneuvers.size) {
                 soundAndHapticHelper?.playActionDone()
-                speakCallback("目的地「${destinationName}」に到着しました！お疲れ様でした。")
+                speakCallback(context.getString(com.shinji.serena.R.string.valhalla_arrived_fmt, destinationName))
                 stopNavigation()
                 return
             } else {
@@ -480,13 +501,13 @@ class OsmValhallaNavigationHelper(
             return
         }
 
-        // 30秒間隔または一定距離接近時の音声サポート
+        // 25秒間隔または一定距離接近時の音声サポート
         val now = System.currentTimeMillis()
         if (now - lastDistanceAnnouncementMs > 25000L) {
             lastDistanceAnnouncementMs = now
             val distInt = distToStep.toInt()
             if (distInt in 20..150) {
-                speakCallback("${relativeDir} ${distInt}メートル先、${targetManeuver.instruction}です。")
+                speakCallback(context.getString(com.shinji.serena.R.string.valhalla_step_ahead_fmt, relativeDir, distInt, targetManeuver.instruction))
             }
         }
     }
@@ -495,9 +516,9 @@ class OsmValhallaNavigationHelper(
         val m = maneuvers.getOrNull(currentManeuverIndex) ?: return
         val distInt = m.distanceMeters.toInt()
         val dirMsg = if (isStart) {
-            "まずは正面へ、${m.streetName}を ${distInt}メートル進みます。"
+            context.getString(com.shinji.serena.R.string.valhalla_start_step_fmt, m.streetName, distInt)
         } else {
-            "${m.instruction}です。その先 ${distInt}メートル進みます。"
+            context.getString(com.shinji.serena.R.string.valhalla_next_step_fmt, m.instruction, distInt)
         }
         speakCallback(dirMsg)
     }

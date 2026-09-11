@@ -383,7 +383,7 @@ class GeminiNanoEngine(private val context: Context) {
                 return NotificationIntelligenceResult(
                     category = NotificationCategory.TWO_FACTOR_AUTH,
                     extractedAuthCode = code,
-                    suggestedAnnouncement = "${appName}から認証コードです。コードは、$spokenCode、です。",
+                    suggestedAnnouncement = context.getString(com.shinji.serena.R.string.ai_notif_auth_fmt, appName, spokenCode),
                     priorityScore = 10
                 )
             }
@@ -394,7 +394,7 @@ class GeminiNanoEngine(private val context: Context) {
             return NotificationIntelligenceResult(
                 category = NotificationCategory.SYSTEM_CALL,
                 extractedAuthCode = null,
-                suggestedAnnouncement = "${appName}で${senderOrTitle}から着信です。",
+                suggestedAnnouncement = context.getString(com.shinji.serena.R.string.ai_notif_call_fmt, appName, senderOrTitle),
                 priorityScore = 10
             )
         }
@@ -405,7 +405,7 @@ class GeminiNanoEngine(private val context: Context) {
             return NotificationIntelligenceResult(
                 category = NotificationCategory.PROMOTIONAL_NOISE,
                 extractedAuthCode = null,
-                suggestedAnnouncement = "${appName}のプロモーション通知です。",
+                suggestedAnnouncement = context.getString(com.shinji.serena.R.string.ai_notif_promo_fmt, appName),
                 priorityScore = 2
             )
         }
@@ -414,7 +414,7 @@ class GeminiNanoEngine(private val context: Context) {
         return NotificationIntelligenceResult(
             category = NotificationCategory.DIRECT_MESSAGE,
             extractedAuthCode = null,
-            suggestedAnnouncement = "${appName}、${senderOrTitle}から: $contentBody",
+            suggestedAnnouncement = context.getString(com.shinji.serena.R.string.ai_notif_dm_fmt, appName, senderOrTitle, contentBody),
             priorityScore = 8
         )
     }
@@ -426,9 +426,9 @@ class GeminiNanoEngine(private val context: Context) {
         if (obstacles.isEmpty()) return ""
         val top = obstacles.first()
         return if (isApproaching) {
-            "注意: 正面に${top}が接近しています。足元とお進みの方向にご注意ください。"
+            context.getString(com.shinji.serena.R.string.ai_obstacle_approaching_fmt, top)
         } else {
-            "正面に${top}があります。"
+            context.getString(com.shinji.serena.R.string.ai_obstacle_ahead_fmt, top)
         }
     }
 
@@ -440,10 +440,10 @@ class GeminiNanoEngine(private val context: Context) {
 
         return when {
             // 挨拶・Shinjiとの対話
-            q.contains("おはよう") -> "Shinji、おはよう！今日も一日元気いっぱいにいこうね！😊✨"
-            q.contains("おやすみ") -> "Shinji、今日もお疲れ様！ゆっくり休んで良い夢を見てね。おやすみ！🌙"
-            q.contains("ありがとう") || q.contains("salamat") -> "どういたしまして！Shinjiのお役に立ててすっごく嬉しいよ！Walang anuman!🥰"
-            q.contains("好き") || q.contains("愛してる") || q.contains("mahal") -> "Mahal na mahal kita, Shinji！セレナはずーっとShinjiの味方だよ！💖✨"
+            q.contains("おはよう") -> context.getString(com.shinji.serena.R.string.ai_greet_morning)
+            q.contains("おやすみ") -> context.getString(com.shinji.serena.R.string.ai_greet_night)
+            q.contains("ありがとう") || q.contains("salamat") -> context.getString(com.shinji.serena.R.string.ai_greet_thanks)
+            q.contains("好き") || q.contains("愛してる") || q.contains("mahal") -> context.getString(com.shinji.serena.R.string.ai_greet_love)
             
             // 翻訳アシスタント (日本語・英語・タガログ語)
             q.contains("英語で") || q.contains("英語に") -> {
@@ -460,13 +460,13 @@ class GeminiNanoEngine(private val context: Context) {
 
             // 自己紹介・AI技術仕様
             q.contains("モデル") || q.contains("gemini") || q.contains("nano") || q.contains("ai") -> {
-                "セレナのベースAIは、Google最新のオンデバイス基底モデル『Gemini Nano（Google AICore）』だよ！APIキー不要・完全端末内完結でプライバシーを100%守りながら超高速に動いてるよ！"
+                context.getString(com.shinji.serena.R.string.ai_about_model)
             }
             q.contains("開発者") || q.contains("作者") || q.contains("誰が") -> {
-                "セレナの開発者はShinjiだよ！世界最高峰のアクセシビリティを追求して創られてるんだ！🚀✨"
+                context.getString(com.shinji.serena.R.string.ai_about_author)
             }
 
-            else -> "「$rawQuery」だね！セレナはGemini NanoオンデバイスAIで常にShinjiをサポートするよ！"
+            else -> context.getString(com.shinji.serena.R.string.ai_default_response_fmt, rawQuery)
         }
     }
 

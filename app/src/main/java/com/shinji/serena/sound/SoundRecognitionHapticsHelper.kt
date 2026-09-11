@@ -12,6 +12,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import com.shinji.serena.R
 import com.shinji.serena.SerenaScreenReaderService
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -172,7 +173,7 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
                         lastAlertTime = now
                         handleDetectedSound(
                             vibrate = { vibrateCrossingAlarm() },
-                            spokenMsg = "踏切の警報音を検知しました。周囲にご注意ください。",
+                            spokenMsg = context.getString(R.string.sound_crossing_alarm_detected),
                             isDanger = true
                         )
                     }
@@ -181,7 +182,7 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
                         lastAlertTime = now
                         handleDetectedSound(
                             vibrate = { vibrateSirenOrHorn() },
-                            spokenMsg = "緊急サイレンまたはクラクションを検知しました。",
+                            spokenMsg = context.getString(R.string.sound_siren_or_horn_detected),
                             isDanger = true
                         )
                     }
@@ -189,14 +190,14 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
                     else if (peak > 18000 && rms < 5000) {
                         lastAlertTime = now
                         val materialDesc = when {
-                            estimatedFreq > 2500.0 -> "金属またはガラスのような硬い衝撃音"
-                            estimatedFreq in 800.0..2500.0 -> "木製ドアや家具、壁への衝突音"
-                            else -> "鈍い打撃音または床への衝撃"
+                            estimatedFreq > 2500.0 -> context.getString(R.string.sound_material_metal_glass)
+                            estimatedFreq in 800.0..2500.0 -> context.getString(R.string.sound_material_wood_wall)
+                            else -> context.getString(R.string.sound_material_dull_impact)
                         }
                         if (detailLevel == SoundAlertDetailLevel.ULTRA_DETAILED) {
                             handleDetectedSound(
                                 vibrate = { vibrateCollision() },
-                                spokenMsg = "${materialDesc}を検知しました。",
+                                spokenMsg = context.getString(R.string.sound_impact_detected_fmt, materialDesc),
                                 isDanger = false
                             )
                         }
@@ -204,11 +205,15 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
                     // 4. 人の声・呼びかけ検知 (低〜中周波の大音量)
                     else if (rms > 8500 && estimatedFreq in 150.0..700.0) {
                         lastAlertTime = now
-                        val voiceGender = if (estimatedFreq < 280.0) "男性の声" else "女性または高い声"
-                        val voiceMsg = if (detailLevel == SoundAlertDetailLevel.ULTRA_DETAILED) {
-                            "${voiceGender}で呼びかけがありました。"
+                        val voiceGender = if (estimatedFreq < 280.0) {
+                            context.getString(R.string.sound_voice_male)
                         } else {
-                            "近くで人の呼びかけ声を検知しました。"
+                            context.getString(R.string.sound_voice_female)
+                        }
+                        val voiceMsg = if (detailLevel == SoundAlertDetailLevel.ULTRA_DETAILED) {
+                            context.getString(R.string.sound_voice_called_detailed_fmt, voiceGender)
+                        } else {
+                            context.getString(R.string.sound_voice_called_generic)
                         }
 
                         if (detailLevel == SoundAlertDetailLevel.ULTRA_DETAILED || detailLevel == SoundAlertDetailLevel.STANDARD) {

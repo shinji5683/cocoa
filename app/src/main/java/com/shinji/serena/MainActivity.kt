@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            Toast.makeText(this, "バックグラウンド位置情報（常に許可）が有効になりました", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.main_bg_location_granted), Toast.LENGTH_SHORT).show()
         }
         updateServiceStatusDisplay()
     }
@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val grantedCount = permissions.values.count { it }
-        Toast.makeText(this, "権限を更新しました (${grantedCount}/${permissions.size})", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.main_permissions_updated_fmt, grantedCount, permissions.size), Toast.LENGTH_SHORT).show()
         updateServiceStatusDisplay()
 
         // 位置情報が許可された場合、Android 10+ で「常に許可」のバックグラウンド権限を案内＆リクエスト
@@ -50,12 +50,12 @@ class MainActivity : AppCompatActivity() {
 
             if ((hasFine || hasCoarse) && !hasBg) {
                 AlertDialog.Builder(this)
-                    .setTitle("📍 バックグラウンド位置情報の許可")
-                    .setMessage("端末をシェイクしたときにいつでも現在地住所を読み上げるため、次の画面で『常に許可』を選択してください。")
-                    .setPositiveButton("許可に進む") { _, _ ->
+                    .setTitle(getString(R.string.main_bg_location_dialog_title))
+                    .setMessage(getString(R.string.main_bg_location_dialog_msg))
+                    .setPositiveButton(getString(R.string.main_bg_location_dialog_positive)) { _, _ ->
                         requestBackgroundLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                     }
-                    .setNegativeButton("後で", null)
+                    .setNegativeButton(getString(R.string.main_bg_location_dialog_negative), null)
                     .show()
             }
         }
@@ -245,30 +245,31 @@ class MainActivity : AppCompatActivity() {
             val crashReport = SerenaApp.getLastCrashReport(this)
             if (crashReport != null) {
                 AlertDialog.Builder(this)
-                    .setTitle("⚠️ 前回の異常終了（クラッシュ）診断ログ")
+                    .setTitle(getString(R.string.main_crash_dialog_title))
                     .setMessage(
-                        "前回の起動時またはサービス実行中に発生したエラーを記録しました。\n" +
-                        "『ログをコピー』を押して開発者Shinjiに共有することで、迅速に原因を特定・修正できます。\n\n" +
-                        crashReport.take(400) + (if (crashReport.length > 400) "\n...(以下省略)" else "")
+                        getString(
+                            R.string.main_crash_dialog_msg_fmt,
+                            crashReport.take(400) + (if (crashReport.length > 400) getString(R.string.main_crash_dialog_more) else "")
+                        )
                     )
-                    .setPositiveButton("📋 診断ログをコピー") { _, _ ->
+                    .setPositiveButton(getString(R.string.main_crash_btn_copy)) { _, _ ->
                         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                         val clip = android.content.ClipData.newPlainText("Serena Crash Report", crashReport)
                         clipboard.setPrimaryClip(clip)
-                        Toast.makeText(this, "クラッシュログをクリップボードにコピーしました！", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, getString(R.string.main_crash_toast_copied), Toast.LENGTH_LONG).show()
                     }
-                    .setNeutralButton("📧 メール送信") { _, _ ->
+                    .setNeutralButton(getString(R.string.main_crash_btn_mail)) { _, _ ->
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
                             data = Uri.parse("mailto:")
                             putExtra(Intent.EXTRA_EMAIL, arrayOf(BuildConfig.DEVELOPER_EMAIL))
-                            putExtra(Intent.EXTRA_SUBJECT, "【Serena クラッシュ診断ログ】")
+                            putExtra(Intent.EXTRA_SUBJECT, getString(R.string.main_crash_mail_subject))
                             putExtra(Intent.EXTRA_TEXT, crashReport)
                         }
                         try {
-                            startActivity(Intent.createChooser(intent, "エラーログ送信"))
+                            startActivity(Intent.createChooser(intent, getString(R.string.main_crash_mail_chooser)))
                         } catch (_: Exception) {}
                     }
-                    .setNegativeButton("閉じる", null)
+                    .setNegativeButton(android.R.string.cancel, null)
                     .show()
             }
         } catch (e: Exception) {
@@ -305,7 +306,7 @@ class MainActivity : AppCompatActivity() {
                 )
                 startActivity(intent)
             } else {
-                Toast.makeText(this, "このOSバージョンでは重ねて表示権限は不要です", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.main_overlay_not_needed), Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -477,13 +478,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnTestSpeech.setOnClickListener {
-            val sampleText = if (Locale.getDefault().language == "ja") {
-                "serena スクリーンリーダーの音声テストです。速度 ${String.format("%.1f", binding.sliderSpeed.value)} 倍速で再生中。"
-            } else if (Locale.getDefault().language == "tl" || Locale.getDefault().language == "fil") {
-                "Pagsusuri ng boses ng serena screen reader sa bilis na ${String.format("%.1f", binding.sliderSpeed.value)}x."
-            } else {
-                "Serena screen reader speech output test at ${String.format("%.1f", binding.sliderSpeed.value)}x speed."
-            }
+            val sampleText = getString(R.string.main_tts_test_speech_fmt, binding.sliderSpeed.value)
             if (SerenaScreenReaderService.isServiceRunning()) {
                 SerenaScreenReaderService.instance?.speak(sampleText, TextToSpeech.QUEUE_FLUSH)
             } else {
@@ -495,7 +490,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 val intent = Intent("com.android.settings.TTS_SETTINGS")
                 startActivity(intent)
-                Toast.makeText(this, "「音声データ」からフィリピン語(Filipino/Tagalog)や英語の音声パッケージを追加できます", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.main_tts_filipino_guide), Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
                 val intent = Intent(Settings.ACTION_SETTINGS)
                 startActivity(intent)
@@ -509,7 +504,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.switchHourlyChime.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean(SerenaScreenReaderService.KEY_HOURLY_CHIME_ENABLED, isChecked).apply()
-            val statusStr = if (isChecked) "時報機能を有効にしました" else "時報機能を無効にしました"
+            val statusStr = if (isChecked) getString(R.string.main_hourly_chime_enabled) else getString(R.string.main_hourly_chime_disabled)
             Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
         }
 
@@ -525,8 +520,8 @@ class MainActivity : AppCompatActivity() {
                     currentHour > 12 -> currentHour - 12
                     else -> currentHour
                 }
-                val periodStr = if (isAm) "午前" else "午後"
-                val sampleText = "${periodStr}${displayHour}時をお知らせします。（テスト再生）"
+                val periodStr = if (isAm) getString(R.string.main_time_am) else getString(R.string.main_time_pm)
+                val sampleText = getString(R.string.main_hourly_chime_test_fmt, periodStr, displayHour)
                 localTts?.speak(sampleText, TextToSpeech.QUEUE_FLUSH, null, "testHourlyChime")
             }
         }
@@ -538,7 +533,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.switchCallPeriodicAnnounce.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean(SerenaScreenReaderService.KEY_CALL_PERIODIC_ANNOUNCE, isChecked).apply()
-            val statusStr = if (isChecked) "通話中の経過時間定期読み上げを有効にしました" else "通話中の経過時間定期読み上げを無効にしました"
+            val statusStr = if (isChecked) getString(R.string.main_call_timer_enabled) else getString(R.string.main_call_timer_disabled)
             Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
         }
     }
@@ -549,7 +544,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.switchAnnounceOperationActions.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean(SerenaScreenReaderService.KEY_ANNOUNCE_OPERATION_ACTIONS, isChecked).apply()
-            val statusStr = if (isChecked) "操作ガイド音声を有効にしました（初心者向け）" else "操作ガイド音声を無効にしました（ノイズ低減・推奨）"
+            val statusStr = if (isChecked) getString(R.string.main_guide_enabled) else getString(R.string.main_guide_disabled)
             Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
         }
     }
@@ -573,12 +568,12 @@ class MainActivity : AppCompatActivity() {
             prefs.edit().putFloat(SerenaScreenReaderService.KEY_SHAKE_THRESHOLD, newThreshold).apply()
             
             val label = when (newThreshold) {
-                2.3f -> "敏感 (2.3f)"
-                3.5f -> "標準 (3.5f)"
-                4.3f -> "しっかり (4.3f)"
-                else -> "敏感 (2.3f)"
+                2.3f -> getString(R.string.main_shake_light)
+                3.5f -> getString(R.string.main_shake_standard)
+                4.3f -> getString(R.string.main_shake_firm)
+                else -> getString(R.string.main_shake_light)
             }
-            Toast.makeText(this, "シェイク感度を${label}に設定しました", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.main_shake_sensitivity_toast_fmt, label), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -592,9 +587,9 @@ class MainActivity : AppCompatActivity() {
             try {
                 val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phoneNumber"))
                 startActivity(intent)
-                Toast.makeText(this, "開発者(${developerName})への電話アプリを起動します", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.main_support_call_toast_fmt, developerName), Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Toast.makeText(this, "電話アプリの起動に失敗しました: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.main_support_call_fail_fmt, e.message ?: ""), Toast.LENGTH_LONG).show()
             }
         }
 
@@ -603,37 +598,37 @@ class MainActivity : AppCompatActivity() {
             try {
                 val intent = Intent(Intent.ACTION_SENDTO).apply {
                     data = Uri.parse("mailto:$developerEmail")
-                    putExtra(Intent.EXTRA_SUBJECT, "【Serena Screen Reader】お問い合わせ・フィードバック")
-                    putExtra(Intent.EXTRA_TEXT, "Shinjiさん、こんにちは！\n\n【お問い合わせ内容】\n\n")
+                    putExtra(Intent.EXTRA_SUBJECT, getString(R.string.main_support_mail_subject))
+                    putExtra(Intent.EXTRA_TEXT, getString(R.string.main_support_mail_body))
                 }
                 startActivity(intent)
-                Toast.makeText(this, "メールアプリを起動します", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.main_support_mail_toast), Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Toast.makeText(this, "メールアプリの起動に失敗しました: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.main_support_mail_fail_fmt, e.message ?: ""), Toast.LENGTH_LONG).show()
             }
         }
 
         // 3. LINE / WhatsApp / SMS 等のメッセージサポートダイアログ
         binding.btnMessageDeveloper.setOnClickListener {
             val options = arrayOf(
-                "🟢 WhatsApp で直通チャットを開く",
-                "💬 SMS (ショートメッセージ) で直接送信",
-                "🟢 LINE で電話番号検索 (番号を自動コピーしてLINE起動)",
-                "📤 その他のアプリで共有送信"
+                getString(R.string.main_support_msg_wa),
+                getString(R.string.main_support_msg_sms),
+                getString(R.string.main_support_msg_line),
+                getString(R.string.main_support_msg_other)
             )
             AlertDialog.Builder(this)
-                .setTitle("💬 メッセージサポート窓口の選択")
+                .setTitle(getString(R.string.main_support_msg_dialog_title))
                 .setItems(options) { _, which ->
                     when (which) {
                         0 -> {
                             // WhatsApp 直通リンク
                             try {
-                                val url = "https://wa.me/818094959134?text=" + Uri.encode("【Serena Screen Reader サポート相談】\nShinjiさん、こんにちは！\n")
+                                val url = "https://wa.me/818094959134?text=" + Uri.encode(getString(R.string.main_support_mail_body))
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                                 startActivity(intent)
-                                Toast.makeText(this, "WhatsAppを起動します", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.main_support_wa_toast), Toast.LENGTH_SHORT).show()
                             } catch (e: Exception) {
-                                Toast.makeText(this, "WhatsAppの起動に失敗しました: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.main_support_wa_fail_fmt, e.message ?: ""), Toast.LENGTH_SHORT).show()
                             }
                         }
                         1 -> {
@@ -641,12 +636,12 @@ class MainActivity : AppCompatActivity() {
                             try {
                                 val smsUri = Uri.parse("smsto:$phoneNumber")
                                 val intent = Intent(Intent.ACTION_SENDTO, smsUri).apply {
-                                    putExtra("sms_body", "【Serena サポート相談】\nShinjiさん、こんにちは！\n")
+                                    putExtra("sms_body", getString(R.string.main_support_mail_body))
                                 }
                                 startActivity(intent)
-                                Toast.makeText(this, "SMSメッセージアプリを起動します", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.main_support_sms_toast), Toast.LENGTH_SHORT).show()
                             } catch (e: Exception) {
-                                Toast.makeText(this, "SMSアプリの起動に失敗しました: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.main_support_sms_fail_fmt, e.message ?: ""), Toast.LENGTH_SHORT).show()
                             }
                         }
                         2 -> {
@@ -655,7 +650,7 @@ class MainActivity : AppCompatActivity() {
                                 val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
                                 val clip = android.content.ClipData.newPlainText("Shinji Phone", phoneNumber)
                                 clipboard.setPrimaryClip(clip)
-                                Toast.makeText(this, "電話番号 ($phoneNumber) をコピーしました。LINEの友だち追加で電話番号検索してください", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this, getString(R.string.main_support_line_toast_fmt, phoneNumber), Toast.LENGTH_LONG).show()
 
                                 val lineIntent = packageManager.getLaunchIntentForPackage("jp.naver.line.android")
                                 if (lineIntent != null) {
@@ -664,21 +659,21 @@ class MainActivity : AppCompatActivity() {
                                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://line.me/")))
                                 }
                             } catch (e: Exception) {
-                                Toast.makeText(this, "LINEの起動に失敗しました: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.main_support_line_fail_fmt, e.message ?: ""), Toast.LENGTH_SHORT).show()
                             }
                         }
                         3 -> {
                             // その他共有
                             val sendIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "【Serena Screen Reader サポート相談】\nShinjiさん宛て\n\n")
+                                putExtra(Intent.EXTRA_TEXT, getString(R.string.main_support_mail_body))
                             }
-                            val chooser = Intent.createChooser(sendIntent, "相談するアプリを選択")
+                            val chooser = Intent.createChooser(sendIntent, getString(R.string.main_support_other_chooser))
                             startActivity(chooser)
                         }
                     }
                 }
-                .setNegativeButton("キャンセル", null)
+                .setNegativeButton(android.R.string.cancel, null)
                 .show()
         }
 
@@ -691,32 +686,32 @@ class MainActivity : AppCompatActivity() {
                     putExtra(Intent.EXTRA_TEXT, "Hi Luis Carlos,\n\nThank you for translating Serena Screen Reader into Spanish!\n\n")
                 }
                 startActivity(intent)
-                Toast.makeText(this, "Luis Carlosさんへのメールアプリを起動します", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.main_support_luis_toast), Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Toast.makeText(this, "メールアプリの起動に失敗しました: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.main_support_mail_fail_fmt, e.message ?: ""), Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun setupTestBench() {
         binding.btnTestA.setOnClickListener {
-            Toast.makeText(this, "テストボタンAが押されました", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.main_test_btn_a_toast), Toast.LENGTH_SHORT).show()
         }
 
         binding.btnTestB.setOnClickListener {
-            Toast.makeText(this, "テストボタンBが押されました", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.main_test_btn_b_toast), Toast.LENGTH_SHORT).show()
         }
 
         binding.switchDetailMode.setOnCheckedChangeListener { _, isChecked ->
-            val modeStr = if (isChecked) "詳細アナウンスモード" else "標準モード"
-            Toast.makeText(this, "$modeStr に切り替えました", Toast.LENGTH_SHORT).show()
+            val modeStr = if (isChecked) getString(R.string.main_mode_detailed) else getString(R.string.main_mode_standard)
+            Toast.makeText(this, getString(R.string.main_test_bench_mode_fmt, modeStr), Toast.LENGTH_SHORT).show()
         }
 
         binding.btnTriggerMenu.setOnClickListener {
             if (SerenaScreenReaderService.isServiceRunning()) {
                 SerenaScreenReaderService.instance?.triggerSerenaMenu()
             } else {
-                Toast.makeText(this, "先にサービスを有効化してください", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.main_service_already_enabled), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -727,7 +722,7 @@ class MainActivity : AppCompatActivity() {
         binding.switchTelemetryOptIn.isChecked = telemetry.isConsentGranted()
         binding.switchTelemetryOptIn.setOnCheckedChangeListener { _, isChecked ->
             telemetry.setConsentStatus(isChecked)
-            val msg = if (isChecked) "動作改善レポート送信を許可しました" else "動作改善レポート送信を停止しました"
+            val msg = if (isChecked) getString(R.string.main_telemetry_enabled) else getString(R.string.main_telemetry_disabled)
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
@@ -908,7 +903,7 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.dialog_telemetry_agree) { dialog, _ ->
                 telemetry.setConsentStatus(true)
                 binding.switchTelemetryOptIn.isChecked = true
-                Toast.makeText(this, "ご協力ありがとうございます！動作改善レポート送信が許可されました", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.main_telemetry_thanks), Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
             .setNegativeButton(R.string.dialog_telemetry_refuse) { dialog, _ ->
@@ -938,7 +933,7 @@ class MainActivity : AppCompatActivity() {
                 else -> com.shinji.serena.translation.TranslationMode.OFF
             }
             helper.mode = newMode
-            Toast.makeText(this, "リアルタイム翻訳: ${newMode.displayName}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.main_translation_mode_toast_fmt, newMode.displayName), Toast.LENGTH_SHORT).show()
         }
     }
 }

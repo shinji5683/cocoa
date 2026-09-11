@@ -16,6 +16,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.shinji.serena.R
 import com.shinji.serena.getSafeSharedPreferences
 import java.util.Locale
 
@@ -89,7 +90,7 @@ class LocationAddressHelper(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun getCurrentLocationAddress(callback: (String) -> Unit) {
         if (!isLocationPermissionGranted()) {
-            callback("位置情報: 権限未許可")
+            callback(context.getString(R.string.loc_permission_required))
             return
         }
 
@@ -158,14 +159,14 @@ class LocationAddressHelper(private val context: Context) {
                         if (bestLocation != null) {
                             resolveAddress(bestLocation, callback)
                         } else {
-                            callback("位置情報: 測位中")
+                            callback(context.getString(R.string.loc_positioning))
                         }
                     }
                 }, 3000)
             } else if (bestLocation != null) {
                 resolveAddress(bestLocation, callback)
             } else {
-                callback("位置情報: GPSオフ")
+                callback(context.getString(R.string.loc_gps_off))
             }
         } catch (e: Exception) {
             Log.e(TAG, "requestSingleUpdate failed: ${e.message}")
@@ -201,14 +202,14 @@ class LocationAddressHelper(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "Geocoder error: ${e.message}")
                 mainHandler.post {
-                    callback("現在地: 緯度${String.format(Locale.US, "%.3f", lat)} 経度${String.format(Locale.US, "%.3f", lng)}")
+                    callback(context.getString(R.string.loc_coords_fmt, String.format(Locale.US, "%.3f", lat), String.format(Locale.US, "%.3f", lng)))
                 }
             }
         }.start()
     }
 
     private fun formatAddressText(address: Address?, locale: Locale): String {
-        if (address == null) return "現在地: 住所不明"
+        if (address == null) return context.getString(R.string.loc_address_unknown)
 
         val isJapanese = locale.language == Locale.JAPANESE.language || locale.country == "JP"
         val exact = isExactBlockPrecision()
@@ -244,7 +245,7 @@ class LocationAddressHelper(private val context: Context) {
             if (exact) {
                 // 番地・号まで詳細
                 if (cleanedLine.isNotEmpty()) {
-                    "現在地: ${countryPrefix}$cleanedLine"
+                    context.getString(R.string.loc_current_fmt, "${countryPrefix}$cleanedLine")
                 } else {
                     val townPart = when {
                         subLocality.isNotEmpty() -> subLocality
@@ -257,7 +258,7 @@ class LocationAddressHelper(private val context: Context) {
                         else -> townPart
                     }
                     val full = "${admin}${locality}${blockPart}".trim()
-                    if (full.isNotEmpty()) "現在地: ${countryPrefix}$full" else "現在地: 住所取得中"
+                    if (full.isNotEmpty()) context.getString(R.string.loc_current_fmt, "${countryPrefix}$full") else context.getString(R.string.loc_address_acquiring)
                 }
             } else {
                 // 市区町村・町名まで (プライバシー保護: 番地数字のみをカットして何町・何丁目で止める)
@@ -273,7 +274,7 @@ class LocationAddressHelper(private val context: Context) {
                         // 3. 末尾の番地数字をカット
                         stripped = stripped.replace(Regex("[\\s\\d\\uFF10-\\uFF19\\-ー番地号]+$"), "").trim()
                     }
-                    "現在地: ${countryPrefix}$stripped"
+                    context.getString(R.string.loc_current_fmt, "${countryPrefix}$stripped")
                 } else {
                     val townPart = when {
                         subLocality.isNotEmpty() -> subLocality
@@ -282,7 +283,7 @@ class LocationAddressHelper(private val context: Context) {
                         else -> ""
                     }
                     val full = "${admin}${locality}${townPart}".trim()
-                    if (full.isNotEmpty()) "現在地: ${countryPrefix}$full" else "現在地: 住所取得中"
+                    if (full.isNotEmpty()) context.getString(R.string.loc_current_fmt, "${countryPrefix}$full") else context.getString(R.string.loc_address_acquiring)
                 }
             }
         } else {
@@ -298,11 +299,11 @@ class LocationAddressHelper(private val context: Context) {
                 val streetFull = listOfNotNull(streetNumber.ifEmpty { null }, street.ifEmpty { null }).joinToString(" ")
                 val parts = listOfNotNull(streetFull.ifEmpty { null }, city.ifEmpty { null }, state.ifEmpty { null }, countryPart.ifEmpty { null })
                 val full = parts.joinToString(", ")
-                if (full.isNotEmpty()) "Location: $full" else "Location: Unknown"
+                if (full.isNotEmpty()) context.getString(R.string.loc_current_fmt, full) else context.getString(R.string.loc_address_unknown)
             } else {
                 val parts = listOfNotNull(city.ifEmpty { null }, state.ifEmpty { null }, countryPart.ifEmpty { null })
                 val full = parts.joinToString(", ")
-                if (full.isNotEmpty()) "Location: $full" else "Location: Unknown"
+                if (full.isNotEmpty()) context.getString(R.string.loc_current_fmt, full) else context.getString(R.string.loc_address_unknown)
             }
         }
     }

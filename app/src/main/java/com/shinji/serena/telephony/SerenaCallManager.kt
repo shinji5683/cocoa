@@ -87,12 +87,13 @@ class SerenaCallManager(
             }
             TelephonyManager.CALL_STATE_OFFHOOK -> {
                 Log.i(TAG, "Telephony: CALL_STATE_OFFHOOK -> Call connected")
-                onCallStarted("電話")
+                onCallStarted(service.getString(R.string.call_app_phone))
             }
             TelephonyManager.CALL_STATE_IDLE -> {
                 Log.i(TAG, "Telephony: CALL_STATE_IDLE -> Call ended")
-                if (isCallActive && (activeCallApp == "電話" || activeCallApp.isEmpty())) {
-                    onCallEnded("電話")
+                val phoneApp = service.getString(R.string.call_app_phone)
+                if (isCallActive && (activeCallApp == phoneApp || activeCallApp == "電話" || activeCallApp.isEmpty())) {
+                    onCallEnded(phoneApp)
                 }
             }
         }
@@ -166,7 +167,7 @@ class SerenaCallManager(
         // 2. 通話開始判定（実際に相手と接続された瞬間からタイマースタート！）
         if (isCurrentlyInCall && !isCallActive) {
             val appLabel = getMessagingAppName(pkgName)
-            val name = if (callerName.isNotEmpty()) "${callerName}さん" else ""
+            val name = if (callerName.isNotEmpty()) callerName else ""
             onCallStarted(appLabel, name)
         } 
         // 3. 通話中の経過時間案内（設定でONになっている場合のみ、実測時間で1分ごとにアナウンス）
@@ -373,9 +374,9 @@ class SerenaCallManager(
             p.contains("skype") -> "Skype"
             p.contains("whatsapp") -> "WhatsApp"
             p.contains("messenger") -> "Messenger"
-            p.contains("rakuten") -> "楽天リンク"
+            p.contains("rakuten") -> "Rakuten Link"
             p.contains("zoom") -> "Zoom"
-            else -> "電話"
+            else -> service.getString(R.string.call_app_phone)
         }
     }
 

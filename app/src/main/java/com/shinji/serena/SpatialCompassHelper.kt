@@ -247,29 +247,33 @@ class SpatialCompassHelper(private val context: Context) : SensorEventListener {
         } catch (_: Exception) {}
     }
 
+    fun getDirectionNameResId(azimuth: Float = currentAzimuth): Int {
+        return when {
+            azimuth >= 348.75f || azimuth < 11.25f -> R.string.cardinal_n
+            azimuth in 11.25f..33.75f -> R.string.cardinal_nne
+            azimuth in 33.75f..56.25f -> R.string.cardinal_ne
+            azimuth in 56.25f..78.75f -> R.string.cardinal_ene
+            azimuth in 78.75f..101.25f -> R.string.cardinal_e
+            azimuth in 101.25f..123.75f -> R.string.cardinal_ese
+            azimuth in 123.75f..146.25f -> R.string.cardinal_se
+            azimuth in 146.25f..168.75f -> R.string.cardinal_sse
+            azimuth in 168.75f..191.25f -> R.string.cardinal_s
+            azimuth in 191.25f..213.75f -> R.string.cardinal_ssw
+            azimuth in 213.75f..236.25f -> R.string.cardinal_sw
+            azimuth in 236.25f..258.75f -> R.string.cardinal_wsw
+            azimuth in 258.75f..281.25f -> R.string.cardinal_w
+            azimuth in 281.25f..303.75f -> R.string.cardinal_wnw
+            azimuth in 303.75f..326.25f -> R.string.cardinal_nw
+            azimuth in 326.25f..348.75f -> R.string.cardinal_nnw
+            else -> R.string.cardinal_n
+        }
+    }
+
     /**
-     * 16方位の日本語方角名を算出
+     * 16方位の方角名を算出
      */
     fun getDirectionName(azimuth: Float = currentAzimuth): String {
-        return when {
-            azimuth >= 348.75f || azimuth < 11.25f -> "北"
-            azimuth in 11.25f..33.75f -> "北北東"
-            azimuth in 33.75f..56.25f -> "北東"
-            azimuth in 56.25f..78.75f -> "東北東"
-            azimuth in 78.75f..101.25f -> "東"
-            azimuth in 101.25f..123.75f -> "東南東"
-            azimuth in 123.75f..146.25f -> "南東"
-            azimuth in 146.25f..168.75f -> "南南東"
-            azimuth in 168.75f..191.25f -> "南"
-            azimuth in 191.25f..213.75f -> "南南西"
-            azimuth in 213.75f..236.25f -> "南西"
-            azimuth in 236.25f..258.75f -> "西南西"
-            azimuth in 258.75f..281.25f -> "西"
-            azimuth in 281.25f..303.75f -> "西北西"
-            azimuth in 303.75f..326.25f -> "北西"
-            azimuth in 326.25f..348.75f -> "北北西"
-            else -> "北"
-        }
+        return context.getString(getDirectionNameResId(azimuth))
     }
 
     /**
@@ -280,19 +284,19 @@ class SpatialCompassHelper(private val context: Context) : SensorEventListener {
         if (diff < 0) diff += 360f
 
         return when {
-            diff >= 345f || diff < 15f -> ClockGuidance(12, "正面", "正面です。まっすぐ直進してください", true)
-            diff in 15f..<45f -> ClockGuidance(1, "少し右斜め前", "少し右前を向いてください", false)
-            diff in 45f..<75f -> ClockGuidance(2, "右斜め前", "右斜め前を向いてください", false)
-            diff in 75f..<105f -> ClockGuidance(3, "右方向", "右を向いてください", false)
-            diff in 105f..<135f -> ClockGuidance(4, "右斜め後ろ", "右斜め後ろです", false)
-            diff in 135f..<165f -> ClockGuidance(5, "右後ろ", "右後ろを向いてください", false)
-            diff in 165f..<195f -> ClockGuidance(6, "真後ろ", "真後ろです。Uターンしてください", false)
-            diff in 195f..<225f -> ClockGuidance(7, "左後ろ", "左後ろを向いてください", false)
-            diff in 225f..<255f -> ClockGuidance(8, "左斜め後ろ", "左斜め後ろです", false)
-            diff in 255f..<285f -> ClockGuidance(9, "左方向", "左を向いてください", false)
-            diff in 285f..<315f -> ClockGuidance(10, "左斜め前", "左斜め前を向いてください", false)
-            diff in 315f..<345f -> ClockGuidance(11, "少し左斜め前", "少し左前を向いてください", false)
-            else -> ClockGuidance(12, "正面", "正面です。まっすぐ直進してください", true)
+            diff >= 345f || diff < 15f -> ClockGuidance(12, context.getString(R.string.dir_front), context.getString(R.string.compass_guidance_front), true)
+            diff in 15f..<45f -> ClockGuidance(1, context.getString(R.string.dir_slight_right), context.getString(R.string.compass_guidance_slight_right), false)
+            diff in 45f..<75f -> ClockGuidance(2, context.getString(R.string.dir_front_right), context.getString(R.string.compass_guidance_front_right), false)
+            diff in 75f..<105f -> ClockGuidance(3, context.getString(R.string.dir_right_side), context.getString(R.string.compass_guidance_right), false)
+            diff in 105f..<135f -> ClockGuidance(4, context.getString(R.string.dir_back_right), context.getString(R.string.compass_guidance_back_right), false)
+            diff in 135f..<165f -> ClockGuidance(5, context.getString(R.string.dir_back_right), context.getString(R.string.compass_guidance_behind_right), false)
+            diff in 165f..<195f -> ClockGuidance(6, context.getString(R.string.dir_directly_behind), context.getString(R.string.compass_guidance_directly_behind), false)
+            diff in 195f..<225f -> ClockGuidance(7, context.getString(R.string.dir_back_left), context.getString(R.string.compass_guidance_behind_left), false)
+            diff in 225f..<255f -> ClockGuidance(8, context.getString(R.string.dir_back_left), context.getString(R.string.compass_guidance_back_left), false)
+            diff in 255f..<285f -> ClockGuidance(9, context.getString(R.string.dir_left_side), context.getString(R.string.compass_guidance_left), false)
+            diff in 285f..<315f -> ClockGuidance(10, context.getString(R.string.dir_front_left), context.getString(R.string.compass_guidance_front_left), false)
+            diff in 315f..<345f -> ClockGuidance(11, context.getString(R.string.dir_slight_left), context.getString(R.string.compass_guidance_slight_left), false)
+            else -> ClockGuidance(12, context.getString(R.string.dir_front), context.getString(R.string.compass_guidance_front), true)
         }
     }
 
@@ -302,6 +306,6 @@ class SpatialCompassHelper(private val context: Context) : SensorEventListener {
     fun getDirectionAnnouncement(): String {
         val dir = getDirectionName()
         val deg = currentAzimuth.toInt()
-        return "現在向いている方角は「${dir}」、角度は${deg}度です。"
+        return context.getString(R.string.compass_direction_announcement_fmt, dir, deg)
     }
 }

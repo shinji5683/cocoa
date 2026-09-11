@@ -94,9 +94,9 @@ class SerenaWalkingNavigator(
      * 現在地の町名・番地住所を日本語で取得（APIキー不要・完全無料）
      */
     fun getCurrentAddressSync(): String {
-        val loc = currentLocation ?: return "現在地を取得中または測位圏外です"
+        val loc = currentLocation ?: return context.getString(com.shinji.serena.R.string.loc_out_of_range)
         return try {
-            val geocoder = Geocoder(context, Locale.JAPAN)
+            val geocoder = Geocoder(context, Locale.getDefault())
             @Suppress("DEPRECATION")
             val addresses: List<Address>? = geocoder.getFromLocation(loc.latitude, loc.longitude, 3)
             if (!addresses.isNullOrEmpty()) {
@@ -131,12 +131,12 @@ class SerenaWalkingNavigator(
                 if (feature.isNotEmpty() && !parts.contains(feature) && feature != locality && feature != subLocality) parts.add(feature)
 
                 val full = parts.joinToString("")
-                if (full.isNotEmpty()) full else "緯度 ${String.format("%.4f", loc.latitude)}、経度 ${String.format("%.4f", loc.longitude)}"
+                if (full.isNotEmpty()) full else context.getString(com.shinji.serena.R.string.loc_coords_fmt, String.format(Locale.US, "%.4f", loc.latitude), String.format(Locale.US, "%.4f", loc.longitude))
             } else {
-                "緯度 ${String.format("%.4f", loc.latitude)}、経度 ${String.format("%.4f", loc.longitude)}"
+                context.getString(com.shinji.serena.R.string.loc_coords_fmt, String.format(Locale.US, "%.4f", loc.latitude), String.format(Locale.US, "%.4f", loc.longitude))
             }
         } catch (e: Exception) {
-            "緯度 ${String.format("%.4f", loc.latitude)}、経度 ${String.format("%.4f", loc.longitude)}"
+            context.getString(com.shinji.serena.R.string.loc_coords_fmt, String.format(Locale.US, "%.4f", loc.latitude), String.format(Locale.US, "%.4f", loc.longitude))
         }
     }
 
@@ -444,8 +444,8 @@ class SerenaWalkingNavigator(
      * 目的地へのリアルタイム徒歩ナビゲーション案内文を生成
      */
     fun getNavigationGuidance(): String {
-        val dest = activeDestination ?: return "目的地が設定されていません。現在地は「${getCurrentAddressSync()}」です。"
-        val loc = currentLocation ?: return "GPS測位中です。目的地「${dest.name}」へ案内しますので少しお待ちください。"
+        val dest = activeDestination ?: return context.getString(com.shinji.serena.R.string.nav_no_destination_fmt, getCurrentAddressSync())
+        val loc = currentLocation ?: return context.getString(com.shinji.serena.R.string.nav_waiting_gps_fmt, dest.name)
 
         // 1. 直線距離（m）と目的地方位角（bearing）を計算
         val results = FloatArray(2)
@@ -460,19 +460,19 @@ class SerenaWalkingNavigator(
 
         // 3. 到着判定 (10m以内)
         if (distanceMeters <= 10) {
-            return "目的地「${dest.name}」付近に到着しました！お疲れ様でした。"
+            return context.getString(com.shinji.serena.R.string.valhalla_arrived_fmt, dest.name)
         }
 
         // 4. ナビゲーション案内アナウンス
-        val dirText = clockGuidance?.directionText ?: "正面"
+        val dirText = clockGuidance?.directionText ?: context.getString(com.shinji.serena.R.string.dir_front)
         val advice = if (clockGuidance?.isStraightAhead == true) {
             compass.checkTargetAlignmentHaptic(targetBearing)
-            "正面を向いています。そのまま直進してください。"
+            context.getString(com.shinji.serena.R.string.nav_straight_advice)
         } else {
             clockGuidance?.detailedDescription ?: ""
         }
 
-        return "目的地「${dest.name}」まで約${distanceMeters}メートル、方向は${dirText}です。$advice"
+        return context.getString(com.shinji.serena.R.string.nav_status_fmt, dest.name, distanceMeters, dirText, advice).trim()
     }
 
     /**
@@ -481,7 +481,7 @@ class SerenaWalkingNavigator(
     fun getCurrentLocationSummary(): String {
         val address = getCurrentAddressSync()
         val compass = compassHelper
-        val direction = compass?.getDirectionName() ?: "北"
-        return "現在地: $address。向いている方角は「${direction}」です。"
+        val direction = compass?.getDirectionName() ?: context.getString(com.shinji.serena.R.string.cardinal_n)
+        return context.getString(com.shinji.serena.R.string.loc_summary_fmt, address, direction)
     }
 }

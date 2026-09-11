@@ -11,6 +11,7 @@ import android.widget.Button
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.shinji.serena.R
 import com.shinji.serena.SoundAndHapticHelper
 
 /**
@@ -86,7 +87,11 @@ class SerenaKeyboardView @JvmOverloads constructor(
             setTextColor(Color.parseColor("#FFD700"))
             gravity = Gravity.CENTER
             setPadding(0, 4, 0, 8)
-            text = "Serena IME | 日本語 (AI予測＆フォネティックON)"
+            text = context.getString(
+                R.string.ime_status_format,
+                context.getString(R.string.ime_short_mode_japanese),
+                context.getString(R.string.ime_phonetic_on_short)
+            )
         }
         addView(statusTextView)
 
@@ -109,7 +114,12 @@ class SerenaKeyboardView @JvmOverloads constructor(
     }
 
     fun updateStatusText(modeName: String, isPhonetic: Boolean) {
-        statusTextView.text = "Serena IME | $modeName (${if (isPhonetic) "AI予測＆詳細読みON" else "通常読み"})"
+        val readingMode = if (isPhonetic) {
+            context.getString(R.string.ime_phonetic_on_short)
+        } else {
+            context.getString(R.string.ime_phonetic_off_short)
+        }
+        statusTextView.text = context.getString(R.string.ime_status_format, modeName, readingMode)
     }
 
     fun displayCandidates(candidates: List<Pair<String, String>>) {
@@ -126,7 +136,7 @@ class SerenaKeyboardView @JvmOverloads constructor(
                 textSize = 17f
                 setTextColor(Color.WHITE)
                 setBackgroundColor(Color.parseColor("#2C2C2C"))
-                contentDescription = "候補${index + 1}: $word ($detail)"
+                contentDescription = context.getString(R.string.ime_candidate_desc_fmt, index + 1, word, detail)
                 layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
                     setMargins(6, 0, 6, 0)
                 }
@@ -157,11 +167,30 @@ class SerenaKeyboardView @JvmOverloads constructor(
 
         val controlRow = LinearLayout(context).apply { orientation = HORIZONTAL }
 
-        val langBtn = createKeyButton("言語切替", "言語切り替えボタン") { listener?.onLanguageSwitchPressed() }
-        val phoneticBtn = createKeyButton("詳細読切替", "詳細フォネティック読み切り替えボタン") { listener?.onPhoneticTogglePressed() }
-        val spaceBtn = createKeyButton("空白", "スペース空白入力") { listener?.onSpacePressed() }
-        val delBtn = createKeyButton("削除", "一文字削除") { listener?.onDeletePressed() }
-        val enterBtn = createKeyButton("確定", "確定・改行") { listener?.onEnterPressed() }
+        val langBtn = createKeyButton(
+            context.getString(R.string.ime_btn_lang_switch),
+            context.getString(R.string.ime_btn_lang_switch_desc)
+        ) { listener?.onLanguageSwitchPressed() }
+
+        val phoneticBtn = createKeyButton(
+            context.getString(R.string.ime_btn_phonetic_switch),
+            context.getString(R.string.ime_btn_phonetic_switch_desc)
+        ) { listener?.onPhoneticTogglePressed() }
+
+        val spaceBtn = createKeyButton(
+            context.getString(R.string.ime_btn_space),
+            context.getString(R.string.ime_btn_space_desc)
+        ) { listener?.onSpacePressed() }
+
+        val delBtn = createKeyButton(
+            context.getString(R.string.ime_btn_delete),
+            context.getString(R.string.ime_btn_delete_desc)
+        ) { listener?.onDeletePressed() }
+
+        val enterBtn = createKeyButton(
+            context.getString(R.string.ime_btn_enter),
+            context.getString(R.string.ime_btn_enter_desc)
+        ) { listener?.onEnterPressed() }
 
         controlRow.addView(langBtn)
         controlRow.addView(phoneticBtn)
@@ -193,7 +222,7 @@ class SerenaKeyboardView @JvmOverloads constructor(
             val res = SerenaBrailleDecoder.decodeDots(activeBrailleMask)
             // デコーダー状態を消費しないよう仮デコード
             res
-        } else Pair("", "入力待機中")
+        } else Pair("", context.getString(R.string.braille_waiting_input))
 
         val tvBrailleGlyph = TextView(context).apply {
             text = glyph
@@ -206,9 +235,13 @@ class SerenaKeyboardView @JvmOverloads constructor(
 
         val tvPreviewText = TextView(context).apply {
             text = if (activeBrailleMask > 0) {
-                if (previewChar.isNotEmpty()) "点字: $glyph  ->  墨訳: 「$previewChar」" else "点字: $glyph ($previewDesc)"
+                if (previewChar.isNotEmpty()) {
+                    context.getString(R.string.braille_preview_fmt, glyph, previewChar)
+                } else {
+                    context.getString(R.string.braille_preview_desc_fmt, glyph, previewDesc)
+                }
             } else {
-                "6点点字入力 (点1〜点6を選択して確定)"
+                context.getString(R.string.braille_instruction)
             }
             textSize = 15f
             setTextColor(Color.WHITE)
@@ -230,9 +263,21 @@ class SerenaKeyboardView @JvmOverloads constructor(
             orientation = VERTICAL
             layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(4, 4, 4, 4) }
         }
-        val btnDot1 = createBrailleDotButton("⠁ 点1", SerenaBrailleDecoder.DOT_1, "点1")
-        val btnDot2 = createBrailleDotButton("⠂ 点2", SerenaBrailleDecoder.DOT_2, "点2")
-        val btnDot3 = createBrailleDotButton("⠄ 点3", SerenaBrailleDecoder.DOT_3, "点3")
+        val btnDot1 = createBrailleDotButton(
+            context.getString(R.string.braille_dot_1),
+            SerenaBrailleDecoder.DOT_1,
+            context.getString(R.string.braille_dot_1_desc)
+        )
+        val btnDot2 = createBrailleDotButton(
+            context.getString(R.string.braille_dot_2),
+            SerenaBrailleDecoder.DOT_2,
+            context.getString(R.string.braille_dot_2_desc)
+        )
+        val btnDot3 = createBrailleDotButton(
+            context.getString(R.string.braille_dot_3),
+            SerenaBrailleDecoder.DOT_3,
+            context.getString(R.string.braille_dot_3_desc)
+        )
         leftCol.addView(btnDot1)
         leftCol.addView(btnDot2)
         leftCol.addView(btnDot3)
@@ -242,9 +287,21 @@ class SerenaKeyboardView @JvmOverloads constructor(
             orientation = VERTICAL
             layoutParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(4, 4, 4, 4) }
         }
-        val btnDot4 = createBrailleDotButton("⠈ 点4 (拗音)", SerenaBrailleDecoder.DOT_4, "点4 拗音符")
-        val btnDot5 = createBrailleDotButton("⠐ 点5 (濁音)", SerenaBrailleDecoder.DOT_5, "点5 濁音符")
-        val btnDot6 = createBrailleDotButton("⠠ 点6 (半濁音)", SerenaBrailleDecoder.DOT_6, "点6 半濁音符")
+        val btnDot4 = createBrailleDotButton(
+            context.getString(R.string.braille_dot_4),
+            SerenaBrailleDecoder.DOT_4,
+            context.getString(R.string.braille_dot_4_desc)
+        )
+        val btnDot5 = createBrailleDotButton(
+            context.getString(R.string.braille_dot_5),
+            SerenaBrailleDecoder.DOT_5,
+            context.getString(R.string.braille_dot_5_desc)
+        )
+        val btnDot6 = createBrailleDotButton(
+            context.getString(R.string.braille_dot_6),
+            SerenaBrailleDecoder.DOT_6,
+            context.getString(R.string.braille_dot_6_desc)
+        )
         rightCol.addView(btnDot4)
         rightCol.addView(btnDot5)
         rightCol.addView(btnDot6)
@@ -259,7 +316,10 @@ class SerenaKeyboardView @JvmOverloads constructor(
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
 
-        val commitBtn = createKeyButton("⠶ 確定入力", "選択した点字を墨訳して入力") {
+        val commitBtn = createKeyButton(
+            context.getString(R.string.braille_btn_commit),
+            context.getString(R.string.braille_btn_commit_desc)
+        ) {
             if (activeBrailleMask > 0) {
                 val (decodedChar, speechDesc) = SerenaBrailleDecoder.decodeDots(activeBrailleMask)
                 activeBrailleMask = 0
@@ -267,39 +327,48 @@ class SerenaKeyboardView @JvmOverloads constructor(
                     for (c in decodedChar) {
                         listener?.onKeyTyped(c)
                     }
-                    soundAndHapticHelper?.announceTts("$decodedChar を入力")
+                    soundAndHapticHelper?.announceTts(context.getString(R.string.braille_inputted_fmt, decodedChar))
                 } else if (speechDesc.isNotEmpty()) {
                     soundAndHapticHelper?.announceTts(speechDesc)
                 }
                 rebuildLayout()
             } else {
-                soundAndHapticHelper?.announceTts("点が選択されていません")
+                soundAndHapticHelper?.announceTts(context.getString(R.string.braille_no_dots_selected))
             }
         }
 
-        val spaceBtn = createKeyButton("␣ マスあけ", "スペース入力") {
+        val spaceBtn = createKeyButton(
+            context.getString(R.string.braille_btn_space),
+            context.getString(R.string.braille_btn_space_desc)
+        ) {
             activeBrailleMask = 0
             SerenaBrailleDecoder.reset()
             listener?.onSpacePressed()
-            soundAndHapticHelper?.announceTts("マスあけ")
+            soundAndHapticHelper?.announceTts(context.getString(R.string.braille_space_announced))
             rebuildLayout()
         }
 
-        val backspaceBtn = createKeyButton("⌫ 削除", "1文字削除") {
+        val backspaceBtn = createKeyButton(
+            context.getString(R.string.braille_btn_backspace),
+            context.getString(R.string.ime_btn_delete_desc)
+        ) {
             if (activeBrailleMask > 0) {
                 activeBrailleMask = 0
-                soundAndHapticHelper?.announceTts("選択中の点をクリア")
+                soundAndHapticHelper?.announceTts(context.getString(R.string.braille_clear_selected_dots))
             } else {
                 listener?.onDeletePressed()
-                soundAndHapticHelper?.announceTts("1文字削除")
+                soundAndHapticHelper?.announceTts(context.getString(R.string.ime_deleted_single_char))
             }
             rebuildLayout()
         }
 
-        val clearDotsBtn = createKeyButton("点クリア", "選択した点をリセット") {
+        val clearDotsBtn = createKeyButton(
+            context.getString(R.string.braille_btn_clear),
+            context.getString(R.string.braille_btn_clear_desc)
+        ) {
             activeBrailleMask = 0
             SerenaBrailleDecoder.reset()
-            soundAndHapticHelper?.announceTts("点字リセット")
+            soundAndHapticHelper?.announceTts(context.getString(R.string.braille_reset_announced))
             rebuildLayout()
         }
 
@@ -319,7 +388,11 @@ class SerenaKeyboardView @JvmOverloads constructor(
             textSize = 18f
             setTextColor(if (isSelected) Color.BLACK else Color.CYAN)
             setBackgroundColor(if (isSelected) Color.CYAN else Color.parseColor("#2A2A2A"))
-            contentDescription = if (isSelected) "$speechReading 選択中" else speechReading
+            contentDescription = if (isSelected) {
+                context.getString(R.string.braille_dot_selected_fmt, speechReading)
+            } else {
+                speechReading
+            }
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, 120).apply {
                 setMargins(4, 4, 4, 4)
             }
@@ -327,7 +400,11 @@ class SerenaKeyboardView @JvmOverloads constructor(
                 soundAndHapticHelper?.performKeyClickHaptic()
                 activeBrailleMask = activeBrailleMask xor dotBit
                 val selectedNow = (activeBrailleMask and dotBit) != 0
-                val status = if (selectedNow) "$speechReading オン" else "$speechReading オフ"
+                val status = if (selectedNow) {
+                    context.getString(R.string.braille_dot_on_fmt, speechReading)
+                } else {
+                    context.getString(R.string.braille_dot_off_fmt, speechReading)
+                }
                 soundAndHapticHelper?.announceTts(status)
                 rebuildLayout()
             }

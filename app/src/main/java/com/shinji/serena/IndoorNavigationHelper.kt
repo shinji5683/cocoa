@@ -17,14 +17,14 @@ class IndoorNavigationHelper(private val context: Context) {
         private const val TAG = "IndoorNavigationHelper"
     }
 
-    enum class Direction(@StringRes val resId: Int, val label: String) {
-        FRONT(R.string.dir_front, "正面"),
-        FRONT_RIGHT(R.string.dir_front_right, "右斜め前"),
-        FRONT_LEFT(R.string.dir_front_left, "左斜め前"),
-        RIGHT(R.string.dir_right, "右側"),
-        LEFT(R.string.dir_left, "左側"),
-        FOOT(R.string.dir_foot, "足元"),
-        AHEAD(R.string.dir_ahead, "前方");
+    enum class Direction(@StringRes val resId: Int) {
+        FRONT(R.string.dir_front),
+        FRONT_RIGHT(R.string.dir_front_right),
+        FRONT_LEFT(R.string.dir_front_left),
+        RIGHT(R.string.dir_right),
+        LEFT(R.string.dir_left),
+        FOOT(R.string.dir_foot),
+        AHEAD(R.string.dir_ahead);
 
         fun getLabel(context: Context): String = context.getString(resId)
     }
@@ -43,7 +43,7 @@ class IndoorNavigationHelper(private val context: Context) {
         val clothingColor: String,
         val expression: String,
         val isLookingAtCamera: Boolean,
-        val poseDescription: String = "人"
+        val poseDescription: String = ""
     )
 
     /**
@@ -89,14 +89,14 @@ class IndoorNavigationHelper(private val context: Context) {
         val parts = mutableListOf<String>()
 
         if (roomName.isNotEmpty()) {
-            parts.add("${roomName}にいます")
+            parts.add(context.getString(R.string.indoor_in_room_fmt, roomName))
         }
 
         // 人物（服装・年代・性別・表情・視線）の詳細実況
         for (p in people) {
             val distStr = if (p.distanceMeter <= 1.0f) "1m" else "${p.distanceMeter.toInt()}m"
-            val clothingStr = if (p.clothingColor.isNotEmpty() && !p.clothingColor.contains("不明")) p.clothingColor else ""
-            val personLabel = if (p.genderAndAge.isNotEmpty()) p.genderAndAge else p.poseDescription
+            val clothingStr = if (p.clothingColor.isNotEmpty() && !p.clothingColor.equals("unknown", ignoreCase = true)) p.clothingColor else ""
+            val personLabel = if (p.genderAndAge.isNotEmpty()) p.genderAndAge else (if (p.poseDescription.isNotEmpty()) p.poseDescription else context.getString(R.string.person_generic))
             val lookingStr = if (p.isLookingAtCamera) "looking" else ""
             val exprDesc = listOf(p.expression, lookingStr).filter { it.isNotEmpty() }.joinToString(", ")
 

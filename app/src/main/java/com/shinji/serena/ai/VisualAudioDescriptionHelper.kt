@@ -238,8 +238,8 @@ class VisualAudioDescriptionHelper(private val context: Context) {
 
         // 4. フォールバック（絶対に「名前のない画像」「ラベルなし」とは言わせない！）
         return when {
-            isClickable -> if (java.util.Locale.getDefault().language.lowercase() == "ja") "操作ボタン" else "Action button"
-            className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> if (java.util.Locale.getDefault().language.lowercase() == "ja") "グラフィック画像" else "Graphic image"
+            isClickable -> context.getString(com.shinji.serena.R.string.generic_action_button)
+            className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> context.getString(com.shinji.serena.R.string.generic_graphic_image)
             else -> ""
         }
     }

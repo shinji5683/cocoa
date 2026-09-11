@@ -38,29 +38,37 @@ class DeviceSecurityHelper(private val context: Context) {
             isCustomOrRooted -> {
                 SecurityCheckResult(
                     status = SecurityStatus.MODIFIED_ENVIRONMENT,
-                    message = "⚠️ 未検証・カスタム環境の通知",
-                    detailMessage = "Google公式互換性チェックのため、標準ビルド環境でのご利用を推奨します。"
+                    message = context.getString(R.string.security_status_custom_title),
+                    detailMessage = context.getString(R.string.security_status_custom_detail)
                 )
             }
             isCanary -> {
                 SecurityCheckResult(
                     status = SecurityStatus.SECURE_OFFICIAL,
-                    message = "🐤 Canary / Baklava プレビュー環境検出",
-                    detailMessage = "最新の Canary プレースホルダー API (Codename: ${Build.VERSION.CODENAME} / API ${Build.VERSION.SDK_INT}) で動作中です。マルチチャンネル完全互換モードが適用されています。"
+                    message = context.getString(R.string.security_status_canary_title),
+                    detailMessage = context.getString(
+                        R.string.security_status_canary_detail_fmt,
+                        Build.VERSION.CODENAME,
+                        Build.VERSION.SDK_INT
+                    )
                 )
             }
             isLegacyOs -> {
                 SecurityCheckResult(
                     status = SecurityStatus.UPDATE_RECOMMENDED,
-                    message = "💡 最新OSへのアップデート推奨",
-                    detailMessage = "安全かつ快適なGoogleサービスをご利用いただくため、Android 11以上への更新をおすすめします。"
+                    message = context.getString(R.string.security_status_update_title),
+                    detailMessage = context.getString(R.string.security_status_update_detail)
                 )
             }
             else -> {
                 SecurityCheckResult(
                     status = SecurityStatus.SECURE_OFFICIAL,
-                    message = "🟢 安全な環境です",
-                    detailMessage = "Google公式互換ビルド (Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}) で正常に稼働しています。"
+                    message = context.getString(R.string.security_status_secure_title),
+                    detailMessage = context.getString(
+                        R.string.security_status_secure_detail_fmt,
+                        Build.VERSION.RELEASE,
+                        Build.VERSION.SDK_INT
+                    )
                 )
             }
         }

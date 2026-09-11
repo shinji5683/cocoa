@@ -7,6 +7,7 @@ import android.location.LocationManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.shinji.serena.R
 import com.shinji.serena.SoundAndHapticHelper
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -49,13 +50,13 @@ class SpatialSurroundingRadarHelper(
     fun startSurroundingRadar() {
         val fineLoc = getBestCurrentLocation()
         if (fineLoc == null) {
-            speakCallback("現在地を取得できませんでした。GPSをONにしてください。")
+            speakCallback(context.getString(R.string.radar_gps_error))
             return
         }
 
         isRadarActive = true
         soundAndHapticHelper?.playActionDone()
-        speakCallback("周辺マップレーダーを開始しました。スマホを周囲に向けると、その方向にある施設や横断歩道を音と音声で案内します。")
+        speakCallback(context.getString(R.string.radar_started))
 
         refreshNearbyPois(fineLoc.latitude, fineLoc.longitude)
     }
@@ -66,7 +67,7 @@ class SpatialSurroundingRadarHelper(
         nearbyPois.clear()
         lastAnnouncedPoiId = -1L
         soundAndHapticHelper?.playActionDone()
-        speakCallback("周辺マップレーダーを停止しました。")
+        speakCallback(context.getString(R.string.radar_stopped))
     }
 
     /**
@@ -171,27 +172,27 @@ class SpatialSurroundingRadarHelper(
 
             val name = tags.optString("name", "").ifEmpty {
                 when {
-                    tags.optString("highway") == "crossing" -> "横断歩道"
-                    tags.optString("highway") == "traffic_signals" -> "信号機"
-                    tags.optString("shop") == "convenience" -> tags.optString("brand", "コンビニ")
-                    tags.optString("railway") == "station" -> "駅"
-                    tags.optString("highway") == "bus_stop" -> "バス停"
-                    tags.optString("amenity") == "pharmacy" -> "薬局"
-                    tags.optString("amenity") == "hospital" -> "病院"
-                    tags.optString("amenity") == "post_office" -> "郵便局"
-                    tags.optString("amenity") == "bank" -> "銀行"
-                    tags.optString("amenity") == "atm" -> "ATM"
-                    else -> "周辺施設"
+                    tags.optString("highway") == "crossing" -> context.getString(R.string.poi_cat_crossing)
+                    tags.optString("highway") == "traffic_signals" -> context.getString(R.string.poi_cat_traffic_signals)
+                    tags.optString("shop") == "convenience" -> tags.optString("brand", context.getString(R.string.poi_cat_convenience))
+                    tags.optString("railway") == "station" -> context.getString(R.string.poi_cat_station)
+                    tags.optString("highway") == "bus_stop" -> context.getString(R.string.poi_cat_bus_stop)
+                    tags.optString("amenity") == "pharmacy" -> context.getString(R.string.poi_cat_pharmacy)
+                    tags.optString("amenity") == "hospital" -> context.getString(R.string.poi_cat_hospital)
+                    tags.optString("amenity") == "post_office" -> context.getString(R.string.poi_cat_post_office)
+                    tags.optString("amenity") == "bank" -> context.getString(R.string.poi_cat_bank)
+                    tags.optString("amenity") == "atm" -> context.getString(R.string.poi_cat_atm)
+                    else -> context.getString(R.string.poi_cat_nearby)
                 }
             }
 
             val category = when {
-                tags.optString("highway") == "crossing" -> "横断歩道"
-                tags.optString("highway") == "traffic_signals" -> "信号機"
-                tags.optString("shop") == "convenience" -> "コンビニ"
-                tags.optString("railway") == "station" -> "駅"
-                tags.optString("highway") == "bus_stop" -> "バス停"
-                else -> "施設"
+                tags.optString("highway") == "crossing" -> context.getString(R.string.poi_cat_crossing)
+                tags.optString("highway") == "traffic_signals" -> context.getString(R.string.poi_cat_traffic_signals)
+                tags.optString("shop") == "convenience" -> context.getString(R.string.poi_cat_convenience)
+                tags.optString("railway") == "station" -> context.getString(R.string.poi_cat_station)
+                tags.optString("highway") == "bus_stop" -> context.getString(R.string.poi_cat_bus_stop)
+                else -> context.getString(R.string.poi_cat_facility)
             }
 
             val dist = calculateDistanceMeters(currentLat, currentLon, pLat, pLon)
@@ -207,7 +208,7 @@ class SpatialSurroundingRadarHelper(
             nearbyPois.addAll(list)
             if (nearbyPois.isNotEmpty()) {
                 val count = nearbyPois.size
-                speakCallback("周囲 ${count}件の施設や横断歩道を取得しました。")
+                speakCallback(context.getString(R.string.radar_acquired_pois_fmt, count))
             }
         }
     }
@@ -235,7 +236,7 @@ class SpatialSurroundingRadarHelper(
             if (abs(relAngle) <= 25.0) {
                 if (dist < minDistance) {
                     minDistance = dist
-                    bestPoi = p.copy(distanceMeters = dist, relativeBearingDegrees = relAngle, relativeDirectionName = "正面")
+                    bestPoi = p.copy(distanceMeters = dist, relativeBearingDegrees = relAngle, relativeDirectionName = context.getString(R.string.dir_front))
                 }
             }
         }
@@ -248,7 +249,7 @@ class SpatialSurroundingRadarHelper(
 
                 soundAndHapticHelper?.playFocusMove()
                 val distInt = bestPoi.distanceMeters.toInt()
-                speakCallback("正面 ${distInt}メートル先に ${bestPoi.name}")
+                speakCallback(context.getString(R.string.radar_poi_ahead_fmt, distInt, bestPoi.name))
             }
         }
     }
@@ -272,7 +273,7 @@ class SpatialSurroundingRadarHelper(
         val touchDistNorm = sqrt(relX * relX + relY * relY).coerceIn(0.0f, 1.0f)
         val touchDistMeters = touchDistNorm * 150.0 // 半径150mにスケーリング
 
-        val targetDir = OsmValhallaNavigationHelper.getRelativeDirectionName(touchAngle)
+        val targetDir = OsmValhallaNavigationHelper.getRelativeDirectionName(context, touchAngle)
 
         // タッチした方向と距離に最も近いPOIを探索
         val closest = nearbyPois.minByOrNull {
@@ -286,7 +287,7 @@ class SpatialSurroundingRadarHelper(
         if (closest != null) {
             soundAndHapticHelper?.playSpatialTouchFeedback(normalizedX, normalizedY, true)
             val distInt = closest.distanceMeters.toInt()
-            speakCallback("${targetDir} ${distInt}メートル、${closest.name}")
+            speakCallback(context.getString(R.string.radar_poi_touch_fmt, targetDir, distInt, closest.name))
         }
     }
 

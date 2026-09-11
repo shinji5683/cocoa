@@ -46,12 +46,12 @@ class ColorAndLightHelper(private val context: Context) : SensorEventListener {
     fun getRoomLightStatus(): String {
         val lux = currentLux
         return when {
-            lux < 0f -> "照度センサー取得中"
-            lux < 5f -> "周囲は真っ暗です。お部屋の照明は消えています（照度: ${lux.toInt()}ルクス）。"
-            lux < 40f -> "周囲は薄暗いです。常夜灯または間接照明の明るさです（照度: ${lux.toInt()}ルクス）。"
-            lux < 250f -> "お部屋の照明が点いています。落ち着いた明るさです（照度: ${lux.toInt()}ルクス）。"
-            lux < 800f -> "お部屋の照明がしっかり明るく点いています（照度: ${lux.toInt()}ルクス）。"
-            else -> "周囲は非常に明るく、直射日光や強い昼光が入っています（照度: ${lux.toInt()}ルクス）。"
+            lux < 0f -> context.getString(R.string.light_acquiring)
+            lux < 5f -> context.getString(R.string.light_pitch_dark_fmt, lux.toInt())
+            lux < 40f -> context.getString(R.string.light_dim_fmt, lux.toInt())
+            lux < 250f -> context.getString(R.string.light_room_on_fmt, lux.toInt())
+            lux < 800f -> context.getString(R.string.light_room_bright_fmt, lux.toInt())
+            else -> context.getString(R.string.light_sunlight_fmt, lux.toInt())
         }
     }
 
@@ -62,19 +62,19 @@ class ColorAndLightHelper(private val context: Context) : SensorEventListener {
         val calendar = Calendar.getInstance()
         val hour = calendar.get(Calendar.HOUR_OF_DAY)
         val minute = calendar.get(Calendar.MINUTE)
-        val timeStr = SimpleDateFormat("a K時m分", Locale.JAPAN).format(Date())
+        val timeStr = SimpleDateFormat("a K:mm", Locale.getDefault()).format(Date())
 
         val sunDesc = when (hour) {
-            in 4..5 -> "東の空からお日様が昇り始めています（夜明け・日の出前）。"
-            in 6..9 -> "お日様は東から南東の空に昇り、朝の光が差し込んでいます。"
-            in 10..13 -> "お日様は南の空の一番高い位置（南中）にあり、日中で最も明るい時間帯です。"
-            in 14..16 -> "お日様は南西から西の空へ傾き始めています（午後の日差し）。"
-            in 17..18 -> "西の空にお日様が沈みかけています（夕暮れ・日没時）。"
-            in 19..23 -> "お日様は完全に沈んでおり、夜間です。"
-            else -> "お日様は沈んでおり、深夜です。"
+            in 4..5 -> context.getString(R.string.sun_dawn)
+            in 6..9 -> context.getString(R.string.sun_morning)
+            in 10..13 -> context.getString(R.string.sun_noon)
+            in 14..16 -> context.getString(R.string.sun_afternoon)
+            in 17..18 -> context.getString(R.string.sun_sunset)
+            in 19..23 -> context.getString(R.string.sun_night)
+            else -> context.getString(R.string.sun_midnight)
         }
 
-        return "現在${timeStr}。${sunDesc}"
+        return context.getString(R.string.sun_status_fmt, timeStr, sunDesc)
     }
 
     /**
@@ -105,7 +105,7 @@ class ColorAndLightHelper(private val context: Context) : SensorEventListener {
             }
         }
 
-        if (count == 0) return "色を判定できませんでした"
+        if (count == 0) return context.getString(R.string.color_detect_failed)
 
         val avgR = (totalR / count).toInt()
         val avgG = (totalG / count).toInt()
@@ -207,7 +207,7 @@ class ColorAndLightHelper(private val context: Context) : SensorEventListener {
     fun buildFullSensoryReport(detectedColor: String? = null): String {
         val light = getRoomLightStatus()
         val sun = getSunAndDaylightStatus()
-        val colorPart = if (!detectedColor.isNullOrBlank()) "目の前の物の色は「$detectedColor」です。" else ""
-        return "【環境・照明・太陽レポート】\n$sun\n$light\n$colorPart".trim()
+        val colorPart = if (!detectedColor.isNullOrBlank()) context.getString(R.string.color_detected_item_fmt, detectedColor) else ""
+        return "$sun\n$light\n$colorPart".trim()
     }
 }

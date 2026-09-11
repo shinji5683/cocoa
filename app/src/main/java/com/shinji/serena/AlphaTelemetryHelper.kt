@@ -112,7 +112,7 @@ class AlphaTelemetryHelper(private val context: Context) {
 
     fun sendReportViaEmail(context: Context) {
         val reportText = generateReportText()
-        val subject = "[serena Alpha] 動作診断・利用統計レポート (v1.0.0-alpha01)"
+        val subject = context.getString(R.string.telemetry_report_subject)
 
         val intent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse("mailto:")
@@ -123,9 +123,9 @@ class AlphaTelemetryHelper(private val context: Context) {
         }
 
         try {
-            context.startActivity(Intent.createChooser(intent, "レポートを送信するメールアプリを選択"))
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.telemetry_chooser_title)))
         } catch (e: Exception) {
-            Toast.makeText(context, "メールアプリの起動に失敗したため、テキストをクリップボードにコピーしました", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.telemetry_launch_failed_copied), Toast.LENGTH_LONG).show()
             copyReportToClipboard(context)
         }
     }
@@ -134,7 +134,7 @@ class AlphaTelemetryHelper(private val context: Context) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("serena Telemetry Report", generateReportText())
         clipboard.setPrimaryClip(clip)
-        Toast.makeText(context, "診断レポートをクリップボードにコピーしました", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.telemetry_copied_to_clipboard), Toast.LENGTH_SHORT).show()
     }
 }
 

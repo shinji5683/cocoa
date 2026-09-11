@@ -4,19 +4,16 @@ import android.content.Context
 import android.graphics.Rect
 import android.os.Build
 import android.view.accessibility.AccessibilityNodeInfo
-import java.util.Locale
+import com.shinji.serena.R
 
 /**
  * SelfHealingA11yEngine (AI自動ラベル付け＆UI自己修復エンジン)
  * 
  * アクセシビリティ非対応アプリの「説明なしボタン」「ラベルなし画像」を、
  * 幾何学的配置（左上/右上/右下/入力欄隣）、viewIdリソース名、階層構造から
- * 瞬時に推論して自然な日本語/英語ラベルを付与する自己修復エンジン。
+ * 瞬時に推論して自然なローカライズラベルを付与する自己修復エンジン。
  */
 class SelfHealingA11yEngine(private val context: Context) {
-
-    private val isJapanese: Boolean
-        get() = Locale.getDefault().language.lowercase() == "ja"
 
     /**
      * 未ラベルまたは不完全なノードを解析し、自己修復されたラベルを返す。
@@ -54,8 +51,8 @@ class SelfHealingA11yEngine(private val context: Context) {
 
         // 4. 最終フォールバック（絶対に「ボタン（説明なし）」「ラベルなし」とは言わせない！）
         return when {
-            isActionable -> if (isJapanese) "操作ボタン" else "Action button"
-            isImage -> if (isJapanese) "画像アイコン" else "Image icon"
+            isActionable -> context.getString(R.string.self_healing_action_button)
+            isImage -> context.getString(R.string.self_healing_image_icon)
             else -> ""
         }
     }
@@ -63,56 +60,55 @@ class SelfHealingA11yEngine(private val context: Context) {
     private fun inferFromViewId(viewId: String, isActionable: Boolean): String {
         if (viewId.isEmpty()) return ""
 
-        val ja = isJapanese
-        val inferred = when {
-            viewId.contains("search") || viewId.contains("find") -> if (ja) "検索" else "Search"
-            viewId.contains("setting") || viewId.contains("gear") || viewId.contains("config") -> if (ja) "設定" else "Settings"
-            viewId.contains("menu") || viewId.contains("nav_drawer") || viewId.contains("hamburger") -> if (ja) "メニュー" else "Menu"
-            viewId.contains("back") || viewId.contains("up") || viewId.contains("arrow_left") -> if (ja) "戻る" else "Back"
-            viewId.contains("close") || viewId.contains("dismiss") || viewId.contains("cancel") || viewId.contains("clear") -> if (ja) "閉じる" else "Close"
-            viewId.contains("send") || viewId.contains("submit") || viewId.contains("post") -> if (ja) "送信" else "Send"
-            viewId.contains("confirm") || viewId.contains("ok") || viewId.contains("apply") -> if (ja) "決定" else "Confirm"
-            viewId.contains("next") || viewId.contains("forward") -> if (ja) "次へ" else "Next"
-            viewId.contains("prev") || viewId.contains("previous") -> if (ja) "前へ" else "Previous"
-            viewId.contains("home") -> if (ja) "ホーム" else "Home"
-            viewId.contains("refresh") || viewId.contains("reload") || viewId.contains("sync") -> if (ja) "更新" else "Refresh"
-            viewId.contains("share") -> if (ja) "共有" else "Share"
-            viewId.contains("filter") -> if (ja) "フィルター" else "Filter"
-            viewId.contains("sort") -> if (ja) "並び替え" else "Sort"
-            viewId.contains("favorite") || viewId.contains("like") || viewId.contains("star") || viewId.contains("heart") -> if (ja) "お気に入り" else "Favorite"
-            viewId.contains("bookmark") -> if (ja) "ブックマーク" else "Bookmark"
-            viewId.contains("cart") || viewId.contains("bag") || viewId.contains("basket") -> if (ja) "カート" else "Cart"
-            viewId.contains("notification") || viewId.contains("bell") || viewId.contains("alert") -> if (ja) "お知らせ" else "Notification"
-            viewId.contains("profile") || viewId.contains("avatar") || viewId.contains("account") || viewId.contains("user") -> if (ja) "プロフィール" else "Profile"
-            viewId.contains("edit") || viewId.contains("pencil") -> if (ja) "編集" else "Edit"
-            viewId.contains("delete") || viewId.contains("trash") || viewId.contains("remove") -> if (ja) "削除" else "Delete"
-            viewId.contains("add") || viewId.contains("plus") || viewId.contains("create") || viewId.contains("fab") -> if (ja) "追加" else "Add"
-            viewId.contains("mic") || viewId.contains("voice") || viewId.contains("audio_input") -> if (ja) "音声入力" else "Voice input"
-            viewId.contains("camera") || viewId.contains("shutter") -> if (ja) "カメラ撮影" else "Camera"
-            viewId.contains("play") -> if (ja) "再生" else "Play"
-            viewId.contains("pause") -> if (ja) "一時停止" else "Pause"
-            viewId.contains("download") -> if (ja) "ダウンロード" else "Download"
-            viewId.contains("upload") -> if (ja) "アップロード" else "Upload"
-            viewId.contains("help") || viewId.contains("info") || viewId.contains("faq") -> if (ja) "ヘルプ" else "Help"
-            viewId.contains("copy") -> if (ja) "コピー" else "Copy"
-            viewId.contains("paste") -> if (ja) "貼り付け" else "Paste"
-            viewId.contains("overflow") || viewId.contains("more") || viewId.contains("dots") -> if (ja) "その他オプション" else "More options"
-            else -> ""
+        val resId = when {
+            viewId.contains("search") || viewId.contains("find") -> R.string.self_healing_search
+            viewId.contains("setting") || viewId.contains("gear") || viewId.contains("config") -> R.string.self_healing_settings
+            viewId.contains("menu") || viewId.contains("nav_drawer") || viewId.contains("hamburger") -> R.string.self_healing_menu
+            viewId.contains("back") || viewId.contains("up") || viewId.contains("arrow_left") -> R.string.self_healing_back
+            viewId.contains("close") || viewId.contains("dismiss") || viewId.contains("cancel") || viewId.contains("clear") -> R.string.self_healing_close
+            viewId.contains("send") || viewId.contains("submit") || viewId.contains("post") -> R.string.self_healing_send
+            viewId.contains("confirm") || viewId.contains("ok") || viewId.contains("apply") -> R.string.self_healing_confirm
+            viewId.contains("next") || viewId.contains("forward") -> R.string.self_healing_next
+            viewId.contains("prev") || viewId.contains("previous") -> R.string.self_healing_prev
+            viewId.contains("home") -> R.string.self_healing_home
+            viewId.contains("refresh") || viewId.contains("reload") || viewId.contains("sync") -> R.string.self_healing_refresh
+            viewId.contains("share") -> R.string.self_healing_share
+            viewId.contains("filter") -> R.string.self_healing_filter
+            viewId.contains("sort") -> R.string.self_healing_sort
+            viewId.contains("favorite") || viewId.contains("like") || viewId.contains("star") || viewId.contains("heart") -> R.string.self_healing_favorite
+            viewId.contains("bookmark") -> R.string.self_healing_bookmark
+            viewId.contains("cart") || viewId.contains("bag") || viewId.contains("basket") -> R.string.self_healing_cart
+            viewId.contains("notification") || viewId.contains("bell") || viewId.contains("alert") -> R.string.self_healing_notification
+            viewId.contains("profile") || viewId.contains("avatar") || viewId.contains("account") || viewId.contains("user") -> R.string.self_healing_profile
+            viewId.contains("edit") || viewId.contains("pencil") -> R.string.self_healing_edit
+            viewId.contains("delete") || viewId.contains("trash") || viewId.contains("remove") -> R.string.self_healing_delete
+            viewId.contains("add") || viewId.contains("plus") || viewId.contains("create") || viewId.contains("fab") -> R.string.self_healing_add
+            viewId.contains("mic") || viewId.contains("voice") || viewId.contains("audio_input") -> R.string.self_healing_voice_input
+            viewId.contains("camera") || viewId.contains("shutter") -> R.string.self_healing_camera
+            viewId.contains("play") -> R.string.self_healing_play
+            viewId.contains("pause") -> R.string.self_healing_pause
+            viewId.contains("download") -> R.string.self_healing_download
+            viewId.contains("upload") -> R.string.self_healing_upload
+            viewId.contains("help") || viewId.contains("info") || viewId.contains("faq") -> R.string.self_healing_help
+            viewId.contains("copy") -> R.string.self_healing_copy
+            viewId.contains("paste") -> R.string.self_healing_paste
+            viewId.contains("overflow") || viewId.contains("more") || viewId.contains("dots") -> R.string.self_healing_more_options
+            else -> 0
         }
 
-        return if (inferred.isNotEmpty()) {
-            if (isActionable) {
-                if (ja) "${inferred}ボタン" else "$inferred button"
-            } else {
-                if (ja) "${inferred}アイコン" else "$inferred icon"
-            }
-        } else ""
+        if (resId == 0) return ""
+
+        val inferred = context.getString(resId)
+        return if (isActionable) {
+            context.getString(R.string.self_healing_button_suffix_fmt, inferred)
+        } else {
+            context.getString(R.string.self_healing_icon_suffix_fmt, inferred)
+        }
     }
 
     private fun inferFromScreenGeometry(bounds: Rect, screenWidth: Int, screenHeight: Int, isActionable: Boolean): String {
         if (!isActionable || bounds.isEmpty) return ""
 
-        val ja = isJapanese
         val topZone = screenHeight * 0.12f // 画面上部 12%
         val bottomZone = screenHeight * 0.88f // 画面下部 12%
         val leftZone = screenWidth * 0.20f // 画面左端 20%
@@ -121,19 +117,19 @@ class SelfHealingA11yEngine(private val context: Context) {
         val centerX = bounds.centerX()
         val centerY = bounds.centerY()
 
-        // 1. 画面左上端のクリック可能要素 ➔ 「戻るボタン」または「メニュー」
+        // 1. 画面左上端のクリック可能要素 ➔ 「戻るボタン」
         if (centerY < topZone && centerX < leftZone) {
-            return if (ja) "戻るボタン" else "Back button"
+            return context.getString(R.string.self_healing_button_suffix_fmt, context.getString(R.string.self_healing_back))
         }
 
         // 2. 画面右上端のクリック可能要素 ➔ 「その他オプション・メニュー」
         if (centerY < topZone && centerX > rightZone) {
-            return if (ja) "その他オプションボタン" else "More options button"
+            return context.getString(R.string.self_healing_more_options_btn)
         }
 
         // 3. 画面右下のフローティングボタン (FAB) ➔ 「新規作成・追加ボタン」
         if (centerY > bottomZone && centerX > rightZone && bounds.width() in 80..220 && bounds.height() in 80..220) {
-            return if (ja) "新規追加ボタン" else "Add button"
+            return context.getString(R.string.self_healing_new_add_btn)
         }
 
         return ""
@@ -141,13 +137,12 @@ class SelfHealingA11yEngine(private val context: Context) {
 
     private fun inferFromSurroundingContext(node: AccessibilityNodeInfo, isActionable: Boolean): String {
         val parent = node.parent ?: return ""
-        val ja = isJapanese
 
         // 親ノードが説明を持っている場合
         val parentDesc = parent.contentDescription?.toString()?.trim() ?: ""
         if (parentDesc.isNotEmpty()) {
             return if (isActionable) {
-                if (ja) "${parentDesc}の操作ボタン" else "$parentDesc action button"
+                context.getString(R.string.self_healing_action_btn_suffix_fmt, parentDesc)
             } else parentDesc
         }
 
@@ -158,7 +153,7 @@ class SelfHealingA11yEngine(private val context: Context) {
                 val sibText = sibling.text?.toString()?.trim() ?: sibling.contentDescription?.toString()?.trim() ?: ""
                 if (sibText.isNotEmpty() && sibText.length < 30) {
                     return if (isActionable) {
-                        if (ja) "${sibText}の操作ボタン" else "$sibText action button"
+                        context.getString(R.string.self_healing_action_btn_suffix_fmt, sibText)
                     } else sibText
                 }
             }

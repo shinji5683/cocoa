@@ -1,4 +1,4 @@
-﻿package com.shinji.serena
+package com.shinji.serena
 
 import android.content.Context
 import android.content.Intent
@@ -30,7 +30,7 @@ object ChromeAuthHelper {
                 context.startActivity(fallbackIntent)
             } catch (fallbackEx: Exception) {
                 Log.e(TAG, "Failed to launch default browser: ${fallbackEx.message}")
-                Toast.makeText(context, "ブラウザを起動できませんでした", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.chrome_auth_launch_failed), Toast.LENGTH_SHORT).show()
             }
         }
     }

@@ -12,7 +12,7 @@ data class OsmPoiModel(
     val lon: Double,
     val distanceMeters: Double = 0.0,
     val relativeBearingDegrees: Double = 0.0, // 進行方向/向いている方角からの相対角度 (-180 ~ +180)
-    val relativeDirectionName: String = "正面" // 「正面」「右斜め前」「右」「右斜め後ろ」「真後ろ」「左斜め後ろ」「左」「左斜め前」
+    val relativeDirectionName: String = ""
 )
 
 /**

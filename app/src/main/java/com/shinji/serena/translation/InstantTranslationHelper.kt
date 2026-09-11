@@ -218,11 +218,7 @@ class InstantTranslationHelper(private val context: Context) {
         val sourceName = getLanguageName(sourceLang, targetLang)
         return when (mode) {
             TranslationMode.ORIGINAL_THEN_TRANSLATION -> {
-                if (targetLang == "ja") {
-                    "（${sourceName}から翻訳）日本語訳：「$translated」"
-                } else {
-                    "(Translated from $sourceName) \"$translated\""
-                }
+                context.getString(com.shinji.serena.R.string.translation_prefix_fmt, sourceName, translated)
             }
             TranslationMode.TRANSLATION_ONLY -> translated
             TranslationMode.OFF -> ""

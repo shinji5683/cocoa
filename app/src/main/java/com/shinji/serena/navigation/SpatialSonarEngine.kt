@@ -2,6 +2,7 @@ package com.shinji.serena.navigation
 
 import android.content.Context
 import android.graphics.RectF
+import com.shinji.serena.R
 import com.shinji.serena.SoundAndHapticHelper
 import java.util.Locale
 
@@ -20,9 +21,6 @@ class SpatialSonarEngine(
     private val context: Context,
     private val soundHelper: SoundAndHapticHelper?
 ) {
-
-    private val isJapanese: Boolean
-        get() = Locale.getDefault().language.lowercase() == "ja"
 
     enum class TargetType {
         DOOR,       // ドア・出入口・自動ドア
@@ -50,7 +48,6 @@ class SpatialSonarEngine(
         rawLabel: String,
         estimatedDistanceMeters: Float
     ): SonarDetection {
-        val ja = isJapanese
         val centerX = boundingBox.centerX() // 0.0 (左) 〜 0.5 (中央) 〜 1.0 (右)
         val bottomY = boundingBox.bottom
 
@@ -59,11 +56,11 @@ class SpatialSonarEngine(
 
         // 相対方向判定（時計盤表現は完全禁止！）
         val direction = when {
-            centerX in 0.40f..0.60f -> if (ja) "正面" else "Straight ahead"
-            centerX in 0.60f..0.85f -> if (ja) "右斜め前" else "Front-right"
-            centerX > 0.85f -> if (ja) "右" else "Right"
-            centerX in 0.15f..0.40f -> if (ja) "左斜め前" else "Front-left"
-            else -> if (ja) "左" else "Left"
+            centerX in 0.40f..0.60f -> context.getString(R.string.dir_front)
+            centerX in 0.60f..0.85f -> context.getString(R.string.dir_front_right)
+            centerX > 0.85f -> context.getString(R.string.dir_right)
+            centerX in 0.15f..0.40f -> context.getString(R.string.dir_front_left)
+            else -> context.getString(R.string.dir_left)
         }
 
         // 物体種別の分類
@@ -75,33 +72,29 @@ class SpatialSonarEngine(
             else -> TargetType.OBSTACLE
         }
 
-        // 日本語・英語の物体名
+        // 各言語対応の物体名
         val targetName = when (type) {
-            TargetType.DOOR -> if (ja) "ドア" else "door"
-            TargetType.STEP_DOWN -> if (ja) "段差" else "step"
-            TargetType.PERSON -> if (ja) "人" else "person"
+            TargetType.DOOR -> context.getString(R.string.sonar_target_door)
+            TargetType.STEP_DOWN -> context.getString(R.string.sonar_target_step)
+            TargetType.PERSON -> context.getString(R.string.sonar_target_person)
             TargetType.OBSTACLE -> when {
-                lower.contains("chair") -> if (ja) "椅子" else "chair"
-                lower.contains("table") || lower.contains("desk") -> if (ja) "机" else "table"
-                lower.contains("pole") || lower.contains("pillar") -> if (ja) "柱" else "pillar"
-                else -> if (ja) "障害物" else "obstacle"
+                lower.contains("chair") -> context.getString(R.string.sonar_target_chair)
+                lower.contains("table") || lower.contains("desk") -> context.getString(R.string.sonar_target_table)
+                lower.contains("pole") || lower.contains("pillar") -> context.getString(R.string.sonar_target_pillar)
+                else -> context.getString(R.string.sonar_target_obstacle)
             }
         }
 
         // 距離の言語化
         val distText = if (estimatedDistanceMeters < 1.0f) {
             val cm = (estimatedDistanceMeters * 100).toInt()
-            if (ja) "${cm}センチ先" else "$cm cm ahead"
+            context.getString(R.string.sonar_dist_cm_ahead, cm)
         } else {
             val m = String.format(Locale.US, "%.1f", estimatedDistanceMeters)
-            if (ja) "${m}メートル先" else "$m meters ahead"
+            context.getString(R.string.sonar_dist_m_ahead, m)
         }
 
-        val guideMessage = if (ja) {
-            "$direction $distText に $targetName"
-        } else {
-            "$targetName $direction, $distText"
-        }
+        val guideMessage = context.getString(R.string.sonar_guide_fmt, direction, distText, targetName)
 
         // ソナーパルス音の鳴動
         soundHelper?.playSonarPulse(estimatedDistanceMeters, pan)

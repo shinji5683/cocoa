@@ -114,7 +114,11 @@ class SerenaGestureDispatcher(
                     }
 
                     val cleanText = rawText.replace(Regex("[\\p{So}\\p{Cn}\\p{Cs}\\p{Extended_Pictographic}\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u26FF\u2700-\u27BF]"), "").replace(Regex("\\s+"), " ").trim()
-                    val announceText = if (cleanText.isNotEmpty()) "$cleanText を実行" else "実行"
+                    val announceText = if (cleanText.isNotEmpty()) {
+                        service.getString(R.string.gesture_execute_named_fmt, cleanText)
+                    } else {
+                        service.getString(R.string.gesture_execute)
+                    }
 
                     // 1. 直近ノードの ACTION_CLICK
                     val directSuccess = focusNode.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)

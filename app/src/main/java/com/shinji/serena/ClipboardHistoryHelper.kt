@@ -3,7 +3,7 @@ package com.shinji.serena
 import android.content.Context
 import android.content.SharedPreferences
 
-class ClipboardHistoryHelper(context: Context) {
+class ClipboardHistoryHelper(private val context: Context) {
 
     companion object {
         private const val PREFS_NAME = "serena_clipboard_prefs"
@@ -33,20 +33,20 @@ class ClipboardHistoryHelper(context: Context) {
         return when {
             text.startsWith("http://") || text.startsWith("https://") -> {
                 val host = try {
-                    java.net.URI(text).host ?: "ウェブ"
+                    java.net.URI(text).host ?: context.getString(R.string.clipboard_web_label)
                 } catch (_: Exception) {
-                    "ウェブ"
+                    context.getString(R.string.clipboard_web_label)
                 }
-                "クリップボードにURLをコピーしました。「$host」のリンクです。"
+                context.getString(R.string.clipboard_copied_url_fmt, host)
             }
             text.matches(Regex(".*(東京都|大阪府|京都府|北海道|.{2,3}県).*(市|区|町|村).*")) -> {
-                "クリップボードに住所をコピーしました。「$text」。ナビゲーションを開始できます。"
+                context.getString(R.string.clipboard_copied_address_fmt, text)
             }
             text.matches(Regex(".*0[789]0-?[0-9]{4}-?[0-9]{4}.*")) || text.matches(Regex(".*0[0-9]{1,4}-?[0-9]{1,4}-?[0-9]{4}.*")) -> {
-                "クリップボードに電話番号をコピーしました。「$text」。直接発信が可能です。"
+                context.getString(R.string.clipboard_copied_phone_fmt, text)
             }
             else -> {
-                "クリップボードにコピーしました: $text"
+                context.getString(R.string.clipboard_copied_text_fmt, text)
             }
         }
     }
@@ -66,5 +66,3 @@ class ClipboardHistoryHelper(context: Context) {
         prefs.edit().putString(KEY_HISTORY, joined).apply()
     }
 }
-
-

@@ -311,10 +311,10 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                             val announcement = when {
                                 foodResult != null && foodResult.expiration != null -> {
-                                    "【${foodResult.category}】${foodResult.estimatedItemName}を検出。${foodResult.expiration.spokenMessage}"
+                                    getString(R.string.food_detected_with_expiry_fmt, foodResult.category, foodResult.estimatedItemName, foodResult.expiration.spokenMessage)
                                 }
                                 foodResult != null -> {
-                                    "【${foodResult.category}】${foodResult.estimatedItemName}を検出しました。"
+                                    getString(R.string.food_detected_fmt, foodResult.category, foodResult.estimatedItemName)
                                 }
                                 expirationResult != null -> {
                                     expirationResult.spokenMessage
@@ -322,7 +322,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 else -> {
                                     // 一般OCR文字
                                     val topText = visionText.textBlocks.firstOrNull()?.text?.trim() ?: ""
-                                    if (topText.isNotEmpty()) "文字: $topText" else ""
+                                    if (topText.isNotEmpty()) getString(R.string.eyes_text_detected_fmt, topText) else ""
                                 }
                             }
 
@@ -346,7 +346,8 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     val walkState = WalkAndTransitVisionHelper.analyzeWalkingScene(
                         bitmap = bitmap,
                         imageWidth = imgWidth,
-                        imageHeight = imgHeight
+                        imageHeight = imgHeight,
+                        context = this
                     )
 
                     val parts = mutableListOf<String>()
@@ -463,7 +464,7 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 }
 
                                 val announcement = if (peopleList.isEmpty() && indoorObjects.isEmpty()) {
-                                    "${brightnessLevel}。前方クリアです。周囲を確認中…"
+                                    getString(R.string.eyes_front_clear_checking, brightnessLevel)
                                 } else {
                                     indoorHelper.buildIndoorAnnouncement(
                                         roomName = "",

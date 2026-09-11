@@ -1,10 +1,12 @@
 package com.shinji.serena.ai
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
 import android.media.Image
 import com.google.mlkit.vision.face.Face
+import com.shinji.serena.R
 import kotlin.math.abs
 
 /**
@@ -39,18 +41,19 @@ object AiVisionFeatureHelper {
         imageWidth: Int,
         imageHeight: Int,
         mediaImage: Image? = null,
-        bitmap: Bitmap? = null
+        bitmap: Bitmap? = null,
+        context: Context? = null
     ): PersonAttributes {
         val box = face.boundingBox
 
         // 1. 距離の推定（画面内の顔の幅の割合から算出）
         val widthRatio = box.width().toFloat() / imageWidth.coerceAtLeast(1)
         val distanceStr = when {
-            widthRatio > 0.40f -> "すぐ近く（約60cm）"
-            widthRatio > 0.25f -> "近く（約1m）"
-            widthRatio > 0.14f -> "約1.5m"
-            widthRatio > 0.08f -> "約2.5m"
-            else -> "少し離れた場所（約3m以上）"
+            widthRatio > 0.40f -> context?.getString(R.string.face_distance_close_60cm) ?: "すぐ近く（約60cm）"
+            widthRatio > 0.25f -> context?.getString(R.string.face_distance_1m_short) ?: "近く（約1m）"
+            widthRatio > 0.14f -> context?.getString(R.string.face_distance_1_5m) ?: "約1.5m"
+            widthRatio > 0.08f -> context?.getString(R.string.face_distance_2_5m) ?: "約2.5m"
+            else -> context?.getString(R.string.face_distance_far_3m) ?: "少し離れた場所（約3m以上）"
         }
 
         // 2. 表情・感情・視線の高精度解析
@@ -64,49 +67,74 @@ object AiVisionFeatureHelper {
 
         // 視線・顔の向き・ポーズ判定（どんな顔でどうなっているか）
         val gazeStr = when {
-            leftEye < 0.20f && rightEye < 0.20f -> "目をつぶってリラックスしています"
-            leftEye > 0.60f && rightEye < 0.20f -> "右目でウインクしています😉"
-            rightEye > 0.60f && leftEye < 0.20f -> "左目でウインクしています😉"
-            eulerY > 20f -> "顔を右に向けています"
-            eulerY < -20f -> "顔を左に向けています"
-            eulerX > 16f -> "少し上を見上げています"
-            eulerX < -16f -> "下をうつむいています"
-            abs(eulerZ) > 20f -> "首をかしげています"
-            else -> "まっすぐこちらを見ています"
+            leftEye < 0.20f && rightEye < 0.20f -> context?.getString(R.string.face_gaze_eyes_closed) ?: "目をつぶってリラックスしています"
+            leftEye > 0.60f && rightEye < 0.20f -> context?.getString(R.string.face_gaze_wink_right) ?: "右目でウインクしています"
+            rightEye > 0.60f && leftEye < 0.20f -> context?.getString(R.string.face_gaze_wink_left) ?: "左目でウインクしています"
+            eulerY > 20f -> context?.getString(R.string.face_gaze_turn_right) ?: "顔を右に向けています"
+            eulerY < -20f -> context?.getString(R.string.face_gaze_turn_left) ?: "顔を左に向けています"
+            eulerX > 16f -> context?.getString(R.string.face_gaze_look_up) ?: "少し上を見上げています"
+            eulerX < -16f -> context?.getString(R.string.face_gaze_look_down) ?: "下をうつむいています"
+            abs(eulerZ) > 20f -> context?.getString(R.string.face_gaze_tilt_head) ?: "首をかしげています"
+            else -> context?.getString(R.string.face_gaze_straight) ?: "まっすぐこちらを見ています"
         }
 
         // 感情カテゴリとニュアンス判定
         val (emotionCategory, emotionalVibe) = when {
             smile >= 0.80f -> {
-                Pair("満面の笑顔", "とても嬉しそうに楽しんでいる様子です")
+                Pair(
+                    context?.getString(R.string.face_emotion_big_smile) ?: "満面の笑顔",
+                    context?.getString(R.string.face_emotion_big_smile_vibe) ?: "とても嬉しそうに楽しんでいる様子です"
+                )
             }
             smile in 0.50f..0.80f -> {
-                Pair("ニッコリ笑顔", "親しみやすく明るい雰囲気です")
+                Pair(
+                    context?.getString(R.string.face_emotion_smile) ?: "ニッコリ笑顔",
+                    context?.getString(R.string.face_emotion_smile_vibe) ?: "親しみやすく明るい雰囲気です"
+                )
             }
             smile in 0.20f..0.50f -> {
-                Pair("優しい微笑み", "穏やかで安心している様子です")
+                Pair(
+                    context?.getString(R.string.face_emotion_gentle_smile) ?: "優しい微笑み",
+                    context?.getString(R.string.face_emotion_gentle_smile_vibe) ?: "穏やかで安心している様子です"
+                )
             }
             smile in 0.07f..0.20f -> {
-                Pair("穏やかでリラックスした表情", "落ち着いた雰囲気です")
+                Pair(
+                    context?.getString(R.string.face_emotion_calm) ?: "穏やかでリラックスした表情",
+                    context?.getString(R.string.face_emotion_calm_vibe) ?: "落ち着いた雰囲気です"
+                )
             }
             else -> {
                 // 笑顔度低めの場合のニュアンス解析
                 when {
                     leftEye > 0.85f && rightEye > 0.85f && eulerX in -10f..10f -> {
-                        Pair("目を丸くした表情", "少し驚いたような、興味津々な様子です")
+                        Pair(
+                            context?.getString(R.string.face_emotion_surprised) ?: "目を丸くした表情",
+                            context?.getString(R.string.face_emotion_surprised_vibe) ?: "少し驚いたような、興味津々な様子です"
+                        )
                     }
                     leftEye < 0.30f && rightEye < 0.30f -> {
-                        Pair("安らぎの表情", "落ち着いてリラックスしています")
+                        Pair(
+                            context?.getString(R.string.face_emotion_peaceful) ?: "安らぎの表情",
+                            context?.getString(R.string.face_emotion_peaceful_vibe) ?: "落ち着いてリラックスしています"
+                        )
                     }
                     else -> {
-                        Pair("真剣で落ち着いた表情", "真面目にこちらに注目しています")
+                        Pair(
+                            context?.getString(R.string.face_emotion_serious) ?: "真剣で落ち着いた表情",
+                            context?.getString(R.string.face_emotion_serious_vibe) ?: "真面目にこちらに注目しています"
+                        )
                     }
                 }
             }
         }
 
-        // 自然な日本語（重複完全ゼロ）
-        val fullDesc = "${gazeStr}。表情は${emotionCategory}で、${emotionalVibe}。"
+        // 自然な感情要約
+        val fullDesc = if (context != null) {
+            context.getString(R.string.face_full_description_fmt, gazeStr, emotionCategory, emotionalVibe)
+        } else {
+            "${gazeStr}。表情は${emotionCategory}で、${emotionalVibe}。"
+        }
         val emotionDetail = DetailedEmotion(
             category = emotionCategory,
             emotionalVibe = emotionalVibe,
@@ -119,34 +147,42 @@ object AiVisionFeatureHelper {
         val genderAndAge = when {
             // 顔幅が小さく丸みが強い（子供・幼児）
             widthRatio < 0.12f && boxAspect > 1.30f -> {
-                if (eyeAvg > 0.6f && smile > 0.3f) "女の子（子供）" else "男の子（子供）"
+                if (eyeAvg > 0.6f && smile > 0.3f) {
+                    context?.getString(R.string.face_gender_age_girl) ?: "女の子（子供）"
+                } else {
+                    context?.getString(R.string.face_gender_age_boy) ?: "男の子（子供）"
+                }
             }
             // 縦横比がすっきり＆笑顔・目元が優しい（女性）
             boxAspect in 1.10f..1.45f && (smile > 0.25f || eyeAvg > 0.50f) -> {
                 when {
-                    smile > 0.50f -> "20代くらいの女性"
-                    eyeAvg > 0.60f -> "20代から30代くらいの女性"
-                    else -> "大人の女性（30代から40代くらい）"
+                    smile > 0.50f -> context?.getString(R.string.face_gender_age_f20s) ?: "20代くらいの女性"
+                    eyeAvg > 0.60f -> context?.getString(R.string.face_gender_age_f20s_30s) ?: "20代から30代くらいの女性"
+                    else -> context?.getString(R.string.face_gender_age_f_adult) ?: "大人の女性（30代から40代くらい）"
                 }
             }
             // 輪郭がしっかりめ（男性）
             boxAspect in 0.88f..1.18f -> {
                 when {
-                    smile > 0.40f -> "20代から30代くらいの男性"
-                    eyeAvg > 0.55f -> "30代から40代くらいの男性"
-                    else -> "大人の男性（30代から50代くらい）"
+                    smile > 0.40f -> context?.getString(R.string.face_gender_age_m20s_30s) ?: "20代から30代くらいの男性"
+                    eyeAvg > 0.55f -> context?.getString(R.string.face_gender_age_m30s_40s) ?: "30代から40代くらいの男性"
+                    else -> context?.getString(R.string.face_gender_age_m_adult) ?: "大人の男性（30代から50代くらい）"
                 }
             }
             else -> {
-                if (smile > 0.30f) "20代から30代くらいの女性" else "30代から40代くらいの男性"
+                if (smile > 0.30f) {
+                    context?.getString(R.string.face_gender_age_f20s_30s) ?: "20代から30代くらいの女性"
+                } else {
+                    context?.getString(R.string.face_gender_age_m30s_40s) ?: "30代から40代くらいの男性"
+                }
             }
         }
 
         // 4. 上半身・胸元領域の服装カラーサンプリング
         val clothingColor = when {
-            mediaImage != null -> sampleClothingColorFromImage(mediaImage, box, imageWidth, imageHeight)
-            bitmap != null && !bitmap.isRecycled -> sampleClothingColorFromBitmap(bitmap, box, imageWidth, imageHeight)
-            else -> "服"
+            mediaImage != null -> sampleClothingColorFromImage(mediaImage, box, imageWidth, imageHeight, context)
+            bitmap != null && !bitmap.isRecycled -> sampleClothingColorFromBitmap(bitmap, box, imageWidth, imageHeight, context)
+            else -> context?.getString(R.string.face_clothing_default) ?: "服"
         }
 
         return PersonAttributes(
@@ -160,10 +196,17 @@ object AiVisionFeatureHelper {
     /**
      * YUV_420_888 の CameraX Image から首下・胸元エリアのピクセル色をサンプリング
      */
-    private fun sampleClothingColorFromImage(mediaImage: Image, faceBox: Rect, imgW: Int, imgH: Int): String {
+    private fun sampleClothingColorFromImage(
+        mediaImage: Image,
+        faceBox: Rect,
+        imgW: Int,
+        imgH: Int,
+        context: Context? = null
+    ): String {
+        val defaultClothing = context?.getString(R.string.face_clothing_default) ?: "服"
         return try {
             val planes = mediaImage.planes
-            if (planes.isEmpty()) return "服"
+            if (planes.isEmpty()) return defaultClothing
 
             val yBuffer = planes[0].buffer
             val chestTop = (faceBox.bottom + faceBox.height() * 0.15f).toInt().coerceIn(0, imgH - 1)
@@ -171,7 +214,7 @@ object AiVisionFeatureHelper {
             val chestLeft = (faceBox.left + faceBox.width() * 0.2f).toInt().coerceIn(0, imgW - 1)
             val chestRight = (faceBox.right - faceBox.width() * 0.2f).toInt().coerceIn(0, imgW - 1)
 
-            if (chestBottom <= chestTop || chestRight <= chestLeft) return "服"
+            if (chestBottom <= chestTop || chestRight <= chestLeft) return defaultClothing
 
             var totalY = 0L
             var count = 0
@@ -192,28 +235,35 @@ object AiVisionFeatureHelper {
 
             val avgY = if (count > 0) totalY / count else 128
             when {
-                avgY >= 185 -> "パリッと清潔感のあるクリアホワイトの服"
-                avgY in 140..184 -> "ふんわり温かみのある明るい色のトップス"
-                avgY in 85..139 -> "落ち着きのある上品なグレー系の服"
-                avgY in 45..84 -> "深みのあるシックで落ち着いた色の服"
-                else -> "キリッと引き締まった漆黒ブラックの服"
+                avgY >= 185 -> context?.getString(R.string.face_clothing_clean_white) ?: "パリッと清潔感のあるクリアホワイトの服"
+                avgY in 140..184 -> context?.getString(R.string.face_clothing_warm_bright) ?: "ふんわり温かみのある明るい色のトップス"
+                avgY in 85..139 -> context?.getString(R.string.face_clothing_elegant_gray) ?: "落ち着きのある上品なグレー系の服"
+                avgY in 45..84 -> context?.getString(R.string.face_clothing_deep_chic) ?: "深みのあるシックで落ち着いた色の服"
+                else -> context?.getString(R.string.face_clothing_sharp_black) ?: "キリッと引き締まった漆黒ブラックの服"
             }
         } catch (_: Exception) {
-            "服"
+            defaultClothing
         }
     }
 
     /**
      * Bitmap からのピクセルサンプリング
      */
-    private fun sampleClothingColorFromBitmap(bitmap: Bitmap, faceBox: Rect, imgW: Int, imgH: Int): String {
+    private fun sampleClothingColorFromBitmap(
+        bitmap: Bitmap,
+        faceBox: Rect,
+        imgW: Int,
+        imgH: Int,
+        context: Context? = null
+    ): String {
+        val defaultClothing = context?.getString(R.string.face_clothing_default) ?: "服"
         return try {
             val chestTop = (faceBox.bottom + faceBox.height() * 0.15f).toInt().coerceIn(0, imgH - 1)
             val chestBottom = (faceBox.bottom + faceBox.height() * 0.85f).toInt().coerceIn(0, imgH - 1)
             val chestLeft = (faceBox.left + faceBox.width() * 0.2f).toInt().coerceIn(0, imgW - 1)
             val chestRight = (faceBox.right - faceBox.width() * 0.2f).toInt().coerceIn(0, imgW - 1)
 
-            if (chestBottom <= chestTop || chestRight <= chestLeft) return "服"
+            if (chestBottom <= chestTop || chestRight <= chestLeft) return defaultClothing
 
             var totalR = 0L
             var totalG = 0L
@@ -233,16 +283,20 @@ object AiVisionFeatureHelper {
                 }
             }
 
-            if (sampleCount == 0) return "服"
+            if (sampleCount == 0) return defaultClothing
 
             val avgR = (totalR / sampleCount).toInt()
             val avgG = (totalG / sampleCount).toInt()
             val avgB = (totalB / sampleCount).toInt()
 
             val mood = FashionMoodHelper.describeColorFromRgb(avgR, avgG, avgB)
-            "${mood.simpleColorName}の服（${mood.sensoryTone}）"
+            if (context != null) {
+                context.getString(R.string.face_clothing_tone_fmt, mood.simpleColorName, mood.sensoryTone)
+            } else {
+                "${mood.simpleColorName}の服（${mood.sensoryTone}）"
+            }
         } catch (_: Exception) {
-            "服"
+            defaultClothing
         }
     }
 }

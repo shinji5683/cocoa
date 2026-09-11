@@ -58,7 +58,7 @@ class MorningSummaryHelper(
 
         service.soundHelper?.playActionDone()
 
-        val greetingText = "おはよう、Shinjiさん！素敵な朝だね。バッテリー残量は${batteryPct}パーセントだよ。今日も一日元気にいこう！"
+        val greetingText = service.getString(R.string.morning_greeting_fmt, batteryPct)
         
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             service.speak(greetingText, TextToSpeech.QUEUE_ADD)

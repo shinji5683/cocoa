@@ -4,6 +4,7 @@ import android.inputmethodservice.InputMethodService
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import com.shinji.serena.R
 import com.shinji.serena.SoundAndHapticHelper
 
 /**
@@ -77,25 +78,25 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
             } else {
                 connection?.commitText("", 1)
             }
-            soundAndHapticHelper?.announceTts("削除")
+            soundAndHapticHelper?.announceTts(getString(R.string.ime_deleted))
         } else {
             val connection = currentInputConnection
             val beforeTwo = connection?.getTextBeforeCursor(2, 0)?.toString() ?: ""
             if (beforeTwo.length >= 2 && Character.isSurrogatePair(beforeTwo[0], beforeTwo[1])) {
                 connection?.deleteSurroundingText(2, 0)
-                soundAndHapticHelper?.announceTts("$beforeTwo を削除")
+                soundAndHapticHelper?.announceTts(getString(R.string.ime_deleted_char, beforeTwo))
             } else {
                 val before = connection?.getTextBeforeCursor(1, 0)?.toString() ?: ""
                 connection?.deleteSurroundingText(1, 0)
                 if (before.isNotEmpty()) {
                     val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(before)
                     if (detail.isNotEmpty() && detail != before) {
-                        soundAndHapticHelper?.announceTts("$before ($detail) を削除")
+                        soundAndHapticHelper?.announceTts(getString(R.string.ime_deleted_char_with_detail, before, detail))
                     } else {
-                        soundAndHapticHelper?.announceTts("$before を削除")
+                        soundAndHapticHelper?.announceTts(getString(R.string.ime_deleted_char, before))
                     }
                 } else {
-                    soundAndHapticHelper?.announceTts("一文字削除")
+                    soundAndHapticHelper?.announceTts(getString(R.string.ime_deleted_single_char))
                 }
             }
         }
@@ -105,7 +106,7 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
 
     override fun onSpacePressed() {
         commitCurrentComposing(" ")
-        soundAndHapticHelper?.announceTts("スペース")
+        soundAndHapticHelper?.announceTts(getString(R.string.ime_space))
     }
 
     override fun onEnterPressed() {
@@ -115,44 +116,44 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
             val connection = currentInputConnection
             connection?.performEditorAction(EditorInfo.IME_ACTION_DONE)
         }
-        soundAndHapticHelper?.announceTts("確定")
+        soundAndHapticHelper?.announceTts(getString(R.string.ime_commit))
     }
 
     override fun onLanguageSwitchPressed() {
         val nextMode = languageEngine?.switchMode() ?: SerenaLanguageEngine.LanguageMode.JAPANESE_KANA
         val modeName = when (nextMode) {
-            SerenaLanguageEngine.LanguageMode.JAPANESE_KANA -> "日本語かな (50音)"
-            SerenaLanguageEngine.LanguageMode.JAPANESE_QWERTY -> "日本語ローマ字 (QWERTY)"
-            SerenaLanguageEngine.LanguageMode.ENGLISH_US -> "英語 US (アメリカ)"
-            SerenaLanguageEngine.LanguageMode.ENGLISH_UK -> "英語 UK (イギリス)"
-            SerenaLanguageEngine.LanguageMode.ENGLISH_AU -> "英語 AU (オーストラリア)"
-            SerenaLanguageEngine.LanguageMode.TAGALOG -> "タガログ語 (フィリピン)"
-            SerenaLanguageEngine.LanguageMode.BRAILLE -> "6点点字入力"
-            SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル 絵文字・記号"
+            SerenaLanguageEngine.LanguageMode.JAPANESE_KANA -> getString(R.string.ime_mode_kana)
+            SerenaLanguageEngine.LanguageMode.JAPANESE_QWERTY -> getString(R.string.ime_mode_qwerty)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_US -> getString(R.string.ime_mode_en_us)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_UK -> getString(R.string.ime_mode_en_uk)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_AU -> getString(R.string.ime_mode_en_au)
+            SerenaLanguageEngine.LanguageMode.TAGALOG -> getString(R.string.ime_mode_tagalog)
+            SerenaLanguageEngine.LanguageMode.BRAILLE -> getString(R.string.ime_mode_braille)
+            SerenaLanguageEngine.LanguageMode.GLOBAL -> getString(R.string.ime_mode_global)
         }
         val isPhonetic = languageEngine?.isPhoneticModeEnabled ?: true
         keyboardView?.updateStatusText(modeName, isPhonetic)
         keyboardView?.rebuildLayout()
         updateCandidateList()
-        soundAndHapticHelper?.announceTts("入力モード切替：$modeName")
+        soundAndHapticHelper?.announceTts(getString(R.string.ime_mode_switched, modeName))
     }
 
     override fun onPhoneticTogglePressed() {
         val isEnabled = languageEngine?.togglePhoneticMode() ?: true
         val modeName = when (languageEngine?.currentMode) {
-            SerenaLanguageEngine.LanguageMode.JAPANESE_KANA -> "日本語かな"
-            SerenaLanguageEngine.LanguageMode.JAPANESE_QWERTY -> "日本語ローマ字"
-            SerenaLanguageEngine.LanguageMode.ENGLISH_US -> "英語 US"
-            SerenaLanguageEngine.LanguageMode.ENGLISH_UK -> "英語 UK"
-            SerenaLanguageEngine.LanguageMode.ENGLISH_AU -> "英語 AU"
-            SerenaLanguageEngine.LanguageMode.TAGALOG -> "タガログ語"
-            SerenaLanguageEngine.LanguageMode.BRAILLE -> "6点点字"
-            SerenaLanguageEngine.LanguageMode.GLOBAL -> "グローバル"
-            null -> "日本語"
+            SerenaLanguageEngine.LanguageMode.JAPANESE_KANA -> getString(R.string.ime_short_mode_kana)
+            SerenaLanguageEngine.LanguageMode.JAPANESE_QWERTY -> getString(R.string.ime_short_mode_qwerty)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_US -> getString(R.string.ime_short_mode_en_us)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_UK -> getString(R.string.ime_short_mode_en_uk)
+            SerenaLanguageEngine.LanguageMode.ENGLISH_AU -> getString(R.string.ime_short_mode_en_au)
+            SerenaLanguageEngine.LanguageMode.TAGALOG -> getString(R.string.ime_short_mode_tagalog)
+            SerenaLanguageEngine.LanguageMode.BRAILLE -> getString(R.string.ime_short_mode_braille)
+            SerenaLanguageEngine.LanguageMode.GLOBAL -> getString(R.string.ime_short_mode_global)
+            null -> getString(R.string.ime_short_mode_japanese)
         }
         keyboardView?.updateStatusText(modeName, isEnabled)
         keyboardView?.rebuildLayout()
-        val announcement = if (isEnabled) "AI予測＆詳細読み オン" else "通常読み"
+        val announcement = if (isEnabled) getString(R.string.ime_phonetic_on) else getString(R.string.ime_phonetic_off)
         soundAndHapticHelper?.announceTts(announcement)
     }
 
@@ -160,9 +161,9 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
         commitCurrentComposing(candidate)
         val detail = SerenaFullKanjiDetailDictionary.getKanjiDetail(candidate)
         val speech = if (detail.isNotEmpty() && detail != candidate) {
-            "選択：$candidate（$detail）"
+            getString(R.string.ime_candidate_selected_with_detail, candidate, detail)
         } else {
-            "選択：$candidate"
+            getString(R.string.ime_candidate_selected, candidate)
         }
         soundAndHapticHelper?.announceTts(speech)
     }
@@ -187,7 +188,7 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
             val phonetic = SerenaPhoneticEngine.getPhoneticReading(char)
             soundAndHapticHelper?.announceTts(phonetic)
         } else {
-            soundAndHapticHelper?.announceTts("行頭")
+            soundAndHapticHelper?.announceTts(getString(R.string.ime_line_start))
         }
         updateCandidateList()
     }
@@ -212,7 +213,7 @@ class SerenaInputMethodService : InputMethodService(), SerenaKeyboardView.KeyAct
             val phonetic = SerenaPhoneticEngine.getPhoneticReading(char)
             soundAndHapticHelper?.announceTts(phonetic)
         } else {
-            soundAndHapticHelper?.announceTts("行末")
+            soundAndHapticHelper?.announceTts(getString(R.string.ime_line_end))
         }
         updateCandidateList()
     }

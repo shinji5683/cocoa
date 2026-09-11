@@ -38,18 +38,18 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
     private var currentMode = AssistantMode.AI_ASSISTANT
 
     fun startListening() {
-        startListeningWithMode(AssistantMode.AI_ASSISTANT, "セレナAIです。どうぞ！")
+        startListeningWithMode(AssistantMode.AI_ASSISTANT, service.getString(R.string.assistant_prompt_ai))
     }
 
     fun startVoiceInput() {
-        startListeningWithMode(AssistantMode.VOICE_INPUT, "音声入力です。どうぞ！")
+        startListeningWithMode(AssistantMode.VOICE_INPUT, service.getString(R.string.assistant_prompt_voice_input))
     }
 
     fun startVoiceTranslation() {
         val targetLangName = InstantTranslationHelper.SUPPORTED_TARGET_LANGUAGES.find {
             it.first == service.instantTranslationHelper?.defaultTargetLanguageCode
         }?.second ?: "英語"
-        startListeningWithMode(AssistantMode.VOICE_TRANSLATION, "音声翻訳です。${targetLangName}または指定の言語へ翻訳します。どうぞ！")
+        startListeningWithMode(AssistantMode.VOICE_TRANSLATION, service.getString(R.string.assistant_prompt_voice_translation_fmt, targetLangName))
     }
 
     private fun startListeningWithMode(mode: AssistantMode, prompt: String) {
@@ -57,7 +57,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
         mainHandler.post {
             try {
                 if (androidx.core.content.ContextCompat.checkSelfPermission(service, android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    service.speak("マイクの録音権限が必要です。セレナの設定画面を開きますので、許可してください。", TextToSpeech.QUEUE_FLUSH)
+                    service.speak(service.getString(R.string.assistant_mic_permission_required), TextToSpeech.QUEUE_FLUSH)
                     val intent = Intent(service, MainActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
                     }
@@ -66,7 +66,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 }
 
                 if (!SpeechRecognizer.isRecognitionAvailable(service)) {
-                    service.speak("お使いの端末は音声認識に対応していません。", TextToSpeech.QUEUE_FLUSH)
+                    service.speak(service.getString(R.string.assistant_speech_not_available), TextToSpeech.QUEUE_FLUSH)
                     return@post
                 }
 
@@ -80,7 +80,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start AI Assistant: ${e.message}")
-                service.speak("音声機能の起動に失敗しました。", TextToSpeech.QUEUE_FLUSH)
+                service.speak(service.getString(R.string.assistant_start_failed), TextToSpeech.QUEUE_FLUSH)
             }
         }
     }
@@ -121,13 +121,13 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                     Log.e(TAG, "Speech recognition error: $error")
                     when (error) {
                         SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> {
-                            service.speak("聞き取れませんでした。もう一度お話しください。", TextToSpeech.QUEUE_FLUSH)
+                            service.speak(service.getString(R.string.assistant_unrecognized), TextToSpeech.QUEUE_FLUSH)
                         }
                         SpeechRecognizer.ERROR_AUDIO, SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> {
-                            service.speak("マイクの権限または音声録音を確認してください。", TextToSpeech.QUEUE_FLUSH)
+                            service.speak(service.getString(R.string.assistant_mic_check), TextToSpeech.QUEUE_FLUSH)
                         }
                         else -> {
-                            service.speak("聞き取りを終了しました。", TextToSpeech.QUEUE_FLUSH)
+                            service.speak(service.getString(R.string.assistant_listening_ended), TextToSpeech.QUEUE_FLUSH)
                         }
                     }
                     stopListeningInternal()
@@ -146,7 +146,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                             AssistantMode.VOICE_TRANSLATION -> processVoiceTranslation(query)
                         }
                     } else {
-                        service.speak("音声を聞き取れませんでした。", TextToSpeech.QUEUE_FLUSH)
+                        service.speak(service.getString(R.string.assistant_speech_empty), TextToSpeech.QUEUE_FLUSH)
                     }
                     stopListeningInternal()
                 }
@@ -185,9 +185,9 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
         cm?.setPrimaryClip(clip)
         service.soundHelper?.playActionDone()
         if (injected) {
-            service.speak("入力しました: $text", TextToSpeech.QUEUE_FLUSH)
+            service.speak(service.getString(R.string.assistant_input_injected_fmt, text), TextToSpeech.QUEUE_FLUSH)
         } else {
-            service.speak("クリップボードにコピーしました: $text", TextToSpeech.QUEUE_FLUSH)
+            service.speak(service.getString(R.string.assistant_clipboard_copied_fmt, text), TextToSpeech.QUEUE_FLUSH)
         }
     }
 
@@ -240,7 +240,7 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
                 val clip = android.content.ClipData.newPlainText("Serena Translation", translated)
                 cm?.setPrimaryClip(clip)
                 service.soundHelper?.playActionDone()
-                service.speak("翻訳: $translated", TextToSpeech.QUEUE_FLUSH)
+                service.speak(service.getString(R.string.assistant_translation_fmt, translated), TextToSpeech.QUEUE_FLUSH)
             }
         }
     }

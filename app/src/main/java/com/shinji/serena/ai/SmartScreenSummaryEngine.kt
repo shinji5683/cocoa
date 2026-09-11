@@ -56,7 +56,7 @@ class SmartScreenSummaryEngine(private val service: SerenaScreenReaderService) {
         }
 
         if (root == null) {
-            return "画面の情報を取得できませんでした。もう一度お試しください。"
+            return service.getString(com.shinji.serena.R.string.screen_summary_fetch_error)
         }
 
         val focusedNode = snapshotFocusedNode ?: service.getAccessibilityFocusedNode()
@@ -153,7 +153,7 @@ class SmartScreenSummaryEngine(private val service: SerenaScreenReaderService) {
         collectInteractiveNodes(root)
 
         if (allItems.isEmpty()) {
-            return "「${appName}」の画面です。操作可能な項目は見つかりませんでした。"
+            return service.getString(com.shinji.serena.R.string.screen_summary_empty_fmt, appName)
         }
 
         return nanoEngine.summarizeScreen(
@@ -170,7 +170,7 @@ class SmartScreenSummaryEngine(private val service: SerenaScreenReaderService) {
     }
 
     private fun getAppName(packageName: String): String {
-        if (packageName.isEmpty()) return "現在のアプリ"
+        if (packageName.isEmpty()) return service.getString(com.shinji.serena.R.string.screen_current_app)
         return try {
             val pm = service.packageManager
             val info = pm.getApplicationInfo(packageName, 0)

@@ -1,5 +1,7 @@
 package com.shinji.serena.ai
 
+import android.content.Context
+import com.shinji.serena.R
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -79,7 +81,7 @@ object FoodAndExpirationScannerHelper {
     /**
      * OCRテキストから賞味期限・消費期限を解析抽出
      */
-    fun extractExpirationDate(ocrText: String): ExpirationResult? {
+    fun extractExpirationDate(ocrText: String, context: Context? = null): ExpirationResult? {
         val cleanText = ocrText.replace(" ", "").replace("　", "")
         val today = Calendar.getInstance()
         val currentYear = today.get(Calendar.YEAR)
@@ -88,7 +90,12 @@ object FoodAndExpirationScannerHelper {
             val matcher = pattern.matcher(cleanText)
             if (matcher.find()) {
                 val prefix = matcher.group(1) ?: ""
-                val label = if (prefix.contains("消費")) "消費期限" else "賞味期限"
+                val isExp = prefix.contains("消費")
+                val label = if (isExp) {
+                    context?.getString(R.string.food_label_expiry) ?: "消費期限"
+                } else {
+                    context?.getString(R.string.food_label_best_before) ?: "賞味期限"
+                }
 
                 val year: Int
                 val month: Int
@@ -144,9 +151,18 @@ object FoodAndExpirationScannerHelper {
 
                     val dateStr = "${year}年${month}月${day}日"
                     val spoken = when {
-                        diffDays > 0 -> "$label は $dateStr です。残り、あと${diffDays}日です。"
-                        diffDays == 0 -> "$label は本日、${dateStr}です！お早めにお召し上がりください。"
-                        else -> "注意！ $label の $dateStr を ${-diffDays}日 過ぎています！"
+                        diffDays > 0 -> {
+                            context?.getString(R.string.food_expiry_days_left_fmt, label, dateStr, diffDays)
+                                ?: "$label は $dateStr です。残り、あと${diffDays}日です。"
+                        }
+                        diffDays == 0 -> {
+                            context?.getString(R.string.food_expiry_today_fmt, label, dateStr)
+                                ?: "$label は本日、${dateStr}です！お早めにお召し上がりください。"
+                        }
+                        else -> {
+                            context?.getString(R.string.food_expiry_overdue_fmt, label, dateStr, -diffDays)
+                                ?: "注意！ $label の $dateStr を ${-diffDays}日 過ぎています！"
+                        }
                     }
 
                     return ExpirationResult(
@@ -164,11 +180,12 @@ object FoodAndExpirationScannerHelper {
     /**
      * OCRテキストから食品の種類・品名をオンデバイス高速推定
      */
-    fun analyzeFoodItem(ocrText: String): FoodAnalysisResult? {
+    fun analyzeFoodItem(ocrText: String, context: Context? = null): FoodAnalysisResult? {
         if (ocrText.isBlank()) return null
-        val expiration = extractExpirationDate(ocrText)
+        val expiration = extractExpirationDate(ocrText, context)
 
-        var matchedCategory = "食品"
+        val defaultCategory = context?.getString(R.string.food_default_category) ?: "食品"
+        var matchedCategory = defaultCategory
         var matchedItem = ""
 
         for ((category, keywords) in FOOD_KEYWORDS) {
@@ -186,7 +203,11 @@ object FoodAndExpirationScannerHelper {
             return null
         }
 
-        val itemName = if (matchedItem.isNotEmpty()) matchedItem else "食品パッケージ"
+        val itemName = if (matchedItem.isNotEmpty()) {
+            matchedItem
+        } else {
+            context?.getString(R.string.food_default_package) ?: "食品パッケージ"
+        }
         return FoodAnalysisResult(
             category = matchedCategory,
             estimatedItemName = itemName,
@@ -198,7 +219,7 @@ object FoodAndExpirationScannerHelper {
     /**
      * レシートや請求書・郵便物のテキストから合計金額や期日を要約
      */
-    fun summarizeDocument(ocrText: String): DocumentSummaryResult {
+    fun summarizeDocument(ocrText: String, context: Context? = null): DocumentSummaryResult {
         val cleanText = ocrText.replace(" ", "").replace("　", "")
         
         // 1. 金額の抽出（合計、請求額、お買上額など）
@@ -216,24 +237,27 @@ object FoodAndExpirationScannerHelper {
         }
 
         // 2. 期限・期日の抽出
-        val expiration = extractExpirationDate(ocrText)
+        val expiration = extractExpirationDate(ocrText, context)
         val dueDate = expiration?.dateString
 
         val isReceipt = cleanText.contains("レシート") || cleanText.contains("領収書") || cleanText.contains("買上") || cleanText.contains("お釣り")
         val isBill = cleanText.contains("請求") || cleanText.contains("納付") || cleanText.contains("期日") || cleanText.contains("払込")
 
         val docType = when {
-            isReceipt -> "レシート"
-            isBill -> "請求書または納付書"
-            else -> "書類または郵便物"
+            isReceipt -> context?.getString(R.string.doc_type_receipt) ?: "レシート"
+            isBill -> context?.getString(R.string.doc_type_bill) ?: "請求書または納付書"
+            else -> context?.getString(R.string.doc_type_general) ?: "書類または郵便物"
         }
 
-        val sb = StringBuilder("$docType を検出しました。")
+        val detectedMsg = context?.getString(R.string.doc_detected_format, docType) ?: "$docType を検出しました。"
+        val sb = StringBuilder(detectedMsg)
         if (totalAmount != null) {
-            sb.append("金額は $totalAmount です。")
+            val amtMsg = context?.getString(R.string.doc_amount_format, totalAmount) ?: "金額は $totalAmount です。"
+            sb.append(" ").append(amtMsg)
         }
         if (dueDate != null) {
-            sb.append("期限は $dueDate です。")
+            val dueMsg = context?.getString(R.string.doc_due_date_format, dueDate) ?: "期限は $dueDate です。"
+            sb.append(" ").append(dueMsg)
         }
 
         return DocumentSummaryResult(

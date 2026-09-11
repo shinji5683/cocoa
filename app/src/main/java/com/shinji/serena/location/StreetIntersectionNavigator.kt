@@ -51,13 +51,13 @@ class StreetIntersectionNavigator(
     fun announceStreetAndIntersections() {
         val fineLocation = getBestLocation()
         if (fineLocation == null) {
-            val noGpsMsg = if (isJapanese) "現在地を取得できませんでした。GPSが有効か確認してください。" else "Unable to get current location. Please check your GPS."
+            val noGpsMsg = context.getString(com.shinji.serena.R.string.radar_gps_error)
             speakCallback(noGpsMsg)
             return
         }
 
         soundHelper?.playFocusMove()
-        val scanningMsg = if (isJapanese) "ストリートと周辺交差点をスキャン中..." else "Scanning streets and nearby intersections..."
+        val scanningMsg = context.getString(com.shinji.serena.R.string.loc_address_acquiring)
         speakCallback(scanningMsg)
 
         val lat = fineLocation.latitude
@@ -88,14 +88,17 @@ class StreetIntersectionNavigator(
 
     private fun buildBasicStreetAnnouncement(streetName: String, neighborhood: String, bearing: Float): String {
         val ja = isJapanese
-        val cardinalDir = getCardinalDirection(bearing, ja)
+        val cardinalDir = getCardinalDirection(bearing)
 
-        return if (ja) {
-            val placePart = if (streetName.isNotEmpty()) "「$streetName」" else if (neighborhood.isNotEmpty()) "「$neighborhood」付近" else "現在の通り"
-            "現在、$placePart を $cardinalDir に向かって歩行中です。"
+        return if (streetName.isNotEmpty()) {
+            val placePart = context.getString(com.shinji.serena.R.string.nav_street_named_fmt, streetName)
+            context.getString(com.shinji.serena.R.string.nav_street_walking_fmt, placePart, cardinalDir)
+        } else if (neighborhood.isNotEmpty()) {
+            val placePart = context.getString(com.shinji.serena.R.string.nav_street_near_fmt, neighborhood)
+            context.getString(com.shinji.serena.R.string.nav_street_walking_fmt, placePart, cardinalDir)
         } else {
-            val placePart = if (streetName.isNotEmpty()) "on $streetName" else if (neighborhood.isNotEmpty()) "near $neighborhood" else "on current street"
-            "Currently walking $cardinalDir $placePart."
+            val placePart = context.getString(com.shinji.serena.R.string.nav_street_current)
+            context.getString(com.shinji.serena.R.string.nav_street_walking_fmt, placePart, cardinalDir)
         }
     }
 
@@ -106,8 +109,7 @@ class StreetIntersectionNavigator(
         streetName: String,
         neighborhood: String
     ): String {
-        val ja = isJapanese
-        val cardinalDir = getCardinalDirection(bearing, ja)
+        val cardinalDir = getCardinalDirection(bearing)
         val delta = 0.0008 // 約80メートル四方
 
         val minLat = lat - delta
@@ -160,7 +162,7 @@ class StreetIntersectionNavigator(
                     val dist = calculateDistanceMeters(lat, lon, elemLat, elemLon)
                     val targetBearing = calculateBearing(lat, lon, elemLat, elemLon)
                     val relativeBearing = (targetBearing - bearing + 360.0) % 360.0
-                    val relDir = OsmValhallaNavigationHelper.getRelativeDirectionName(relativeBearing, ja)
+                    val relDir = OsmValhallaNavigationHelper.getRelativeDirectionName(context, relativeBearing)
 
                     val highway = tags.optString("highway", "")
                     val amenity = tags.optString("amenity", "")
@@ -173,17 +175,17 @@ class StreetIntersectionNavigator(
                     } else if (dist <= 70.0) {
                         val label = when {
                             name.isNotEmpty() -> name
-                            amenity == "convenience" -> if (ja) "コンビニ" else "convenience store"
-                            amenity == "cafe" -> if (ja) "カフェ" else "cafe"
-                            amenity == "pharmacy" -> if (ja) "薬局" else "pharmacy"
-                            amenity == "bank" -> if (ja) "銀行" else "bank"
-                            amenity == "restaurant" -> if (ja) "飲食店" else "restaurant"
-                            tags.optString("railway") == "station" -> if (ja) "駅" else "station"
+                            amenity == "convenience" -> context.getString(com.shinji.serena.R.string.poi_cat_convenience)
+                            amenity == "cafe" -> context.getString(com.shinji.serena.R.string.poi_cat_cafe)
+                            amenity == "pharmacy" -> context.getString(com.shinji.serena.R.string.poi_cat_pharmacy)
+                            amenity == "bank" -> context.getString(com.shinji.serena.R.string.poi_cat_bank)
+                            amenity == "restaurant" -> context.getString(com.shinji.serena.R.string.poi_cat_restaurant)
+                            tags.optString("railway") == "station" -> context.getString(com.shinji.serena.R.string.poi_cat_station)
                             else -> ""
                         }
                         if (label.isNotEmpty() && nearbyPois.size < 2) {
-                            val distText = if (ja) "${dist.toInt()}メートル" else "${dist.toInt()}m"
-                            nearbyPois.add(if (ja) "$relDir $distText に $label" else "$label, $relDir $distText")
+                            val distText = "${dist.toInt()}m"
+                            nearbyPois.add(context.getString(com.shinji.serena.R.string.nav_poi_rel_dist_fmt, relDir, distText, label))
                         }
                     }
                 }
@@ -192,56 +194,38 @@ class StreetIntersectionNavigator(
 
         // 音声メッセージの組み立て
         val sb = StringBuilder()
-        if (ja) {
-            val placePart = if (streetName.isNotEmpty()) "「$streetName」" else if (neighborhood.isNotEmpty()) "「$neighborhood」付近" else "現在の通り"
-            sb.append("現在、$placePart を $cardinalDir に向かって歩行中です。")
-
-            if (intersectionFound) {
-                sb.append("注意: $intersectionDirection ${intersectionDist}メートル先に交差点・横断歩道があります。")
-            }
-            if (nearbyPois.isNotEmpty()) {
-                sb.append("周辺: ${nearbyPois.joinToString("、")}。")
-            }
+        val placePart = if (streetName.isNotEmpty()) {
+            context.getString(com.shinji.serena.R.string.nav_street_named_fmt, streetName)
+        } else if (neighborhood.isNotEmpty()) {
+            context.getString(com.shinji.serena.R.string.nav_street_near_fmt, neighborhood)
         } else {
-            val placePart = if (streetName.isNotEmpty()) "on $streetName" else if (neighborhood.isNotEmpty()) "near $neighborhood" else "on current street"
-            sb.append("Walking $cardinalDir $placePart. ")
+            context.getString(com.shinji.serena.R.string.nav_street_current)
+        }
+        sb.append(context.getString(com.shinji.serena.R.string.nav_street_walking_fmt, placePart, cardinalDir)).append(" ")
 
-            if (intersectionFound) {
-                sb.append("Caution: $intersectionDirection $intersectionDist meters, intersection or crosswalk ahead. ")
-            }
-            if (nearbyPois.isNotEmpty()) {
-                sb.append("Nearby: ${nearbyPois.joinToString(", ")}.")
-            }
+        if (intersectionFound) {
+            sb.append(context.getString(com.shinji.serena.R.string.nav_intersection_caution_fmt, intersectionDirection, intersectionDist)).append(" ")
+        }
+        if (nearbyPois.isNotEmpty()) {
+            sb.append(context.getString(com.shinji.serena.R.string.nav_nearby_pois_fmt, nearbyPois.joinToString(", ")))
         }
 
         return sb.toString().trim()
     }
 
-    private fun getCardinalDirection(bearing: Float, isJapanese: Boolean): String {
+    private fun getCardinalDirection(bearing: Float): String {
         val norm = (bearing % 360.0 + 360.0) % 360.0
-        return if (isJapanese) {
-            when {
-                norm in 337.5..360.0 || norm in 0.0..22.5 -> "北"
-                norm in 22.5..67.5 -> "北東"
-                norm in 67.5..112.5 -> "東"
-                norm in 112.5..157.5 -> "南東"
-                norm in 157.5..202.5 -> "南"
-                norm in 202.5..247.5 -> "南西"
-                norm in 247.5..292.5 -> "西"
-                else -> "北西"
-            }
-        } else {
-            when {
-                norm in 337.5..360.0 || norm in 0.0..22.5 -> "North"
-                norm in 22.5..67.5 -> "Northeast"
-                norm in 67.5..112.5 -> "East"
-                norm in 112.5..157.5 -> "Southeast"
-                norm in 157.5..202.5 -> "South"
-                norm in 202.5..247.5 -> "Southwest"
-                norm in 247.5..292.5 -> "West"
-                else -> "Northwest"
-            }
+        val resId = when {
+            norm in 337.5..360.0 || norm in 0.0..22.5 -> com.shinji.serena.R.string.cardinal_n
+            norm in 22.5..67.5 -> com.shinji.serena.R.string.cardinal_ne
+            norm in 67.5..112.5 -> com.shinji.serena.R.string.cardinal_e
+            norm in 112.5..157.5 -> com.shinji.serena.R.string.cardinal_se
+            norm in 157.5..202.5 -> com.shinji.serena.R.string.cardinal_s
+            norm in 202.5..247.5 -> com.shinji.serena.R.string.cardinal_sw
+            norm in 247.5..292.5 -> com.shinji.serena.R.string.cardinal_w
+            else -> com.shinji.serena.R.string.cardinal_nw
         }
+        return context.getString(resId)
     }
 
     private fun calculateDistanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {

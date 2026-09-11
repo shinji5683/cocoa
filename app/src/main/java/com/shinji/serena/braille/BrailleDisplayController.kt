@@ -162,7 +162,7 @@ class BrailleDisplayController(
                 if (currentDisplayText.isNotEmpty()) {
                     displayNodeInfo(currentDisplayText)
                 } else {
-                    displayNodeInfo("Serena 点字接続完了")
+                    displayNodeInfo(context.getString(com.shinji.serena.R.string.braille_status_connected))
                 }
 
                 // 受信監視ループ開始
