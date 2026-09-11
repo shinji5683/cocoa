@@ -10,8 +10,8 @@ android {
         applicationId = "com.shinji.serena"
         minSdk = 26
         targetSdk = 37
-        versionCode = 44
-        versionName = "2.2.2"
+        versionCode = 45
+        versionName = "2.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
