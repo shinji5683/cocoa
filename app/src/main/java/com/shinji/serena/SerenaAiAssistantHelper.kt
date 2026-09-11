@@ -166,7 +166,8 @@ class SerenaAiAssistantHelper(private val service: SerenaScreenReaderService) {
 
         } catch (e: Exception) {
             Log.e(TAG, "Error starting speech recognizer: ${e.message}")
-            service.speak("音声認識の開始エラーが発生しました。", TextToSpeech.QUEUE_FLUSH)
+            stopListeningInternal()
+            service.speak(service.getString(R.string.assistant_start_failed), TextToSpeech.QUEUE_FLUSH)
         }
     }
 

@@ -205,7 +205,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         safeInitHelper("aiAutoLabel") { aiAutoLabelHelper = AiAutoLabelHelper(safeContext) }
         safeInitHelper("morningSummary") { morningSummaryHelper = MorningSummaryHelper(this) }
         safeInitHelper("instantTranslation") { instantTranslationHelper = com.shinji.serena.translation.InstantTranslationHelper(safeContext) }
-        safeInitHelper("soundRecognition") { soundRecognitionHelper = com.shinji.serena.sound.SoundRecognitionHapticsHelper(safeContext).apply { try { start() } catch (_: Exception) {} } }
+        safeInitHelper("soundRecognition") { soundRecognitionHelper = com.shinji.serena.sound.SoundRecognitionHapticsHelper(safeContext) }
         safeInitHelper("visualAudioDescription") { visualAudioDescriptionHelper = com.shinji.serena.ai.VisualAudioDescriptionHelper(safeContext) }
         safeInitHelper("smartScreenSummary") { smartScreenSummaryEngine = com.shinji.serena.ai.SmartScreenSummaryEngine(this) }
         safeInitHelper("spatialHapticTouchMap") {
