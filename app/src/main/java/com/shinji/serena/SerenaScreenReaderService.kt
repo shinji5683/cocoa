@@ -411,55 +411,59 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
-        val info = serviceInfo ?: AccessibilityServiceInfo()
-        info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
-        info.feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK
-        info.notificationTimeout = 0
-        var flags = info.flags or
-                AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
-                AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
-                AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
-                AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
-                AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = flags or AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_2_FINGER_PASSTHROUGH
-        }
         try {
-            info.flags = flags
-            serviceInfo = info
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to apply full flags, falling back: ${e.message}")
-            try {
-                info.flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
-                        AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
-                        AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-                serviceInfo = info
-            } catch (_: Exception) {}
-        }
-        Log.i(TAG, "serena AccessibilityService connected with full Interactive Windows flags=$flags.")
-
-        speakStartupGreeting()
-
-        // 再起動直後（Direct Boot）やサービス接続時の初期フォーカス自動捕捉
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
-            if (km?.isKeyguardLocked == true) {
-                focusPinEntryField()
-            } else {
-                navigateLinearFocus(forward = true)
+            val info = serviceInfo ?: AccessibilityServiceInfo()
+            info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK
+            info.feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+            info.notificationTimeout = 0
+            var flags = info.flags or
+                    AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
+                    AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                    AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
+                    AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
+                    AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
             }
-        }, 3500)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                flags = flags or AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_2_FINGER_PASSTHROUGH
+            }
+            try {
+                info.flags = flags
+                serviceInfo = info
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to apply full flags, falling back: ${e.message}")
+                try {
+                    info.flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
+                            AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                            AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+                    serviceInfo = info
+                } catch (_: Exception) {}
+            }
+            Log.i(TAG, "serena AccessibilityService connected with full Interactive Windows flags=$flags.")
 
-        // バックグラウンド自動アップデート定期チェック (10秒後)
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            checkAutoUpdateInBackground()
-        }, 10000)
+            speakStartupGreeting()
+
+            // 再起動直後（Direct Boot）やサービス接続時の初期フォーカス自動捕捉
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+                if (km?.isKeyguardLocked == true) {
+                    focusPinEntryField()
+                } else {
+                    navigateLinearFocus(forward = true)
+                }
+            }, 3500)
+
+            // バックグラウンド自動アップデート定期チェック (10秒後)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                checkAutoUpdateInBackground()
+            }, 10000)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Critical Shield: Error during onServiceConnected safely handled: ${t.message}", t)
+        }
     }
 
     private fun checkAutoUpdateInBackground() {
@@ -483,30 +487,40 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var lastDispatchedGestureTimeMs = 0L
 
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
-        if (isInternalGestureDispatching) {
-            Log.d(TAG, "onGesture ignored: internal gesture dispatch in progress.")
+        try {
+            if (isInternalGestureDispatching) {
+                Log.d(TAG, "onGesture ignored: internal gesture dispatch in progress.")
+                return false
+            }
+            val now = System.currentTimeMillis()
+            if (now - lastDispatchedGestureTimeMs < 150) return false
+            lastDispatchedGestureTimeMs = now
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val gestureId = gestureEvent.gestureId
+                Log.i(TAG, "onGesture(AccessibilityGestureEvent) received: $gestureId")
+                return gestureDispatcher?.onGesture(gestureId) ?: handleGestureId(gestureId)
+            }
+            return false
+        } catch (t: Throwable) {
+            Log.e(TAG, "Critical Shield: Safe gesture guard caught in onGesture(event): ${t.message}", t)
             return false
         }
-        val now = System.currentTimeMillis()
-        if (now - lastDispatchedGestureTimeMs < 150) return false
-        lastDispatchedGestureTimeMs = now
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val gestureId = gestureEvent.gestureId
-            Log.i(TAG, "onGesture(AccessibilityGestureEvent) received: $gestureId")
-            return gestureDispatcher?.onGesture(gestureId) ?: handleGestureId(gestureId)
-        }
-        return false
     }
 
     @Deprecated("Deprecated in API 30+")
     override fun onGesture(gestureId: Int): Boolean {
-        if (isInternalGestureDispatching) {
-            Log.d(TAG, "onGesture(Int) ignored: internal gesture dispatch in progress.")
+        try {
+            if (isInternalGestureDispatching) {
+                Log.d(TAG, "onGesture(Int) ignored: internal gesture dispatch in progress.")
+                return false
+            }
+            Log.i(TAG, "onGesture(Int) received: $gestureId")
+            return gestureDispatcher?.onGesture(gestureId) ?: handleGestureId(gestureId)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Critical Shield: Safe gesture guard caught in onGesture(id): ${t.message}", t)
             return false
         }
-        Log.i(TAG, "onGesture(Int) received: $gestureId")
-        return gestureDispatcher?.onGesture(gestureId) ?: handleGestureId(gestureId)
     }
 
     private var lastUnlockTime = 0L
@@ -3295,8 +3309,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-
-        val pkgName = event.packageName?.toString() ?: ""
+        try {
+            val pkgName = event.packageName?.toString() ?: ""
         callManager?.checkCallState(pkgName, rootInActiveWindow)
 
         when (event.eventType) {
@@ -3668,7 +3682,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
         }
+    } catch (se: SecurityException) {
+        Log.w(TAG, "Critical Shield: SecurityException intercepted in onAccessibilityEvent: ${se.message}")
+    } catch (cme: ConcurrentModificationException) {
+        Log.w(TAG, "Critical Shield: ConcurrentModificationException intercepted in onAccessibilityEvent: ${cme.message}")
+    } catch (t: Throwable) {
+        Log.e(TAG, "Critical Shield: Unhandled exception safely handled in onAccessibilityEvent: ${t.message}", t)
     }
+}
 
     private fun isCallRelatedPackage(pkgName: String): Boolean {
         val lower = pkgName.lowercase()
@@ -4454,7 +4475,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     override fun onInterrupt() {
-        stopSpeech()
+        try {
+            stopSpeech()
+        } catch (t: Throwable) {
+            Log.e(TAG, "Critical Shield: Error in onInterrupt safely handled: ${t.message}", t)
+        }
     }
 
     fun dismissKeyguardViaOs() {

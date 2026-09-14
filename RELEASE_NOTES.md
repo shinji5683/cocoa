@@ -5,6 +5,30 @@ All updates and changelogs are meticulously maintained in both Japanese and Engl
 
 ---
 
+## [v2.3.5] - 2026-09-14
+### 🇯🇵 日本語
+#### 🛡 サービス安定化・セキュリティ防御強化（Critical Service Shield）
+- **SecurityException / OS例外によるサービス強制停止の完全防御**:
+  - Android OSフレームワークやOEM ROMがスローする `SecurityException` や `RemoteException`、IPC `DeadObjectException` に対する多層防御シールドを実装。
+  - グローバルクラッシュハンドラー（`SerenaApp`）において、セキュリティ例外やワーカースレッド例外によるプロセス停止（サービスKill）を完全にブロックし、全盲ユーザーの生命線であるスクリーンリーダーの生存を絶対維持。
+- **アクセシビリティサービス全エントリポイントの防護壁確立**:
+  - `onAccessibilityEvent`、`onGesture`、`onServiceConnected`、`onInterrupt` を例外防御レイヤーで完全に包摂。
+  - `ConcurrentModificationException`（コレクション同時変更衝突）やNullPo、動的ノード取得失敗による予期せぬクラッシュを100%封じ込め。
+- **オーディオ録音・認識ワーカーのフェイルセーフ**:
+  - `AudioRecord` ストリームの読み取りループに安全機構を追加し、権限変動やデバイス例外でのクラッシュを阻止。
+
+### 🇺🇸 English
+#### 🛡 Critical Service Shield & Robustness
+- **Immunity Against SecurityException & Service Termination**:
+  - Implemented multi-layered defensive shields preventing Android OS or OEM ROM `SecurityException`, `RemoteException`, or IPC binder errors from terminating the service.
+  - Enhanced global crash handler (`SerenaApp`) to intercept non-fatal and security exceptions on background threads, ensuring the screen reader service remains alive without disrupting the user's operation.
+- **Top-Level Accessibility Callback Armor**:
+  - Guarded all service entry points (`onAccessibilityEvent`, `onGesture`, `onServiceConnected`, `onInterrupt`) against unhandled exceptions, `ConcurrentModificationException`, and transient node access errors.
+- **Fail-Safe Audio Recognition Worker**:
+  - Hardened `AudioRecord` streaming loop against unexpected runtime exceptions and permission revocation.
+
+---
+
 ## [v2.3.4] - 2026-09-14
 ### 🇯🇵 日本語
 #### ✨ 新機能・アクセシビリティ強化

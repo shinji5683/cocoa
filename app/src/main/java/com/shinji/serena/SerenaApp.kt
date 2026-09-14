@@ -84,10 +84,21 @@ class SerenaApp : Application() {
 
                 val prefs = getSafeSharedPreferences(PREFS_CRASH, Context.MODE_PRIVATE)
                 prefs.edit().putBoolean(KEY_HAS_CRASH, true).apply()
+
+                // SecurityException / ConcurrentModificationException / IPC例外 / ワーカースレッド例外の自己治癒・プロセス生存防衛
+                val isSecurity = throwable is SecurityException || (throwable.cause is SecurityException)
+                val isConcurrent = throwable is ConcurrentModificationException || (throwable.cause is ConcurrentModificationException)
+                val isDeadObject = throwable.javaClass.name.contains("DeadObjectException") || throwable.javaClass.name.contains("RemoteException")
+                val isNonMainThread = thread != android.os.Looper.getMainLooper().thread
+
+                if (isSecurity || isConcurrent || isDeadObject || isNonMainThread) {
+                    Log.w(TAG, "Critical Service Shield: Prevented fatal process death for ${throwable.javaClass.simpleName} on thread ${thread.name}. Serena accessibility service remains fully alive.")
+                    return@setDefaultUncaughtExceptionHandler
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Error writing crash log: ${e.message}")
+                Log.e(TAG, "Error handling crash log: ${e.message}")
             } finally {
-                // デフォルトのハンドラーへ委譲
+                // デフォルトのハンドラーへ委譲（真に回避不能なメインスレッド例外のみ）
                 defaultHandler?.uncaughtException(thread, throwable)
             }
         }

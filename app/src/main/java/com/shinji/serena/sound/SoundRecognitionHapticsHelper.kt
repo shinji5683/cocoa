@@ -144,7 +144,8 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
         val audioBuffer = ShortArray(bufferSize)
         var lastAlertTime = 0L
 
-        while (isRecording && !Thread.currentThread().isInterrupted) {
+        try {
+            while (isRecording && !Thread.currentThread().isInterrupted) {
             val readSize = audioRecord?.read(audioBuffer, 0, audioBuffer.size) ?: -1
             if (readSize > 0) {
                 // RMS音量計算
@@ -233,7 +234,14 @@ class SoundRecognitionHapticsHelper(private val context: Context) {
                 break
             }
         }
+    } catch (se: SecurityException) {
+        Log.w(TAG, "Critical Shield: SecurityException in audio stream: ${se.message}")
+        isRecording = false
+    } catch (t: Throwable) {
+        Log.e(TAG, "Critical Shield: Audio stream error safely caught: ${t.message}", t)
+        isRecording = false
     }
+}
 
     private fun handleDetectedSound(vibrate: () -> Unit, spokenMsg: String, isDanger: Boolean) {
         when (detailLevel) {
