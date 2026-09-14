@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -642,7 +642,9 @@
     <string name="app_switch_granularity_fmt">App-wissel: %1$s modus</string>
     <string name="call_app_incoming_fmt">%1$s inkomende oproep: %2$s</string>
     <string name="call_started_fmt">Oproep gestart op %1$s. Starttijd is %2$s.</string>
+    <string name="call_started_named_fmt">%1$s-oproep gestart met %2$s. Starttijd is %3$s.</string>
     <string name="call_ended_fmt">Oproep beëindigd op %1$s. Duur was %2$s. Eindtijd is %3$s.</string>
+    <string name="call_ended_named_fmt">%1$s-oproep met %2$s beëindigd. Duur was %3$s. Eindtijd is %4$s.</string>
     <string name="chime_sound_changed_fmt">Uursignaalgeluid gewijzigd naar %1$s</string>
     <string name="camera_live_launch_failed">Kan live commentaarcamera niet starten.</string>
     <string name="clipboard_latest_fmt">Meest recente klembordgeschiedenis: %1$s</string>

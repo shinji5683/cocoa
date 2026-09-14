@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -673,7 +673,9 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <string name="app_switch_granularity_fmt">Cambio de app: modo %1$s</string>
     <string name="call_app_incoming_fmt">%1$s llamada entrante: %2$s</string>
     <string name="call_started_fmt">Llamada iniciada en %1$s. Hora de inicio: %2$s.</string>
+    <string name="call_started_named_fmt">Se inició llamada de %1$s con %2$s. Hora de inicio: %3$s.</string>
     <string name="call_ended_fmt">Llamada finalizada en %1$s. Duración: %2$s. Hora de fin: %3$s.</string>
+    <string name="call_ended_named_fmt">Llamada de %1$s con %2$s finalizada. Duración: %3$s. Hora de fin: %4$s.</string>
     <string name="chime_sound_changed_fmt">Sonido de campana horaria cambiado a %1$s</string>
     <string name="camera_live_launch_failed">Error al iniciar la cámara de relato en tiempo real.</string>
     <string name="clipboard_latest_fmt">Último historial de portapapeles: %1$s</string>

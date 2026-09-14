@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -626,7 +626,9 @@
     <string name="app_switch_granularity_fmt">Paglipat ng App: %1$s mode</string>
     <string name="call_app_incoming_fmt">%1$s papasok na tawag: %2$s</string>
     <string name="call_started_fmt">Nagsimula ang tawag sa %1$s. Oras ng pagsisimula: %2$s.</string>
+    <string name="call_started_named_fmt">Nagsimula ang tawag sa %1$s kay %2$s. Oras ng pagsisimula: %3$s.</string>
     <string name="call_ended_fmt">Natapos ang tawag sa %1$s. Tagal: %2$s. Oras ng pagtatapos: %3$s.</string>
+    <string name="call_ended_named_fmt">Natapos ang tawag sa %1$s kay %2$s. Tagal: %3$s. Oras ng pagtatapos: %4$s.</string>
     <string name="chime_sound_changed_fmt">Pinalitan ang tunog ng chime bawat oras sa %1$s</string>
     <string name="camera_live_launch_failed">Nabigong ilunsad ang real-time commentary camera.</string>
     <string name="clipboard_latest_fmt">Pinakabagong kasaysayan ng clipboard: %1$s</string>

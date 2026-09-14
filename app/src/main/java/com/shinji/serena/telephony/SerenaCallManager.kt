@@ -102,10 +102,18 @@ class SerenaCallManager(
         when (state) {
             TelephonyManager.CALL_STATE_RINGING -> {
                 Log.i(TAG, "Telephony: CALL_STATE_RINGING")
+                val root = service.rootInActiveWindow
+                if (callerName.isEmpty() && root != null) {
+                    callerName = extractCallerNameFromNode(root)
+                }
             }
             TelephonyManager.CALL_STATE_OFFHOOK -> {
                 Log.i(TAG, "Telephony: CALL_STATE_OFFHOOK -> Call connected")
-                onCallStarted(service.getString(R.string.call_app_phone))
+                val root = service.rootInActiveWindow
+                if (callerName.isEmpty() && root != null) {
+                    callerName = extractCallerNameFromNode(root)
+                }
+                onCallStarted(service.getString(R.string.call_app_phone), callerName)
             }
             TelephonyManager.CALL_STATE_IDLE -> {
                 Log.i(TAG, "Telephony: CALL_STATE_IDLE -> Call ended")
@@ -117,6 +125,17 @@ class SerenaCallManager(
         }
     }
 
+    private fun formatCurrentTime(): String {
+        return try {
+            android.text.format.DateFormat.getTimeFormat(service).format(java.util.Date())
+        } catch (_: Exception) {
+            val calendar = java.util.Calendar.getInstance()
+            val hour24 = calendar.get(java.util.Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(java.util.Calendar.MINUTE)
+            "${hour24}:${if (minute < 10) "0$minute" else "$minute"}"
+        }
+    }
+
     fun onCallStarted(appName: String, extraInfo: String = "") {
         if (isCallActive) return
         isCallActive = true
@@ -125,9 +144,18 @@ class SerenaCallManager(
         lastAnnouncedMinute = 0L
         service.soundHelper?.playActionDone()
 
-        val extra = if (extraInfo.isNotEmpty()) "（${extraInfo}）" else ""
-        service.speak(service.getString(R.string.call_started, activeCallApp, extra), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
-        Log.i(TAG, "onCallStarted: $activeCallApp at $callStartTimeMs")
+        if (extraInfo.isNotEmpty()) {
+            callerName = extraInfo
+        }
+
+        val currentTime = formatCurrentTime()
+        val announcement = if (callerName.isNotEmpty()) {
+            service.getString(R.string.call_started_named_fmt, activeCallApp, callerName, currentTime)
+        } else {
+            service.getString(R.string.call_started_fmt, activeCallApp, currentTime)
+        }
+        service.speak(announcement, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        Log.i(TAG, "onCallStarted: $activeCallApp with caller=$callerName at $currentTime")
     }
 
     fun onCallEnded(appName: String = activeCallApp) {
@@ -136,10 +164,17 @@ class SerenaCallManager(
         val elapsedMs = (SystemClock.elapsedRealtime() - callStartTimeMs).coerceAtLeast(1000L)
         val durationText = formatDuration(elapsedMs)
         val appLabel = if (appName.isNotEmpty()) appName else if (activeCallApp.isNotEmpty()) activeCallApp else service.getString(R.string.call_app_phone)
+        val currentTime = formatCurrentTime()
+        val currentCaller = callerName
         
         service.soundHelper?.playActionDone()
-        service.speak(service.getString(R.string.call_ended_with_duration, appLabel, durationText), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
-        Log.i(TAG, "onCallEnded: $appLabel. Duration: $durationText")
+        val announcement = if (currentCaller.isNotEmpty()) {
+            service.getString(R.string.call_ended_named_fmt, appLabel, currentCaller, durationText, currentTime)
+        } else {
+            service.getString(R.string.call_ended_fmt, appLabel, durationText, currentTime)
+        }
+        service.speak(announcement, android.speech.tts.TextToSpeech.QUEUE_FLUSH)
+        Log.i(TAG, "onCallEnded: $appLabel with $currentCaller. Duration: $durationText, EndTime: $currentTime")
 
         activeCallApp = ""
         callerName = ""
@@ -172,8 +207,13 @@ class SerenaCallManager(
         )
 
         // 1. 着信アナウンス（着信中のみ）
-        if (isRinging && callerName.isEmpty() && windowText.isNotEmpty()) {
-            callerName = extractNameFromText(windowText)
+        if (isRinging && callerName.isEmpty()) {
+            if (root != null) {
+                callerName = extractCallerNameFromNode(root)
+            }
+            if (callerName.isEmpty() && windowText.isNotEmpty()) {
+                callerName = extractNameFromText(windowText)
+            }
             val appLabel = getMessagingAppName(pkgName)
             if (callerName.isNotEmpty()) {
                 service.speak(service.getString(R.string.call_incoming_named, appLabel, callerName), android.speech.tts.TextToSpeech.QUEUE_FLUSH)
@@ -185,19 +225,28 @@ class SerenaCallManager(
         // 2. 通話開始判定（実際に相手と接続された瞬間からタイマースタート！）
         if (isCurrentlyInCall && !isCallActive) {
             val appLabel = getMessagingAppName(pkgName)
-            val name = if (callerName.isNotEmpty()) callerName else ""
-            onCallStarted(appLabel, name)
+            if (callerName.isEmpty()) {
+                if (root != null) callerName = extractCallerNameFromNode(root)
+                if (callerName.isEmpty() && windowText.isNotEmpty()) callerName = extractNameFromText(windowText)
+            }
+            onCallStarted(appLabel, callerName)
         } 
         // 3. 通話中の経過時間案内（設定でONになっている場合のみ、実測時間で1分ごとにアナウンス）
-        else if (isCurrentlyInCall && isCallActive && callStartTimeMs > 0L) {
-            val periodicEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_CALL_PERIODIC_ANNOUNCE, false)
-            if (periodicEnabled) {
-                val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
-                val currentMinutes = (elapsedMs / 1000) / 60
-                if (currentMinutes > 0 && currentMinutes > lastAnnouncedMinute) {
-                    lastAnnouncedMinute = currentMinutes
-                    val timeToAnnounce = formatDuration(elapsedMs)
-                    service.speak(service.getString(R.string.call_periodic_elapsed, timeToAnnounce), android.speech.tts.TextToSpeech.QUEUE_ADD)
+        else if (isCurrentlyInCall && isCallActive) {
+            if (callerName.isEmpty()) {
+                if (root != null) callerName = extractCallerNameFromNode(root)
+                if (callerName.isEmpty() && windowText.isNotEmpty()) callerName = extractNameFromText(windowText)
+            }
+            if (callStartTimeMs > 0L) {
+                val periodicEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_CALL_PERIODIC_ANNOUNCE, false)
+                if (periodicEnabled) {
+                    val elapsedMs = SystemClock.elapsedRealtime() - callStartTimeMs
+                    val currentMinutes = (elapsedMs / 1000) / 60
+                    if (currentMinutes > 0 && currentMinutes > lastAnnouncedMinute) {
+                        lastAnnouncedMinute = currentMinutes
+                        val timeToAnnounce = formatDuration(elapsedMs)
+                        service.speak(service.getString(R.string.call_periodic_elapsed, timeToAnnounce), android.speech.tts.TextToSpeech.QUEUE_ADD)
+                    }
                 }
             }
         }
@@ -396,6 +445,57 @@ class SerenaCallManager(
             p.contains("zoom") -> "Zoom"
             else -> service.getString(R.string.call_app_phone)
         }
+    }
+
+    private fun extractCallerNameFromNode(root: AccessibilityNodeInfo): String {
+        val candidates = mutableListOf<String>()
+        val excludedWords = setOf(
+            "着信", "発信", "通話中", "通話時間", "音声通話", "ビデオ通話", "からの通話",
+            "応答", "受話", "answer", "accept", "拒否", "切断", "終話", "decline", "reject", "hang up", "end",
+            "ミュート", "消音", "mute", "スピーカー", "speaker", "キーパッド", "ダイヤル", "keypad",
+            "保留", "hold", "録音", "record", "bluetooth", "オーディオ", "audio", "mic", "マイク",
+            "メッセージ", "チャット", "追加", "連絡先", "履歴", "カメラ", "画面共有",
+            "戻る", "ホーム", "アプリ一覧", "line", "discord", "skype", "whatsapp", "messenger", "zoom"
+        )
+
+        fun cleanCandidate(text: String): String {
+            return text.replace("着信", "")
+                .replace("からの通話", "")
+                .replace("音声通話", "")
+                .replace("ビデオ通話", "")
+                .replace("通話中", "")
+                .trim()
+        }
+
+        fun isValidCandidate(text: String): Boolean {
+            val lower = text.lowercase()
+            if (text.length < 2 || text.length > 30) return false
+            if (lower.matches(Regex(".*\\d{1,2}:\\d{2}(:\\d{2})?.*"))) return false
+            if (excludedWords.any { lower == it || lower.startsWith(it) }) return false
+            return true
+        }
+
+        fun traverse(node: AccessibilityNodeInfo?) {
+            if (node == null) return
+            val viewId = node.viewIdResourceName?.lowercase() ?: ""
+            val txt = node.text?.toString()?.trim() ?: node.contentDescription?.toString()?.trim() ?: ""
+            if (txt.isNotEmpty() && node.isVisibleToUser) {
+                val cleaned = cleanCandidate(txt)
+                if (isValidCandidate(cleaned)) {
+                    if (viewId.contains("name") || viewId.contains("caller") || viewId.contains("contact") || viewId.contains("number") || viewId.contains("title")) {
+                        candidates.add(0, cleaned)
+                    } else {
+                        candidates.add(cleaned)
+                    }
+                }
+            }
+            for (i in 0 until node.childCount) {
+                traverse(node.getChild(i))
+            }
+        }
+
+        traverse(root)
+        return candidates.firstOrNull { it.isNotEmpty() } ?: ""
     }
 
     private fun parseCallerFromNode(root: AccessibilityNodeInfo): String {

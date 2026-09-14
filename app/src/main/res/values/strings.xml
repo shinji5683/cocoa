@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -641,7 +641,9 @@
     <string name="app_switch_granularity_fmt">App Switch: %1$s mode</string>
     <string name="call_app_incoming_fmt">%1$s incoming call: %2$s</string>
     <string name="call_started_fmt">Call started on %1$s. Start time is %2$s.</string>
+    <string name="call_started_named_fmt">Started %1$s call with %2$s. Start time is %3$s.</string>
     <string name="call_ended_fmt">Call ended on %1$s. Duration was %2$s. End time is %3$s.</string>
+    <string name="call_ended_named_fmt">%1$s call with %2$s ended. Duration was %3$s. End time is %4$s.</string>
     <string name="chime_sound_changed_fmt">Hourly chime sound changed to %1$s</string>
     <string name="camera_live_launch_failed">Failed to launch live commentary camera.</string>
     <string name="clipboard_latest_fmt">Latest clipboard history: %1$s</string>

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -642,7 +642,9 @@
     <string name="app_switch_granularity_fmt">アプリ切替: %1$sモード</string>
     <string name="call_app_incoming_fmt">%1$s着信中: %2$s</string>
     <string name="call_started_fmt">%1$sの通話を開始しました。開始時刻は %2$s です。</string>
+    <string name="call_started_named_fmt">%1$sの%2$sさんとの通話を開始しました。開始時刻は %3$s です。</string>
     <string name="call_ended_fmt">%1$sの通話が終了しました。通話時間は %2$s です。終了時刻は %3$s です。</string>
+    <string name="call_ended_named_fmt">%1$sの%2$sさんとの通話が終了しました。通話時間は %3$s です。終了時刻は %4$s です。</string>
     <string name="chime_sound_changed_fmt">時報チャイム音を %1$s に変更しました</string>
     <string name="camera_live_launch_failed">リアルタイム実況カメラの起動に失敗しました。</string>
     <string name="clipboard_latest_fmt">最新のクリップボード履歴: %1$s</string>
