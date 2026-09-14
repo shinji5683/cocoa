@@ -42,6 +42,29 @@ class SerenaCallManager(
     private var lastCallCheckTimeMs = 0L
     private var lastAnnouncedMinute = 0L
 
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
+    private object Api31CallHelper {
+        fun registerCallCallback(
+            tm: TelephonyManager,
+            executor: java.util.concurrent.Executor,
+            onStateChanged: (Int) -> Unit
+        ): Any {
+            val callback = object : TelephonyCallback(), TelephonyCallback.CallStateListener {
+                override fun onCallStateChanged(state: Int) {
+                    onStateChanged(state)
+                }
+            }
+            tm.registerTelephonyCallback(executor, callback)
+            return callback
+        }
+
+        fun unregisterCallCallback(tm: TelephonyManager, callback: Any?) {
+            if (callback is TelephonyCallback) {
+                tm.unregisterTelephonyCallback(callback)
+            }
+        }
+    }
+
     private var telephonyCallback: Any? = null
     private var phoneStateListener: PhoneStateListener? = null
 
@@ -50,17 +73,12 @@ class SerenaCallManager(
     }
 
     private fun initTelephonyListener() {
+        val tm = telephonyManager ?: return
         try {
-            if (telephonyManager == null) return
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val callback = object : TelephonyCallback(), TelephonyCallback.CallStateListener {
-                    override fun onCallStateChanged(state: Int) {
-                        handleTelephonyCallState(state)
-                    }
+                telephonyCallback = Api31CallHelper.registerCallCallback(tm, service.mainExecutor) { state ->
+                    handleTelephonyCallState(state)
                 }
-                telephonyCallback = callback
-                telephonyManager.registerTelephonyCallback(service.mainExecutor, callback)
                 Log.i(TAG, "TelephonyCallback registered for API 31+.")
             } else {
                 @Suppress("DEPRECATION")
@@ -72,7 +90,7 @@ class SerenaCallManager(
                 }
                 phoneStateListener = listener
                 @Suppress("DEPRECATION")
-                telephonyManager.listen(listener, PhoneStateListener.LISTEN_CALL_STATE)
+                tm.listen(listener, PhoneStateListener.LISTEN_CALL_STATE)
                 Log.i(TAG, "PhoneStateListener registered for legacy API.")
             }
         } catch (e: Exception) {
@@ -403,11 +421,12 @@ class SerenaCallManager(
 
     fun release() {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && telephonyCallback is TelephonyCallback) {
-                telephonyManager?.unregisterTelephonyCallback(telephonyCallback as TelephonyCallback)
-            } else if (phoneStateListener != null) {
+            val tm = telephonyManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && tm != null && telephonyCallback != null) {
+                Api31CallHelper.unregisterCallCallback(tm, telephonyCallback)
+            } else if (tm != null && phoneStateListener != null) {
                 @Suppress("DEPRECATION")
-                telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
+                tm.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
             }
         } catch (_: Exception) {}
         telephonyCallback = null

@@ -421,19 +421,28 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
                 AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
                 AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_FINGERPRINT_GESTURES
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_MULTI_FINGER_GESTURES
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             flags = flags or AccessibilityServiceInfo.FLAG_SERVICE_HANDLES_DOUBLE_TAP
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_2_FINGER_PASSTHROUGH
         }
-        info.flags = flags
-        serviceInfo = info
-        Log.i(TAG, "serena AccessibilityService connected with full Interactive Windows, Multi-Finger & 2-Finger Passthrough flags=$flags.")
+        try {
+            info.flags = flags
+            serviceInfo = info
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to apply full flags, falling back: ${e.message}")
+            try {
+                info.flags = AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE or
+                        AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                        AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+                serviceInfo = info
+            } catch (_: Exception) {}
+        }
+        Log.i(TAG, "serena AccessibilityService connected with full Interactive Windows flags=$flags.")
 
         speakStartupGreeting()
 
@@ -471,12 +480,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     @Volatile var isInternalGestureDispatching = false
+    private var lastDispatchedGestureTimeMs = 0L
 
     override fun onGesture(gestureEvent: AccessibilityGestureEvent): Boolean {
         if (isInternalGestureDispatching) {
             Log.d(TAG, "onGesture ignored: internal gesture dispatch in progress.")
             return false
         }
+        val now = System.currentTimeMillis()
+        if (now - lastDispatchedGestureTimeMs < 150) return false
+        lastDispatchedGestureTimeMs = now
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val gestureId = gestureEvent.gestureId
             Log.i(TAG, "onGesture(AccessibilityGestureEvent) received: $gestureId")
@@ -487,10 +501,6 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     @Deprecated("Deprecated in API 30+")
     override fun onGesture(gestureId: Int): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // API 30+ (Android 11/12/13/14/15/16) では onGesture(AccessibilityGestureEvent) で処理済みのため二重実行を完全防止
-            return false
-        }
         if (isInternalGestureDispatching) {
             Log.d(TAG, "onGesture(Int) ignored: internal gesture dispatch in progress.")
             return false

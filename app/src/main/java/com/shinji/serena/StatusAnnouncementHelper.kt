@@ -34,18 +34,42 @@ class StatusAnnouncementHelper(private val context: Context) {
         initTelephonyListener()
     }
 
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
+    private object Api31TelephonyHelper {
+        fun registerTelephonyCallback(
+            tm: TelephonyManager,
+            context: Context,
+            onUpdate: (String) -> Unit
+        ): Any {
+            val callback = object : TelephonyCallback(), TelephonyCallback.DisplayInfoListener {
+                override fun onDisplayInfoChanged(telephonyDisplayInfo: TelephonyDisplayInfo) {
+                    val overrideType = telephonyDisplayInfo.overrideNetworkType
+                    val gen = if (overrideType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED) {
+                        context.getString(R.string.status_network_5g_mmwave)
+                    } else ""
+                    if (gen.isNotEmpty()) {
+                        onUpdate(gen)
+                    }
+                }
+            }
+            tm.registerTelephonyCallback(context.mainExecutor, callback)
+            return callback
+        }
+
+        fun isNrAdvanced(overrideType: Int): Boolean {
+            return overrideType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED
+        }
+    }
+
     private fun initTelephonyListener() {
-        if (telephonyManager == null) return
+        val tm = telephonyManager ?: return
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 // Android 12 (API 31+) TelephonyCallback
-                val callback = object : TelephonyCallback(), TelephonyCallback.DisplayInfoListener {
-                    override fun onDisplayInfoChanged(telephonyDisplayInfo: TelephonyDisplayInfo) {
-                        latestNetworkGeneration = parseDisplayInfo(telephonyDisplayInfo)
-                        Log.i(TAG, "TelephonyCallback: updated network generation to $latestNetworkGeneration")
-                    }
+                Api31TelephonyHelper.registerTelephonyCallback(tm, context) { gen ->
+                    latestNetworkGeneration = gen
+                    Log.i(TAG, "TelephonyCallback: updated network generation to $latestNetworkGeneration")
                 }
-                telephonyManager.registerTelephonyCallback(context.mainExecutor, callback)
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 // Android 11 (API 30) PhoneStateListener
                 @Suppress("DEPRECATION")
@@ -57,17 +81,23 @@ class StatusAnnouncementHelper(private val context: Context) {
                     }
                 }
                 @Suppress("DEPRECATION")
-                telephonyManager.listen(listener, PhoneStateListener.LISTEN_DISPLAY_INFO_CHANGED)
+                tm.listen(listener, PhoneStateListener.LISTEN_DISPLAY_INFO_CHANGED)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error registering telephony listener: ${e.message}")
         }
     }
 
-    @SuppressLint("NewApi")
     private fun parseDisplayInfo(displayInfo: TelephonyDisplayInfo): String {
-        return when (displayInfo.overrideNetworkType) {
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED -> context.getString(R.string.status_network_5g_mmwave)
+        val overrideType = displayInfo.overrideNetworkType
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                if (Api31TelephonyHelper.isNrAdvanced(overrideType)) {
+                    return context.getString(R.string.status_network_5g_mmwave)
+                }
+            } catch (_: Throwable) {}
+        }
+        return when (overrideType) {
             TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA -> "5G"
             TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA -> context.getString(R.string.status_network_4g_plus)
             TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO -> context.getString(R.string.status_network_4g_plus)
