@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
         safeRun("setupPermissionsSection") { setupPermissionsSection() }
         safeRun("setupTtsControls") { setupTtsControls() }
         safeRun("setupHourlyChimeSection") { setupHourlyChimeSection() }
+        safeRun("setupSmartBatterySection") { setupSmartBatterySection() }
         safeRun("setupCallAssistantSection") { setupCallAssistantSection() }
         safeRun("setupOperationGuideSection") { setupOperationGuideSection() }
         safeRun("setupShakeSensitivitySection") { setupShakeSensitivitySection() }
@@ -515,11 +516,24 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
         }
 
+        val isHalfHour = prefs.getBoolean(SerenaScreenReaderService.KEY_HOURLY_CHIME_HALF_HOUR, false)
+        binding.switchHourlyChimeHalfHour.isChecked = isHalfHour
+
+        binding.switchHourlyChimeHalfHour.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_HOURLY_CHIME_HALF_HOUR, isChecked).apply()
+            val statusStr = if (isChecked) getString(R.string.main_hourly_chime_half_enabled) else getString(R.string.main_hourly_chime_half_disabled)
+            Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
+        }
+
         binding.btnTestHourlyChime.setOnClickListener {
             val calendar = Calendar.getInstance()
             val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+            val currentMin = calendar.get(Calendar.MINUTE)
+            val isHalf = binding.switchHourlyChimeHalfHour.isChecked && currentMin >= 30
+            val testMin = if (isHalf) 30 else 0
+
             if (SerenaScreenReaderService.isServiceRunning()) {
-                SerenaScreenReaderService.instance?.triggerHourlyAnnouncement(currentHour)
+                SerenaScreenReaderService.instance?.triggerHourlyAnnouncement(currentHour, testMin)
             } else {
                 val isAm = currentHour < 12
                 val displayHour = when {
@@ -528,9 +542,58 @@ class MainActivity : AppCompatActivity() {
                     else -> currentHour
                 }
                 val periodStr = if (isAm) getString(R.string.main_time_am) else getString(R.string.main_time_pm)
-                val sampleText = getString(R.string.main_hourly_chime_test_fmt, periodStr, displayHour)
+                val sampleText = if (testMin == 30) {
+                    getString(R.string.main_hourly_chime_test_half_fmt, periodStr, displayHour)
+                } else {
+                    getString(R.string.main_hourly_chime_test_fmt, periodStr, displayHour)
+                }
                 localTts?.speak(sampleText, TextToSpeech.QUEUE_FLUSH, null, "testHourlyChime")
             }
+        }
+    }
+
+    private fun setupSmartBatterySection() {
+        val is80 = prefs.getBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_80, true)
+        binding.switchSmartBattery80.isChecked = is80
+        binding.switchSmartBattery80.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_80, isChecked).apply()
+            val msg = if (isChecked) getString(R.string.main_smart_battery_80_enabled) else getString(R.string.main_smart_battery_80_disabled)
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        val isLow = prefs.getBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_LOW, true)
+        binding.switchSmartBatteryLow.isChecked = isLow
+        binding.switchSmartBatteryLow.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_LOW, isChecked).apply()
+            val msg = if (isChecked) getString(R.string.main_smart_battery_low_enabled) else getString(R.string.main_smart_battery_low_disabled)
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        val isSteps = prefs.getBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_STEPS, true)
+        binding.switchSmartBatterySteps.isChecked = isSteps
+        binding.switchSmartBatterySteps.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_STEPS, isChecked).apply()
+            val msg = if (isChecked) getString(R.string.main_smart_battery_steps_enabled) else getString(R.string.main_smart_battery_steps_disabled)
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        val isEstimate = prefs.getBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_ESTIMATE, true)
+        binding.switchSmartBatteryEstimate.isChecked = isEstimate
+        binding.switchSmartBatteryEstimate.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_ESTIMATE, isChecked).apply()
+            val msg = if (isChecked) getString(R.string.main_smart_battery_estimate_enabled) else getString(R.string.main_smart_battery_estimate_disabled)
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnTestSmartBattery.setOnClickListener {
+            if (SerenaScreenReaderService.isServiceRunning()) {
+                SerenaScreenReaderService.instance?.testSmartBatteryAnnouncement()
+            } else {
+                val sample80 = getString(R.string.battery_protect_80_reached)
+                val sampleEst = getString(R.string.battery_estimate_time_fmt, 45)
+                localTts?.speak("$sample80 $sampleEst", TextToSpeech.QUEUE_FLUSH, null, "testSmartBattery")
+            }
+            Toast.makeText(this, getString(R.string.test_smart_battery_announced), Toast.LENGTH_SHORT).show()
         }
     }
 

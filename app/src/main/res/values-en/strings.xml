@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -1266,4 +1266,38 @@ Sharing this log with developer Shinji helps diagnose and fix the issue quickly.
     <string name="service_page_index_single_fmt">%1$d of %2$d items</string>
     <string name="service_street_nav_preparing">Preparing street navigation</string>
     <string name="service_power_menu">Power menu</string>
+    <string name="service_hourly_chime_half_announcement_fmt">It is %2$d:30 %1$s.</string>
+    <string name="main_hourly_chime_test_half_fmt">It is %2$d:30 %1$s. (Test)</string>
+    <string name="label_hourly_chime_half_switch">Announce every 30 minutes</string>
+    <string name="desc_hourly_chime_half_switch">When enabled, announces the time at 30 minutes past the hour in addition to on the hour.</string>
+    <string name="main_hourly_chime_half_enabled">30-minute chime enabled</string>
+    <string name="main_hourly_chime_half_disabled">30-minute chime disabled (Hourly only)</string>
+    <string name="menu_item_hourly_chime_interval">Chime Interval (Hourly / 30-min)</string>
+    <string name="msg_hourly_chime_interval_1h">Chime interval set to hourly</string>
+    <string name="msg_hourly_chime_interval_30m">Chime interval set to every 30 minutes</string>
+    <string name="title_smart_battery">⚡ Smart Battery Announcements</string>
+    <string name="desc_smart_battery" formatted="false">Customizable alerts for 80% battery protection, low battery reminders, progress milestones, and estimated charge time.</string>
+    <string name="label_smart_battery_80" formatted="false">80% Battery Protection Alert</string>
+    <string name="desc_smart_battery_80" formatted="false">Alerts when battery reaches 80% to help prolong battery lifespan.</string>
+    <string name="battery_protect_80_reached" formatted="false">Battery has reached 80%. Consider disconnecting the charger to protect battery health.</string>
+    <string name="label_smart_battery_low" formatted="false">Low Battery Reminder (20% &amp; below)</string>
+    <string name="desc_smart_battery_low" formatted="false">Voice reminder to plug in when battery drops to 20% or lower.</string>
+    <string name="battery_low_warning_fmt">Battery is running low (%1$d%%). Please connect the charger.</string>
+    <string name="label_smart_battery_steps" formatted="false">Charging Milestone Announcements (50%, 80%)</string>
+    <string name="desc_smart_battery_steps" formatted="false">Announces progress as battery reaches 50% and 80% while charging.</string>
+    <string name="battery_step_reached_fmt">Charging: Battery reached %1$d%%.</string>
+    <string name="label_smart_battery_estimate">Estimated Charge Time on Plug In</string>
+    <string name="desc_smart_battery_estimate">Announces estimated time remaining until fully charged when plugged in.</string>
+    <string name="battery_estimate_time_fmt">Approximately %1$d minutes until fully charged.</string>
+    <string name="battery_estimate_time_hours_fmt">Approximately %1$d hours and %2$d minutes until fully charged.</string>
+    <string name="btn_test_smart_battery">Test Smart Battery Announcement</string>
+    <string name="main_smart_battery_80_enabled" formatted="false">80% battery protection alert enabled</string>
+    <string name="main_smart_battery_80_disabled" formatted="false">80% battery protection alert disabled</string>
+    <string name="main_smart_battery_low_enabled">Low battery reminder enabled</string>
+    <string name="main_smart_battery_low_disabled">Low battery reminder disabled</string>
+    <string name="main_smart_battery_steps_enabled">Charging milestone announcements enabled</string>
+    <string name="main_smart_battery_steps_disabled">Charging milestone announcements disabled</string>
+    <string name="main_smart_battery_estimate_enabled">Estimated charge time announcement enabled</string>
+    <string name="main_smart_battery_estimate_disabled">Estimated charge time announcement disabled</string>
+    <string name="test_smart_battery_announced">Smart battery announcement test played</string>
 </resources>

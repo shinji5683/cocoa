@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -1266,4 +1266,38 @@ Het delen van dit logboek met ontwikkelaar Shinji helpt het probleem snel op te 
     <string name="service_page_index_single_fmt">%1$d van %2$d items</string>
     <string name="service_street_nav_preparing">Straatnavigatie voorbereiden</string>
     <string name="service_power_menu">Aan/uit-menu</string>
+    <string name="service_hourly_chime_half_announcement_fmt">Het is %2$d uur dertig %1$s.</string>
+    <string name="main_hourly_chime_test_half_fmt">Het is %2$d uur dertig %1$s. (Testweergave)</string>
+    <string name="label_hourly_chime_half_switch">Elk half uur aankondigen</string>
+    <string name="desc_hourly_chime_half_switch">Kondigt naast het hele uur ook elk half uur de tijd aan.</string>
+    <string name="main_hourly_chime_half_enabled">Half-uursignaal ingeschakeld</string>
+    <string name="main_hourly_chime_half_disabled">Half-uursignaal uitgeschakeld (Alleen hele uren)</string>
+    <string name="menu_item_hourly_chime_interval">Beltooninterval (Per uur / Elk half uur)</string>
+    <string name="msg_hourly_chime_interval_1h">Beltooninterval ingesteld op per uur</string>
+    <string name="msg_hourly_chime_interval_30m">Beltooninterval ingesteld op elk half uur</string>
+    <string name="title_smart_battery">⚡ Slimme batterijmeldingen</string>
+    <string name="desc_smart_battery" formatted="false">Meldingen voor 80% accubescherming, herinnering bij lage lading, voortgang en geschatte oplaadtijd.</string>
+    <string name="label_smart_battery_80" formatted="false">80% Accubeschermingsmelding</string>
+    <string name="desc_smart_battery_80" formatted="false">Geeft een melding wanneer de batterij 80% bereikt om de levensduur te verlengen.</string>
+    <string name="battery_protect_80_reached" formatted="false">Batterij heeft 80% bereikt. Koppel de oplader los om de levensduur van de batterij te verlengen.</string>
+    <string name="label_smart_battery_low" formatted="false">Herinnering bij lage acculading (20% en lager)</string>
+    <string name="desc_smart_battery_low" formatted="false">Gesproken herinnering om op te laden als de batterij tot 20% of minder daalt.</string>
+    <string name="battery_low_warning_fmt">Batterij bijna leeg (%1$d%%). Sluit de oplader aan.</string>
+    <string name="label_smart_battery_steps" formatted="false">Oplaadvoortgang meldingen (50%, 80%)</string>
+    <string name="desc_smart_battery_steps" formatted="false">Meldt de voortgang wanneer de batterij tijdens het laden 50% en 80% bereikt.</string>
+    <string name="battery_step_reached_fmt">Opladen: Batterij heeft %1$d%% bereikt.</string>
+    <string name="label_smart_battery_estimate">Geschatte oplaadtijd bij aansluiten</string>
+    <string name="desc_smart_battery_estimate">Kondigt bij het aansluiten de geschatte resterende tijd aan tot volledig opgeladen.</string>
+    <string name="battery_estimate_time_fmt">Ongeveer %1$d minuten tot volledig opgeladen.</string>
+    <string name="battery_estimate_time_hours_fmt">Ongeveer %1$d uur en %2$d minuten tot volledig opgeladen.</string>
+    <string name="btn_test_smart_battery">Test slimme batterijmelding</string>
+    <string name="main_smart_battery_80_enabled" formatted="false">80% accubeschermingsmelding ingeschakeld</string>
+    <string name="main_smart_battery_80_disabled" formatted="false">80% accubeschermingsmelding uitgeschakeld</string>
+    <string name="main_smart_battery_low_enabled">Herinnering bij lage lading ingeschakeld</string>
+    <string name="main_smart_battery_low_disabled">Herinnering bij lage lading uitgeschakeld</string>
+    <string name="main_smart_battery_steps_enabled">Oplaadvoortgang meldingen ingeschakeld</string>
+    <string name="main_smart_battery_steps_disabled">Oplaadvoortgang meldingen uitgeschakeld</string>
+    <string name="main_smart_battery_estimate_enabled">Geschatte oplaadtijd ingeschakeld</string>
+    <string name="main_smart_battery_estimate_disabled">Geschatte oplaadtijd uitgeschakeld</string>
+    <string name="test_smart_battery_announced">Test voor slimme batterijmelding afgespeeld</string>
 </resources>

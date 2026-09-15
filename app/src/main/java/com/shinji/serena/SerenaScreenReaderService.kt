@@ -50,6 +50,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         const val KEY_SPEECH_PITCH = "speech_pitch"
         const val KEY_CALL_PERIODIC_ANNOUNCE = "call_periodic_announce"
         const val KEY_HOURLY_CHIME_ENABLED = "hourly_chime_enabled"
+        const val KEY_HOURLY_CHIME_HALF_HOUR = "hourly_chime_half_hour"
+        const val KEY_SMART_BATTERY_80 = "smart_battery_80_enabled"
+        const val KEY_SMART_BATTERY_LOW = "smart_battery_low_enabled"
+        const val KEY_SMART_BATTERY_STEPS = "smart_battery_steps_enabled"
+        const val KEY_SMART_BATTERY_ESTIMATE = "smart_battery_estimate_enabled"
         const val KEY_SHAKE_THRESHOLD = "shake_threshold"
         const val KEY_TALKBACK_MODE = "key_talkback_mode"
         const val KEY_CHIME_STYLE = "key_chime_style"
@@ -2159,6 +2164,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             },
             serenaMenuItem("🔔", getString(R.string.menu_item_hourly_chime)) {
                 cycleChimeStyle()
+            },
+            serenaMenuItem("⏱️", getString(R.string.menu_item_hourly_chime_interval)) {
+                toggleChimeInterval()
             },
             serenaMenuItem(if (screenCurtainHelper?.isCurtainEnabled == true) "☀️" else "🌑", curtainLabel) {
                 toggleScreenCurtain()
@@ -4559,14 +4567,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val isEnabled = prefs.getBoolean(KEY_HOURLY_CHIME_ENABLED, true)
         if (!isEnabled) return
 
+        val allowHalfHour = prefs.getBoolean(KEY_HOURLY_CHIME_HALF_HOUR, false)
         val calendar = Calendar.getInstance()
         val minute = calendar.get(Calendar.MINUTE)
         if (minute == 0) {
-            triggerHourlyAnnouncement(calendar.get(Calendar.HOUR_OF_DAY))
+            triggerHourlyAnnouncement(calendar.get(Calendar.HOUR_OF_DAY), 0)
+        } else if (allowHalfHour && minute == 30) {
+            triggerHourlyAnnouncement(calendar.get(Calendar.HOUR_OF_DAY), 30)
         }
     }
 
-    fun triggerHourlyAnnouncement(hour24: Int) {
+    fun triggerHourlyAnnouncement(hour24: Int, minute: Int = 0) {
         val style = prefs.getString(KEY_CHIME_STYLE, CHIME_STYLE_NHK) ?: CHIME_STYLE_NHK
         when (style) {
             CHIME_STYLE_NHK -> soundHelper?.playNhkRadioChime()
@@ -4583,8 +4594,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
         val periodStr = if (isAm) getString(R.string.main_time_am) else getString(R.string.main_time_pm)
 
-        val announcement = getString(R.string.service_hourly_chime_announcement_fmt, periodStr, displayHour)
+        val announcement = if (minute == 30) {
+            getString(R.string.service_hourly_chime_half_announcement_fmt, periodStr, displayHour)
+        } else {
+            getString(R.string.service_hourly_chime_announcement_fmt, periodStr, displayHour)
+        }
         speak(announcement, TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun toggleChimeInterval() {
+        val currentHalf = prefs.getBoolean(KEY_HOURLY_CHIME_HALF_HOUR, false)
+        val nextHalf = !currentHalf
+        prefs.edit().putBoolean(KEY_HOURLY_CHIME_HALF_HOUR, nextHalf).apply()
+        soundHelper?.playActionDone()
+        val msg = if (nextHalf) {
+            getString(R.string.msg_hourly_chime_interval_30m)
+        } else {
+            getString(R.string.msg_hourly_chime_interval_1h)
+        }
+        speak(msg, TextToSpeech.QUEUE_FLUSH)
     }
 
     fun cycleChimeStyle() {
@@ -4610,6 +4638,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
         }
         speak(getString(R.string.chime_sound_changed_fmt, name), TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun testSmartBatteryAnnouncement() {
+        batteryHelper?.testSmartBatteryAnnouncement()
     }
 
     override fun onDestroy() {

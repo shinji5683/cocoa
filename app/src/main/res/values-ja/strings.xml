@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -1266,4 +1266,38 @@
     <string name="service_page_index_single_fmt">%1$d / 全%2$d項目</string>
     <string name="service_street_nav_preparing">ストリートナビゲーションを準備中です</string>
     <string name="service_power_menu">電源メニュー</string>
+    <string name="service_hourly_chime_half_announcement_fmt">%1$s%2$d時30分をお知らせします。</string>
+    <string name="main_hourly_chime_test_half_fmt">%1$s%2$d時30分をお知らせします。（テスト再生）</string>
+    <string name="label_hourly_chime_half_switch">30分毎にも時報を鳴らす</string>
+    <string name="desc_hourly_chime_half_switch">有効にすると、毎時0分に加えて30分にも時刻をお知らせします。</string>
+    <string name="main_hourly_chime_half_enabled">30分毎の時報を有効にしました</string>
+    <string name="main_hourly_chime_half_disabled">30分毎の時報を無効にしました（1時間毎のみ）</string>
+    <string name="menu_item_hourly_chime_interval">時報の間隔切り替え (1時間毎 / 30分毎)</string>
+    <string name="msg_hourly_chime_interval_1h">時報の間隔を1時間毎に設定しました</string>
+    <string name="msg_hourly_chime_interval_30m">時報の間隔を30分毎に設定しました</string>
+    <string name="title_smart_battery">⚡ スマート充電通知</string>
+    <string name="desc_smart_battery" formatted="false">80%バッテリー保護通知、低残量警告、充電進行状況、充電残り時間をお知らせします。</string>
+    <string name="label_smart_battery_80" formatted="false">80%バッテリー保護通知</string>
+    <string name="desc_smart_battery_80" formatted="false">バッテリー残量が80%に達したときに、劣化防止のため取り外しをおすすめします。</string>
+    <string name="battery_protect_80_reached" formatted="false">バッテリー残量が80%に達しました。バッテリー保護のため充電器の取り外しをおすすめします。</string>
+    <string name="label_smart_battery_low" formatted="false">充電忘れ防止（20%低残量警告）</string>
+    <string name="desc_smart_battery_low" formatted="false">バッテリー残量が20%以下になった時に音声で充電を促します。</string>
+    <string name="battery_low_warning_fmt">バッテリー残量が少なくなっています（%1$d%%）。充電器を接続してください。</string>
+    <string name="label_smart_battery_steps" formatted="false">充電進行ステップ通知（50%・80%）</string>
+    <string name="desc_smart_battery_steps" formatted="false">充電中にバッテリー残量が50%や80%の節目に達したときにお知らせします。</string>
+    <string name="battery_step_reached_fmt">充電中、バッテリー残量が%1$d%%に達しました。</string>
+    <string name="label_smart_battery_estimate">充電開始時の完了予測時間案内</string>
+    <string name="desc_smart_battery_estimate">充電器を接続した際に満充電までのおよその残り時間をお知らせします。</string>
+    <string name="battery_estimate_time_fmt">満充電まであと約%1$d分です。</string>
+    <string name="battery_estimate_time_hours_fmt">満充電まであと約%1$d時間%2$d分です。</string>
+    <string name="btn_test_smart_battery">スマート充電通知のテスト再生</string>
+    <string name="main_smart_battery_80_enabled" formatted="false">80%バッテリー保護通知を有効にしました</string>
+    <string name="main_smart_battery_80_disabled" formatted="false">80%バッテリー保護通知を無効にしました</string>
+    <string name="main_smart_battery_low_enabled">低残量警告通知を有効にしました</string>
+    <string name="main_smart_battery_low_disabled">低残量警告通知を無効にしました</string>
+    <string name="main_smart_battery_steps_enabled">充電進行ステップ通知を有効にしました</string>
+    <string name="main_smart_battery_steps_disabled">充電進行ステップ通知を無効にしました</string>
+    <string name="main_smart_battery_estimate_enabled">完了予測時間案内を有効にしました</string>
+    <string name="main_smart_battery_estimate_disabled">完了予測時間案内を無効にしました</string>
+    <string name="test_smart_battery_announced">繧ｹ繝槭・繝亥・髮ｻ騾夂衍縺ｮ繝・せ繝医ｒ蜀咲函縺励∪縺励◆</string>
 </resources>

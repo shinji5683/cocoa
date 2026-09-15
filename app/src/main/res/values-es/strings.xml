@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -1297,4 +1297,38 @@ Compartir este registro con el desarrollador Shinji ayuda a diagnosticar y soluc
     <string name="service_page_index_single_fmt">%1$d de %2$d elementos</string>
     <string name="service_street_nav_preparing">Preparando navegación de calles</string>
     <string name="service_power_menu">Menú de encendido</string>
+    <string name="service_hourly_chime_half_announcement_fmt">Son las %2$d y media %1$s.</string>
+    <string name="main_hourly_chime_test_half_fmt">Son las %2$d y media %1$s. (Prueba)</string>
+    <string name="label_hourly_chime_half_switch">Anunciar cada 30 minutos</string>
+    <string name="desc_hourly_chime_half_switch">Cuando está activado, anuncia la hora a las medias además de en punto.</string>
+    <string name="main_hourly_chime_half_enabled">Señal cada 30 minutos activada</string>
+    <string name="main_hourly_chime_half_disabled">Señal cada 30 minutos desactivada (Solo cada hora)</string>
+    <string name="menu_item_hourly_chime_interval">Intervalo de señal horaria (Cada hora / Cada 30 min)</string>
+    <string name="msg_hourly_chime_interval_1h">Intervalo de señal cambiado a cada hora</string>
+    <string name="msg_hourly_chime_interval_30m">Intervalo de señal cambiado a cada 30 minutos</string>
+    <string name="title_smart_battery">⚡ Notificaciones inteligentes de batería</string>
+    <string name="desc_smart_battery" formatted="false">Alertas para protección al 80%, recordatorio de batería baja, progreso y tiempo estimado.</string>
+    <string name="label_smart_battery_80" formatted="false">Alerta de protección al 80%</string>
+    <string name="desc_smart_battery_80" formatted="false">Avisa cuando la batería alcanza el 80% para prolongar la vida útil.</string>
+    <string name="battery_protect_80_reached" formatted="false">La batería ha alcanzado el 80%. Se recomienda desconectar el cargador para proteger la salud de la batería.</string>
+    <string name="label_smart_battery_low" formatted="false">Recordatorio de batería baja (20% o menos)</string>
+    <string name="desc_smart_battery_low" formatted="false">Recordatorio de voz para conectar el cargador cuando baje del 20%.</string>
+    <string name="battery_low_warning_fmt">Batería baja (%1$d%%). Por favor, conecte el cargador.</string>
+    <string name="label_smart_battery_steps" formatted="false">Anuncio de progreso de carga (50%, 80%)</string>
+    <string name="desc_smart_battery_steps" formatted="false">Anuncia el progreso cuando la batería alcanza el 50% y el 80% durante la carga.</string>
+    <string name="battery_step_reached_fmt">Cargando: La batería alcanzó el %1$d%%.</string>
+    <string name="label_smart_battery_estimate">Tiempo estimado de carga al conectar</string>
+    <string name="desc_smart_battery_estimate">Anuncia el tiempo restante estimado hasta la carga completa al conectar el cargador.</string>
+    <string name="battery_estimate_time_fmt">Aproximadamente %1$d minutos para carga completa.</string>
+    <string name="battery_estimate_time_hours_fmt">Aproximadamente %1$d horas y %2$d minutos para carga completa.</string>
+    <string name="btn_test_smart_battery">Probar notificación inteligente de batería</string>
+    <string name="main_smart_battery_80_enabled" formatted="false">Alerta de protección al 80% activada</string>
+    <string name="main_smart_battery_80_disabled" formatted="false">Alerta de protección al 80% desactivada</string>
+    <string name="main_smart_battery_low_enabled">Recordatorio de batería baja activado</string>
+    <string name="main_smart_battery_low_disabled">Recordatorio de batería baja desactivado</string>
+    <string name="main_smart_battery_steps_enabled">Anuncios de progreso de carga activados</string>
+    <string name="main_smart_battery_steps_disabled">Anuncios de progreso de carga desactivados</string>
+    <string name="main_smart_battery_estimate_enabled">Tiempo estimado de carga activado</string>
+    <string name="main_smart_battery_estimate_disabled">Tiempo estimado de carga desactivado</string>
+    <string name="test_smart_battery_announced">Prueba de notificaciﾃｳn inteligente de baterﾃｭa reproducida</string>
 </resources>

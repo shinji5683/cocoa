@@ -3,6 +3,51 @@
 すべての更新履歴は、全盲の開発者Shinjiのこだわりと世界中の視覚障害者ユーザーのために、日本語と英語の両方で詳細に記録されています。
 All updates and changelogs are meticulously maintained in both Japanese and English for global visually impaired users.
 
+## [v2.3.6] - 2026-09-15
+### 🇯🇵 日本語
+#### ⚡ スマート充電通知スイート（全項目カスタマイズ可能）
+- **80%バッテリー保護通知**:
+  - 充電中、バッテリー残量が80%に達した瞬間にプレミアム完了ジングル音とともに「バッテリー残量が80%に達しました。バッテリー保護のため充電器の取り外しをおすすめします」とアナウンス。バッテリー劣化を防ぎ寿命を最大化。
+- **充電忘れ防止（20%以下低残量警告）**:
+  - 放電中、残量が20%以下（20%, 15%, 10%, 5%）に低下した際に、優しい警告音とともに充電を促すリマインダーをアナウンス。
+- **充電進行ステップ通知（50%・80%）**:
+  - 充電中に画面をタッチしなくても、キリの良い50%および80%の節目で進捗を自動案内。
+- **充電開始時の満充電予測残り時間案内**:
+  - 充電器を挿した際に、満充電までにかかるおよその残り時間（例:「満充電まであと約42分です」）を自動予測案内。
+- **設定画面＆テストボタン**:
+  - メイン画面に専用のスマート充電通知カードを新設。全機能のON/OFF切り替えおよびテスト再生に対応。
+
+#### 🔔 時報機能の30分毎/1時間毎インターバル切り替え
+- **30分毎アナウンス対応**:
+  - 毎時0分の時報に加え、毎時30分にも心地よいチャイム音とともに「午後3時30分をお知らせします」と自動アナウンスするスイッチを追加。
+- **Serenaメニューからの即座切り替え**:
+  - L字ジェスチャーのSerenaメニュー内に「時報の間隔切り替え (1時間毎 / 30分毎)」を追加し、設定画面を開かずワンタップで切り替え可能。
+
+#### 🌍 厳格な6言語ローカライズ＆ハードコードゼロ
+- 日本語・英語・スペイン語・タガログ語・オランダ語・デフォルトの全6言語に全UI・音声リソースを完全同期。
+
+### 🇺🇸 English
+#### ⚡ Smart Battery Announcement Suite (Fully Customizable)
+- **80% Battery Protection Alert**:
+  - Plays a gentle jingle and announces when battery reaches 80% to encourage unplugging and prolong battery health.
+- **Low Battery Plug-in Reminder (20% & below)**:
+  - Timely audible reminders when battery drops to 20%, 15%, 10%, or 5% to prevent unexpected shutdowns.
+- **Charging Milestone Announcements (50%, 80%)**:
+  - Hands-free audible status updates when battery crosses 50% and 80% while charging.
+- **Estimated Charge Time on Plug In**:
+  - Speaks estimated time remaining until full charge right upon connecting the charger.
+- **Dedicated Settings & Test Button**:
+  - New Smart Battery card in MainActivity with individual toggles and instant announcement preview.
+
+#### 🔔 Hourly Chime: 30-Minute & 1-Hour Interval Toggle
+- **Half-Hour Announcement Support**:
+  - Option to announce the time at both 0 and 30 minutes past the hour.
+- **Instant Toggle via Serena Menu**:
+  - Switch between hourly and 30-minute chime directly from the Serena L-gesture menu.
+
+#### 🌍 Strict 6-Locale Synchronization & Zero Hardcoding
+- Complete parity across Japanese, English, Spanish, Tagalog, Dutch, and Default locale string resources.
+
 ---
 
 ## [v2.3.5] - 2026-09-14

@@ -26,6 +26,9 @@ class BatteryStateHelper(
     private var lastChargingState = false
     private var lastPluggedType = -1
     private var hasAnnouncedFull = false
+    private var hasAnnounced80 = false
+    private var hasAnnounced50 = false
+    private var lastLowAnnouncedPct = -1
     private var hasAnnouncedOverheat = false
 
     private val batteryReceiver = object : BroadcastReceiver() {
@@ -43,6 +46,8 @@ class BatteryStateHelper(
             val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
             val isFull = status == BatteryManager.BATTERY_STATUS_FULL || pct == 100
 
+            val prefs = service.getSharedPreferences(SerenaScreenReaderService.PREFS_NAME, Context.MODE_PRIVATE)
+
             when (action) {
                 Intent.ACTION_POWER_CONNECTED -> {
                     service.soundHelper?.playActionDone()
@@ -50,6 +55,28 @@ class BatteryStateHelper(
                     service.speak(service.getString(R.string.battery_charging_started, chargingDetails, pct), TextToSpeech.QUEUE_FLUSH)
                     lastChargingState = true
                     lastPluggedType = plugged
+                    lastLowAnnouncedPct = -1
+
+                    // 満充電までの予測残り時間案内
+                    val isEstimateEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_ESTIMATE, true)
+                    if (isEstimateEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && bm != null) {
+                        try {
+                            val remainingMs = bm.computeChargeTimeRemaining()
+                            if (remainingMs > 60_000L) {
+                                val totalMin = (remainingMs / 1000 / 60).toInt()
+                                val estimateText = if (totalMin >= 60) {
+                                    val h = totalMin / 60
+                                    val m = totalMin % 60
+                                    service.getString(R.string.battery_estimate_time_hours_fmt, h, m)
+                                } else {
+                                    service.getString(R.string.battery_estimate_time_fmt, totalMin)
+                                }
+                                service.speak(estimateText, TextToSpeech.QUEUE_ADD)
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "computeChargeTimeRemaining error: ${e.message}")
+                        }
+                    }
                 }
                 Intent.ACTION_POWER_DISCONNECTED -> {
                     service.soundHelper?.playFocusMove()
@@ -57,12 +84,15 @@ class BatteryStateHelper(
                     lastChargingState = false
                     lastPluggedType = -1
                     hasAnnouncedFull = false
+                    hasAnnounced80 = false
+                    hasAnnounced50 = false
                 }
                 Intent.ACTION_BATTERY_CHANGED -> {
                     // 充電タイプの途中変更（例: USBからAC急速充電に切り替わった場合など）
                     if (isCharging && !lastChargingState) {
                         lastChargingState = true
                         lastPluggedType = plugged
+                        lastLowAnnouncedPct = -1
                         val chargingDetails = getChargingDetailsDesc(intent, plugged)
                         service.soundHelper?.playActionDone()
                         service.speak(service.getString(R.string.battery_charging_started, chargingDetails, pct), TextToSpeech.QUEUE_ADD)
@@ -70,13 +100,51 @@ class BatteryStateHelper(
                         lastChargingState = false
                         lastPluggedType = -1
                         hasAnnouncedFull = false
+                        hasAnnounced80 = false
+                        hasAnnounced50 = false
                     }
 
-                    // 100% 満充電の初検知（プレミアム完了ジングル♪）
-                    if (isFull && isCharging && !hasAnnouncedFull) {
-                        hasAnnouncedFull = true
-                        service.soundHelper?.playFullChargeJingle()
-                        service.speak(service.getString(R.string.battery_fully_charged), TextToSpeech.QUEUE_ADD)
+                    if (isCharging) {
+                        lastLowAnnouncedPct = -1
+
+                        // 50% 充電進行ステップ通知
+                        val isStepsEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_STEPS, true)
+                        if (isStepsEnabled && pct in 50..79 && !hasAnnounced50) {
+                            hasAnnounced50 = true
+                            service.soundHelper?.playActionDone()
+                            service.speak(service.getString(R.string.battery_step_reached_fmt, 50), TextToSpeech.QUEUE_ADD)
+                        }
+
+                        // 80% バッテリー保護通知（またはステップ通知）
+                        val is80Enabled = prefs.getBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_80, true)
+                        if (pct in 80..99 && !hasAnnounced80) {
+                            hasAnnounced80 = true
+                            if (is80Enabled) {
+                                service.soundHelper?.playFullChargeJingle()
+                                service.speak(service.getString(R.string.battery_protect_80_reached), TextToSpeech.QUEUE_ADD)
+                            } else if (isStepsEnabled) {
+                                service.soundHelper?.playActionDone()
+                                service.speak(service.getString(R.string.battery_step_reached_fmt, 80), TextToSpeech.QUEUE_ADD)
+                            }
+                        }
+
+                        // 100% 満充電の初検知（プレミアム完了ジングル♪）
+                        if (isFull && !hasAnnouncedFull) {
+                            hasAnnouncedFull = true
+                            service.soundHelper?.playFullChargeJingle()
+                            service.speak(service.getString(R.string.battery_fully_charged), TextToSpeech.QUEUE_ADD)
+                        }
+                    } else {
+                        // 放電中: 低残量（20%以下）充電リマインダー
+                        val isLowEnabled = prefs.getBoolean(SerenaScreenReaderService.KEY_SMART_BATTERY_LOW, true)
+                        if (isLowEnabled && pct in 1..20) {
+                            val shouldAlert = (lastLowAnnouncedPct == -1 || pct <= lastLowAnnouncedPct - 5)
+                            if (shouldAlert) {
+                                lastLowAnnouncedPct = pct
+                                service.soundHelper?.playWarningSound()
+                                service.speak(service.getString(R.string.battery_low_warning_fmt, pct), TextToSpeech.QUEUE_ADD)
+                            }
+                        }
                     }
 
                     // バッテリー発熱警告（45℃以上）
@@ -94,6 +162,16 @@ class BatteryStateHelper(
                 }
             }
         }
+    }
+
+    /**
+     * スマート充電通知のテスト再生
+     */
+    fun testSmartBatteryAnnouncement() {
+        service.soundHelper?.playFullChargeJingle()
+        val sample80 = service.getString(R.string.battery_protect_80_reached)
+        val sampleEst = service.getString(R.string.battery_estimate_time_fmt, 45)
+        service.speak("$sample80 $sampleEst", TextToSpeech.QUEUE_FLUSH)
     }
 
     fun start() {
