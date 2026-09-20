@@ -212,8 +212,11 @@ class AccessibilityNodeEvaluator {
                 return true
             }
 
+            val isProgressBar = className.contains("ProgressBar", ignoreCase = true)
+            val isSeekBar = className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true)
             val isActionable = node.isClickable || node.isCheckable || node.isFocusable || node.isLongClickable ||
-                    node.safeIsHeading || isSwitchOrToggle(node) || isCheckableOrCompound(node)
+                    node.safeIsHeading || isSwitchOrToggle(node) || isCheckableOrCompound(node) ||
+                    isProgressBar || isSeekBar || node.rangeInfo != null
 
             val hasDirect = hasDirectTextOrLabel(node)
 
@@ -372,18 +375,17 @@ class AccessibilityNodeEvaluator {
             }
 
             val className = node.className?.toString() ?: ""
-            val rangeInfo = node.rangeInfo
-            val isSeekBar = className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true) || rangeInfo != null
+            val isSeekBarOrProgress = className.contains("SeekBar", ignoreCase = true) ||
+                    className.contains("Slider", ignoreCase = true) ||
+                    className.contains("ProgressBar", ignoreCase = true) ||
+                    node.rangeInfo != null
 
-            if (isSeekBar) {
+            if (isSeekBarOrProgress) {
                 val title = text ?: ""
                 val cleanTitle = if (title.contains("value", ignoreCase = true) || title.contains("バリュー", ignoreCase = true)) "" else title
-                val pct = if (rangeInfo != null && (rangeInfo.max - rangeInfo.min) > 0) {
-                    ((rangeInfo.current - rangeInfo.min) * 100 / (rangeInfo.max - rangeInfo.min)).toInt()
-                } else {
-                    50
+                if (cleanTitle.isNotEmpty()) {
+                    return cleanTitle
                 }
-                return if (cleanTitle.isNotEmpty()) "$cleanTitle スライダー $pct%" else "スライダー $pct%"
             }
 
             // 2. PIN / パスワード入力欄の徹底した安全性保護（平文PIN/パスワードの漏洩を完全防止）

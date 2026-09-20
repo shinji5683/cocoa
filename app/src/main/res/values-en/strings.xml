@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -108,6 +108,9 @@
     <string name="role_email_entry">Email entry</string>
     <string name="role_url_entry">URL entry</string>
     <string name="role_slider">Slider</string>
+    <string name="role_progress_bar">Progress bar</string>
+    <string name="role_dropdown_list">Dropdown list</string>
+    <string name="role_tab">Tab</string>
     <string name="role_widget">Widget</string>
     <string name="role_expand_button">Expand button</string>
     <string name="role_collapse_button">Collapse button</string>
@@ -124,6 +127,9 @@
     <string name="state_collapsed">collapsed</string>
     <string name="state_expanded">expanded</string>
     <string name="state_disabled">disabled</string>
+    <string name="state_in_progress">in progress</string>
+    <string name="progress_percent">%d percent</string>
+    <string name="progress_complete">Complete</string>
 
     <!-- Menu Status & Settings Values -->
     <string name="precision_exact_block">Street level (Detailed)</string>

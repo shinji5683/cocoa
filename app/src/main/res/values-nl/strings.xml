@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">serena Screen Reader</string>
     <string name="accessibility_service_name">serena Screen Reader</string>
@@ -108,6 +108,9 @@
     <string name="role_email_entry">E-mailinvoer</string>
     <string name="role_url_entry">URL-invoer</string>
     <string name="role_slider">Schuifregelaar</string>
+    <string name="role_progress_bar">Voortgangsbalk</string>
+    <string name="role_dropdown_list">Vervolgkeuzelijst</string>
+    <string name="role_tab">Tabblad</string>
     <string name="role_widget">Widget</string>
     <string name="role_expand_button">Knop Uitvouwen</string>
     <string name="role_collapse_button">Knop Samenvouwen</string>
@@ -124,6 +127,9 @@
     <string name="state_collapsed">samengevouwen</string>
     <string name="state_expanded">uitgevouwen</string>
     <string name="state_disabled">uitgeschakeld</string>
+    <string name="state_in_progress">bezig</string>
+    <string name="progress_percent">%d procent</string>
+    <string name="progress_complete">Voltooid</string>
 
     <!-- Menu Status & Settings Values -->
     <string name="precision_exact_block">Straatniveau (Gedetailleerd)</string>

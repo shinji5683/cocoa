@@ -987,12 +987,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             val className = focused.className?.toString() ?: ""
-            // 1. スライダー (SeekBar / Slider / ProgressBar)
-            if (className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true) || className.contains("ProgressBar", ignoreCase = true)) {
+            // 1. スライダー (SeekBar / Slider)
+            if (className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true)) {
                 val success = focused.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD.id) ||
                               focused.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
                 if (success) {
                     soundHelper?.playActionDone()
+                    val currentRange = focused.rangeInfo
+                    if (currentRange != null && (currentRange.max - currentRange.min) > 0) {
+                        val pct = ((currentRange.current - currentRange.min) * 100 / (currentRange.max - currentRange.min)).toInt().coerceIn(0, 100)
+                        speak(getString(R.string.progress_percent, pct), TextToSpeech.QUEUE_FLUSH)
+                    }
                     return
                 }
             }
@@ -1072,12 +1077,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             val className = focused.className?.toString() ?: ""
-            // 1. スライダー (SeekBar / Slider / ProgressBar)
-            if (className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true) || className.contains("ProgressBar", ignoreCase = true)) {
+            // 1. スライダー (SeekBar / Slider)
+            if (className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true)) {
                 val success = focused.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.id) ||
                               focused.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
                 if (success) {
                     soundHelper?.playActionDone()
+                    val currentRange = focused.rangeInfo
+                    if (currentRange != null && (currentRange.max - currentRange.min) > 0) {
+                        val pct = ((currentRange.current - currentRange.min) * 100 / (currentRange.max - currentRange.min)).toInt().coerceIn(0, 100)
+                        speak(getString(R.string.progress_percent, pct), TextToSpeech.QUEUE_FLUSH)
+                    }
                     return
                 }
             }
@@ -2542,6 +2552,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     private var lastKeyboardHoverExitTimeMs = 0L
     private var lastLiftToTypeTimeMs = 0L
     private var lastStatusAnnounceTimeMs = 0L
+    private var lastProgressNodeHash = 0
+    private var lastProgressPercent = -1
+    private var lastProgressAnnounceTimeMs = 0L
 
     private fun getStatusBarHeight(): Int {
         val resId = resources.getIdentifier("status_bar_height", "dimen", "android")
@@ -3429,6 +3442,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
                 // コンテンツ動的更新時はフォーカス奪取を行わない（誤爆・ループ防止）
+                handleProgressBarProgressChanged(event)
             }
 
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_START -> {
@@ -4103,6 +4117,47 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    private fun handleProgressBarProgressChanged(event: AccessibilityEvent) {
+        val source = event.source ?: return
+        try {
+            val className = source.className?.toString() ?: ""
+            val isProgress = className.contains("ProgressBar", ignoreCase = true) || className.contains("SeekBar", ignoreCase = true)
+            val rangeInfo = source.rangeInfo
+            if (isProgress && rangeInfo != null && (rangeInfo.max - rangeInfo.min) > 0) {
+                val currentPct = ((rangeInfo.current - rangeInfo.min) * 100 / (rangeInfo.max - rangeInfo.min)).toInt().coerceIn(0, 100)
+                val nodeHash = source.hashCode()
+                val now = System.currentTimeMillis()
+
+                if (nodeHash == lastProgressNodeHash) {
+                    val delta = kotlin.math.abs(currentPct - lastProgressPercent)
+                    val isComplete = currentPct >= 100 && lastProgressPercent < 100
+                    val isSignificantProgress = delta >= 10 && (now - lastProgressAnnounceTimeMs > 2500L)
+
+                    if (isComplete) {
+                        lastProgressPercent = 100
+                        lastProgressAnnounceTimeMs = now
+                        soundHelper?.playActionDone()
+                        val label = getNodeText(source)
+                        val msg = if (label.isNotEmpty()) "$label ${getString(R.string.progress_complete)}" else getString(R.string.progress_complete)
+                        speak(msg, TextToSpeech.QUEUE_ADD)
+                    } else if (isSignificantProgress) {
+                        lastProgressPercent = currentPct
+                        lastProgressAnnounceTimeMs = now
+                        soundHelper?.playScroll()
+                        speak(getString(R.string.progress_percent, currentPct), TextToSpeech.QUEUE_ADD)
+                    }
+                } else {
+                    lastProgressNodeHash = nodeHash
+                    lastProgressPercent = currentPct
+                    lastProgressAnnounceTimeMs = now
+                }
+            }
+        } catch (_: Exception) {
+        } finally {
+            try { source.recycle() } catch (_: Exception) {}
+        }
+    }
+
     private fun getNodeRole(node: AccessibilityNodeInfo): String {
         // キーボードキー（文字キー・特殊キー等）には冗長な「Button」「ボタン」ロールを付与しない
         if (isKeyboardNode(node)) {
@@ -4148,7 +4203,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 }
             }
             className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true) -> if (node.isClickable) getString(R.string.role_button) else getString(R.string.role_image)
-            className.contains("SeekBar", ignoreCase = true) -> getString(R.string.role_slider)
+            className.contains("ProgressBar", ignoreCase = true) -> getString(R.string.role_progress_bar)
+            className.contains("SeekBar", ignoreCase = true) || className.contains("Slider", ignoreCase = true) -> getString(R.string.role_slider)
+            className.contains("Spinner", ignoreCase = true) -> getString(R.string.role_dropdown_list)
+            className.contains("Tab", ignoreCase = true) || className.contains("TabItem", ignoreCase = true) || viewId.contains("tab") -> getString(R.string.role_tab)
             target.isCheckable -> getString(R.string.role_switch)
             className.contains("TextView", ignoreCase = true) -> if (node.isClickable) getString(R.string.role_button) else ""
             node.isClickable -> getString(R.string.role_button)
@@ -4188,13 +4246,43 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 states.add(if (target.isChecked) getString(R.string.state_on) else getString(R.string.state_off))
             }
         }
-        val selectedStr = getString(R.string.state_selected)
-        if (node.isSelected && !states.contains(selectedStr)) {
-            states.add(selectedStr)
+
+        // 3. プログレスバー / スライダーの進行状況・進捗率（Determinate / Indeterminate）判定
+        val isProgress = className.contains("ProgressBar", ignoreCase = true) ||
+                node.className?.toString()?.contains("ProgressBar", ignoreCase = true) == true
+        val isSlider = className.contains("SeekBar", ignoreCase = true) ||
+                className.contains("Slider", ignoreCase = true) ||
+                node.className?.toString()?.contains("SeekBar", ignoreCase = true) == true ||
+                node.className?.toString()?.contains("Slider", ignoreCase = true) == true
+        val rangeInfo = target.rangeInfo ?: node.rangeInfo
+        if (isProgress || isSlider || rangeInfo != null) {
+            if (rangeInfo != null && (rangeInfo.max - rangeInfo.min) > 0) {
+                val pct = ((rangeInfo.current - rangeInfo.min) * 100 / (rangeInfo.max - rangeInfo.min)).toInt().coerceIn(0, 100)
+                states.add(getString(R.string.progress_percent, pct))
+            } else if (isProgress) {
+                // 不確定（Indeterminate / くるくるローディング）のプログレスバー
+                states.add(getString(R.string.state_in_progress))
+            }
         }
 
-        // 3. 有効/無効の判定（クリック可能・展開可能な要素に対して誤って「無効」と言わないよう防御）
-        val isInteractive = node.isClickable || node.isCheckable || target.isClickable || target.isCheckable
+        // 4. 選択状態（タブなど）
+        val isTab = className.contains("Tab", ignoreCase = true) ||
+                node.className?.toString()?.contains("Tab", ignoreCase = true) == true ||
+                node.viewIdResourceName?.lowercase()?.contains("tab") == true
+        val selectedStr = getString(R.string.state_selected)
+        val notSelectedStr = getString(R.string.state_not_selected)
+        if (node.isSelected || target.isSelected) {
+            if (!states.contains(selectedStr)) {
+                states.add(selectedStr)
+            }
+        } else if (isTab) {
+            if (!states.contains(notSelectedStr) && !states.contains(selectedStr)) {
+                states.add(notSelectedStr)
+            }
+        }
+
+        // 5. 有効/無効の判定（クリック可能・展開可能・進行中要素に対して誤って「無効」と言わないよう防御）
+        val isInteractive = node.isClickable || node.isCheckable || target.isClickable || target.isCheckable || isProgress || isSlider
         if (!node.isEnabled && !target.isEnabled && !isInteractive) {
             states.add(getString(R.string.state_disabled))
         }
