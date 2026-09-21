@@ -694,6 +694,8 @@
     <string name="transit_braille_center">🟨 Tactile paving is directly ahead. Continue straight.</string>
     <string name="transit_braille_slight_right">🟨 Tactile paving is slightly right.</string>
     <string name="transit_braille_far_right">🟨 Tactile paving is on your far right.</string>
+    <string name="transit_pedestrian_detected">🚶 Pedestrian %1$s, %2$s</string>
+    <string name="transit_pedestrian_close_warning">⚠️ Caution, pedestrian very close %1$s</string>
     <string name="loc_acquiring">Location: Acquiring</string>
     <string name="loc_positioning">Location: Positioning</string>
     <string name="loc_gps_off">Location: GPS off</string>

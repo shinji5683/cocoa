@@ -695,6 +695,8 @@
     <string name="transit_braille_center">🟨 Voelbare tegels recht voor u. Loop rechtdoor.</string>
     <string name="transit_braille_slight_right">🟨 Voelbare tegels iets naar rechts.</string>
     <string name="transit_braille_far_right">🟨 Voelbare tegels aan uw uiterste rechterzijde.</string>
+    <string name="transit_pedestrian_detected">🚶 Voetganger %1$s, %2$s</string>
+    <string name="transit_pedestrian_close_warning">⚠️ Let op, voetganger zeer dichtbij %1$s</string>
     <string name="loc_acquiring">Locatie: Ophalen</string>
     <string name="loc_positioning">Locatie: Bepalen</string>
     <string name="loc_gps_off">Locatie: GPS uit</string>

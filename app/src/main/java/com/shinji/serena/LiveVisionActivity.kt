@@ -341,39 +341,82 @@ class LiveVisionActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     }
             }
             "WALK_TRANSIT" -> {
-                try {
-                    val bitmap = imageProxy.toBitmap()
-                    val walkState = WalkAndTransitVisionHelper.analyzeWalkingScene(
-                        bitmap = bitmap,
-                        imageWidth = imgWidth,
-                        imageHeight = imgHeight,
-                        context = this
-                    )
+                val bitmap = try {
+                    imageProxy.toBitmap()
+                } catch (e: Exception) {
+                    null
+                }
+                val walkState = WalkAndTransitVisionHelper.analyzeWalkingScene(
+                    bitmap = bitmap,
+                    imageWidth = imgWidth,
+                    imageHeight = imgHeight,
+                    context = this
+                )
 
-                    val parts = mutableListOf<String>()
-                    if (walkState.trafficLightMessage != null) {
-                        parts.add(walkState.trafficLightMessage)
-                    }
-                    if (walkState.brailleBlockMessage != null) {
-                        parts.add(walkState.brailleBlockMessage)
-                    }
+                faceDetector.process(image)
+                    .addOnSuccessListener { faces ->
+                        val faceRects = faces.map { it.boundingBox }
+                        val pedGuide = WalkAndTransitVisionHelper.calculatePedestrianGuideFromFaces(
+                            faceRects = faceRects,
+                            imageWidth = imgWidth,
+                            imageHeight = imgHeight,
+                            context = this
+                        )
 
-                    if (parts.isNotEmpty()) {
-                        val announcement = parts.joinToString(" ")
-                        if (announcement != lastSpokenText || currentTime - lastSpokenTime > 3500) {
-                            lastSpokenText = announcement
-                            lastSpokenTime = currentTime
-                            runOnUiThread {
-                                tvStatus.text = "🚦 $announcement"
+                        val parts = mutableListOf<String>()
+                        // 1. 信号機（最優先）
+                        if (walkState.trafficLightMessage != null) {
+                            parts.add(walkState.trafficLightMessage)
+                        }
+                        // 2. 至近距離の歩行者警告（衝突防止）
+                        if (pedGuide != null && pedGuide.isVeryClose) {
+                            parts.add(pedGuide.message)
+                        }
+                        // 3. 点字ブロック
+                        if (walkState.brailleBlockMessage != null) {
+                            parts.add(walkState.brailleBlockMessage)
+                        }
+                        // 4. 通常の歩行者接近（至近距離でない場合）
+                        if (pedGuide != null && !pedGuide.isVeryClose) {
+                            parts.add(pedGuide.message)
+                        }
+
+                        if (parts.isNotEmpty()) {
+                            val announcement = parts.joinToString(" ")
+                            if (announcement != lastSpokenText || currentTime - lastSpokenTime > 3500) {
+                                lastSpokenText = announcement
+                                lastSpokenTime = currentTime
+                                runOnUiThread {
+                                    tvStatus.text = "🚦 $announcement"
+                                }
+                                speak(announcement, TextToSpeech.QUEUE_FLUSH)
                             }
-                            speak(announcement, TextToSpeech.QUEUE_FLUSH)
                         }
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Walk transit analysis error: ${e.message}")
-                } finally {
-                    imageProxy.close()
-                }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Walk transit pedestrian detection error: ${e.message}")
+                        val parts = mutableListOf<String>()
+                        if (walkState.trafficLightMessage != null) {
+                            parts.add(walkState.trafficLightMessage)
+                        }
+                        if (walkState.brailleBlockMessage != null) {
+                            parts.add(walkState.brailleBlockMessage)
+                        }
+                        if (parts.isNotEmpty()) {
+                            val announcement = parts.joinToString(" ")
+                            if (announcement != lastSpokenText || currentTime - lastSpokenTime > 3500) {
+                                lastSpokenText = announcement
+                                lastSpokenTime = currentTime
+                                runOnUiThread {
+                                    tvStatus.text = "🚦 $announcement"
+                                }
+                                speak(announcement, TextToSpeech.QUEUE_FLUSH)
+                            }
+                        }
+                    }
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
             }
             "BARCODE_DOC" -> {
                 barcodeScanner.process(image)

@@ -695,6 +695,8 @@
     <string name="transit_braille_center">🟨 正面に点字ブロックがあります。このまま直進してください。</string>
     <string name="transit_braille_slight_right">🟨 点字ブロックはやや右です。</string>
     <string name="transit_braille_far_right">🟨 点字ブロックは右側にあります。</string>
+    <string name="transit_pedestrian_detected">🚶 %1$s %2$sに歩行者</string>
+    <string name="transit_pedestrian_close_warning">⚠️ 注意、%1$s 至近距離に歩行者がいます</string>
     <string name="loc_acquiring">位置情報: 取得中</string>
     <string name="loc_positioning">位置情報: 測位中</string>
     <string name="loc_gps_off">位置情報: GPSオフ</string>

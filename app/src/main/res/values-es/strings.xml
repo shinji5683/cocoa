@@ -726,6 +726,8 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <string name="transit_braille_center">🟨 Pavimento táctil al frente. Continúe recto.</string>
     <string name="transit_braille_slight_right">🟨 Pavimento táctil ligeramente a la derecha.</string>
     <string name="transit_braille_far_right">🟨 Pavimento táctil a su derecha.</string>
+    <string name="transit_pedestrian_detected">🚶 Peatón %1$s, %2$s</string>
+    <string name="transit_pedestrian_close_warning">⚠️ Atención, peatón muy cerca %1$s</string>
     <string name="loc_acquiring">Ubicación: Obteniendo</string>
     <string name="loc_positioning">Ubicación: Posicionando</string>
     <string name="loc_gps_off">Ubicación: GPS desactivado</string>

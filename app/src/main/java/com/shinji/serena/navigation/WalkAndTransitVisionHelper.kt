@@ -30,13 +30,21 @@ object WalkAndTransitVisionHelper {
         NONE       // 検知なし
     }
 
+    data class PedestrianGuide(
+        val direction: String,
+        val distance: String,
+        val isVeryClose: Boolean,
+        val message: String
+    )
+
     data class TransitWalkState(
         val trafficLight: TrafficLightState,
         val trafficLightMessage: String?,
         val brailleBlockFound: Boolean,
         val brailleBlockDirection: DirectionGuide,
         val brailleBlockMessage: String?,
-        val stereoPan: Float // -1.0 (全左) 〜 0.0 (中央) 〜 +1.0 (全右)
+        val stereoPan: Float, // -1.0 (全左) 〜 0.0 (中央) 〜 +1.0 (全右)
+        val pedestrianGuide: PedestrianGuide? = null
     )
 
     /**
@@ -138,5 +146,100 @@ object WalkAndTransitVisionHelper {
             brailleBlockMessage = brailleMsg,
             stereoPan = pan
         )
+    }
+
+    /**
+     * 検出された顔のバウンディングボックス群から、注視すべき歩行者を特定し、相対方向と距離の案内を生成
+     */
+    fun calculatePedestrianGuideFromFaces(
+        faceRects: List<android.graphics.Rect>,
+        imageWidth: Int,
+        imageHeight: Int,
+        context: Context
+    ): PedestrianGuide? {
+        if (faceRects.isEmpty() || imageWidth <= 0 || imageHeight <= 0) return null
+        val primary = faceRects.maxByOrNull { it.width() * it.height() } ?: return null
+        val centerX = primary.centerX().toFloat() / imageWidth.coerceAtLeast(1)
+        val direction = when {
+            centerX < 0.25f -> context.getString(R.string.dir_left)
+            centerX in 0.25f..0.40f -> context.getString(R.string.dir_front_left)
+            centerX in 0.40f..0.60f -> context.getString(R.string.dir_front)
+            centerX in 0.60f..0.75f -> context.getString(R.string.dir_front_right)
+            else -> context.getString(R.string.dir_right)
+        }
+        val widthRatio = primary.width().toFloat() / imageWidth.coerceAtLeast(1)
+        val isVeryClose = widthRatio > 0.28f
+        val distance = when {
+            widthRatio > 0.28f -> context.getString(R.string.face_distance_close_60cm)
+            widthRatio > 0.18f -> context.getString(R.string.face_distance_1m_short)
+            widthRatio > 0.10f -> context.getString(R.string.face_distance_1_5m)
+            widthRatio > 0.05f -> context.getString(R.string.face_distance_2_5m)
+            else -> context.getString(R.string.face_distance_far_3m)
+        }
+        val message = if (isVeryClose) {
+            context.getString(R.string.transit_pedestrian_close_warning, direction)
+        } else {
+            context.getString(R.string.transit_pedestrian_detected, direction, distance)
+        }
+        return PedestrianGuide(direction, distance, isVeryClose, message)
+    }
+
+    /**
+     * 検出された人物（全身・半身）のバウンディングボックス群から、注視すべき歩行者を特定し、相対方向と距離の案内を生成
+     */
+    fun calculatePedestrianGuideFromObjects(
+        personRects: List<android.graphics.Rect>,
+        imageWidth: Int,
+        imageHeight: Int,
+        context: Context
+    ): PedestrianGuide? {
+        if (personRects.isEmpty() || imageWidth <= 0 || imageHeight <= 0) return null
+        val primary = personRects.maxByOrNull { it.width() * it.height() } ?: return null
+        val centerX = primary.centerX().toFloat() / imageWidth.coerceAtLeast(1)
+        val direction = when {
+            centerX < 0.25f -> context.getString(R.string.dir_left)
+            centerX in 0.25f..0.40f -> context.getString(R.string.dir_front_left)
+            centerX in 0.40f..0.60f -> context.getString(R.string.dir_front)
+            centerX in 0.60f..0.75f -> context.getString(R.string.dir_front_right)
+            else -> context.getString(R.string.dir_right)
+        }
+        val heightRatio = primary.height().toFloat() / imageHeight.coerceAtLeast(1)
+        val isVeryClose = heightRatio > 0.65f
+        val distance = when {
+            heightRatio > 0.65f -> context.getString(R.string.face_distance_close_60cm)
+            heightRatio > 0.45f -> context.getString(R.string.face_distance_1m_short)
+            heightRatio > 0.28f -> context.getString(R.string.face_distance_1_5m)
+            heightRatio > 0.15f -> context.getString(R.string.face_distance_2_5m)
+            else -> context.getString(R.string.face_distance_far_3m)
+        }
+        val message = if (isVeryClose) {
+            context.getString(R.string.transit_pedestrian_close_warning, direction)
+        } else {
+            context.getString(R.string.transit_pedestrian_detected, direction, distance)
+        }
+        return PedestrianGuide(direction, distance, isVeryClose, message)
+    }
+
+    /**
+     * 顔検出と物体検出の結果を統合し、最も重要・近接している歩行者案内を選択
+     */
+    fun calculateBestPedestrianGuide(
+        faceRects: List<android.graphics.Rect>,
+        objectPersonRects: List<android.graphics.Rect>,
+        imageWidth: Int,
+        imageHeight: Int,
+        context: Context
+    ): PedestrianGuide? {
+        val faceGuide = calculatePedestrianGuideFromFaces(faceRects, imageWidth, imageHeight, context)
+        val objectGuide = calculatePedestrianGuideFromObjects(objectPersonRects, imageWidth, imageHeight, context)
+
+        return when {
+            faceGuide != null && objectGuide != null -> {
+                if (faceGuide.isVeryClose || !objectGuide.isVeryClose) faceGuide else objectGuide
+            }
+            faceGuide != null -> faceGuide
+            objectGuide != null -> objectGuide
+            else -> null
+        }
     }
 }

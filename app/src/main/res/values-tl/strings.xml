@@ -679,6 +679,8 @@
     <string name="transit_braille_center">🟨 Tactile paving sa tapat mo. Magpatuloy nang diretso.</string>
     <string name="transit_braille_slight_right">Bahagyang pakanan ang tactile paving.</string>
     <string name="transit_braille_far_right">🟨 Ang tactile paving ay nasa kanan.</string>
+    <string name="transit_pedestrian_detected">🚶 May taong naglalakad %1$s, %2$s</string>
+    <string name="transit_pedestrian_close_warning">⚠️ Mag-ingat, may taong napakalapit %1$s</string>
     <string name="loc_acquiring">Lokasyon: Kinukuha</string>
     <string name="loc_positioning">Lokasyon: Sinusukat</string>
     <string name="loc_gps_off">Lokasyon: Naka-off ang GPS</string>
