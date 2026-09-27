@@ -532,11 +532,17 @@
     <!-- Auto Update Background Notification -->
     <string name="update_new_version_available_fmt">May bagong bersyon ang Serena, %1$s. Maaari kang mag-update anumang oras mula sa Serena Menu.</string>
 
-    <!-- Mga anunsyo sa kahon ng pahintulot -->
+    <!-- Mga anunsyo sa kahon ng pahintulot at sistema -->
     <string name="permission_dialog_tag">Kumpirmasyon</string>
     <string name="permission_dialog_default_msg">Humihiling ng pahintulot.</string>
     <string name="permission_dialog_hint">Nakatambad ang kahon ng pahintulot. Mag-swipe pakaliwa o pakanan para pumili.</string>
     <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
+    <string name="dialog_tag_confirmation">Kumpirmasyon</string>
+    <string name="dialog_tag_alert">Babala</string>
+    <string name="dialog_default_title">Kahon ng diyalogo</string>
+    <string name="dialog_hint">Nakatambad ang kahon ng diyalogo. Mag-swipe pakaliwa o pakanan para pumili.</string>
+    <string name="dialog_announcement_fmt">[%1$s] %2$s</string>
+    <string name="dialog_announcement_with_title_and_message_fmt">[%1$s] %2$s. %3$s</string>
 
     <!-- Mga pagkilos, pag-navigate at operasyon -->
     <string name="action_page_next">Lumipat sa susunod na pahina</string>

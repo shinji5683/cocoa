@@ -80,7 +80,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var activeMenuDialog: serenaMenuDialog? = null
 
     private var tts: TextToSpeech? = null
-    private var isTtsReady = false
+    var isTtsReady = false
     private var lastSpokenText: String? = null
     private var lastSpokenTime: Long = 0L
     var lastFocusTimeMs: Long = 0L
@@ -3257,48 +3257,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     }
 
     private fun announcePermissionDialogWithRetry(attempt: Int) {
-        val delayMs = if (attempt == 1) 150L else 250L
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            val nodes = collectAccessibleNodes()
-            if (nodes.isNotEmpty()) {
-                val msgNode = nodes.find {
-                    val id = it.viewIdResourceName?.lowercase() ?: ""
-                    id.contains("permission_message") || id.contains("message") || id.contains("desc")
-                } ?: nodes.find { !it.isClickable && getNodeText(it).isNotEmpty() }
-
-                val rawMsg = if (msgNode != null) getNodeText(msgNode) else ""
-                val defaultMsg = getString(R.string.permission_dialog_default_msg)
-                val msgText = if (rawMsg.isNotEmpty()) rawMsg else defaultMsg
-
-                val tag = getString(R.string.permission_dialog_tag)
-                val fullAnnouncement = getString(R.string.permission_dialog_announcement_fmt, tag, msgText)
-
-                val primaryButton = nodes.find {
-                    val id = it.viewIdResourceName?.lowercase() ?: ""
-                    it.isClickable && (id.contains("allow_foreground") || id.contains("allow_always") || id.contains("allow_button") || id.contains("grant") || id.contains("ok"))
-                } ?: nodes.find {
-                    it.isClickable && (it.className?.toString()?.contains("Button") == true)
-                } ?: nodes.find { it.isClickable } ?: nodes[0]
-
-                focusNavigator?.setFocusAndShowOnScreen(primaryButton)
-                if (isTtsReady) {
-                    speak(fullAnnouncement, TextToSpeech.QUEUE_FLUSH)
-                    announceNode(primaryButton, TextToSpeech.QUEUE_ADD)
-                }
-            } else {
-                if (attempt < 3) {
-                    announcePermissionDialogWithRetry(attempt + 1)
-                } else {
-                    if (isTtsReady) {
-                        speak(getString(R.string.permission_dialog_hint), TextToSpeech.QUEUE_FLUSH)
-                    }
-                }
-            }
-        }, delayMs)
+        com.shinji.serena.navigation.SystemDialogHelper.announceDialogWithRetry(this, attempt)
     }
 
     private fun handleWindowFocusTransition(windowTitle: String, isDialog: Boolean, delayMs: Long = 150L) {
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            // 最前面にダイアログが存在する場合、または直近にダイアログ処理が行われた場合は背景へのフォーカス遷移を中断
+            val topDialog = com.shinji.serena.navigation.SystemDialogHelper.findTopDialogWindow(this)
+            if (topDialog != null) return@postDelayed
+            val now = System.currentTimeMillis()
+            if (now - com.shinji.serena.navigation.SystemDialogHelper.lastHandledTimeMs < 1500L) return@postDelayed
+
             val nodes = collectAccessibleNodes()
             if (nodes.isNotEmpty()) {
                 val currentFocus = getAccessibilityFocusedNode()
@@ -3369,16 +3338,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 if (!isKeyguardLocked()) {
                     try {
                         val wins = windows
-                        val hasPermWin = wins?.any { w ->
-                            val p = w.root?.packageName?.toString() ?: ""
-                            com.shinji.serena.navigation.SerenaFocusNavigator.isPermissionOrSecurityPackage(p)
-                        } == true
-                        if (hasPermWin) {
+                        val topDialog = com.shinji.serena.navigation.SystemDialogHelper.findTopDialogWindow(this)
+                        if (topDialog != null) {
                             announcePermissionDialogWithRetry(attempt = 1)
                             return
                         }
                     } catch (_: Exception) {}
-                    handleWindowFocusTransition(windowTitle = "", isDialog = true, delayMs = 150)
+                    handleWindowFocusTransition(windowTitle = "", isDialog = false, delayMs = 150)
                 }
             }
 
@@ -3425,18 +3391,30 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
-                val isPermission = com.shinji.serena.navigation.SerenaFocusNavigator.isPermissionOrSecurityPackage(pkgName)
-                if (isPermission) {
-                    announcePermissionDialogWithRetry(attempt = 1)
+                val isPermission = com.shinji.serena.navigation.SystemDialogHelper.isPermissionPackage(pkgName)
+                val isSpecial = com.shinji.serena.navigation.SystemDialogHelper.isSpecialSystemDialogPackage(pkgName)
+                val isDialog = isPermission || isSpecial ||
+                        className.contains("Dialog", ignoreCase = true) ||
+                        className.contains("AlertDialog", ignoreCase = true) ||
+                        className.contains("PopupWindow", ignoreCase = true) ||
+                        pkgName.contains("com.google.android.gms") ||
+                        com.shinji.serena.navigation.SystemDialogHelper.isSystemUiDialog(rootInActiveWindow) ||
+                        com.shinji.serena.navigation.SystemDialogHelper.isGeneralDialog(rootInActiveWindow, className)
+
+                if (isDialog) {
+                    if (isKeyguardLocked()) {
+                        autoFocusPinKeypadIfPresent(force = false)
+                    } else {
+                        announcePermissionDialogWithRetry(attempt = 1)
+                    }
                     return
                 }
 
-                val isDialog = className.contains("Dialog", ignoreCase = true) || className.contains("AlertDialog", ignoreCase = true) || className.contains("PopupWindow", ignoreCase = true) || pkgName.contains("com.google.android.gms")
                 if (isKeyguardLocked()) {
                     // ロック画面 / Bouncer のウィンドウ検知時のみPIN入力欄を捕捉
                     autoFocusPinKeypadIfPresent(force = false)
                 } else {
-                    handleWindowFocusTransition(windowTitle, isDialog, delayMs = 180)
+                    handleWindowFocusTransition(windowTitle, isDialog = false, delayMs = 180)
                 }
             }
 
@@ -3545,7 +3523,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 lastFocusTimeMs = now
                 lastHoveredNode = node
                 if (isTtsReady) {
-                    val queueMode = if (now - lastScrollTime < 900) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
+                    val isDialogRecent = (now - com.shinji.serena.navigation.SystemDialogHelper.lastHandledTimeMs) < 2500L
+                    val queueMode = if (isDialogRecent || now - lastScrollTime < 900) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
                     announceNode(node, queueMode)
                 }
             }

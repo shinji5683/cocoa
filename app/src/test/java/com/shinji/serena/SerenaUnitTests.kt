@@ -171,4 +171,55 @@ class SerenaUnitTests {
         assertEquals("黒丸を1文字削除", getPasswordTypeFeedback(true, 0, 1))
         assertEquals("黒丸を2文字削除", getPasswordTypeFeedback(true, 0, 2))
     }
+
+    @Test
+    fun testSystemDialogHelperPackageClassification() {
+        val permissionPkgs = listOf(
+            "com.google.android.permissioncontroller",
+            "com.android.permissioncontroller",
+            "com.android.packageinstaller",
+            "com.google.android.packageinstaller",
+            "com.samsung.android.permissioncontroller",
+            "com.miui.securitycenter",
+            "com.miui.securitypermission",
+            "com.lbe.security.miui",
+            "com.coloros.safecenter",
+            "com.oplus.securitypermission",
+            "com.vivo.permissionmanager",
+            "com.iqoo.secure",
+            "com.huawei.systemmanager",
+            "com.hihonor.systemmanager",
+            "com.transsion.phonemaster",
+            "com.lenovo.safecenter"
+        )
+        for (pkg in permissionPkgs) {
+            assertTrue("Package $pkg should be detected as permission package",
+                com.shinji.serena.navigation.SystemDialogHelper.isPermissionPackage(pkg))
+            assertTrue("Package $pkg should be detected in SerenaFocusNavigator",
+                com.shinji.serena.navigation.SerenaFocusNavigator.isPermissionOrSecurityPackage(pkg))
+        }
+
+        val specialPkgs = listOf(
+            "com.android.vpndialogs",
+            "com.android.companiondevicemanager",
+            "com.google.android.permissioncontroller"
+        )
+        for (pkg in specialPkgs) {
+            assertTrue("Package $pkg should be detected as special system dialog package",
+                com.shinji.serena.navigation.SystemDialogHelper.isSpecialSystemDialogPackage(pkg))
+        }
+
+        val normalPkgs = listOf(
+            "com.shinji.serena",
+            "com.android.calculator2",
+            "org.telegram.messenger",
+            "com.android.vending"
+        )
+        for (pkg in normalPkgs) {
+            assertTrue("Package $pkg should NOT be detected as permission package",
+                !com.shinji.serena.navigation.SystemDialogHelper.isPermissionPackage(pkg))
+            assertTrue("Package $pkg should NOT be detected as special system dialog package",
+                !com.shinji.serena.navigation.SystemDialogHelper.isSpecialSystemDialogPackage(pkg))
+        }
+    }
 }

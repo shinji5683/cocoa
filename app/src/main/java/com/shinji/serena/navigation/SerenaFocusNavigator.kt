@@ -23,10 +23,7 @@ class SerenaFocusNavigator(
         private const val TAG = "SerenaFocusNavigator"
 
         fun isPermissionOrSecurityPackage(pkg: String): Boolean {
-            val p = pkg.lowercase()
-            return p.contains("permission") || p.contains("packageinstaller") ||
-                   p.contains("safetycenter") || p.contains("securitycenter") ||
-                   p.contains("safecenter") || p.contains("securitypermission")
+            return SystemDialogHelper.isPermissionPackage(pkg)
         }
     }
 
@@ -52,28 +49,28 @@ class SerenaFocusNavigator(
             return if (root != null) listOf(root) else emptyList()
         }
 
-        // 2. システム権限ダイアログ（Pixel, Samsung, Xiaomi, OPPO, Vivo, Moto等 全OEM対応）を最優先・完全隔離！
+        // 2. システム権限ダイアログおよび特殊ダイアログ（Pixel, Samsung, Xiaomi, OPPO, Vivo, Moto等 全OEM対応）を最優先・完全隔離（モーダルトラップ）！
         try {
-            val wins = service.windows
-            if (!wins.isNullOrEmpty()) {
-                for (w in wins) {
-                    val r = w.root ?: continue
-                    val pkg = r.packageName?.toString() ?: ""
-                    if (isPermissionOrSecurityPackage(pkg)) {
-                        val isolated = mutableListOf<AccessibilityNodeInfo>()
-                        val imeWin = wins.find { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
-                        imeWin?.root?.let { isolated.add(it) }
-                        isolated.add(r)
-                        return isolated
-                    }
-                }
+            val topDialog = SystemDialogHelper.findTopDialogWindow(service)
+            if (topDialog != null) {
+                val dialogRoot = topDialog.second
+                val isolated = mutableListOf<AccessibilityNodeInfo>()
+                val imeWin = service.windows?.find { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+                imeWin?.root?.let { isolated.add(it) }
+                isolated.add(dialogRoot)
+                return isolated
             }
         } catch (_: Exception) {}
 
         val activeRoot = service.rootInActiveWindow
         if (activeRoot != null) {
             val activePkg = activeRoot.packageName?.toString() ?: ""
-            if (isPermissionOrSecurityPackage(activePkg)) {
+            if (SystemDialogHelper.isPurePermissionPackage(activePkg) ||
+                (SystemDialogHelper.isOemSecurityPackage(activePkg) && (SystemDialogHelper.isGeneralDialog(activeRoot) || SystemDialogHelper.hasDialogIndicators(activeRoot))) ||
+                SystemDialogHelper.isSpecialSystemDialogPackage(activePkg) ||
+                SystemDialogHelper.isSystemUiDialog(activeRoot) ||
+                SystemDialogHelper.isGeneralDialog(activeRoot)
+            ) {
                 return listOf(activeRoot)
             }
         }
@@ -84,20 +81,7 @@ class SerenaFocusNavigator(
                 val activePkg = activeRoot?.packageName?.toString()?.lowercase() ?: ""
                 val isSystemUiActive = activePkg.contains("systemui") || wins.any { it.type == AccessibilityWindowInfo.TYPE_SYSTEM && (it.isActive || it.isFocused) }
 
-                // 1. 権限ダイアログ / パッケージインストーラー / セーフティセンターを絶対最優先
-                for (w in wins) {
-                    val r = w.root ?: continue
-                    val pkg = r.packageName?.toString() ?: ""
-                    if (isPermissionOrSecurityPackage(pkg)) {
-                        val isolated = mutableListOf<AccessibilityNodeInfo>()
-                        val imeWin = wins.find { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
-                        imeWin?.root?.let { isolated.add(it) }
-                        isolated.add(r)
-                        return isolated
-                    }
-                }
-
-                // 2. Googleアカウント選択ポップアップ / アカウント設定 (com.google.android.gms) やダイアログウィンドウを最優先捕捉
+                // Googleアカウント選択ポップアップ / アカウント設定 (com.google.android.gms) やダイアログウィンドウを最優先捕捉
                 val modalWins = wins.filter { w ->
                     val r = w.root
                     val pkg = r?.packageName?.toString()?.lowercase() ?: ""

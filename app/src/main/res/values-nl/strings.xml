@@ -548,11 +548,17 @@
     <!-- Auto Update Background Notification -->
     <string name="update_new_version_available_fmt">Er is een nieuwe versie van Serena beschikbaar, %1$s. U kunt op elk moment updaten via het Serena-menu.</string>
 
-    <!-- Meldingen van toestemmingsvenster -->
+    <!-- Meldingen van toestemmingsvenster en systeem -->
     <string name="permission_dialog_tag">Bevestiging</string>
     <string name="permission_dialog_default_msg">Toestemmingsverzoek.</string>
     <string name="permission_dialog_hint">Toestemmingsvenster wordt weergegeven. Veeg naar links of rechts om te kiezen.</string>
     <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
+    <string name="dialog_tag_confirmation">Bevestiging</string>
+    <string name="dialog_tag_alert">Waarschuwing</string>
+    <string name="dialog_default_title">Dialoogvenster</string>
+    <string name="dialog_hint">Dialoogvenster wordt weergegeven. Veeg naar links of rechts om te kiezen.</string>
+    <string name="dialog_announcement_fmt">[%1$s] %2$s</string>
+    <string name="dialog_announcement_with_title_and_message_fmt">[%1$s] %2$s. %3$s</string>
 
     <!-- Gebaren, navigatie en bewerkingen -->
     <string name="action_page_next">Naar volgende pagina verplaatst</string>

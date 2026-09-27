@@ -579,11 +579,17 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <!-- Auto Update Background Notification -->
     <string name="update_new_version_available_fmt">Una nueva versión de Serena, %1$s, está disponible. Puede actualizar en cualquier momento desde el menú Serena.</string>
 
-    <!-- Notificaciones de diálogo de permisos -->
+    <!-- Notificaciones de diálogo de permisos y sistema -->
     <string name="permission_dialog_tag">Confirmación</string>
     <string name="permission_dialog_default_msg">Solicitud de permiso.</string>
     <string name="permission_dialog_hint">Se muestra el diálogo de permisos. Deslice a la izquierda o derecha para seleccionar.</string>
     <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
+    <string name="dialog_tag_confirmation">Confirmación</string>
+    <string name="dialog_tag_alert">Alerta</string>
+    <string name="dialog_default_title">Diálogo</string>
+    <string name="dialog_hint">Se muestra el diálogo. Deslice a la izquierda o derecha para seleccionar.</string>
+    <string name="dialog_announcement_fmt">[%1$s] %2$s</string>
+    <string name="dialog_announcement_with_title_and_message_fmt">[%1$s] %2$s. %3$s</string>
 
     <!-- Gestos, navegación y operaciones -->
     <string name="action_page_next">Página siguiente</string>

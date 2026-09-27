@@ -547,11 +547,17 @@
     <!-- Auto Update Background Notification -->
     <string name="update_new_version_available_fmt">A new version of Serena, %1$s, is available. You can update anytime from the Serena Menu.</string>
 
-    <!-- Permission Dialog Announcements -->
+    <!-- Permission & System Dialog Announcements -->
     <string name="permission_dialog_tag">Confirmation</string>
     <string name="permission_dialog_default_msg">Permission request.</string>
     <string name="permission_dialog_hint">Permission dialog is displayed. Swipe left or right to choose.</string>
     <string name="permission_dialog_announcement_fmt">[%1$s] %2$s</string>
+    <string name="dialog_tag_confirmation">Confirmation</string>
+    <string name="dialog_tag_alert">Alert</string>
+    <string name="dialog_default_title">Dialog</string>
+    <string name="dialog_hint">Dialog is displayed. Swipe left or right to choose.</string>
+    <string name="dialog_announcement_fmt">[%1$s] %2$s</string>
+    <string name="dialog_announcement_with_title_and_message_fmt">[%1$s] %2$s. %3$s</string>
 
     <!-- Gestures, Navigation & Operations -->
     <string name="action_page_next">Moved to next page</string>
