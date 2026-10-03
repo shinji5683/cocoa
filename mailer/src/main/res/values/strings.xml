@@ -60,4 +60,17 @@
     <string name="update_install_failed">Failed to launch installer: %1$s</string>
     <string name="update_already_latest">Serena Mail is already up to date (%1$s).</string>
     <string name="update_checking">Checking for updates…</string>
+
+    <!-- Google OAuth & Simple Setup Strings -->
+    <string name="mail_btn_google_auth">Sign in with Google Account (1-Tap)</string>
+    <string name="mail_btn_google_sign_in">Sign in with Google</string>
+    <string name="mail_status_logged_in_as">Logged in as: %1$s</string>
+    <string name="mail_btn_logout">Sign Out / Switch Account</string>
+    <string name="mail_btn_toggle_manual">Show Manual Setup (App Password)</string>
+    <string name="mail_logged_out">Signed out successfully</string>
+    <string name="mail_login_prompt">Sign in with your Google account to start using email immediately without an App Password.</string>
+    <string name="mail_label_or_manual">— OR configure with 16-character App Password —</string>
+    <string name="mail_btn_open_app_password_page">Open Google App Passwords web page</string>
+    <string name="mail_oauth_connecting">Authenticating with Google Account…</string>
+    <string name="mail_oauth_fallback_hint">Google authentication failed. Please enter an App Password in Manual Setup.</string>
 </resources>

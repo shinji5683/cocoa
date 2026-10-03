@@ -60,4 +60,17 @@
     <string name="update_install_failed">Nabigong buksan ang installer: %1$s</string>
     <string name="update_already_latest">Nasa pinakabagong bersyon na ang Serena Mail (%1$s).</string>
     <string name="update_checking">Sinusuri ang mga update…</string>
+
+    <!-- Google OAuth & Simple Setup Strings -->
+    <string name="mail_btn_google_auth">Mag-sign in gamit ang Google Account (1-Tap)</string>
+    <string name="mail_btn_google_sign_in">Mag-sign in gamit ang Google</string>
+    <string name="mail_status_logged_in_as">Naka-sign in bilang: %1$s</string>
+    <string name="mail_btn_logout">Mag-sign out / Lumipat ng account</string>
+    <string name="mail_btn_toggle_manual">Ipakita ang manual setup (App Password)</string>
+    <string name="mail_logged_out">Matagumpay na nag-sign out</string>
+    <string name="mail_login_prompt">Mag-sign in gamit ang iyong Google account para simulang gamitin ang email nang walang App Password.</string>
+    <string name="mail_label_or_manual">— O mag-set up gamit ang 16-character na App Password —</string>
+    <string name="mail_btn_open_app_password_page">Buksan ang pahina ng Google App Password</string>
+    <string name="mail_oauth_connecting">Nagpapatunay gamit ang Google Account…</string>
+    <string name="mail_oauth_fallback_hint">Nabigo ang pagpapatunay sa Google. Mangyaring maglagay ng App Password sa manual setup.</string>
 </resources>

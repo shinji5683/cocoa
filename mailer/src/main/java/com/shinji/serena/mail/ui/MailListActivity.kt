@@ -85,9 +85,10 @@ class MailListActivity : AppCompatActivity() {
 
     private fun refreshInbox() {
         val email = accountPrefs.getEmail()
-        val password = accountPrefs.getAppPassword()
+        val credential = accountPrefs.getAuthCredential()
+        val isOAuth = accountPrefs.isOAuth()
 
-        if (email.isEmpty() || password.isEmpty()) {
+        if (email.isEmpty() || credential.isEmpty()) {
             showStatus(getString(R.string.mail_status_no_account))
             return
         }
@@ -95,7 +96,7 @@ class MailListActivity : AppCompatActivity() {
         showStatus(getString(R.string.mail_status_fetching))
 
         lifecycleScope.launch {
-            val result = gmailService.fetchInbox(email, password, maxCount = 30)
+            val result = gmailService.fetchInbox(email, credential, isOAuth = isOAuth, maxCount = 30)
             result.onSuccess { list ->
                 mailAdapter.submitList(list)
                 showStatus(getString(R.string.mail_status_fetched_fmt, list.size))

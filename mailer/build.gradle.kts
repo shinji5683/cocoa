@@ -10,15 +10,15 @@ android {
         applicationId = "com.shinji.serena.mail"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "DEVELOPER_NAME", "\"Shinji\"")
         buildConfigField("String", "DEVELOPER_EMAIL", "\"shinjisakiyama@gmail.com\"")
         buildConfigField("String", "COPYRIGHT_NOTICE", "\"Copyright © 2026 Shinji. All Rights Reserved.\"")
-        buildConfigField("String", "REPO_RELEASE_TAG", "\"v2.5.2\"")
+        buildConfigField("String", "REPO_RELEASE_TAG", "\"v2.5.3\"")
     }
 
     signingConfigs {
@@ -79,6 +79,9 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
+
+    // Google Sign-In & Google Auth (Play Services)
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
 
     // JavaMail API for Android (IMAP / SMTP for Gmail)
     implementation("com.sun.mail:android-mail:1.6.7")

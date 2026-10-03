@@ -84,9 +84,10 @@ class ComposeMailActivity : AppCompatActivity() {
         }
 
         val myEmail = accountPrefs.getEmail()
-        val myPassword = accountPrefs.getAppPassword()
+        val myCredential = accountPrefs.getAuthCredential()
+        val isOAuth = accountPrefs.isOAuth()
 
-        if (myEmail.isEmpty() || myPassword.isEmpty()) {
+        if (myEmail.isEmpty() || myCredential.isEmpty()) {
             Toast.makeText(this, getString(R.string.mail_status_no_account), Toast.LENGTH_LONG).show()
             return
         }
@@ -95,7 +96,7 @@ class ComposeMailActivity : AppCompatActivity() {
         Toast.makeText(this, getString(R.string.mail_status_sending), Toast.LENGTH_SHORT).show()
 
         lifecycleScope.launch {
-            val result = gmailService.sendEmail(myEmail, myPassword, to, subject, body)
+            val result = gmailService.sendEmail(myEmail, myCredential, to, subject, body, isOAuth = isOAuth)
             btnSend.isEnabled = true
             result.onSuccess {
                 Toast.makeText(this@ComposeMailActivity, getString(R.string.mail_status_sent), Toast.LENGTH_LONG).show()

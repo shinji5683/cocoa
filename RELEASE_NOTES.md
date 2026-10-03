@@ -3,6 +3,29 @@
 すべての更新履歴は、全盲の開発者Shinjiのこだわりと世界中の視覚障害者ユーザーのために、日本語と英語の両方で詳細に記録されています。
 All updates and changelogs are meticulously maintained in both Japanese and English for global visually impaired users.
 
+## [v2.5.3] - 2026-10-04
+### 🇯🇵 日本語
+#### 🔑 Serena Mail「Googleでログイン」ワンタップ連携機能が新登場！
+- **Google公式アカウント選択による一発ログイン**:
+  - 設定画面に「Googleでログイン」ボタンをメイン配置。端末に登録されているGoogleアカウントを選ぶだけで、即座にOAuth認証＆メールサーバーへの安全な接続が完了。
+  - 面倒なアプリパスワードの手動発行・入力・コピペ作業が一切不要になり、全盲・視覚障害者ユーザーでも迷わず数秒で初期設定が可能に！
+- **スマートなアカウント状態管理＆ログアウト機能**:
+  - ログイン済みアカウントのメールアドレスを分かりやすく表示。
+  - 「ログアウト / アカウント変更」もワンタップで可能。
+- **全6言語対応**:
+  - 日本語・英語・スペイン語・タガログ語・オランダ語・デフォルトの全言語で完全ローカライズ。
+
+### 🇺🇸 English
+#### 🔑 Official "Sign in with Google" 1-Tap Integration in Serena Mail!
+- **Effortless 1-Tap Google Account Login**:
+  - "Sign in with Google" is now front and center in Account Settings. Simply select your Google account from the standard system picker to instantly authenticate via OAuth and connect to mail services.
+  - Zero tedious manual App Password generation or copying required — setup is complete in seconds with full accessibility!
+- **Smart Account State Management & Sign Out**:
+  - Clear display of the currently authenticated account.
+  - 1-tap "Sign Out / Switch Account" support.
+- **Full 6-Language Localization**:
+  - Comprehensively localized across Japanese, English, Spanish, Tagalog, Dutch, and default locales.
+
 ## [v2.5.2] - 2026-10-04
 ### 🇯🇵 日本語
 #### 🚀 Serena Mail 専用アクセシブル・自動アップデーター（AutoUpdateManager）爆誕！

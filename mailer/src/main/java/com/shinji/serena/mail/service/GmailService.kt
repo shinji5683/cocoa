@@ -33,9 +33,13 @@ class GmailService {
     }
 
     /**
-     * アカウント接続テスト
+     * アカウント接続テスト (アプリパスワード / OAuth2 トークン両対応)
      */
-    suspend fun testConnection(email: String, appPassword: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    suspend fun testConnection(
+        email: String,
+        tokenOrPassword: String,
+        isOAuth: Boolean = false
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val props = Properties().apply {
                 put("mail.store.protocol", "imaps")
@@ -44,11 +48,17 @@ class GmailService {
                 put("mail.imaps.ssl.enable", "true")
                 put("mail.imaps.timeout", "10000")
                 put("mail.imaps.connectiontimeout", "10000")
+                if (isOAuth) {
+                    put("mail.imaps.sasl.enable", "true")
+                    put("mail.imaps.sasl.mechanisms", "XOAUTH2")
+                    put("mail.imaps.auth.login.disable", "true")
+                    put("mail.imaps.auth.plain.disable", "true")
+                }
             }
 
             val session = Session.getInstance(props)
             val store = session.getStore("imaps")
-            store.connect(IMAP_HOST, email, appPassword)
+            store.connect(IMAP_HOST, email, tokenOrPassword)
             store.close()
             Result.success(true)
         } catch (e: Exception) {
@@ -58,11 +68,12 @@ class GmailService {
     }
 
     /**
-     * 受信トレイから最新メッセージを取得
+     * 受信トレイから最新メッセージを取得 (アプリパスワード / OAuth2 トークン両対応)
      */
     suspend fun fetchInbox(
         email: String,
-        appPassword: String,
+        tokenOrPassword: String,
+        isOAuth: Boolean = false,
         maxCount: Int = 30
     ): Result<List<MailMessage>> = withContext(Dispatchers.IO) {
         var store: javax.mail.Store? = null
@@ -75,11 +86,17 @@ class GmailService {
                 put("mail.imaps.ssl.enable", "true")
                 put("mail.imaps.timeout", "15000")
                 put("mail.imaps.connectiontimeout", "15000")
+                if (isOAuth) {
+                    put("mail.imaps.sasl.enable", "true")
+                    put("mail.imaps.sasl.mechanisms", "XOAUTH2")
+                    put("mail.imaps.auth.login.disable", "true")
+                    put("mail.imaps.auth.plain.disable", "true")
+                }
             }
 
             val session = Session.getInstance(props)
             store = session.getStore("imaps")
-            store.connect(IMAP_HOST, email, appPassword)
+            store.connect(IMAP_HOST, email, tokenOrPassword)
 
             inbox = store.getFolder("INBOX")
             inbox.open(Folder.READ_ONLY)
@@ -142,14 +159,15 @@ class GmailService {
     }
 
     /**
-     * メール送信 (SMTP over SSL)
+     * メール送信 (SMTP over SSL / アプリパスワード / OAuth2 両対応)
      */
     suspend fun sendEmail(
         fromEmail: String,
-        appPassword: String,
+        tokenOrPassword: String,
         toEmail: String,
         subject: String,
-        bodyText: String
+        bodyText: String,
+        isOAuth: Boolean = false
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val props = Properties().apply {
@@ -160,11 +178,17 @@ class GmailService {
                 put("mail.smtp.ssl.checkserveridentity", "true")
                 put("mail.smtp.timeout", "15000")
                 put("mail.smtp.connectiontimeout", "15000")
+                if (isOAuth) {
+                    put("mail.smtp.sasl.enable", "true")
+                    put("mail.smtp.sasl.mechanisms", "XOAUTH2")
+                    put("mail.smtp.auth.login.disable", "true")
+                    put("mail.smtp.auth.plain.disable", "true")
+                }
             }
 
             val session = Session.getInstance(props, object : javax.mail.Authenticator() {
                 override fun getPasswordAuthentication(): PasswordAuthentication {
-                    return PasswordAuthentication(fromEmail, appPassword)
+                    return PasswordAuthentication(fromEmail, tokenOrPassword)
                 }
             })
 
@@ -175,7 +199,14 @@ class GmailService {
                 setText(bodyText, "UTF-8")
             }
 
-            Transport.send(message)
+            if (isOAuth) {
+                val transport = session.getTransport("smtps")
+                transport.connect(SMTP_HOST, fromEmail, tokenOrPassword)
+                transport.sendMessage(message, message.allRecipients)
+                transport.close()
+            } else {
+                Transport.send(message)
+            }
             Log.i(TAG, "Email successfully sent to $toEmail")
             Result.success(true)
         } catch (e: Exception) {

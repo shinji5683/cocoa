@@ -21,67 +21,144 @@
             android:layout_marginBottom="12dp" />
 
         <TextView
+            android:id="@+id/tvSettingsDesc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/mail_settings_desc"
+            android:text="@string/mail_login_prompt"
             android:textColor="#B0BEC5"
-            android:textSize="14sp"
+            android:textSize="15sp"
             android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Gmail アドレス入力 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/mail_hint_email"
-            android:textColor="#AAAAAA"
-            android:textSize="14sp"
-            android:layout_marginBottom="4dp" />
-
-        <EditText
-            android:id="@+id/etEmail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:hint="@string/mail_hint_email"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#666666"
-            android:background="#1E1E1E"
-            android:padding="12dp"
-            android:inputType="textEmailAddress"
-            android:layout_marginBottom="16dp" />
-
-        <!-- アプリパスワード入力 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/mail_hint_app_password"
-            android:textColor="#AAAAAA"
-            android:textSize="14sp"
-            android:layout_marginBottom="4dp" />
-
-        <EditText
-            android:id="@+id/etAppPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:hint="@string/mail_hint_app_password"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#666666"
-            android:background="#1E1E1E"
-            android:padding="12dp"
-            android:inputType="textPassword"
             android:layout_marginBottom="24dp" />
 
-        <!-- 保存ボタン -->
+        <!-- ログイン中ステータス表示領域（ログイン時） -->
+        <LinearLayout
+            android:id="@+id/layoutLoggedIn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1E1E1E"
+            android:padding="16dp"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvLoggedInStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#81C784"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/mail_btn_logout"
+                android:contentDescription="@string/mail_btn_logout"
+                android:backgroundTint="#CF6679"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Googleでログイン ボタン（メイン・ワンタップ） -->
         <Button
-            android:id="@+id/btnSave"
+            android:id="@+id/btnGoogleSignIn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
+            android:text="@string/mail_btn_google_sign_in"
+            android:contentDescription="@string/mail_btn_google_sign_in"
+            android:backgroundTint="#4285F4"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- 手動設定（アプリパスワード）の開閉ボタン -->
+        <Button
+            android:id="@+id/btnToggleManual"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
-            android:text="@string/mail_btn_save_account"
-            android:contentDescription="@string/mail_btn_save_account"
-            android:layout_marginBottom="32dp" />
+            android:text="@string/mail_btn_toggle_manual"
+            android:contentDescription="@string/mail_btn_toggle_manual"
+            android:backgroundTint="#262626"
+            android:textColor="#AAAAAA"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 手動設定コンテナ（初期非表示） -->
+        <LinearLayout
+            android:id="@+id/layoutManualSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#181818"
+            android:padding="12dp"
+            android:layout_marginBottom="24dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/mail_hint_email"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:hint="@string/mail_hint_email"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#666666"
+                android:background="#1E1E1E"
+                android:padding="12dp"
+                android:inputType="textEmailAddress"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/mail_hint_app_password"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/etAppPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:hint="@string/mail_hint_app_password"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#666666"
+                android:background="#1E1E1E"
+                android:padding="12dp"
+                android:inputType="textPassword"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnOpenAppPasswordPage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/mail_btn_open_app_password_page"
+                android:contentDescription="@string/mail_btn_open_app_password_page"
+                android:backgroundTint="#2C2C2C"
+                android:textColor="#81D4FA"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/mail_btn_save_account"
+                android:contentDescription="@string/mail_btn_save_account" />
+        </LinearLayout>
 
         <!-- アップデート・バージョン情報 -->
         <TextView
@@ -100,6 +177,8 @@
             android:minHeight="48dp"
             android:text="@string/mail_settings_check_update"
             android:contentDescription="@string/mail_settings_check_update"
+            android:backgroundTint="#333333"
+            android:textColor="#EEEEEE"
             android:layout_marginBottom="16dp" />
 
     </LinearLayout>

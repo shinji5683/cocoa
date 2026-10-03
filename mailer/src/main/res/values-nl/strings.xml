@@ -60,4 +60,17 @@
     <string name="update_install_failed">Kan installatieprogramma niet starten: %1$s</string>
     <string name="update_already_latest">Serena Mail is up-to-date (%1$s).</string>
     <string name="update_checking">Controleren op updates…</string>
+
+    <!-- Google OAuth & Simple Setup Strings -->
+    <string name="mail_btn_google_auth">Aanmelden met Google-account (1 tik)</string>
+    <string name="mail_btn_google_sign_in">Inloggen met Google</string>
+    <string name="mail_status_logged_in_as">Ingelogd als: %1$s</string>
+    <string name="mail_btn_logout">Uitloggen / Van account wisselen</string>
+    <string name="mail_btn_toggle_manual">Handmatige instelling weergeven (App-wachtwoord)</string>
+    <string name="mail_logged_out">Succesvol uitgelogd</string>
+    <string name="mail_login_prompt">Meld u aan met uw Google-account om e-mail direct te gebruiken zonder app-wachtwoord.</string>
+    <string name="mail_label_or_manual">— OF handmatig instellen met app-wachtwoord van 16 tekens —</string>
+    <string name="mail_btn_open_app_password_page">Webpagina voor Google App-wachtwoorden openen</string>
+    <string name="mail_oauth_connecting">Verifiëren met Google-account…</string>
+    <string name="mail_oauth_fallback_hint">Google-authenticatie mislukt. Voer een app-wachtwoord in bij handmatige instelling.</string>
 </resources>

@@ -60,4 +60,17 @@
     <string name="update_install_failed">インストーラーの起動に失敗しました: %1$s</string>
     <string name="update_already_latest">Serena Mail は最新バージョン (%1$s) です。</string>
     <string name="update_checking">アップデートを確認中…</string>
+
+    <!-- Google OAuth & Simple Setup Strings -->
+    <string name="mail_btn_google_auth">Googleアカウントでワンタップ連携</string>
+    <string name="mail_btn_google_sign_in">Googleでログイン</string>
+    <string name="mail_status_logged_in_as">ログイン中: %1$s</string>
+    <string name="mail_btn_logout">ログアウト / アカウント変更</string>
+    <string name="mail_btn_toggle_manual">手動設定（アプリパスワード）を表示</string>
+    <string name="mail_logged_out">ログアウトしました</string>
+    <string name="mail_login_prompt">Googleアカウントでログインすると、アプリパスワード不要ですぐにメールが使えます。</string>
+    <string name="mail_label_or_manual">— または16桁のアプリパスワードで設定 —</string>
+    <string name="mail_btn_open_app_password_page">Googleアプリパスワード発行ページを開く</string>
+    <string name="mail_oauth_connecting">Googleアカウントで認証中…</string>
+    <string name="mail_oauth_fallback_hint">Googleアカウントの認証に失敗しました。詳細設定からアプリパスワードを入力してください。</string>
 </resources>

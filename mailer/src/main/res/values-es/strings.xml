@@ -60,4 +60,17 @@
     <string name="update_install_failed">Error al iniciar el instalador: %1$s</string>
     <string name="update_already_latest">Serena Mail ya está actualizada (%1$s).</string>
     <string name="update_checking">Buscando actualizaciones…</string>
+
+    <!-- Google OAuth & Simple Setup Strings -->
+    <string name="mail_btn_google_auth">Iniciar sesión con Cuenta de Google (1 toque)</string>
+    <string name="mail_btn_google_sign_in">Iniciar sesión con Google</string>
+    <string name="mail_status_logged_in_as">Sesión iniciada como: %1$s</string>
+    <string name="mail_btn_logout">Cerrar sesión / Cambiar de cuenta</string>
+    <string name="mail_btn_toggle_manual">Mostrar configuración manual (Contraseña de aplicación)</string>
+    <string name="mail_logged_out">Sesión cerrada correctamente</string>
+    <string name="mail_login_prompt">Inicia sesión con tu cuenta de Google para comenzar a usar el correo sin contraseña de aplicación.</string>
+    <string name="mail_label_or_manual">— O configurar con contraseña de aplicación de 16 caracteres —</string>
+    <string name="mail_btn_open_app_password_page">Abrir página de contraseñas de aplicaciones de Google</string>
+    <string name="mail_oauth_connecting">Autenticando con Cuenta de Google…</string>
+    <string name="mail_oauth_fallback_hint">Falló la autenticación con Google. Ingresa una contraseña de aplicación en la configuración manual.</string>
 </resources>
