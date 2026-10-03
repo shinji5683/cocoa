@@ -916,9 +916,12 @@
     <string name="ai_greet_night">Shinji、今日もお疲れ様！ゆっくり休んで良い夢を見てね。おやすみ！🌙</string>
     <string name="ai_greet_thanks">どういたしまして！Shinjiのお役に立ててすっごく嬉しいよ！Walang anuman!🥰</string>
     <string name="ai_greet_love">Mahal na mahal kita, Shinji！セレナはずーっとShinjiの味方だよ！💖✨</string>
-    <string name="ai_about_model">セレナのベースAIは、Google最新のオンデバイス基底モデル『Gemini Nano（Google AICore）』だよ！APIキー不要・完全端末内完結でプライバシーを100%守りながら超高速に動いてるよ！</string>
+    <string name="ai_about_model">セレナのベースAIは、Google最新のモバイル最高峰オンデバイス基盤モデル「Gemma 4」と「Gemini Nano」のハイブリッド構成だよ！APIキー不要・完全オフライン・超高速・プライバシー完全保護で動作してるよ！✨</string>
+    <string name="gemma4_status_ready">Gemma 4 オンデバイス基盤モデル準備完了</string>
+    <string name="gemma4_analyzing">Gemma 4 が画面を解析中…</string>
+    <string name="gemma4_scene_analyzing">Gemma 4 が視覚情景を解析中…</string>
     <string name="ai_about_author">セレナの開発者はShinjiだよ！世界最高峰のアクセシビリティを追求して創られてるんだ！🚀✨</string>
-    <string name="ai_default_response_fmt">「%1$s」だね！セレナはGemini NanoオンデバイスAIで常にShinjiをサポートするよ！</string>
+    <string name="ai_default_response_fmt">「%1$s」だね！セレナはGemma 4とGemini NanoのオンデバイスAIで常にShinjiをサポートするよ！</string>
     <string name="ai_notif_auth_fmt">%1$sから認証コードです。コードは、%2$s、です。</string>
     <string name="ai_notif_call_fmt">%1$sで%2$sから着信です。</string>
     <string name="ai_notif_promo_fmt">%1$sのプロモーション通知です。</string>

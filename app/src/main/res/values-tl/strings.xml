@@ -900,9 +900,12 @@
     <string name="ai_greet_night">Napakagaling mo ngayon Shinji! Magpahinga nang mabuti at matamis na panaginip. Magandang gabi! 🌙</string>
     <string name="ai_greet_thanks">Walang anuman po! Masayang-masaya akong tumulong sa iyo Shinji! 🥰</string>
     <string name="ai_greet_love">Mahal na mahal kita, Shinji! Si Serena ay laging kakampi mo! 💖✨</string>
-    <string name="ai_about_model">Ang AI ni Serena ay gumagamit ng Gemini Nano ng Google! Ganap na nasa device, walang API key, at 100% protektado ang privacy! 🚀</string>
+    <string name="ai_about_model">Ang AI ni Serena ay pinapagana ng pinakabagong on-device model ng Google: Gemma 4 at Gemini Nano! Ganap na offline, napakabilis, at 100% protektado ang privacy! 🚀✨</string>
+    <string name="gemma4_status_ready">Handa na ang Gemma 4 on-device model</string>
+    <string name="gemma4_analyzing">Sinusuri ng Gemma 4 ang screen…</string>
+    <string name="gemma4_scene_analyzing">Sinusuri ng Gemma 4 ang visual scene…</string>
     <string name="ai_about_author">Ang lumikha kay Serena ay si Shinji! Nilikha nang buong puso para sa pinakamahusay na accessibility sa buong mundo! 🚀✨</string>
-    <string name="ai_default_response_fmt">"%1$s" natanggap! Si Serena na may Gemini Nano ay laging handang tumulong kay Shinji!</string>
+    <string name="ai_default_response_fmt">"%1$s" natanggap! Si Serena na may Gemma 4 at Gemini Nano ay laging handang tumulong kay Shinji!</string>
     <string name="ai_notif_auth_fmt">Verification code mula sa %1$s: Ang code ay %2$s.</string>
     <string name="ai_notif_call_fmt">Papasok na tawag sa %1$s mula kay %2$s.</string>
     <string name="ai_notif_promo_fmt">Promosyonal na abiso mula sa %1$s.</string>

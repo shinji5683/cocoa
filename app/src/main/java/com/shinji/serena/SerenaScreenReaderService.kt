@@ -22,6 +22,11 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
 import java.util.Calendar
 import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 enum class GranularityMode(val resId: Int, val displayName: String) {
     CHARACTERS(R.string.granularity_characters, "文字"),
@@ -129,6 +134,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var soundRecognitionHelper: com.shinji.serena.sound.SoundRecognitionHapticsHelper? = null
     var visualAudioDescriptionHelper: com.shinji.serena.ai.VisualAudioDescriptionHelper? = null
     var smartScreenSummaryEngine: com.shinji.serena.ai.SmartScreenSummaryEngine? = null
+    val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     // 通話時間計測用
     var isCallActive = false
@@ -2117,11 +2123,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         val offText = getString(R.string.state_off)
         val items = listOf(
             serenaMenuItem("💡", getString(R.string.menu_item_smart_summary)) {
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    val summary = com.shinji.serena.ai.SmartScreenSummaryEngine(this).generateDetailedSummary(snapshotRoot, snapshotFocused)
-                    Log.i(TAG, "Generated Smart Screen Summary: $summary")
+                speak(getString(R.string.gemma4_analyzing), TextToSpeech.QUEUE_FLUSH)
+                serviceScope.launch {
+                    val summary = com.shinji.serena.ai.SmartScreenSummaryEngine(this@SerenaScreenReaderService)
+                        .generateDetailedSummaryAsync(snapshotRoot, snapshotFocused)
+                    Log.i(TAG, "Generated Smart Screen Summary (Gemma 4/Edge): $summary")
                     speak(summary, TextToSpeech.QUEUE_FLUSH)
-                }, 300)
+                }
             },
             serenaMenuItem("🎙️", getString(R.string.menu_item_ai_assistant)) {
                 launchAiAssistant()
@@ -2544,8 +2552,13 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
 
     fun summarizeCurrentScreen() {
         soundHelper?.playActionDone()
-        val summary = smartScreenSummaryEngine?.generateDetailedSummary() ?: getString(R.string.service_screen_analysis_failed)
-        speak(summary, TextToSpeech.QUEUE_FLUSH)
+        speak(getString(R.string.gemma4_analyzing), TextToSpeech.QUEUE_FLUSH)
+        serviceScope.launch {
+            val summary = smartScreenSummaryEngine?.generateDetailedSummaryAsync() 
+                ?: smartScreenSummaryEngine?.generateDetailedSummary() 
+                ?: getString(R.string.service_screen_analysis_failed)
+            speak(summary, TextToSpeech.QUEUE_FLUSH)
+        }
     }
 
     fun announceNotificationDigest() {
@@ -4803,6 +4816,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             sentinelEyesManager?.stopSentinelEyes()
             spatialSurroundingRadarHelper?.stopSurroundingRadar()
         } catch (_: Exception) {}
+        serviceScope.cancel()
         super.onDestroy()
         callManager?.release()
         callManager = null

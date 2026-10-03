@@ -916,9 +916,12 @@
     <string name="ai_greet_night">Goed gewerkt vandaag Shinji! Rust lekker uit en slaap zacht. Goedenacht! 🌙</string>
     <string name="ai_greet_thanks">Graag gedaan! Heel fijn om je te helpen Shinji! Walang anuman! 🥰</string>
     <string name="ai_greet_love">Mahal na mahal kita, Shinji! Serena staat altijd aan jouw zijde! 💖✨</string>
-    <string name="ai_about_model">Serena\'s AI draait op Google\'s Gemini Nano! Volledig offline, geen API-sleutels en 100% privacybescherming! 🚀</string>
+    <string name="ai_about_model">Serena\'s AI wordt aangedreven door Google\'s on-device modellen: Gemma 4 en Gemini Nano! Volledig offline, razendsnel en 100% privacybescherming! 🚀✨</string>
+    <string name="gemma4_status_ready">Gemma 4 on-device model gereed</string>
+    <string name="gemma4_analyzing">Gemma 4 analyseert scherm…</string>
+    <string name="gemma4_scene_analyzing">Gemma 4 analyseert visuele scène…</string>
     <string name="ai_about_author">Serena is ontwikkeld door Shinji! Met toewijding gebouwd voor toonaangevende toegankelijkheid! 🚀✨</string>
-    <string name="ai_default_response_fmt">"%1$s" begrepen! Serena ondersteunt Shinji altijd met Gemini Nano op het apparaat!</string>
+    <string name="ai_default_response_fmt">"%1$s" begrepen! Serena met Gemma 4 en Gemini Nano ondersteunt Shinji altijd op het apparaat!</string>
     <string name="ai_notif_auth_fmt">Verificatiecode van %1$s: De code is %2$s.</string>
     <string name="ai_notif_call_fmt">Inkomende oproep via %1$s van %2$s.</string>
     <string name="ai_notif_promo_fmt">Promotiemelding van %1$s.</string>

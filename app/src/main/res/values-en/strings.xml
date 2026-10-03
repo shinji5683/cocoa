@@ -916,9 +916,12 @@
     <string name="ai_greet_night">Great job today Shinji! Rest well and sweet dreams. Good night! 🌙</string>
     <string name="ai_greet_thanks">You\'re very welcome! So happy to assist you Shinji! Walang anuman! 🥰</string>
     <string name="ai_greet_love">Mahal na mahal kita, Shinji! Serena is always on your side! 💖✨</string>
-    <string name="ai_about_model">Serena\'s base AI is Google\'s on-device foundation model, Gemini Nano! Completely offline, zero API keys, and 100% privacy-protected! 🚀</string>
+    <string name="ai_about_model">Serena\'s AI is powered by Google\'s bleeding-edge on-device models: Gemma 4 and Gemini Nano! Completely offline, lightning-fast, and 100% privacy-protected! 🚀✨</string>
+    <string name="gemma4_status_ready">Gemma 4 on-device foundation model ready</string>
+    <string name="gemma4_analyzing">Gemma 4 analyzing screen…</string>
+    <string name="gemma4_scene_analyzing">Gemma 4 analyzing scene…</string>
     <string name="ai_about_author">Serena was created by developer Shinji! Crafted with love for world-class accessibility! 🚀✨</string>
-    <string name="ai_default_response_fmt">"%1$s" received! Serena on-device Gemini Nano is always here to support Shinji!</string>
+    <string name="ai_default_response_fmt">"%1$s" received! Serena on-device Gemma 4 and Gemini Nano are always here to support Shinji!</string>
     <string name="ai_notif_auth_fmt">Verification code from %1$s: The code is %2$s.</string>
     <string name="ai_notif_call_fmt">Incoming call on %1$s from %2$s.</string>
     <string name="ai_notif_promo_fmt">Promotional notification from %1$s.</string>

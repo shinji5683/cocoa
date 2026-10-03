@@ -947,9 +947,12 @@ Todo el análisis de imágenes por IA y el reconocimiento de voz se realiza de f
     <string name="ai_greet_night">¡Buen trabajo hoy Shinji! Descansa bien y dulces sueños. ¡Buenas noches! 🌙</string>
     <string name="ai_greet_thanks">¡De nada! ¡Feliz de ayudarte Shinji! ¡Walang anuman! 🥰</string>
     <string name="ai_greet_love">¡Mahal na mahal kita, Shinji! ¡Serena siempre estará a tu lado! 💖✨</string>
-    <string name="ai_about_model">¡La IA de Serena funciona con Gemini Nano de Google! ¡Completamente local, sin claves API y 100% privado! 🚀</string>
+    <string name="ai_about_model">¡La IA de Serena está impulsada por los modelos locales de Google: Gemma 4 y Gemini Nano! ¡Completamente sin conexión, ultrarrápida y 100% privada! 🚀✨</string>
+    <string name="gemma4_status_ready">Modelo local Gemma 4 listo</string>
+    <string name="gemma4_analyzing">Gemma 4 analizando pantalla…</string>
+    <string name="gemma4_scene_analyzing">Gemma 4 analizando escena visual…</string>
     <string name="ai_about_author">¡El creador de Serena es Shinji! ¡Diseñado con pasión por la mejor accesibilidad! 🚀✨</string>
-    <string name="ai_default_response_fmt">¡Entendido "%1$s"! ¡Serena con Gemini Nano está siempre aquí para apoyarte!</string>
+    <string name="ai_default_response_fmt">¡Entendido "%1$s"! ¡Serena con Gemma 4 y Gemini Nano está siempre aquí para apoyarte!</string>
     <string name="ai_notif_auth_fmt">Código de verificación de %1$s: El código es %2$s.</string>
     <string name="ai_notif_call_fmt">Llamada entrante en %1$s de %2$s.</string>
     <string name="ai_notif_promo_fmt">Notificación promocional de %1$s.</string>

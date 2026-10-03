@@ -18,6 +18,7 @@ class SmartScreenSummaryEngine(private val service: SerenaScreenReaderService) {
     }
 
     private val nanoEngine = GeminiNanoEngine(service)
+    private val gemma4Engine by lazy { Gemma4EdgeEngine.getInstance(service) }
 
     data class DetailedNodeItem(
         val index: Int,
@@ -168,6 +169,139 @@ class SmartScreenSummaryEngine(private val service: SerenaScreenReaderService) {
             images = images
         )
     }
+
+    /**
+     * Gemma 4 オンデバイス基盤モデルによる最高峰の自然言語画面要約 (非同期)
+     */
+    suspend fun generateDetailedSummaryAsync(snapshotRoot: AccessibilityNodeInfo? = null, snapshotFocusedNode: AccessibilityNodeInfo? = null): String {
+        var root: AccessibilityNodeInfo? = snapshotRoot
+
+        if (root == null) {
+            val windows = try { service.windows } catch (e: Exception) { null }
+            if (!windows.isNullOrEmpty()) {
+                val appWindow = windows.firstOrNull { 
+                    it.type == AccessibilityWindowInfo.TYPE_APPLICATION && it.isFocused 
+                } ?: windows.firstOrNull { 
+                    it.type == AccessibilityWindowInfo.TYPE_APPLICATION 
+                }
+                root = appWindow?.root
+            }
+        }
+
+        if (root == null) {
+            root = try { service.rootInActiveWindow } catch (e: Exception) { null }
+        }
+
+        if (root == null) {
+            val focused = snapshotFocusedNode ?: service.getAccessibilityFocusedNode()
+            var current = focused
+            while (current?.parent != null) {
+                current = current.parent
+            }
+            root = current
+        }
+
+        if (root == null) {
+            return service.getString(com.shinji.serena.R.string.screen_summary_fetch_error)
+        }
+
+        val focusedNode = snapshotFocusedNode ?: service.getAccessibilityFocusedNode()
+        val packageName = root.packageName?.toString() ?: ""
+        val appName = getAppName(packageName)
+
+        val allItems = mutableListOf<DetailedNodeItem>()
+        val headings = mutableListOf<String>()
+        val buttons = mutableListOf<String>()
+        val inputs = mutableListOf<String>()
+        val images = mutableListOf<String>()
+        var screenTitle = ""
+        var focusedIndex = -1
+        var focusedItemLabel = ""
+
+        val selfHealing = SelfHealingA11yEngine(service)
+
+        fun collectNodes(node: AccessibilityNodeInfo?) {
+            if (node == null) return
+
+            var text = node.text?.toString()?.trim() ?: node.contentDescription?.toString()?.trim() ?: ""
+            val className = node.className?.toString() ?: ""
+            val isImage = className.contains("ImageView", ignoreCase = true) || className.contains("Image", ignoreCase = true)
+
+            if (text.isEmpty()) {
+                val healed = selfHealing.repairUnlabeledNode(node)
+                if (healed.isNotEmpty()) text = healed
+            }
+
+            if (isImage && text.isNotEmpty()) {
+                images.add(text)
+            }
+
+            if (text.isNotEmpty()) {
+                val isClickable = node.isClickable || className.contains("Button")
+                val isEditable = node.isEditable || className.contains("EditText")
+                val isCheckable = node.isCheckable || className.contains("CheckBox") || className.contains("Switch")
+                val isHeading = node.isHeading || (className.contains("TextView") && text.length < 25 && (node.parent?.childCount ?: 0) < 3)
+
+                val typeStr = when {
+                    isHeading -> {
+                        if (screenTitle.isEmpty() && text.length < 30) screenTitle = text
+                        headings.add(text)
+                        "見出し"
+                    }
+                    isCheckable -> "スイッチ"
+                    isEditable -> {
+                        inputs.add(text)
+                        "入力欄"
+                    }
+                    isClickable -> {
+                        buttons.add(text)
+                        "ボタン"
+                    }
+                    isImage -> "画像"
+                    else -> "テキスト"
+                }
+
+                val isCurrentFocused = (focusedNode != null && (node == focusedNode || node.isAccessibilityFocused))
+                val itemIndex = allItems.size + 1
+
+                allItems.add(DetailedNodeItem(
+                    index = itemIndex,
+                    type = typeStr,
+                    label = text,
+                    state = if (isCheckable) (if (node.isChecked) "（オン）" else "（オフ）") else "",
+                    isFocused = isCurrentFocused
+                ))
+
+                if (isCurrentFocused) {
+                    focusedIndex = itemIndex
+                    focusedItemLabel = text
+                }
+            }
+
+            for (i in 0 until node.childCount) {
+                collectNodes(node.getChild(i))
+            }
+        }
+
+        collectNodes(root)
+
+        if (allItems.isEmpty()) {
+            return service.getString(com.shinji.serena.R.string.screen_summary_empty_fmt, appName)
+        }
+
+        return gemma4Engine.generateScreenSummary(
+            appName = appName,
+            screenTitle = screenTitle,
+            itemCount = allItems.size,
+            headings = headings,
+            buttons = buttons,
+            inputs = inputs,
+            focusedItem = focusedItemLabel,
+            focusedIndex = focusedIndex,
+            images = images
+        )
+    }
+
 
     private fun getAppName(packageName: String): String {
         if (packageName.isEmpty()) return service.getString(com.shinji.serena.R.string.screen_current_app)
