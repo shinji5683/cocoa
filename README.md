@@ -25,7 +25,33 @@
 
 ---
 
+## 🏛️ Multi-Module Architecture & The Serena Ecosystem Vision
+
+The `cocoa` repository has officially transitioned from a standalone screen reader into a unified multi-module monorepo powering the **Serena Accessible Suite**—a complete, holistic ecosystem tailored specifically for visually impaired users worldwide.
+
+### 📦 Modular Structure & Versioning Policy
+* **`:app` Module — Serena Screen Reader (Core System Service)**
+  * **App Version**: `v2.5.1` (versionCode 59)
+  * **Role**: 24/7 background system AccessibilityService handling real-time UI hierarchy inspection, speech feedback, spatial obstacle sonar, and braille I/O.
+* **`:mailer` Module — Serena Mail (Blind-Centric Gmail Client)**
+  * **App Version**: `v1.0.0` (versionCode 1) ★ Brand New!
+  * **Role**: Streamlined email experience free from complex HTML layouts and ads, featuring on-device Gemma 4 AI for 2-3 sentence email summarization and instant polite reply drafting.
+
+> [!NOTE]
+> **Understanding Release Tags**: GitHub Release tags (e.g., `v2.5.1`) act as global repository-level release milestones. Under this tag, both the core screen reader (`v2.5.1`) and the newly debuted Serena Mail (`v1.0.0`) maintain independent internal versioning while being compiled and distributed simultaneously as distinct standalone APKs.
+
+### 🚀 Future Roadmap: What to Expect Next
+1. **Uncompromised Safety for the "Lifeline" (Screen Reader)**:
+   * By decoupling heavy networking, IMAP/SMTP synchronization, and attachment handling into the independent `:mailer` application, Serena Screen Reader's memory footprint remains rock-solid, completely eliminating the risk of unexpected OS termination (OOM kill).
+2. **Universal On-Device AI Powered by Gemma 4**:
+   * Google's cutting-edge on-device LLMs (Gemma 4 and Gemini Nano) are shared across all Serena applications, delivering sub-second, private, and offline intelligence without any cloud dependency.
+3. **Expanding the Serena Accessible Suite**:
+   * Future specialized modules (accessible calendar, screen reader-first lightweight web browser) will join the ecosystem under this monorepo, continuously building a truly barrier-free mobile world alongside Shinji.
+
+---
+
 ## 🌟 Key Features & Innovations
+
 
 ### 1. ⚡ Blazing-Fast Linear & Semantic Navigation
 - Real-time hierarchy analysis for dynamic Jetpack Compose and modern Android UI (Android 11 to Android 17 Canary / QPR Beta / Stable).
