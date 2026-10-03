@@ -473,4 +473,275 @@ class ContextualActionHintHelperTest {
             }
         }
     }
+
+    @Test
+    fun testDisabledNodeReturnsNone() {
+        val disabledSendButton = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "jp.naver.line.android",
+            className = "android.widget.Button",
+            viewId = "jp.naver.line.android:id/btn_send",
+            text = "送信",
+            contentDesc = "送信",
+            actionLabels = emptyList(),
+            role = "ボタン",
+            isEnabled = false
+        )
+        assertEquals(ActionHintType.NONE, disabledSendButton)
+    }
+
+    @Test
+    fun testSearchEditTextReturnsEditTextNotSearch() {
+        val searchEditText = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = true,
+            isLongClickable = true,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.google.android.googlequicksearchbox",
+            className = "android.widget.EditText",
+            viewId = "com.google.android.googlequicksearchbox:id/search_box",
+            text = "検索",
+            contentDesc = "検索キーワードを入力",
+            actionLabels = emptyList(),
+            role = "エディットボックス",
+            roleEditText = "エディットボックス"
+        )
+        assertEquals(ActionHintType.EDIT_TEXT, searchEditText)
+    }
+
+    @Test
+    fun testSwitchWithCallOrDeleteLabelReturnsToggle() {
+        val callSwitch = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = true,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.android.settings",
+            className = "android.widget.Switch",
+            viewId = "com.android.settings:id/switch_call_recording",
+            text = "通話の自動録音",
+            contentDesc = "",
+            actionLabels = emptyList(),
+            role = "スイッチ",
+            roleSwitch = "スイッチ"
+        )
+        assertEquals(ActionHintType.TOGGLE, callSwitch)
+
+        val deleteSwitch = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = true,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.android.settings",
+            className = "android.widget.Switch",
+            viewId = "com.android.settings:id/switch_confirm_delete",
+            text = "削除前の確認",
+            contentDesc = "",
+            actionLabels = emptyList(),
+            role = "スイッチ",
+            roleSwitch = "スイッチ"
+        )
+        assertEquals(ActionHintType.TOGGLE, deleteSwitch)
+    }
+
+    @Test
+    fun testCheckboxWithDeleteLabelReturnsCheck() {
+        val deleteCheckbox = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = true,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.google.android.apps.photos",
+            className = "android.widget.CheckBox",
+            viewId = "com.google.android.apps.photos:id/check_delete",
+            text = "削除項目を一括選択",
+            contentDesc = "",
+            actionLabels = emptyList(),
+            role = "チェックボックス",
+            roleCheckbox = "チェックボックス"
+        )
+        assertEquals(ActionHintType.CHECK, deleteCheckbox)
+    }
+
+    @Test
+    fun testLauncherOverviewClearAllNotAppLaunch() {
+        val clearAll = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.google.android.apps.nexuslauncher",
+            className = "android.widget.Button",
+            viewId = "com.google.android.apps.nexuslauncher:id/clear_all",
+            text = "すべてクリア",
+            contentDesc = "すべてクリア",
+            actionLabels = emptyList(),
+            role = "ボタン"
+        )
+        assertEquals(ActionHintType.ACTIVATE, clearAll)
+    }
+
+    @Test
+    fun testNonLauncherHomesPackageNotAppLaunch() {
+        val searchInHomes = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "jp.co.homes.android",
+            className = "android.widget.Button",
+            viewId = "jp.co.homes.android:id/btn_search",
+            text = "物件を検索",
+            contentDesc = "物件を検索",
+            actionLabels = emptyList(),
+            role = "ボタン"
+        )
+        assertEquals(ActionHintType.SEARCH, searchInHomes)
+    }
+
+    @Test
+    fun testFalsePositiveSubstringsAvoidance() {
+        // Feedback button should not be BACK
+        val feedback = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.example.app",
+            className = "android.widget.Button",
+            viewId = "com.example.app:id/btn_feedback",
+            text = "ご意見・フィードバック",
+            contentDesc = "",
+            actionLabels = emptyList(),
+            role = "ボタン"
+        )
+        assertEquals(ActionHintType.ACTIVATE, feedback)
+
+        // Playback speed button should not be BACK
+        val playback = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.google.android.youtube",
+            className = "android.widget.Button",
+            viewId = "com.google.android.youtube:id/playback_speed",
+            text = "再生速度",
+            contentDesc = "",
+            actionLabels = emptyList(),
+            role = "ボタン"
+        )
+        // Does not match BACK
+        assertTrue(playback != ActionHintType.BACK)
+
+        // Sender profile link should not be SEND
+        val sender = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.google.android.gm",
+            className = "android.widget.TextView",
+            viewId = "com.google.android.gm:id/sender_name",
+            text = "送信者: 山田太郎",
+            contentDesc = "",
+            actionLabels = emptyList(),
+            role = "ボタン"
+        )
+        assertEquals(ActionHintType.ACTIVATE, sender)
+
+        // Recently deleted album should not be DELETE
+        val recentDelete = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.google.android.apps.photos",
+            className = "android.widget.TextView",
+            viewId = "com.google.android.apps.photos:id/album_name",
+            text = "最近削除した項目",
+            contentDesc = "",
+            actionLabels = emptyList(),
+            role = "ボタン"
+        )
+        assertEquals(ActionHintType.ACTIVATE, recentDelete)
+
+        // Call history tab should not be CALL
+        val callHistoryTab = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.google.android.dialer",
+            className = "android.widget.TextView",
+            viewId = "com.google.android.dialer:id/tab_call_history",
+            text = "通話履歴",
+            contentDesc = "",
+            actionLabels = emptyList(),
+            role = "タブ",
+            roleTab = "タブ"
+        )
+        assertEquals(ActionHintType.ACTIVATE, callHistoryTab)
+    }
+
+    @Test
+    fun testCustomClickLabelPrecedence() {
+        val customAction = ContextualActionHintHelper.evaluateActionHintType(
+            isClickable = true,
+            isCheckable = false,
+            isEditable = false,
+            isLongClickable = false,
+            hasClickAction = true,
+            hasExpandAction = false,
+            hasCollapseAction = false,
+            pkg = "com.google.android.gm",
+            className = "android.widget.ImageButton",
+            viewId = "com.google.android.gm:id/btn_archive",
+            text = "メッセージをアーカイブ",
+            contentDesc = "",
+            actionLabels = listOf("アーカイブ"),
+            customClickLabel = "アーカイブ",
+            role = "ボタン"
+        )
+        assertEquals(ActionHintType.CUSTOM, customAction)
+    }
 }
