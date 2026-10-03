@@ -88,11 +88,11 @@ class WifiConnectivityHelper(
                 return context.getString(resId)
             }
             return when (level) {
-                4 -> "4"
-                3 -> "3"
-                2 -> "2"
-                1 -> "1"
-                else -> "0"
+                4 -> "電波4本最強"
+                3 -> "電波3本良好"
+                2 -> "電波2本普通"
+                1 -> "電波1本やや弱い"
+                else -> "電波微弱"
             }
         }
     }

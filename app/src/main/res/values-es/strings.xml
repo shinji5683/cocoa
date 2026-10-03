@@ -1344,5 +1344,30 @@ Compartir este registro con el desarrollador Shinji ayuda a diagnosticar y soluc
     <string name="main_smart_battery_steps_disabled">Anuncios de progreso de carga desactivados</string>
     <string name="main_smart_battery_estimate_enabled">Tiempo estimado de carga activado</string>
     <string name="main_smart_battery_estimate_disabled">Tiempo estimado de carga desactivado</string>
-    <string name="test_smart_battery_announced">Prueba de notificaciﾃｳn inteligente de baterﾃｭa reproducida</string>
+    <string name="test_smart_battery_announced">Prueba de notificación inteligente de batería reproducida</string>
+
+    <!-- In-display Fingerprint Guidance -->
+    <string name="title_fingerprint_guidance">👆 Guía de sensor de huellas en pantalla</string>
+    <string name="desc_fingerprint_guidance">Guía el dedo hacia el sensor de huellas en pantalla mediante voz en tiempo real y pulsos hápticos.</string>
+    <string name="fingerprint_guidance_aligned">¡Aquí!</string>
+    <string name="fingerprint_dir_up">Arriba</string>
+    <string name="fingerprint_dir_slightly_up">Un poco arriba</string>
+    <string name="fingerprint_dir_down">Abajo</string>
+    <string name="fingerprint_dir_slightly_down">Un poco abajo</string>
+    <string name="fingerprint_dir_left">Izquierda</string>
+    <string name="fingerprint_dir_slightly_left">Un poco a la izquierda</string>
+    <string name="fingerprint_dir_right">Derecha</string>
+    <string name="fingerprint_dir_slightly_right">Un poco a la derecha</string>
+    <string name="fingerprint_dir_up_right">Arriba a la derecha</string>
+    <string name="fingerprint_dir_slightly_up_right">Un poco arriba a la derecha</string>
+    <string name="fingerprint_dir_down_right">Abajo a la derecha</string>
+    <string name="fingerprint_dir_slightly_down_right">Un poco abajo a la derecha</string>
+    <string name="fingerprint_dir_up_left">Arriba a la izquierda</string>
+    <string name="fingerprint_dir_slightly_up_left">Un poco arriba a la izquierda</string>
+    <string name="fingerprint_dir_down_left">Abajo a la izquierda</string>
+    <string name="fingerprint_dir_slightly_down_left">Un poco abajo a la izquierda</string>
+    <string name="fingerprint_sensor_detected">Sensor de huellas</string>
+    <string name="fingerprint_sensor_searching">Buscando sensor de huellas</string>
+    <string name="main_fingerprint_guidance_enabled">Guía de sensor de huellas activada</string>
+    <string name="main_fingerprint_guidance_disabled">Guía de sensor de huellas desactivada</string>
 </resources>

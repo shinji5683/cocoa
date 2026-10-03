@@ -1298,4 +1298,29 @@ Ang pagbabahagi ng log na ito sa developer na si Shinji ay makakatulong upang ma
     <string name="main_smart_battery_estimate_enabled">Pinagana ang abiso sa tinatayang oras ng pagpuno</string>
     <string name="main_smart_battery_estimate_disabled">Hindi pinagana ang abiso sa tinatayang oras ng pagpuno</string>
     <string name="test_smart_battery_announced">Napatugtog ang pagsubok sa matalinong abiso ng baterya</string>
+
+    <!-- In-display Fingerprint Guidance -->
+    <string name="title_fingerprint_guidance">👆 Gabay sa Sensor ng Fingerprint sa Screen</string>
+    <string name="desc_fingerprint_guidance">Ginagabayan ang daliri patungo sa sensor ng fingerprint sa screen gamit ang boses at mga haptic pulse sa real-time.</string>
+    <string name="fingerprint_guidance_aligned">Dito na!</string>
+    <string name="fingerprint_dir_up">Itaas</string>
+    <string name="fingerprint_dir_slightly_up">Bahagyang itaas</string>
+    <string name="fingerprint_dir_down">Ibaba</string>
+    <string name="fingerprint_dir_slightly_down">Bahagyang ibaba</string>
+    <string name="fingerprint_dir_left">Kaliwa</string>
+    <string name="fingerprint_dir_slightly_left">Bahagyang kaliwa</string>
+    <string name="fingerprint_dir_right">Kanan</string>
+    <string name="fingerprint_dir_slightly_right">Bahagyang kanan</string>
+    <string name="fingerprint_dir_up_right">Itaas pakanan</string>
+    <string name="fingerprint_dir_slightly_up_right">Bahagyang itaas pakanan</string>
+    <string name="fingerprint_dir_down_right">Ibaba pakanan</string>
+    <string name="fingerprint_dir_slightly_down_right">Bahagyang ibaba pakanan</string>
+    <string name="fingerprint_dir_up_left">Itaas pakaliwa</string>
+    <string name="fingerprint_dir_slightly_up_left">Bahagyang itaas pakaliwa</string>
+    <string name="fingerprint_dir_down_left">Ibaba pakaliwa</string>
+    <string name="fingerprint_dir_slightly_down_left">Bahagyang ibaba pakaliwa</string>
+    <string name="fingerprint_sensor_detected">Sensor ng fingerprint</string>
+    <string name="fingerprint_sensor_searching">Hinahanap ang sensor ng fingerprint</string>
+    <string name="main_fingerprint_guidance_enabled">Pinagana ang gabay sa fingerprint sa screen</string>
+    <string name="main_fingerprint_guidance_disabled">Hindi pinagana ang gabay sa fingerprint sa screen</string>
 </resources>

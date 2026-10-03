@@ -1313,5 +1313,30 @@
     <string name="main_smart_battery_steps_disabled">充電進行ステップ通知を無効にしました</string>
     <string name="main_smart_battery_estimate_enabled">完了予測時間案内を有効にしました</string>
     <string name="main_smart_battery_estimate_disabled">完了予測時間案内を無効にしました</string>
-    <string name="test_smart_battery_announced">繧ｹ繝槭・繝亥・髮ｻ騾夂衍縺ｮ繝・せ繝医ｒ蜀咲函縺励∪縺励◆</string>
+    <string name="test_smart_battery_announced">スマート充電通知のテストを再生しました</string>
+
+    <!-- 画面内指紋センサー位置案内 (Fingerprint Guidance) -->
+    <string name="title_fingerprint_guidance">👆 画面内指紋センサー位置案内</string>
+    <string name="desc_fingerprint_guidance">画面内指紋センサーの位置と指の移動方向を音声と振動でリアルタイムにナビゲーションします。</string>
+    <string name="fingerprint_guidance_aligned">ピッタリ！</string>
+    <string name="fingerprint_dir_up">上</string>
+    <string name="fingerprint_dir_slightly_up">少し上</string>
+    <string name="fingerprint_dir_down">下</string>
+    <string name="fingerprint_dir_slightly_down">少し下</string>
+    <string name="fingerprint_dir_left">左</string>
+    <string name="fingerprint_dir_slightly_left">少し左</string>
+    <string name="fingerprint_dir_right">右</string>
+    <string name="fingerprint_dir_slightly_right">少し右</string>
+    <string name="fingerprint_dir_up_right">右斜め上</string>
+    <string name="fingerprint_dir_slightly_up_right">少し右斜め上</string>
+    <string name="fingerprint_dir_down_right">右斜め下</string>
+    <string name="fingerprint_dir_slightly_down_right">少し右斜め下</string>
+    <string name="fingerprint_dir_up_left">左斜め上</string>
+    <string name="fingerprint_dir_slightly_up_left">少し左斜め上</string>
+    <string name="fingerprint_dir_down_left">左斜め下</string>
+    <string name="fingerprint_dir_slightly_down_left">少し左斜め下</string>
+    <string name="fingerprint_sensor_detected">指紋センサー</string>
+    <string name="fingerprint_sensor_searching">指紋センサー探索中</string>
+    <string name="main_fingerprint_guidance_enabled">画面内指紋センサー位置案内を有効にしました</string>
+    <string name="main_fingerprint_guidance_disabled">画面内指紋センサー位置案内を無効にしました</string>
 </resources>

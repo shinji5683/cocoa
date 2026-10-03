@@ -1314,4 +1314,29 @@ Het delen van dit logboek met ontwikkelaar Shinji helpt het probleem snel op te 
     <string name="main_smart_battery_estimate_enabled">Geschatte oplaadtijd ingeschakeld</string>
     <string name="main_smart_battery_estimate_disabled">Geschatte oplaadtijd uitgeschakeld</string>
     <string name="test_smart_battery_announced">Test voor slimme batterijmelding afgespeeld</string>
+
+    <!-- In-display Fingerprint Guidance -->
+    <string name="title_fingerprint_guidance">👆 Vingerafdruksensorgeleiding op het scherm</string>
+    <string name="desc_fingerprint_guidance">Begeleidt uw vinger naar de vingerafdruksensor op het scherm met behulp van realtime spraak en haptische pulsen.</string>
+    <string name="fingerprint_guidance_aligned">Precies hier!</string>
+    <string name="fingerprint_dir_up">Omhoog</string>
+    <string name="fingerprint_dir_slightly_up">Iets omhoog</string>
+    <string name="fingerprint_dir_down">Omlaag</string>
+    <string name="fingerprint_dir_slightly_down">Iets omlaag</string>
+    <string name="fingerprint_dir_left">Links</string>
+    <string name="fingerprint_dir_slightly_left">Iets naar links</string>
+    <string name="fingerprint_dir_right">Rechts</string>
+    <string name="fingerprint_dir_slightly_right">Iets naar rechts</string>
+    <string name="fingerprint_dir_up_right">Schuin rechtsboven</string>
+    <string name="fingerprint_dir_slightly_up_right">Iets schuin rechtsboven</string>
+    <string name="fingerprint_dir_down_right">Schuin rechtsonder</string>
+    <string name="fingerprint_dir_slightly_down_right">Iets schuin rechtsonder</string>
+    <string name="fingerprint_dir_up_left">Schuin linksboven</string>
+    <string name="fingerprint_dir_slightly_up_left">Iets schuin linksboven</string>
+    <string name="fingerprint_dir_down_left">Schuin linksonder</string>
+    <string name="fingerprint_dir_slightly_down_left">Iets schuin linksonder</string>
+    <string name="fingerprint_sensor_detected">Vingerafdruksensor</string>
+    <string name="fingerprint_sensor_searching">Vingerafdruksensor zoeken</string>
+    <string name="main_fingerprint_guidance_enabled">Vingerafdruksensorgeleiding ingeschakeld</string>
+    <string name="main_fingerprint_guidance_disabled">Vingerafdruksensorgeleiding uitgeschakeld</string>
 </resources>

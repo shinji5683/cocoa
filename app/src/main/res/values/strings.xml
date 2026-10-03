@@ -1313,4 +1313,29 @@ Sharing this log with developer Shinji helps diagnose and fix the issue quickly.
     <string name="main_smart_battery_estimate_enabled">Estimated charge time announcement enabled</string>
     <string name="main_smart_battery_estimate_disabled">Estimated charge time announcement disabled</string>
     <string name="test_smart_battery_announced">Smart battery announcement test played</string>
+
+    <!-- In-display Fingerprint Guidance -->
+    <string name="title_fingerprint_guidance">👆 In-display Fingerprint Guidance</string>
+    <string name="desc_fingerprint_guidance">Guides your finger to the in-display fingerprint sensor with real-time directional speech and haptic pulses.</string>
+    <string name="fingerprint_guidance_aligned">Here!</string>
+    <string name="fingerprint_dir_up">Up</string>
+    <string name="fingerprint_dir_slightly_up">Slightly up</string>
+    <string name="fingerprint_dir_down">Down</string>
+    <string name="fingerprint_dir_slightly_down">Slightly down</string>
+    <string name="fingerprint_dir_left">Left</string>
+    <string name="fingerprint_dir_slightly_left">Slightly left</string>
+    <string name="fingerprint_dir_right">Right</string>
+    <string name="fingerprint_dir_slightly_right">Slightly right</string>
+    <string name="fingerprint_dir_up_right">Up and right</string>
+    <string name="fingerprint_dir_slightly_up_right">Slightly up and right</string>
+    <string name="fingerprint_dir_down_right">Down and right</string>
+    <string name="fingerprint_dir_slightly_down_right">Slightly down and right</string>
+    <string name="fingerprint_dir_up_left">Up and left</string>
+    <string name="fingerprint_dir_slightly_up_left">Slightly up and left</string>
+    <string name="fingerprint_dir_down_left">Down and left</string>
+    <string name="fingerprint_dir_slightly_down_left">Slightly down and left</string>
+    <string name="fingerprint_sensor_detected">Fingerprint sensor</string>
+    <string name="fingerprint_sensor_searching">Locating fingerprint sensor</string>
+    <string name="main_fingerprint_guidance_enabled">In-display fingerprint guidance enabled</string>
+    <string name="main_fingerprint_guidance_disabled">In-display fingerprint guidance disabled</string>
 </resources>

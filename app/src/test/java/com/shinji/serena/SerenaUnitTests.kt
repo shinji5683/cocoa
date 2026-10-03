@@ -2,6 +2,7 @@ package com.shinji.serena
 
 import com.shinji.serena.ime.SerenaPhoneticEngine
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -222,4 +223,202 @@ class SerenaUnitTests {
                 !com.shinji.serena.navigation.SystemDialogHelper.isSpecialSystemDialogPackage(pkg))
         }
     }
+
+    @Test
+    fun testFingerprintGuidanceCalculations() {
+        val targetX = 500f
+        val targetY = 1000f
+        val density = 2.0f
+        val tolerance = 35f * density // 70px
+
+        // 1. ターゲット中央ピッタリ (ALIGNED)
+        val aligned = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 500f,
+            touchY = 1000f,
+            targetX = targetX,
+            targetY = targetY,
+            tolerancePx = tolerance,
+            density = density
+        )
+        assertTrue("Center should be aligned", aligned.isAligned)
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.ALIGNED, aligned.direction)
+        assertEquals(0f, aligned.distance, 0.01f)
+
+        // 許容誤差範囲内 (ALIGNED)
+        val nearAligned = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 520f,
+            touchY = 980f,
+            targetX = targetX,
+            targetY = targetY,
+            tolerancePx = tolerance,
+            density = density
+        )
+        assertTrue("Within tolerance should be aligned", nearAligned.isAligned)
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.ALIGNED, nearAligned.direction)
+
+        // 2. 直線4方向 (上・下・左・右)
+        // 指が上方（targetY > touchY） -> 下へ移動
+        val gDown = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 500f, touchY = 300f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.DOWN, gDown.direction)
+
+        val gSlightlyDown = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 500f, touchY = 900f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_DOWN, gSlightlyDown.direction)
+
+        // 指が下方（targetY < touchY） -> 上へ移動
+        val gUp = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 500f, touchY = 1700f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.UP, gUp.direction)
+
+        val gSlightlyUp = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 500f, touchY = 1100f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_UP, gSlightlyUp.direction)
+
+        // 指が左側（targetX > touchX） -> 右へ移動
+        val gRight = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 100f, touchY = 1000f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.RIGHT, gRight.direction)
+
+        val gSlightlyRight = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 400f, touchY = 1000f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_RIGHT, gSlightlyRight.direction)
+
+        // 指が右側（targetX < touchX） -> 左へ移動
+        val gLeft = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 900f, touchY = 1000f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.LEFT, gLeft.direction)
+
+        val gSlightlyLeft = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 600f, touchY = 1000f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_LEFT, gSlightlyLeft.direction)
+
+        // 3. 斜め4方向
+        // 指が左上（targetX > touchX, targetY > touchY） -> 右斜め下へ移動
+        val gDownRight = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 150f, touchY = 400f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.DOWN_RIGHT, gDownRight.direction)
+
+        // 指が右上（targetX < touchX, targetY > touchY） -> 左斜め下へ移動
+        val gDownLeft = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 850f, touchY = 400f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.DOWN_LEFT, gDownLeft.direction)
+
+        // 指が左下（targetX > touchX, targetY < touchY） -> 右斜め上へ移動
+        val gUpRight = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 150f, touchY = 1600f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.UP_RIGHT, gUpRight.direction)
+
+        // 指が右下（targetX < touchX, targetY < touchY） -> 左斜め上へ移動
+        val gUpLeft = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 850f, touchY = 1600f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.UP_LEFT, gUpLeft.direction)
+
+        // 斜め微小移動 (Slightly Diagonal)
+        val gSlightlyDownRight = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 430f, touchY = 930f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_DOWN_RIGHT, gSlightlyDownRight.direction)
+
+        val gSlightlyDownLeft = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 570f, touchY = 930f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_DOWN_LEFT, gSlightlyDownLeft.direction)
+
+        val gSlightlyUpRight = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 430f, touchY = 1070f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_UP_RIGHT, gSlightlyUpRight.direction)
+
+        val gSlightlyUpLeft = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = 570f, touchY = 1070f,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_UP_LEFT, gSlightlyUpLeft.direction)
+
+        // 4. 境界値（ちょうど許容誤差境界 tolerancePx）
+        val gExactBoundary = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = targetX + tolerance, touchY = targetY,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertTrue("Exact tolerance boundary must be ALIGNED", gExactBoundary.isAligned)
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.ALIGNED, gExactBoundary.direction)
+
+        // 許容誤差を 1px 超えた境界
+        val gJustOutside = FingerprintGuidanceHelper.calculateGuidance(
+            touchX = targetX + tolerance + 1.0f, touchY = targetY,
+            targetX = targetX, targetY = targetY,
+            tolerancePx = tolerance, density = density
+        )
+        assertFalse("Just outside tolerance must not be aligned", gJustOutside.isAligned)
+        assertEquals(FingerprintGuidanceHelper.GuidanceDirection.SLIGHTLY_LEFT, gJustOutside.direction)
+
+        // 5. ガイガーカウンター式振動間隔の狭まり検証
+        val iFar = FingerprintGuidanceHelper.calculateGeigerInterval(400f * density, tolerance, density)
+        val iMidFar = FingerprintGuidanceHelper.calculateGeigerInterval(250f * density, tolerance, density)
+        val iMid = FingerprintGuidanceHelper.calculateGeigerInterval(160f * density, tolerance, density)
+        val iClose = FingerprintGuidanceHelper.calculateGeigerInterval(90f * density, tolerance, density)
+        val iVeryClose = FingerprintGuidanceHelper.calculateGeigerInterval(40f * density, tolerance, density)
+        val iAligned = FingerprintGuidanceHelper.calculateGeigerInterval(10f, tolerance, density)
+
+        assertEquals(750L, iFar)
+        assertEquals(500L, iMidFar)
+        assertEquals(350L, iMid)
+        assertEquals(220L, iClose)
+        assertEquals(130L, iVeryClose)
+        assertEquals(80L, iAligned)
+
+        assertTrue("Interval must decrease as distance decreases",
+            iAligned < iVeryClose && iVeryClose < iClose && iClose < iMid && iMid < iMidFar && iMidFar < iFar)
+
+        // 6. 全方向EnumのリソースID存在検証
+        for (dir in FingerprintGuidanceHelper.GuidanceDirection.values()) {
+            assertTrue("Resource ID for ${dir.name} must be valid", dir.stringResId != 0)
+        }
+    }
 }
+

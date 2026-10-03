@@ -55,6 +55,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         const val KEY_SMART_BATTERY_LOW = "smart_battery_low_enabled"
         const val KEY_SMART_BATTERY_STEPS = "smart_battery_steps_enabled"
         const val KEY_SMART_BATTERY_ESTIMATE = "smart_battery_estimate_enabled"
+        const val KEY_FINGERPRINT_GUIDANCE_ENABLED = "fingerprint_guidance_enabled"
         const val KEY_SHAKE_THRESHOLD = "shake_threshold"
         const val KEY_TALKBACK_MODE = "key_talkback_mode"
         const val KEY_CHIME_STYLE = "key_chime_style"
@@ -110,6 +111,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
     var sentinelEyesManager: com.shinji.serena.ai.SerenaSentinelEyesManager? = null
     private var shakeDetectorHelper: ShakeDetectorHelper? = null
     private var spatialHapticTouchMapHelper: SpatialHapticTouchMapHelper? = null
+    var fingerprintGuidanceHelper: FingerprintGuidanceHelper? = null
     private var isLiveEnvironmentModeActive = false
     private var liveEnvironmentHandler: android.os.Handler? = null
     private var liveEnvironmentRunnable: Runnable? = null
@@ -217,6 +219,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             soundHelper?.let {
                 spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
             }
+        }
+        safeInitHelper("fingerprintGuidance") {
+            fingerprintGuidanceHelper = FingerprintGuidanceHelper(this, soundHelper)
         }
         safeInitHelper("callManager") {
             callManager = com.shinji.serena.telephony.SerenaCallManager(this, com.shinji.serena.speech.SerenaSpeechEngine(this))
@@ -502,6 +507,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             lastDispatchedGestureTimeMs = now
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (fingerprintGuidanceHelper?.isGuidanceActive() == true) {
+                    try {
+                        val motionEvent = gestureEvent.motionEvents.lastOrNull()
+                        if (motionEvent != null) {
+                            fingerprintGuidanceHelper?.onTouchCoordinates(motionEvent.x, motionEvent.y)
+                        }
+                    } catch (_: Throwable) {}
+                }
                 val gestureId = gestureEvent.gestureId
                 Log.i(TAG, "onGesture(AccessibilityGestureEvent) received: $gestureId")
                 return gestureDispatcher?.onGesture(gestureId) ?: handleGestureId(gestureId)
@@ -2190,6 +2203,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             serenaMenuItem("🦇", getString(R.string.menu_item_sonar_radar)) {
                 toggleSpatialObstacleSonar()
             },
+            serenaMenuItem("👆", "${getString(R.string.title_fingerprint_guidance)} (${if (fingerprintGuidanceHelper?.isEnabled == true) onText else offText})") {
+                toggleFingerprintGuidance()
+            },
             serenaMenuItem("🏠", getString(R.string.menu_item_indoor_nav)) {
                 launchIndoorNavigation()
             },
@@ -3230,6 +3246,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
     }
 
+    fun toggleFingerprintGuidance() {
+        val helper = fingerprintGuidanceHelper ?: return
+        val newState = !helper.isEnabled
+        helper.setEnabled(newState)
+        soundHelper?.playActionDone()
+        val msg = if (newState) getString(R.string.main_fingerprint_guidance_enabled) else getString(R.string.main_fingerprint_guidance_disabled)
+        speak(msg, TextToSpeech.QUEUE_FLUSH)
+    }
+
     fun announceStreetAndIntersections() {
         soundHelper?.playMenuOpen()
         val nav = streetIntersectionNavigator ?: run {
@@ -3330,8 +3355,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     wasKeyguardLocked = false
                     soundHelper?.playActionDone()
                     speak(getString(R.string.screen_unlocked), TextToSpeech.QUEUE_FLUSH)
+                    fingerprintGuidanceHelper?.onKeyguardDismissed()
                 } else if (currentlyLocked) {
                     wasKeyguardLocked = true
+                    fingerprintGuidanceHelper?.updateSensorLocation()
                 }
 
                 if (activeMenuDialog != null) return
@@ -3358,8 +3385,10 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     wasKeyguardLocked = false
                     soundHelper?.playActionDone()
                     speak(getString(R.string.screen_unlocked), TextToSpeech.QUEUE_FLUSH)
+                    fingerprintGuidanceHelper?.onKeyguardDismissed()
                 } else if (currentlyLocked) {
                     wasKeyguardLocked = true
+                    fingerprintGuidanceHelper?.updateSensorLocation()
                 }
 
                 // セレナメニューダイアログ表示中の場合、OSがウィンドウ内の全項目テキストを結合して送ってくるため全読みを抑制！
@@ -3426,6 +3455,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_START -> {
                 lastKeyboardHoverNode = null
                 lastKeyboardHoverExitTimeMs = 0L
+                fingerprintGuidanceHelper?.onTouchStart()
             }
 
             AccessibilityEvent.TYPE_VIEW_HOVER_ENTER -> {
@@ -3433,6 +3463,16 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                 val pkg = node.packageName?.toString() ?: ""
                 val viewId = node.viewIdResourceName?.lowercase() ?: ""
                 val className = node.className?.toString() ?: ""
+
+                // 画面内指紋センサー位置案内（ロック画面または生体認証ダイアログ時）
+                if (fingerprintGuidanceHelper?.isGuidanceActive() == true) {
+                    val consumed = fingerprintGuidanceHelper?.onHoverNode(node) == true
+                    if (consumed) {
+                        lastHoveredNode = node
+                        node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
+                        return
+                    }
+                }
 
                 val rect = android.graphics.Rect()
                 node.getBoundsInScreen(rect)
@@ -3503,6 +3543,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             }
 
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> {
+                fingerprintGuidanceHelper?.onTouchEnd()
                 val now = System.currentTimeMillis()
                 val targetKey = lastKeyboardHoverNode
                 // 指を離した瞬間：キー上で指を離した場合のみ入力実行（離してからの猶予400ms以内）
@@ -4739,6 +4780,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         streetIntersectionNavigator = null
         brailleController?.disconnect()
         brailleController = null
+        fingerprintGuidanceHelper?.destroy()
+        fingerprintGuidanceHelper = null
         shakeDetectorHelper?.stop()
         stopSpeech()
         unregisterTimeTickReceiver()

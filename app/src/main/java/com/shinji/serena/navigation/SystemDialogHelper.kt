@@ -29,7 +29,7 @@ object SystemDialogHelper {
         val dialogRoot: AccessibilityNodeInfo?
     )
 
-    private val mainHandler = Handler(Looper.getMainLooper())
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
     private var pendingDialogRunnable: Runnable? = null
     private var lastHandledDialogKey: String = ""
 
