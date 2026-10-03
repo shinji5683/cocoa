@@ -10,15 +10,15 @@ android {
         applicationId = "com.shinji.serena.mail"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "DEVELOPER_NAME", "\"Shinji\"")
         buildConfigField("String", "DEVELOPER_EMAIL", "\"shinjisakiyama@gmail.com\"")
         buildConfigField("String", "COPYRIGHT_NOTICE", "\"Copyright © 2026 Shinji. All Rights Reserved.\"")
-        buildConfigField("String", "REPO_RELEASE_TAG", "\"v2.5.1\"")
+        buildConfigField("String", "REPO_RELEASE_TAG", "\"v2.5.2\"")
     }
 
     signingConfigs {

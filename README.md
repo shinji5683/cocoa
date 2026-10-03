@@ -31,14 +31,14 @@ The `cocoa` repository has officially transitioned from a standalone screen read
 
 ### 📦 Modular Structure & Versioning Policy
 * **`:app` Module — Serena Screen Reader (Core System Service)**
-  * **App Version**: `v2.5.1` (versionCode 59)
+  * **App Version**: `v2.5.2` (versionCode 60)
   * **Role**: 24/7 background system AccessibilityService handling real-time UI hierarchy inspection, speech feedback, spatial obstacle sonar, and braille I/O.
 * **`:mailer` Module — Serena Mail (Blind-Centric Gmail Client)**
-  * **App Version**: `v1.0.0` (versionCode 1) ★ Brand New!
+  * **App Version**: `v1.0.1` (versionCode 2) ★ Auto-Updater Built-in!
   * **Role**: Streamlined email experience free from complex HTML layouts and ads, featuring on-device Gemma 4 AI for 2-3 sentence email summarization, instant polite reply drafting, and an integrated Accessible Auto-Updater checking directly against GitHub Releases.
 
 > [!NOTE]
-> **Understanding Release Tags**: GitHub Release tags (e.g., `v2.5.1`) act as global repository-level release milestones. Under this tag, both the core screen reader (`v2.5.1`) and the newly debuted Serena Mail (`v1.0.0`) maintain independent internal versioning while being compiled and distributed simultaneously as distinct standalone APKs.
+> **Understanding Release Tags**: GitHub Release tags (e.g., `v2.5.2`) act as global repository-level release milestones. Under this tag, both the core screen reader (`v2.5.2`) and the newly debuted Serena Mail (`v1.0.1`) maintain independent internal versioning while being compiled and distributed simultaneously as distinct standalone APKs.
 
 ### 🚀 Future Roadmap: What to Expect Next
 1. **Uncompromised Safety for the "Lifeline" (Screen Reader)**:

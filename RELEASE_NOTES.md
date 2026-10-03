@@ -3,6 +3,29 @@
 すべての更新履歴は、全盲の開発者Shinjiのこだわりと世界中の視覚障害者ユーザーのために、日本語と英語の両方で詳細に記録されています。
 All updates and changelogs are meticulously maintained in both Japanese and English for global visually impaired users.
 
+## [v2.5.2] - 2026-10-04
+### 🇯🇵 日本語
+#### 🚀 Serena Mail 専用アクセシブル・自動アップデーター（AutoUpdateManager）爆誕！
+- **完全自律型アプリ内アップデートエンジン**:
+  - GitHub Releases APIと連携し、Serena Mailの最新APK（`app-serena-mail-release.apk`）を自動検知。
+  - アプリ起動時のサイレント確認 ＆ 設定画面からのワンタップ手動確認をサポート。
+- **安心・安全のバックグラウンド更新＆PackageInstaller連携**:
+  - ダウンロード完了後、Android標準のPackageInstaller Session APIまたはFileProvider経由で更新ダイアログを自動起動。
+  - 視覚障害者ユーザーが外部ブラウザやファイルマネージャーで迷うことなく、アプリ内完結で常に最新のSerena Mailを利用可能に。
+- **全6言語の完全ローカライズ**:
+  - 日本語・英語・スペイン語・タガログ語・オランダ語・デフォルトの全6言語に更新メッセージを完全外部化。
+
+### 🇺🇸 English
+#### 🚀 Accessible In-App Auto-Updater for Serena Mail!
+- **Autonomous In-App Update Engine**:
+  - Integrated with GitHub Releases API to detect and fetch the latest `app-serena-mail-release.apk`.
+  - Supports silent background checks on app launch as well as manual "Check for Updates" in Account Settings.
+- **Accessible Background Download & PackageInstaller Integration**:
+  - Direct background streaming download followed by automated PackageInstaller session launch.
+  - Zero friction for visually impaired users without needing external browsers or file managers.
+- **Full 6-Language Localization**:
+  - 100% externalized string resources across Japanese, English, Spanish, Tagalog, Dutch, and default locales.
+
 ## [v2.5.1] - 2026-10-04
 ### 🇯🇵 日本語
 #### 📬 マルチモジュール化 ＆ 全盲特化メーラー「Serena Mail」爆誕！
