@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#121212">
+
+    <!-- ヘッダー＆アクションバー -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#1E1E1E"
+        android:padding="12dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/mail_list_title"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:accessibilityHeading="true" />
+
+        <Button
+            android:id="@+id/btnRefresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/mail_btn_refresh"
+            android:contentDescription="@string/mail_btn_refresh"
+            android:layout_marginEnd="6dp" />
+
+        <Button
+            android:id="@+id/btnCompose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/mail_btn_compose"
+            android:contentDescription="@string/mail_btn_compose"
+            android:layout_marginEnd="6dp" />
+
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/mail_btn_settings"
+            android:contentDescription="@string/mail_btn_settings" />
+    </LinearLayout>
+
+    <!-- ステータスバー（読み上げ用） -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:background="#2A2A2A"
+        android:textColor="#80D8FF"
+        android:textSize="16sp"
+        android:visibility="gone"
+        android:accessibilityLiveRegion="polite" />
+
+    <!-- メール一覧 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewMails"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="6dp" />
+
+</LinearLayout>

@@ -3,6 +3,37 @@
 すべての更新履歴は、全盲の開発者Shinjiのこだわりと世界中の視覚障害者ユーザーのために、日本語と英語の両方で詳細に記録されています。
 All updates and changelogs are meticulously maintained in both Japanese and English for global visually impaired users.
 
+## [v2.5.1] - 2026-10-04
+### 🇯🇵 日本語
+#### 📬 マルチモジュール化 ＆ 全盲特化メーラー「Serena Mail」爆誕！
+- **マルチモジュール・アーキテクチャの導入**:
+  - `cocoa` リポジトリをマルチモジュール化（`:app` スクリーンリーダー本体 ＋ `:mailer` メーラーアプリ）。
+  - スクリーンリーダーの安全性を100%保ったまま、独立したアプリ（`app-serena-mail-release.apk`）として動作。
+- **Gmail (IMAP / SMTP) 送受信エンジン**:
+  - 受信トレイの一覧取得、メール閲覧、新規作成・送信を完全非同期・安全に実装。
+  - Googleアプリパスワード（16桁）によるセキュア接続（暗号化保存）。
+- **Gemma 4 オンデバイスAIの統合**:
+  - 長文メールの要点を2〜3文で簡潔にまとめる「Gemma 4 要約機能」。
+  - 「了解とお礼」「承諾」などの返信下書きをワンタップで自動作成する「AI返信アシスタント」。
+- **全盲特化スクリーンリーダーフレンドリーUI**:
+  - 余計な装飾や重いWebViewを排除し、TalkBack / Serena で最も操作しやすいクリーンで高速なアクセシビリティ設計。
+  - 日本語・英語・スペイン語・タガログ語・オランダ語の全6言語に完全ローカライズ。
+
+### 🇺🇸 English
+#### 📬 Multi-Module Architecture & "Serena Mail" Debut!
+- **Multi-Module Project Architecture**:
+  - Restructured `cocoa` as a multi-module repository (`:app` Screen Reader + `:mailer` Email Client).
+  - Keeps the core AccessibilityService completely safe while producing an independent APK (`app-serena-mail-release.apk`).
+- **Gmail (IMAP / SMTP) Engine**:
+  - Fully asynchronous and secure inbox fetching, email reading, and email composing/sending.
+  - Secure encrypted storage for Google App Passwords.
+- **Gemma 4 On-Device AI Integration**:
+  - One-tap email summarization distilling lengthy messages into 2-3 concise sentences.
+  - Generative AI reply assistant drafting polite responses instantly.
+- **Screen Reader-First Accessible Design**:
+  - Clean, high-contrast, zero-clutter interface tailored specifically for blind users.
+  - Full localization across all 6 supported languages.
+
 ## [v2.3.6] - 2026-09-15
 ### 🇯🇵 日本語
 #### ⚡ スマート充電通知スイート（全項目カスタマイズ可能）

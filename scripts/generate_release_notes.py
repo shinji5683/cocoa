@@ -45,7 +45,7 @@ def main():
             notes_content += "* Continuous improvement and bug fixes."
             
     # Add official asset download footer
-    footer = f"\n\n---\n### 📦 Official Downloads\n- **Release APK**: [app-serena-release.apk](https://github.com/shinji5683/cocoa/releases/download/{target_tag}/app-serena-release.apk)\n- **Debug APK**: [app-serena-debug.apk](https://github.com/shinji5683/cocoa/releases/download/{target_tag}/app-serena-debug.apk)\n"
+    footer = f"\n\n---\n### 📦 Official Downloads\n- **Serena Screen Reader (Release)**: [app-serena-release.apk](https://github.com/shinji5683/cocoa/releases/download/{target_tag}/app-serena-release.apk)\n- **Serena Mail (Release)**: [app-serena-mail-release.apk](https://github.com/shinji5683/cocoa/releases/download/{target_tag}/app-serena-mail-release.apk)\n- **Debug APKs**: [app-serena-debug.apk](https://github.com/shinji5683/cocoa/releases/download/{target_tag}/app-serena-debug.apk), [app-serena-mail-debug.apk](https://github.com/shinji5683/cocoa/releases/download/{target_tag}/app-serena-mail-debug.apk)\n"
     notes_content += footer
     
     with open(output_file, "w", encoding="utf-8") as f:

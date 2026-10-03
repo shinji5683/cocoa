@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 宛先入力 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/mail_hint_to"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/etTo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/mail_hint_to"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#666666"
+            android:background="#1E1E1E"
+            android:padding="12dp"
+            android:inputType="textEmailAddress"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 件名入力 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/mail_hint_subject"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/etSubject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="@string/mail_hint_subject"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#666666"
+            android:background="#1E1E1E"
+            android:padding="12dp"
+            android:inputType="text"
+            android:layout_marginBottom="12dp" />
+
+        <!-- AI作成アシストボタン -->
+        <Button
+            android:id="@+id/btnAiAssist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="🪄 Gemma 4 で返信・下書きを作成"
+            android:contentDescription="Gemma 4 で返信または下書きを作成"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 本文入力 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/mail_hint_body"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/etBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="140dp"
+            android:gravity="top"
+            android:hint="@string/mail_hint_body"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#666666"
+            android:background="#1E1E1E"
+            android:padding="12dp"
+            android:inputType="textMultiLine"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 送信ボタン -->
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/mail_btn_send"
+            android:contentDescription="@string/mail_btn_send" />
+
+    </LinearLayout>
+</ScrollView>

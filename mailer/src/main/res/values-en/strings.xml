@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mail_app_name">Serena Mail</string>
+    <string name="mail_list_title">Inbox</string>
+    <string name="mail_detail_title">Message Details</string>
+    <string name="mail_compose_title">Compose Email</string>
+    <string name="mail_settings_title">Account Settings</string>
+
+    <string name="mail_btn_refresh">Refresh inbox</string>
+    <string name="mail_btn_compose">Compose new email</string>
+    <string name="mail_btn_settings">Account settings</string>
+    <string name="mail_btn_summarize">Summarize with Gemma 4</string>
+    <string name="mail_btn_ai_reply">Generate AI Reply</string>
+    <string name="mail_btn_reply">Reply</string>
+    <string name="mail_btn_send">Send email</string>
+    <string name="mail_btn_save_account">Save and test connection</string>
+
+    <string name="mail_label_from">From: %1$s</string>
+    <string name="mail_label_to">To: %1$s</string>
+    <string name="mail_label_date">Date: %1$s</string>
+    <string name="mail_label_subject">Subject: %1$s</string>
+    <string name="mail_label_body">Body: %1$s</string>
+
+    <string name="mail_hint_to">Recipient email address</string>
+    <string name="mail_hint_subject">Subject</string>
+    <string name="mail_hint_body">Write your email message here</string>
+    <string name="mail_hint_email">Gmail address (e.g. user@gmail.com)</string>
+    <string name="mail_hint_app_password">16-character Google App Password</string>
+
+    <string name="mail_status_connecting">Connecting to mail server…</string>
+    <string name="mail_status_connected">Connected successfully!</string>
+    <string name="mail_status_fetching">Fetching emails…</string>
+    <string name="mail_status_fetched_fmt">Fetched %1$d emails.</string>
+    <string name="mail_status_sending">Sending email…</string>
+    <string name="mail_status_sent">Email sent successfully!</string>
+    <string name="mail_status_send_failed_fmt">Failed to send: %1$s</string>
+    <string name="mail_status_error_fmt">Error: %1$s</string>
+    <string name="mail_status_no_account">No account configured. Please open settings to setup your Gmail account.</string>
+    <string name="mail_status_summarizing">Gemma 4 is summarizing this email…</string>
+    <string name="mail_status_generating_reply">Gemma 4 is drafting an AI reply…</string>
+    <string name="mail_summary_result_fmt">Gemma 4 Summary: %1$s</string>
+
+    <string name="mail_unread_indicator">Unread</string>
+    <string name="mail_read_indicator">Read</string>
+    <string name="mail_item_a11y_fmt">%1$s. From %2$s. Subject: %3$s. Date: %4$s.</string>
+    <string name="mail_settings_desc">To use Gmail, enable 2-step verification in your Google Account and generate a 16-character App Password to log in securely.</string>
+</resources>

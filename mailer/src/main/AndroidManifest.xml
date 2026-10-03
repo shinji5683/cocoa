@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/mail_app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SerenaMail">
+
+        <!-- メール一覧画面 (メインランチャー) -->
+        <activity
+            android:name=".ui.MailListActivity"
+            android:exported="true"
+            android:label="@string/mail_app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- メール閲覧＆Gemma 4要約画面 -->
+        <activity
+            android:name=".ui.MailDetailActivity"
+            android:exported="false"
+            android:label="@string/mail_detail_title" />
+
+        <!-- メール作成＆AI返信画面 -->
+        <activity
+            android:name=".ui.ComposeMailActivity"
+            android:exported="true"
+            android:label="@string/mail_compose_title">
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO" />
+                <data android:scheme="mailto" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- アカウント設定画面 -->
+        <activity
+            android:name=".ui.AccountSettingsActivity"
+            android:exported="false"
+            android:label="@string/mail_settings_title" />
+
+    </application>
+
+</manifest>

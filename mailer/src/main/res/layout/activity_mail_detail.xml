@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- アクションボタン群 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <Button
+                android:id="@+id/btnSummarizeGemma4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:text="@string/mail_btn_summarize"
+                android:contentDescription="@string/mail_btn_summarize"
+                android:layout_marginEnd="6dp" />
+
+            <Button
+                android:id="@+id/btnAiReply"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:text="@string/mail_btn_ai_reply"
+                android:contentDescription="@string/mail_btn_ai_reply" />
+        </LinearLayout>
+
+        <!-- Gemma 4 要約カード -->
+        <LinearLayout
+            android:id="@+id/layoutSummaryCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1E3A5F"
+            android:padding="14dp"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvSummaryTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💡 Gemma 4 要約"
+                android:textColor="#80D8FF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:accessibilityHeading="true" />
+
+            <TextView
+                android:id="@+id/tvSummaryContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+
+        <!-- メタデータ（差出人・宛先・日時・件名） -->
+        <TextView
+            android:id="@+id/tvSubject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:accessibilityHeading="true"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvSender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#E0E0E0"
+            android:textSize="15sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#333333"
+            android:layout_marginBottom="16dp" />
+
+        <!-- メール本文 -->
+        <TextView
+            android:id="@+id/tvBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#F5F5F5"
+            android:textSize="16sp"
+            android:lineSpacingExtra="6dp"
+            android:textIsSelectable="true"
+            android:layout_marginBottom="24dp" />
+
+        <!-- 返信ボタン -->
+        <Button
+            android:id="@+id/btnReply"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/mail_btn_reply"
+            android:contentDescription="@string/mail_btn_reply" />
+
+    </LinearLayout>
+</ScrollView>

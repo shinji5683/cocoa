@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mail_app_name">Serena Mail</string>
+    <string name="mail_list_title">Inbox</string>
+    <string name="mail_detail_title">Detalye ng Mensahe</string>
+    <string name="mail_compose_title">Sumulat ng Email</string>
+    <string name="mail_settings_title">Mga Setting ng Account</string>
+
+    <string name="mail_btn_refresh">I-refresh ang inbox</string>
+    <string name="mail_btn_compose">Bagong email</string>
+    <string name="mail_btn_settings">Mga setting</string>
+    <string name="mail_btn_summarize">I-summarize gamit ang Gemma 4</string>
+    <string name="mail_btn_ai_reply">Gumawa ng sagot gamit ang AI</string>
+    <string name="mail_btn_reply">Sumagot</string>
+    <string name="mail_btn_send">Ipadala ang email</string>
+    <string name="mail_btn_save_account">I-save at subukan ang koneksyon</string>
+
+    <string name="mail_label_from">Mula kay: %1$s</string>
+    <string name="mail_label_to">Para kay: %1$s</string>
+    <string name="mail_label_date">Petsa: %1$s</string>
+    <string name="mail_label_subject">Paksa: %1$s</string>
+    <string name="mail_label_body">Nilalaman: %1$s</string>
+
+    <string name="mail_hint_to">Email address ng tatanggap</string>
+    <string name="mail_hint_subject">Paksa</string>
+    <string name="mail_hint_body">Isulat ang iyong mensahe dito</string>
+    <string name="mail_hint_email">Gmail address (hal. user@gmail.com)</string>
+    <string name="mail_hint_app_password">16-character na Google App Password</string>
+
+    <string name="mail_status_connecting">Kumokonekta sa mail server…</string>
+    <string name="mail_status_connected">Matagumpay na nakakonekta!</string>
+    <string name="mail_status_fetching">Kinukuha ang mga email…</string>
+    <string name="mail_status_fetched_fmt">Nakuha ang %1$d na mga email.</string>
+    <string name="mail_status_sending">Ipinapadala ang email…</string>
+    <string name="mail_status_sent">Matagumpay na naipadala ang email!</string>
+    <string name="mail_status_send_failed_fmt">Nabigong ipadala: %1$s</string>
+    <string name="mail_status_error_fmt">Error: %1$s</string>
+    <string name="mail_status_no_account">Walang naka-set up na account. Buksan ang mga setting upang mai-setup ang iyong Gmail.</string>
+    <string name="mail_status_summarizing">Sinasuri at binubuod ng Gemma 4 ang email…</string>
+    <string name="mail_status_generating_reply">Gumagawa ang Gemma 4 ng sagot gamit ang AI…</string>
+    <string name="mail_summary_result_fmt">Buod ng Gemma 4: %1$s</string>
+
+    <string name="mail_unread_indicator">Hindi pa nababasa</string>
+    <string name="mail_read_indicator">Nabasa na</string>
+    <string name="mail_item_a11y_fmt">%1$s. Mula kay %2$s. Paksa: %3$s. Petsa: %4$s.</string>
+    <string name="mail_settings_desc">Upang magamit ang Gmail, i-on ang 2-step verification sa iyong Google Account at gumawa ng 16-character App Password.</string>
+</resources>

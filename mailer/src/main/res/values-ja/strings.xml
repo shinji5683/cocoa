@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mail_app_name">Serena Mail</string>
+    <string name="mail_list_title">受信トレイ</string>
+    <string name="mail_detail_title">メール詳細</string>
+    <string name="mail_compose_title">メール作成</string>
+    <string name="mail_settings_title">アカウント設定</string>
+
+    <string name="mail_btn_refresh">受信トレイを更新</string>
+    <string name="mail_btn_compose">新規メール作成</string>
+    <string name="mail_btn_settings">アカウント設定</string>
+    <string name="mail_btn_summarize">Gemma 4 でメールを要約</string>
+    <string name="mail_btn_ai_reply">AIで返信文を作成</string>
+    <string name="mail_btn_reply">返信</string>
+    <string name="mail_btn_send">メールを送信</string>
+    <string name="mail_btn_save_account">保存して接続テスト</string>
+
+    <string name="mail_label_from">送信者: %1$s</string>
+    <string name="mail_label_to">宛先: %1$s</string>
+    <string name="mail_label_date">日時: %1$s</string>
+    <string name="mail_label_subject">件名: %1$s</string>
+    <string name="mail_label_body">本文: %1$s</string>
+
+    <string name="mail_hint_to">宛先メールアドレスを入力</string>
+    <string name="mail_hint_subject">件名を入力</string>
+    <string name="mail_hint_body">メール本文を入力</string>
+    <string name="mail_hint_email">Gmailアドレス (例: user@gmail.com)</string>
+    <string name="mail_hint_app_password">Googleアプリパスワード (16桁)</string>
+
+    <string name="mail_status_connecting">メールサーバーに接続中…</string>
+    <string name="mail_status_connected">接続に成功しました！</string>
+    <string name="mail_status_fetching">メールを受信中…</string>
+    <string name="mail_status_fetched_fmt">%1$d件のメールを受信しました。</string>
+    <string name="mail_status_sending">メールを送信中…</string>
+    <string name="mail_status_sent">メールを送信しました！</string>
+    <string name="mail_status_send_failed_fmt">送信に失敗しました: %1$s</string>
+    <string name="mail_status_error_fmt">エラー: %1$s</string>
+    <string name="mail_status_no_account">アカウントが設定されていません。設定画面からGmailを設定してください。</string>
+    <string name="mail_status_summarizing">Gemma 4 がメール本文を解析・要約中…</string>
+    <string name="mail_status_generating_reply">Gemma 4 がAI返信文を作成中…</string>
+    <string name="mail_summary_result_fmt">【Gemma 4 要約】%1$s</string>
+
+    <string name="mail_unread_indicator">未読</string>
+    <string name="mail_read_indicator">既読</string>
+    <string name="mail_item_a11y_fmt">%1$s、送信者 %2$s、件名 %3$s、日時 %4$s</string>
+    <string name="mail_settings_desc">Gmailを利用するには、Googleアカウントで「2段階認証」を有効にし、「アプリパスワード（16桁）」を発行して設定してください。</string>
+</resources>

@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "cocoa"
 include(":app")
+include(":mailer")

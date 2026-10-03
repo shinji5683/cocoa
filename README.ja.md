@@ -18,7 +18,8 @@
 
 ## 📥 ダウンロード＆クイックスタート
 
-* 🚀 **[最新リリース APK を直接ダウンロード (app-serena-release.apk)](https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-release.apk)**
+* 🚀 **[Serena スクリーンリーダー 最新 APK (app-serena-release.apk)](https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-release.apk)**
+* 📬 **[Serena Mail（全盲特化・Gemma 4統合メーラー）最新 APK (app-serena-mail-release.apk)](https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-mail-release.apk)**
 * 📦 **[全リリース一覧＆更新履歴 (Releases)](https://github.com/shinji5683/cocoa/releases)**
 
 ---

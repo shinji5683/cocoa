@@ -19,7 +19,8 @@
 
 ## 📥 Download & Quick Start
 
-* 👑 **[Download Latest Release APK (app-serena-release.apk)](https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-release.apk)**
+* 👑 **[Serena Screen Reader Latest Release APK (app-serena-release.apk)](https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-release.apk)**
+* 📬 **[Serena Mail (Accessible Gmail Client with Gemma 4) Latest Release APK (app-serena-mail-release.apk)](https://github.com/shinji5683/cocoa/releases/latest/download/app-serena-mail-release.apk)**
 * 📦 **[All Releases & Changelog](https://github.com/shinji5683/cocoa/releases)**
 
 ---

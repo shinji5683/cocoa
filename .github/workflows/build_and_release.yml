@@ -54,16 +54,16 @@ jobs:
         env:
           GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4096m -XX:MaxMetaspaceSize=1024m' -Dfile.encoding=UTF-8"
         run: |
-          ./gradlew assembleRelease --stacktrace
-          ./gradlew assembleDebug --stacktrace
-
+          ./gradlew :app:assembleRelease :app:assembleDebug :mailer:assembleRelease :mailer:assembleDebug --stacktrace
 
       - name: Prepare Standard Named Artifacts
         run: |
           cp app/build/outputs/apk/release/app-release.apk app-serena-release.apk
           cp app/build/outputs/apk/debug/app-debug.apk app-serena-debug.apk
+          cp mailer/build/outputs/apk/release/mailer-release.apk app-serena-mail-release.apk
+          cp mailer/build/outputs/apk/debug/mailer-debug.apk app-serena-mail-debug.apk
           echo "Prepared APK artifacts:"
-          ls -lh app-serena-release.apk app-serena-debug.apk
+          ls -lh app-serena-release.apk app-serena-debug.apk app-serena-mail-release.apk app-serena-mail-debug.apk
 
       - name: Publish or Update GitHub Release
         env:
@@ -87,6 +87,8 @@ jobs:
             gh release upload "$TARGET_TAG" \
               app-serena-release.apk \
               app-serena-debug.apk \
+              app-serena-mail-release.apk \
+              app-serena-mail-debug.apk \
               --clobber
             gh release edit "$TARGET_TAG" --latest --prerelease=false --notes-file target_release_notes.md
           else
@@ -94,6 +96,8 @@ jobs:
             gh release create "$TARGET_TAG" \
               app-serena-release.apk \
               app-serena-debug.apk \
+              app-serena-mail-release.apk \
+              app-serena-mail-debug.apk \
               --title "Serena $TARGET_TAG" \
               --notes-file target_release_notes.md \
               --latest

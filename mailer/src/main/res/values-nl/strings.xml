@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mail_app_name">Serena Mail</string>
+    <string name="mail_list_title">Postvak IN</string>
+    <string name="mail_detail_title">Berichtdetails</string>
+    <string name="mail_compose_title">E-mail opstellen</string>
+    <string name="mail_settings_title">Accountinstellingen</string>
+
+    <string name="mail_btn_refresh">Postvak IN vernieuwen</string>
+    <string name="mail_btn_compose">Nieuwe e-mail opstellen</string>
+    <string name="mail_btn_settings">Accountinstellingen</string>
+    <string name="mail_btn_summarize">Samenvatten met Gemma 4</string>
+    <string name="mail_btn_ai_reply">AI-antwoord genereren</string>
+    <string name="mail_btn_reply">Beantwoorden</string>
+    <string name="mail_btn_send">E-mail verzenden</string>
+    <string name="mail_btn_save_account">Opslaan en verbinding testen</string>
+
+    <string name="mail_label_from">Van: %1$s</string>
+    <string name="mail_label_to">Aan: %1$s</string>
+    <string name="mail_label_date">Datum: %1$s</string>
+    <string name="mail_label_subject">Onderwerp: %1$s</string>
+    <string name="mail_label_body">Inhoud: %1$s</string>
+
+    <string name="mail_hint_to">E-mailadres van ontvanger</string>
+    <string name="mail_hint_subject">Onderwerp</string>
+    <string name="mail_hint_body">Schrijf hier uw bericht</string>
+    <string name="mail_hint_email">Gmail-adres (bijv. gebruiker@gmail.com)</string>
+    <string name="mail_hint_app_password">16-tekens Google-app-wachtwoord</string>
+
+    <string name="mail_status_connecting">Verbinden met mailserver…</string>
+    <string name="mail_status_connected">Succesvol verbonden!</string>
+    <string name="mail_status_fetching">E-mails ophalen…</string>
+    <string name="mail_status_fetched_fmt">%1$d e-mails opgehaald.</string>
+    <string name="mail_status_sending">E-mail verzenden…</string>
+    <string name="mail_status_sent">E-mail succesvol verzonden!</string>
+    <string name="mail_status_send_failed_fmt">Verzenden mislukt: %1$s</string>
+    <string name="mail_status_error_fmt">Fout: %1$s</string>
+    <string name="mail_status_no_account">Geen account ingesteld. Open instellingen om uw Gmail in te stellen.</string>
+    <string name="mail_status_summarizing">Gemma 4 vat de e-mail samen…</string>
+    <string name="mail_status_generating_reply">Gemma 4 stelt een AI-antwoord op…</string>
+    <string name="mail_summary_result_fmt">Gemma 4 Samenvatting: %1$s</string>
+
+    <string name="mail_unread_indicator">Ongelezen</string>
+    <string name="mail_read_indicator">Gelezen</string>
+    <string name="mail_item_a11y_fmt">%1$s. Van %2$s. Onderwerp: %3$s. Datum: %4$s.</string>
+    <string name="mail_settings_desc">Om Gmail te gebruiken, schakelt u tweestapsverificatie in op uw Google-account en genereert u een app-wachtwoord van 16 tekens.</string>
+</resources>
