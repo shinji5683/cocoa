@@ -44,4 +44,20 @@
     <string name="mail_read_indicator">既読</string>
     <string name="mail_item_a11y_fmt">%1$s、送信者 %2$s、件名 %3$s、日時 %4$s</string>
     <string name="mail_settings_desc">Gmailを利用するには、Googleアカウントで「2段階認証」を有効にし、「アプリパスワード（16桁）」を発行して設定してください。</string>
+
+    <!-- Auto Update Strings -->
+    <string name="mail_settings_check_update">Serena Mail のアップデートを確認</string>
+    <string name="update_dialog_title">🚀 Serena Mail のアップデートが利用可能です: %1$s</string>
+    <string name="update_dialog_message">Serena Mail の最新バージョンが公開されています！\n\n現在のバージョン: %1$s\n最新のバージョン: %2$s\n\n更新内容:\n%3$s\n\n今すぐアップデートしますか？</string>
+    <string name="update_btn_install_now">今すぐアップデート</string>
+    <string name="update_btn_open_github">GitHubで確認</string>
+    <string name="update_btn_later">後で</string>
+    <string name="update_download_started">Serena Mail 最新版のダウンロードを開始しました…</string>
+    <string name="update_download_finished">ダウンロードが完了しました。インストーラーを開きます…</string>
+    <string name="update_download_failed">アップデートのダウンロードに失敗しました: %1$s</string>
+    <string name="update_permission_required">Serena Mail からのアプリ更新を許可してください。設定画面を開きます。</string>
+    <string name="update_launching_installer">パッケージインストーラーを起動します…</string>
+    <string name="update_install_failed">インストーラーの起動に失敗しました: %1$s</string>
+    <string name="update_already_latest">Serena Mail は最新バージョン (%1$s) です。</string>
+    <string name="update_checking">アップデートを確認中…</string>
 </resources>

@@ -63,10 +63,18 @@ class MailListActivity : AppCompatActivity() {
         btnSettings.setOnClickListener {
             startActivity(Intent(this, AccountSettingsActivity::class.java))
         }
+
+        // 起動時にサイレントでアップデートを確認し、最新版があれば案内ダイアログを表示
+        com.shinji.serena.mail.update.AutoUpdateManager.getInstance(this).checkForUpdate(silent = true) { info ->
+            if (!isFinishing && !isDestroyed && info != null && info.isUpdateAvailable) {
+                com.shinji.serena.mail.update.AutoUpdateManager.getInstance(this).showUpdateDialog(this, info)
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        com.shinji.serena.mail.update.AutoUpdateManager.getInstance(this).checkAndResumePendingInstall()
         if (!accountPrefs.hasAccount()) {
             showStatus(getString(R.string.mail_status_no_account))
             startActivity(Intent(this, AccountSettingsActivity::class.java))

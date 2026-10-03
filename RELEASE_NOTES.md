@@ -18,6 +18,8 @@ All updates and changelogs are meticulously maintained in both Japanese and Engl
 - **全盲特化スクリーンリーダーフレンドリーUI**:
   - 余計な装飾や重いWebViewを排除し、TalkBack / Serena で最も操作しやすいクリーンで高速なアクセシビリティ設計。
   - 日本語・英語・スペイン語・タガログ語・オランダ語の全6言語に完全ローカライズ。
+- **Serena Mail 専用アクセシブル・オートアップデーター**:
+  - アプリ起動時の自動更新チェック、設定画面からの手動更新確認、バックグラウンド高速ダウンロードおよびAndroid標準PackageInstaller連携によるワンタップ更新を完備。
 
 ### 🇺🇸 English
 #### 📬 Multi-Module Architecture & "Serena Mail" Debut!
@@ -33,6 +35,8 @@ All updates and changelogs are meticulously maintained in both Japanese and Engl
 - **Screen Reader-First Accessible Design**:
   - Clean, high-contrast, zero-clutter interface tailored specifically for blind users.
   - Full localization across all 6 supported languages.
+- **Accessible Auto-Updater for Serena Mail**:
+  - Seamless in-app update checks on startup and settings, background APK download from GitHub Releases, and PackageInstaller integration for 1-tap upgrades.
 
 ## [v2.3.6] - 2026-09-15
 ### 🇯🇵 日本語

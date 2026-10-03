@@ -35,7 +35,7 @@ The `cocoa` repository has officially transitioned from a standalone screen read
   * **Role**: 24/7 background system AccessibilityService handling real-time UI hierarchy inspection, speech feedback, spatial obstacle sonar, and braille I/O.
 * **`:mailer` Module — Serena Mail (Blind-Centric Gmail Client)**
   * **App Version**: `v1.0.0` (versionCode 1) ★ Brand New!
-  * **Role**: Streamlined email experience free from complex HTML layouts and ads, featuring on-device Gemma 4 AI for 2-3 sentence email summarization and instant polite reply drafting.
+  * **Role**: Streamlined email experience free from complex HTML layouts and ads, featuring on-device Gemma 4 AI for 2-3 sentence email summarization, instant polite reply drafting, and an integrated Accessible Auto-Updater checking directly against GitHub Releases.
 
 > [!NOTE]
 > **Understanding Release Tags**: GitHub Release tags (e.g., `v2.5.1`) act as global repository-level release milestones. Under this tag, both the core screen reader (`v2.5.1`) and the newly debuted Serena Mail (`v1.0.0`) maintain independent internal versioning while being compiled and distributed simultaneously as distinct standalone APKs.

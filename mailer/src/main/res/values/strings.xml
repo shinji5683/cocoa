@@ -44,4 +44,20 @@
     <string name="mail_read_indicator">Read</string>
     <string name="mail_item_a11y_fmt">%1$s. From %2$s. Subject: %3$s. Date: %4$s.</string>
     <string name="mail_settings_desc">To use Gmail, enable 2-step verification in your Google Account and generate a 16-character App Password to log in securely.</string>
+
+    <!-- Auto Update Strings -->
+    <string name="mail_settings_check_update">Check for Serena Mail updates</string>
+    <string name="update_dialog_title">🚀 Serena Mail Update Available: %1$s</string>
+    <string name="update_dialog_message">A newer version of Serena Mail is available!\n\nCurrent Version: %1$s\nLatest Version: %2$s\n\nRelease Notes:\n%3$s\n\nWould you like to install the update now?</string>
+    <string name="update_btn_install_now">Install Update</string>
+    <string name="update_btn_open_github">View on GitHub</string>
+    <string name="update_btn_later">Later</string>
+    <string name="update_download_started">Downloading Serena Mail update APK…</string>
+    <string name="update_download_finished">Download complete. Opening installer…</string>
+    <string name="update_download_failed">Failed to download update: %1$s</string>
+    <string name="update_permission_required">Please allow \'Install unknown apps\' for Serena Mail to proceed with the update.</string>
+    <string name="update_launching_installer">Launching package installer…</string>
+    <string name="update_install_failed">Failed to launch installer: %1$s</string>
+    <string name="update_already_latest">Serena Mail is already up to date (%1$s).</string>
+    <string name="update_checking">Checking for updates…</string>
 </resources>

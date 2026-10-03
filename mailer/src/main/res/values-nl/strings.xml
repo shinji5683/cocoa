@@ -44,4 +44,20 @@
     <string name="mail_read_indicator">Gelezen</string>
     <string name="mail_item_a11y_fmt">%1$s. Van %2$s. Onderwerp: %3$s. Datum: %4$s.</string>
     <string name="mail_settings_desc">Om Gmail te gebruiken, schakelt u tweestapsverificatie in op uw Google-account en genereert u een app-wachtwoord van 16 tekens.</string>
+
+    <!-- Auto Update Strings -->
+    <string name="mail_settings_check_update">Controleer op updates voor Serena Mail</string>
+    <string name="update_dialog_title">🚀 Serena Mail-update beschikbaar: %1$s</string>
+    <string name="update_dialog_message">Er is een nieuwere versie van Serena Mail beschikbaar!\n\nHuidige versie: %1$s\nNieuwste versie: %2$s\n\nRelease-opmerkingen:\n%3$s\n\nWil je de update nu installeren?</string>
+    <string name="update_btn_install_now">Nu bijwerken</string>
+    <string name="update_btn_open_github">Bekijken op GitHub</string>
+    <string name="update_btn_later">Later</string>
+    <string name="update_download_started">Bezig met downloaden van Serena Mail-update…</string>
+    <string name="update_download_finished">Download voltooid. Installatieprogramma wordt geopend…</string>
+    <string name="update_download_failed">Downloaden van update mislukt: %1$s</string>
+    <string name="update_permission_required">Sta \'Onbekende apps installeren\' toe voor Serena Mail om door te gaan met de update.</string>
+    <string name="update_launching_installer">Pakketinstallatieprogramma wordt gestart…</string>
+    <string name="update_install_failed">Kan installatieprogramma niet starten: %1$s</string>
+    <string name="update_already_latest">Serena Mail is up-to-date (%1$s).</string>
+    <string name="update_checking">Controleren op updates…</string>
 </resources>

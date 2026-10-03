@@ -44,4 +44,20 @@
     <string name="mail_read_indicator">Nabasa na</string>
     <string name="mail_item_a11y_fmt">%1$s. Mula kay %2$s. Paksa: %3$s. Petsa: %4$s.</string>
     <string name="mail_settings_desc">Upang magamit ang Gmail, i-on ang 2-step verification sa iyong Google Account at gumawa ng 16-character App Password.</string>
+
+    <!-- Auto Update Strings -->
+    <string name="mail_settings_check_update">Suriin ang mga update ng Serena Mail</string>
+    <string name="update_dialog_title">🚀 May Bagong Update ang Serena Mail: %1$s</string>
+    <string name="update_dialog_message">May bagong bersyon ang Serena Mail!\n\nKasalukuyang Bersyon: %1$s\nPinakabagong Bersyon: %2$s\n\nMga Tala sa Release:\n%3$s\n\nGusto mo bang i-update ngayon?</string>
+    <string name="update_btn_install_now">I-install ang Update</string>
+    <string name="update_btn_open_github">Tingnan sa GitHub</string>
+    <string name="update_btn_later">Mamaya</string>
+    <string name="update_download_started">Dina-download ang bagong APK ng Serena Mail…</string>
+    <string name="update_download_finished">Tapos na ang pag-download. Binubuksan ang installer…</string>
+    <string name="update_download_failed">Nabigo ang pag-download ng update: %1$s</string>
+    <string name="update_permission_required">Mangyaring payagan ang \'Mag-install ng hindi kilalang app\' para sa Serena Mail upang magpatuloy sa pag-update.</string>
+    <string name="update_launching_installer">Binubuksan ang package installer…</string>
+    <string name="update_install_failed">Nabigong buksan ang installer: %1$s</string>
+    <string name="update_already_latest">Nasa pinakabagong bersyon na ang Serena Mail (%1$s).</string>
+    <string name="update_checking">Sinusuri ang mga update…</string>
 </resources>
