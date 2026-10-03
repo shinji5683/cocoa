@@ -1339,4 +1339,34 @@ Sharing this log with developer Shinji helps diagnose and fix the issue quickly.
     <string name="fingerprint_sensor_searching">Locating fingerprint sensor</string>
     <string name="main_fingerprint_guidance_enabled">In-display fingerprint guidance enabled</string>
     <string name="main_fingerprint_guidance_disabled">In-display fingerprint guidance disabled</string>
+
+    <!-- Contextual Action & Usage Hints -->
+    <string name="hint_action_activate">Double tap to activate</string>
+    <string name="hint_action_launch_app">Double tap to launch app</string>
+    <string name="hint_action_power_off">Double tap to power off</string>
+    <string name="hint_action_shutdown">Double tap to shut down</string>
+    <string name="hint_action_restart">Double tap to restart</string>
+    <string name="hint_action_send">Double tap to send</string>
+    <string name="hint_action_delete">Double tap to delete</string>
+    <string name="hint_action_search">Double tap to search</string>
+    <string name="hint_action_close">Double tap to close</string>
+    <string name="hint_action_back">Double tap to go back</string>
+    <string name="hint_action_toggle">Double tap to toggle</string>
+    <string name="hint_action_check">Double tap to check</string>
+    <string name="hint_action_call">Double tap to call</string>
+    <string name="hint_action_end_call">Double tap to end call</string>
+    <string name="hint_action_edit_text">Double tap to enter text</string>
+    <string name="hint_action_play">Double tap to play</string>
+    <string name="hint_action_pause">Double tap to pause</string>
+    <string name="hint_action_open_link">Double tap to open link</string>
+    <string name="hint_action_expand">Double tap to expand</string>
+    <string name="hint_action_collapse">Double tap to collapse</string>
+    <string name="hint_action_long_click">Double tap and hold for more options</string>
+    <string name="hint_action_custom_fmt">Double tap to %1$s</string>
+    <string name="action_default_hint_fmt">Default. %1$s</string>
+    <string name="menu_item_usage_hints">Usage Hints</string>
+    <string name="label_usage_hints">Speak Usage Hints</string>
+    <string name="desc_usage_hints">Speaks contextual usage hints such as "Double tap to launch app", "Double tap to power off", or "Double tap to toggle" when items are focused.</string>
+    <string name="usage_hints_enabled">Usage hints enabled</string>
+    <string name="usage_hints_disabled">Usage hints disabled</string>
 </resources>

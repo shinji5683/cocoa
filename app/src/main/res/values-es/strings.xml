@@ -1370,4 +1370,34 @@ Compartir este registro con el desarrollador Shinji ayuda a diagnosticar y soluc
     <string name="fingerprint_sensor_searching">Buscando sensor de huellas</string>
     <string name="main_fingerprint_guidance_enabled">Guía de sensor de huellas activada</string>
     <string name="main_fingerprint_guidance_disabled">Guía de sensor de huellas desactivada</string>
+
+    <!-- Contextual Action & Usage Hints -->
+    <string name="hint_action_activate">Toque dos veces para activar</string>
+    <string name="hint_action_launch_app">Toque dos veces para abrir la app</string>
+    <string name="hint_action_power_off">Toque dos veces para apagar</string>
+    <string name="hint_action_shutdown">Toque dos veces para apagar el sistema</string>
+    <string name="hint_action_restart">Toque dos veces para reiniciar</string>
+    <string name="hint_action_send">Toque dos veces para enviar</string>
+    <string name="hint_action_delete">Toque dos veces para eliminar</string>
+    <string name="hint_action_search">Toque dos veces para buscar</string>
+    <string name="hint_action_close">Toque dos veces para cerrar</string>
+    <string name="hint_action_back">Toque dos veces para volver</string>
+    <string name="hint_action_toggle">Toque dos veces para alternar</string>
+    <string name="hint_action_check">Toque dos veces para marcar</string>
+    <string name="hint_action_call">Toque dos veces para llamar</string>
+    <string name="hint_action_end_call">Toque dos veces para finalizar la llamada</string>
+    <string name="hint_action_edit_text">Toque dos veces para ingresar texto</string>
+    <string name="hint_action_play">Toque dos veces para reproducir</string>
+    <string name="hint_action_pause">Toque dos veces para pausar</string>
+    <string name="hint_action_open_link">Toque dos veces para abrir enlace</string>
+    <string name="hint_action_expand">Toque dos veces para desplegar</string>
+    <string name="hint_action_collapse">Toque dos veces para contraer</string>
+    <string name="hint_action_long_click">Toque dos veces y mantenga presionado para más opciones</string>
+    <string name="hint_action_custom_fmt">Toque dos veces para %1$s</string>
+    <string name="action_default_hint_fmt">Predeterminado. %1$s</string>
+    <string name="menu_item_usage_hints">Sugerencias de uso</string>
+    <string name="label_usage_hints">Leer sugerencias de uso</string>
+    <string name="desc_usage_hints">Lee sugerencias contextuales como \"Toque dos veces para abrir la app\", \"Toque dos veces para apagar\" o \"Toque dos veces para alternar\" al enfocar elementos.</string>
+    <string name="usage_hints_enabled">Sugerencias de uso activadas</string>
+    <string name="usage_hints_disabled">Sugerencias de uso desactivadas</string>
 </resources>

@@ -60,6 +60,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         const val KEY_TALKBACK_MODE = "key_talkback_mode"
         const val KEY_CHIME_STYLE = "key_chime_style"
         const val KEY_ANNOUNCE_OPERATION_ACTIONS = "announce_operation_actions"
+        const val KEY_SPEAK_USAGE_HINTS = "speak_usage_hints"
         const val CHIME_STYLE_NHK = "nhk_radio"
         const val CHIME_STYLE_CUTE = "cute_beep"
         const val CHIME_STYLE_BELL = "japanese_bell"
@@ -72,9 +73,14 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val p = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             return p.getBoolean(KEY_ANNOUNCE_OPERATION_ACTIONS, false)
         }
+        fun isUsageHintsEnabled(context: Context): Boolean {
+            val p = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            return p.getBoolean(KEY_SPEAK_USAGE_HINTS, true)
+        }
     }
 
     var focusNavigator: com.shinji.serena.navigation.SerenaFocusNavigator? = null
+    var contextualActionHintHelper: com.shinji.serena.navigation.ContextualActionHintHelper? = null
     var callManager: com.shinji.serena.telephony.SerenaCallManager? = null
     var lastHoveredNode: AccessibilityNodeInfo? = null
     var gestureDispatcher: com.shinji.serena.gesture.SerenaGestureDispatcher? = null
@@ -215,6 +221,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         safeInitHelper("soundRecognition") { soundRecognitionHelper = com.shinji.serena.sound.SoundRecognitionHapticsHelper(safeContext) }
         safeInitHelper("visualAudioDescription") { visualAudioDescriptionHelper = com.shinji.serena.ai.VisualAudioDescriptionHelper(safeContext) }
         safeInitHelper("smartScreenSummary") { smartScreenSummaryEngine = com.shinji.serena.ai.SmartScreenSummaryEngine(this) }
+        safeInitHelper("contextualActionHint") { contextualActionHintHelper = com.shinji.serena.navigation.ContextualActionHintHelper(this) }
         safeInitHelper("spatialHapticTouchMap") {
             soundHelper?.let {
                 spatialHapticTouchMapHelper = SpatialHapticTouchMapHelper(it)
@@ -1710,9 +1717,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
         val customActions = getAvailableCustomActions(node)
         val totalCount = 1 + customActions.size
+        val defaultMsg = run {
+            val contextualHint = contextualActionHintHelper?.getActionHint(node, getNodeText(node), getNodeRole(node)) ?: ""
+            if (contextualHint.isNotEmpty()) {
+                getString(R.string.action_default_hint_fmt, contextualHint)
+            } else {
+                getString(R.string.action_default_double_tap)
+            }
+        }
         if (totalCount <= 1) {
             selectedCustomActionIndex = 0
-            speak(getString(R.string.action_default_double_tap), TextToSpeech.QUEUE_FLUSH)
+            speak(defaultMsg, TextToSpeech.QUEUE_FLUSH)
             return
         }
         selectedCustomActionIndex = if (forward) {
@@ -1722,7 +1737,7 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         }
         soundHelper?.playFocusMove()
         if (selectedCustomActionIndex == 0) {
-            speak(getString(R.string.action_default_double_tap), TextToSpeech.QUEUE_FLUSH)
+            speak(defaultMsg, TextToSpeech.QUEUE_FLUSH)
         } else {
             val actionItem = customActions[selectedCustomActionIndex - 1]
             speak(getString(R.string.action_custom_action_fmt, actionItem.action.label), TextToSpeech.QUEUE_FLUSH)
@@ -2205,6 +2220,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             },
             serenaMenuItem("👆", "${getString(R.string.title_fingerprint_guidance)} (${if (fingerprintGuidanceHelper?.isEnabled == true) onText else offText})") {
                 toggleFingerprintGuidance()
+            },
+            serenaMenuItem("💡", "${getString(R.string.menu_item_usage_hints)} (${if (isUsageHintsEnabled()) onText else offText})") {
+                toggleUsageHints()
             },
             serenaMenuItem("🏠", getString(R.string.menu_item_indoor_nav)) {
                 launchIndoorNavigation()
@@ -3055,6 +3073,17 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         updateTtsSettings()
         soundHelper?.playActionDone()
         speak(getString(R.string.tts_rate_changed_fmt, newRate), TextToSpeech.QUEUE_FLUSH)
+    }
+
+    fun isUsageHintsEnabled(): Boolean = isUsageHintsEnabled(this)
+
+    fun toggleUsageHints() {
+        val current = isUsageHintsEnabled()
+        val next = !current
+        prefs.edit().putBoolean(KEY_SPEAK_USAGE_HINTS, next).apply()
+        soundHelper?.playActionDone()
+        val msg = if (next) getString(R.string.usage_hints_enabled) else getString(R.string.usage_hints_disabled)
+        speak(msg, TextToSpeech.QUEUE_FLUSH)
     }
 
     private fun callDeveloper() {
@@ -3964,6 +3993,15 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         // コンテナやルートノード（text, role, state がすべて空）の場合、無意味な単体読み上げを抑止！
         if (text.isEmpty() && role.isEmpty() && state.isEmpty()) {
             return ""
+        }
+
+        // 4. 操作・使用ヒント（Action / Usage Hint）の動的インテリジェント付与
+        val isKb = isKeyboardNode(node)
+        if (isUsageHintsEnabled() && !isKb) {
+            val hint = contextualActionHintHelper?.getActionHint(node, text, role) ?: ""
+            if (hint.isNotEmpty()) {
+                parts.add(hint)
+            }
         }
 
         return parts.joinToString(comma)

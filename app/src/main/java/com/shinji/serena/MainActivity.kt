@@ -617,6 +617,15 @@ class MainActivity : AppCompatActivity() {
             val statusStr = if (isChecked) getString(R.string.main_guide_enabled) else getString(R.string.main_guide_disabled)
             Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
         }
+
+        val isUsageHints = prefs.getBoolean(SerenaScreenReaderService.KEY_SPEAK_USAGE_HINTS, true)
+        binding.switchUsageHints.isChecked = isUsageHints
+
+        binding.switchUsageHints.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(SerenaScreenReaderService.KEY_SPEAK_USAGE_HINTS, isChecked).apply()
+            val statusStr = if (isChecked) getString(R.string.usage_hints_enabled) else getString(R.string.usage_hints_disabled)
+            Toast.makeText(this, statusStr, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupShakeSensitivitySection() {

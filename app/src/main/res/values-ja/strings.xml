@@ -569,7 +569,7 @@
     <string name="action_open_notifications">通知を開きます</string>
     <string name="action_unlocking">ロックを解除しています</string>
     <string name="action_no_focus">フォーカスされている項目がありません</string>
-    <string name="action_default_double_tap">デフォルト。ダブルタップで有効化します</string>
+    <string name="action_default_double_tap">デフォルト。ダブルタップでアクティベート</string>
     <string name="action_custom_action_fmt">アクション: %1$s。実行するにはダブルタップします</string>
     <string name="action_not_found_fmt">%1$sは見つかりませんでした</string>
     <string name="action_executed_fmt">%1$s を実行しました</string>
@@ -1339,4 +1339,34 @@
     <string name="fingerprint_sensor_searching">指紋センサー探索中</string>
     <string name="main_fingerprint_guidance_enabled">画面内指紋センサー位置案内を有効にしました</string>
     <string name="main_fingerprint_guidance_disabled">画面内指紋センサー位置案内を無効にしました</string>
+
+    <!-- Contextual Action & Usage Hints -->
+    <string name="hint_action_activate">ダブルタップでアクティベート</string>
+    <string name="hint_action_launch_app">ダブルタップでアプリを起動</string>
+    <string name="hint_action_power_off">ダブルタップで電源を切る</string>
+    <string name="hint_action_shutdown">ダブルタップでシャットダウン</string>
+    <string name="hint_action_restart">ダブルタップで再起動</string>
+    <string name="hint_action_send">ダブルタップで送信</string>
+    <string name="hint_action_delete">ダブルタップで削除</string>
+    <string name="hint_action_search">ダブルタップで検索</string>
+    <string name="hint_action_close">ダブルタップで閉じる</string>
+    <string name="hint_action_back">ダブルタップで戻る</string>
+    <string name="hint_action_toggle">ダブルタップで切り替え</string>
+    <string name="hint_action_check">ダブルタップでチェック</string>
+    <string name="hint_action_call">ダブルタップで発信</string>
+    <string name="hint_action_end_call">ダブルタップで通話を終了</string>
+    <string name="hint_action_edit_text">ダブルタップでテキストを入力</string>
+    <string name="hint_action_play">ダブルタップで再生</string>
+    <string name="hint_action_pause">ダブルタップで一時停止</string>
+    <string name="hint_action_open_link">ダブルタップでリンクを開く</string>
+    <string name="hint_action_expand">ダブルタップで展開</string>
+    <string name="hint_action_collapse">ダブルタップで折りたたむ</string>
+    <string name="hint_action_long_click">ダブルタップ長押しでその他の操作</string>
+    <string name="hint_action_custom_fmt">ダブルタップで%1$s</string>
+    <string name="action_default_hint_fmt">デフォルト。%1$s</string>
+    <string name="menu_item_usage_hints">操作・使用ヒント</string>
+    <string name="label_usage_hints">操作・使用ヒントの読み上げ</string>
+    <string name="desc_usage_hints">フォーカス時に「ダブルタップでアプリを起動」「ダブルタップで電源を切る」「ダブルタップで切り替え」などの操作ヒントを音声案内します。</string>
+    <string name="usage_hints_enabled">操作ヒントの読み上げを有効にしました</string>
+    <string name="usage_hints_disabled">操作ヒントの読み上げを無効にしました</string>
 </resources>

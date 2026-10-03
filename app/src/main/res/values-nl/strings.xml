@@ -1339,4 +1339,34 @@ Het delen van dit logboek met ontwikkelaar Shinji helpt het probleem snel op te 
     <string name="fingerprint_sensor_searching">Vingerafdruksensor zoeken</string>
     <string name="main_fingerprint_guidance_enabled">Vingerafdruksensorgeleiding ingeschakeld</string>
     <string name="main_fingerprint_guidance_disabled">Vingerafdruksensorgeleiding uitgeschakeld</string>
+
+    <!-- Contextual Action & Usage Hints -->
+    <string name="hint_action_activate">Dubbeltik om te activeren</string>
+    <string name="hint_action_launch_app">Dubbeltik om app te openen</string>
+    <string name="hint_action_power_off">Dubbeltik om uit te schakelen</string>
+    <string name="hint_action_shutdown">Dubbeltik om af te sluiten</string>
+    <string name="hint_action_restart">Dubbeltik om opnieuw op te starten</string>
+    <string name="hint_action_send">Dubbeltik om te verzenden</string>
+    <string name="hint_action_delete">Dubbeltik om te verwijderen</string>
+    <string name="hint_action_search">Dubbeltik om te zoeken</string>
+    <string name="hint_action_close">Dubbeltik om te sluiten</string>
+    <string name="hint_action_back">Dubbeltik om terug te gaan</string>
+    <string name="hint_action_toggle">Dubbeltik om te schakelen</string>
+    <string name="hint_action_check">Dubbeltik om aan te vinken</string>
+    <string name="hint_action_call">Dubbeltik om te bellen</string>
+    <string name="hint_action_end_call">Dubbeltik om gesprek te beëindigen</string>
+    <string name="hint_action_edit_text">Dubbeltik om tekst in te voeren</string>
+    <string name="hint_action_play">Dubbeltik om af te spelen</string>
+    <string name="hint_action_pause">Dubbeltik om te pauzeren</string>
+    <string name="hint_action_open_link">Dubbeltik om link te openen</string>
+    <string name="hint_action_expand">Dubbeltik om uit te vouwen</string>
+    <string name="hint_action_collapse">Dubbeltik om samen te vouwen</string>
+    <string name="hint_action_long_click">Dubbeltik en houd vast voor meer opties</string>
+    <string name="hint_action_custom_fmt">Dubbeltik om te %1$s</string>
+    <string name="action_default_hint_fmt">Standaard. %1$s</string>
+    <string name="menu_item_usage_hints">Bedieningstips</string>
+    <string name="label_usage_hints">Bedieningstips voorlezen</string>
+    <string name="desc_usage_hints">Leest contextuele tips voor zoals \"Dubbeltik om app te openen\", \"Dubbeltik om uit te schakelen\" of \"Dubbeltik om te schakelen\" wanneer items gefocust zijn.</string>
+    <string name="usage_hints_enabled">Bedieningstips ingeschakeld</string>
+    <string name="usage_hints_disabled">Bedieningstips uitgeschakeld</string>
 </resources>

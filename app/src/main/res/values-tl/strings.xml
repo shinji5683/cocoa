@@ -1323,4 +1323,34 @@ Ang pagbabahagi ng log na ito sa developer na si Shinji ay makakatulong upang ma
     <string name="fingerprint_sensor_searching">Hinahanap ang sensor ng fingerprint</string>
     <string name="main_fingerprint_guidance_enabled">Pinagana ang gabay sa fingerprint sa screen</string>
     <string name="main_fingerprint_guidance_disabled">Hindi pinagana ang gabay sa fingerprint sa screen</string>
+
+    <!-- Contextual Action & Usage Hints -->
+    <string name="hint_action_activate">I-double tap para i-activate</string>
+    <string name="hint_action_launch_app">I-double tap para buksan ang app</string>
+    <string name="hint_action_power_off">I-double tap para patayin</string>
+    <string name="hint_action_shutdown">I-double tap para i-shutdown</string>
+    <string name="hint_action_restart">I-double tap para i-restart</string>
+    <string name="hint_action_send">I-double tap para ipadala</string>
+    <string name="hint_action_delete">I-double tap para burahin</string>
+    <string name="hint_action_search">I-double tap para maghanap</string>
+    <string name="hint_action_close">I-double tap para isara</string>
+    <string name="hint_action_back">I-double tap para bumalik</string>
+    <string name="hint_action_toggle">I-double tap para palitan</string>
+    <string name="hint_action_check">I-double tap para i-check</string>
+    <string name="hint_action_call">I-double tap para tumawag</string>
+    <string name="hint_action_end_call">I-double tap para ibaba ang tawag</string>
+    <string name="hint_action_edit_text">I-double tap para mag-type ng teksto</string>
+    <string name="hint_action_play">I-double tap para i-play</string>
+    <string name="hint_action_pause">I-double tap para i-pause</string>
+    <string name="hint_action_open_link">I-double tap para buksan ang link</string>
+    <string name="hint_action_expand">I-double tap para i-expand</string>
+    <string name="hint_action_collapse">I-double tap para itupi</string>
+    <string name="hint_action_long_click">I-double tap at hawakan para sa higit pang mga opsyon</string>
+    <string name="hint_action_custom_fmt">I-double tap para %1$s</string>
+    <string name="action_default_hint_fmt">Default. %1$s</string>
+    <string name="menu_item_usage_hints">Mga Pahiwatig sa Paggamit</string>
+    <string name="label_usage_hints">Boses ng Pahiwatig sa Paggamit</string>
+    <string name="desc_usage_hints">Nagsasalita ng mga pahiwatig tulad ng \"I-double tap para buksan ang app\", \"I-double tap para patayin\", o \"I-double tap para palitan\" kapag may focus ang item.</string>
+    <string name="usage_hints_enabled">Pinagana ang mga pahiwatig sa paggamit</string>
+    <string name="usage_hints_disabled">Hindi pinagana ang mga pahiwatig sa paggamit</string>
 </resources>
