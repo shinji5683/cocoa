@@ -69,6 +69,7 @@ class SerenaFocusNavigator(
                 (SystemDialogHelper.isOemSecurityPackage(activePkg) && (SystemDialogHelper.isGeneralDialog(activeRoot) || SystemDialogHelper.hasDialogIndicators(activeRoot))) ||
                 SystemDialogHelper.isSpecialSystemDialogPackage(activePkg) ||
                 SystemDialogHelper.isSystemUiDialog(activeRoot) ||
+                SystemDialogHelper.isSettingsConfirmationDialog(activeRoot) ||
                 SystemDialogHelper.isGeneralDialog(activeRoot)
             ) {
                 return listOf(activeRoot)

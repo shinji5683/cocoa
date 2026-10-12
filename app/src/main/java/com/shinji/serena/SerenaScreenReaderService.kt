@@ -3323,8 +3323,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         startActivity(intent)
     }
 
-    private fun announcePermissionDialogWithRetry(attempt: Int) {
-        com.shinji.serena.navigation.SystemDialogHelper.announceDialogWithRetry(this, attempt)
+    private fun announcePermissionDialogWithRetry(attempt: Int, fallbackNode: AccessibilityNodeInfo? = null) {
+        com.shinji.serena.navigation.SystemDialogHelper.announceDialogWithRetry(this, attempt, fallbackNode)
     }
 
     private fun handleWindowFocusTransition(windowTitle: String, isDialog: Boolean, delayMs: Long = 150L) {
@@ -3333,7 +3333,8 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             val topDialog = com.shinji.serena.navigation.SystemDialogHelper.findTopDialogWindow(this)
             if (topDialog != null) return@postDelayed
             val now = System.currentTimeMillis()
-            if (now - com.shinji.serena.navigation.SystemDialogHelper.lastHandledTimeMs < 1500L) return@postDelayed
+            if (now - com.shinji.serena.navigation.SystemDialogHelper.lastHandledTimeMs < 2500L) return@postDelayed
+            if (com.shinji.serena.navigation.SystemDialogHelper.isDialogHandlingActive()) return@postDelayed
 
             val nodes = collectAccessibleNodes()
             if (nodes.isNotEmpty()) {
@@ -3409,10 +3410,11 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                         val wins = windows
                         val topDialog = com.shinji.serena.navigation.SystemDialogHelper.findTopDialogWindow(this)
                         if (topDialog != null) {
-                            announcePermissionDialogWithRetry(attempt = 1)
+                            announcePermissionDialogWithRetry(attempt = 1, fallbackNode = topDialog.second)
                             return
                         }
                     } catch (_: Exception) {}
+                    if (com.shinji.serena.navigation.SystemDialogHelper.isDialogHandlingActive()) return
                     handleWindowFocusTransition(windowTitle = "", isDialog = false, delayMs = 150)
                 }
             }
@@ -3462,21 +3464,27 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
                     }
                 }
 
+                val eventSource = event.source
                 val isPermission = com.shinji.serena.navigation.SystemDialogHelper.isPermissionPackage(pkgName)
                 val isSpecial = com.shinji.serena.navigation.SystemDialogHelper.isSpecialSystemDialogPackage(pkgName)
                 val isDialog = isPermission || isSpecial ||
                         className.contains("Dialog", ignoreCase = true) ||
                         className.contains("AlertDialog", ignoreCase = true) ||
                         className.contains("PopupWindow", ignoreCase = true) ||
+                        className.contains("AlertActivity", ignoreCase = true) ||
+                        className.contains("PermissionActivity", ignoreCase = true) ||
+                        className.contains("ConfirmActivity", ignoreCase = true) ||
+                        className.contains("SubSettings", ignoreCase = true) ||
                         pkgName.contains("com.google.android.gms") ||
-                        com.shinji.serena.navigation.SystemDialogHelper.isSystemUiDialog(rootInActiveWindow) ||
-                        com.shinji.serena.navigation.SystemDialogHelper.isGeneralDialog(rootInActiveWindow, className)
+                        com.shinji.serena.navigation.SystemDialogHelper.isSystemUiDialog(eventSource ?: rootInActiveWindow) ||
+                        com.shinji.serena.navigation.SystemDialogHelper.isSettingsConfirmationDialog(eventSource ?: rootInActiveWindow, className) ||
+                        com.shinji.serena.navigation.SystemDialogHelper.isGeneralDialog(eventSource ?: rootInActiveWindow, className)
 
                 if (isDialog) {
                     if (isKeyguardLocked()) {
                         autoFocusPinKeypadIfPresent(force = false)
                     } else {
-                        announcePermissionDialogWithRetry(attempt = 1)
+                        announcePermissionDialogWithRetry(attempt = 1, fallbackNode = eventSource)
                     }
                     return
                 }

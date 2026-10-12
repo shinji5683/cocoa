@@ -3,6 +3,23 @@
 すべての更新履歴は、全盲の開発者Shinjiのこだわりと世界中の視覚障害者ユーザーのために、日本語と英語の両方で詳細に記録されています。
 All updates and changelogs are meticulously maintained in both Japanese and English for global visually impaired users.
 
+## [v2.5.5] - 2026-10-13
+### 🇯🇵 日本語
+#### 🛡️ 権限ダイアログ・特殊システムダイアログの読み上げ ＆ フォーカストラップ完全修正
+- **特殊ダイアログの網羅的検知 ＆ 最適フォーカス制御**:
+  - `SystemDialogHelper` および `SerenaScreenReaderService` において、権限確認ダイアログ（PermissionController）、設定確認ダイアログ（ユーザー補助・オーバーレイ・通知アクセス等のSettings画面）、システム警告（USBデバッグ、メディア録画/キャスト許可、電池最適化除外、Bluetoothペアリング等）が正常に読み上げられなかった不具合を完全解決。
+  - 最前面ウィンドウ探索（`findTopDialogWindow`）でシステムステータスバー等に遮られていた階層判定ロジックを抜本修正。前面のすべてのウィンドウおよびイベントソース（`event.source`）からダイアログを瞬時に捕捉。
+  - ダイアログ描画完了までのバックオフリトライ（80ms/220ms/400ms/650ms）時にイベントがリセットされる不具合を解消し、タイトル・説明メッセージ・主要アクションボタン（「アプリの使用中のみ」「許可」「OK」など）を漏れなく確実に音声読み上げ。
+  - フォーカス移動時（`TYPE_WINDOWS_CHANGED`）の不要なキュークリア（QUEUE_FLUSH）を抑制し、ダイアログ表示中はフォーカスをダイアログ内に100%隔離（モーダルトラップ）。スワイプで背景画面へすり抜ける現象を完全防止。
+
+### 🇺🇸 English
+#### 🛡️ Comprehensive Fix: Special & Permission Dialog Announcements and Modal Focus Trap
+- **Universal Special Dialog Detection & Seamless Spoken Feedback**:
+  - Resolved an issue where Android permission prompts (PermissionController), Settings confirmation popups (Accessibility service permission, overlay, notification access, etc.), and system alerts (USB debugging, MediaProjection capture, battery optimization, Bluetooth pairing) were not spoken.
+  - Fixed `findTopDialogWindow` layer traversal to prevent SystemUI status/nav bars from masking dialog windows. Added direct fallback to `event.source` for zero-latency detection.
+  - Eliminated debounce cancellation cycles during dialog inflation, guaranteeing the title, description, and primary positive button ("While using the app", "Allow", "OK") are announced clearly via TTS.
+  - Suppressed background focus transitions and enforced a 100% airtight modal focus trap inside `getAllRoots()`, preventing swipe gestures from escaping to background apps.
+
 ## [v2.5.4] - 2026-10-12
 ### 🇯🇵 日本語
 #### ⚡ パッケージインストーラー起動バグの完全修正

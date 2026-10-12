@@ -88,14 +88,38 @@ object SystemDialogHelper {
     }
 
     /**
-     * 特殊システムダイアログ（VPN接続確認、Bluetoothコンパニオン接続等）判定
+     * 特殊システムダイアログ（VPN接続確認、Bluetooth、証明書、ファイルアクセス等）判定
      */
     fun isSpecialSystemDialogPackage(pkg: String?): Boolean {
         if (pkg.isNullOrEmpty()) return false
         val p = pkg.lowercase()
         return isPurePermissionPackage(p) ||
                 p == "com.android.vpndialogs" ||
-                p == "com.android.companiondevicemanager"
+                p == "com.android.companiondevicemanager" ||
+                p == "com.android.certinstaller" ||
+                p == "com.google.android.certinstaller" ||
+                p == "com.android.bluetooth" ||
+                p == "com.google.android.documentsui" ||
+                p == "com.android.documentsui"
+    }
+
+    /**
+     * Settingsアプリ（com.android.settings）配下の権限・特殊アクセス確認ダイアログ判定
+     */
+    fun isSettingsConfirmationDialog(node: AccessibilityNodeInfo?, className: String = ""): Boolean {
+        if (node == null) return false
+        val pkg = node.packageName?.toString()?.lowercase() ?: ""
+        if (pkg != "com.android.settings") return false
+
+        if (className.contains("Dialog", ignoreCase = true) ||
+            className.contains("AlertDialog", ignoreCase = true) ||
+            className.contains("Confirm", ignoreCase = true) ||
+            className.contains("Prompt", ignoreCase = true)
+        ) {
+            return true
+        }
+
+        return hasDialogIndicators(node, depth = 0)
     }
 
     /**
@@ -129,6 +153,8 @@ object SystemDialogHelper {
 
         if (id.contains("alerttitle") || id.contains("alert_title") ||
             id.contains("permission_message") || id.contains("permission_grant_title") ||
+            id.contains("permission_grant_dialog") || id.contains("grant_dialog") ||
+            id.contains("permission_icon") || id.contains("permission_rationale") ||
             id.contains("dialog_title") || id.contains("header_title") ||
             id.contains("title_template") ||
             id.endsWith(":id/button1") || id.endsWith(":id/button2") || id.endsWith(":id/button3") ||
@@ -138,14 +164,17 @@ object SystemDialogHelper {
             id.contains("permission_allow_always_button") ||
             id.contains("permission_deny_button") ||
             id.contains("button_start") || id.contains("btn_confirm") ||
+            id.contains("btn_positive") || id.contains("btn_negative") ||
             id.contains("parentpanel") || id.contains("contentpanel") || id.contains("buttonpanel") ||
+            id.contains("media_projection") || id.contains("remember_choice") ||
             cls.contains("AlertDialog", ignoreCase = true) ||
-            cls.contains("DialogTitle", ignoreCase = true)
+            cls.contains("DialogTitle", ignoreCase = true) ||
+            cls.contains("BottomSheet", ignoreCase = true)
         ) {
             return true
         }
 
-        for (i in 0 until node.childCount.coerceAtMost(20)) {
+        for (i in 0 until node.childCount.coerceAtMost(25)) {
             val child = node.getChild(i) ?: continue
             if (hasDialogIndicators(child, depth + 1)) return true
         }
@@ -159,7 +188,10 @@ object SystemDialogHelper {
         if (node == null) return false
         if (className.contains("Dialog", ignoreCase = true) ||
             className.contains("AlertDialog", ignoreCase = true) ||
-            className.contains("PopupWindow", ignoreCase = true)
+            className.contains("PopupWindow", ignoreCase = true) ||
+            className.contains("AlertActivity", ignoreCase = true) ||
+            className.contains("PermissionActivity", ignoreCase = true) ||
+            className.contains("ConfirmActivity", ignoreCase = true)
         ) {
             return true
         }
@@ -174,19 +206,26 @@ object SystemDialogHelper {
         return hasDialogIndicators(node, depth = 0)
     }
 
+    fun isDialogHandlingActive(): Boolean {
+        val now = System.currentTimeMillis()
+        return pendingDialogRunnable != null || (now - lastHandledTimeMs) < 2500L
+    }
+
     /**
      * 最前面のダイアログウィンドウを検出して取得
      */
-    fun findTopDialogWindow(service: SerenaScreenReaderService): Pair<AccessibilityWindowInfo, AccessibilityNodeInfo>? {
+    fun findTopDialogWindow(
+        service: SerenaScreenReaderService,
+        fallbackSource: AccessibilityNodeInfo? = null
+    ): Pair<AccessibilityWindowInfo?, AccessibilityNodeInfo>? {
         try {
             val wins = service.windows
             if (!wins.isNullOrEmpty()) {
-                // レイヤーの高い順（前面順）にソートして精査
                 val sortedWins = wins.sortedByDescending { it.layer }
 
                 // 1. 純粋な権限確認・特殊システムダイアログのウィンドウを最優先
                 for (w in sortedWins) {
-                    val root = w.root ?: continue
+                    val root = try { w.root } catch (_: Exception) { null } ?: continue
                     val pkg = root.packageName?.toString() ?: ""
                     if (isPurePermissionPackage(pkg) || isSpecialSystemDialogPackage(pkg)) {
                         return Pair(w, root)
@@ -195,7 +234,7 @@ object SystemDialogHelper {
 
                 // 2. OEMセキュリティパッケージ（MIUI Security, ColorOS SafeCenter等）でダイアログ要素を含む場合
                 for (w in sortedWins) {
-                    val root = w.root ?: continue
+                    val root = try { w.root } catch (_: Exception) { null } ?: continue
                     val pkg = root.packageName?.toString() ?: ""
                     if (isOemSecurityPackage(pkg)) {
                         if (isGeneralDialog(root) || hasDialogIndicators(root)) {
@@ -204,32 +243,43 @@ object SystemDialogHelper {
                     }
                 }
 
-                // 3. SystemUIのシステムダイアログ（画面キャスト/録画許可、USB接続許可等）
+                // 3. SystemUI / Android OS / Settings のシステムダイアログ
                 for (w in sortedWins) {
-                    if (w.type == AccessibilityWindowInfo.TYPE_SYSTEM || w.type == AccessibilityWindowInfo.TYPE_APPLICATION) {
-                        val root = w.root ?: continue
-                        if (isSystemUiDialog(root)) {
-                            return Pair(w, root)
-                        }
+                    val root = try { w.root } catch (_: Exception) { null } ?: continue
+                    if (isSystemUiDialog(root) || isSettingsConfirmationDialog(root)) {
+                        return Pair(w, root)
                     }
                 }
 
-                // 4. アプリ内ダイアログ（複数ウィンドウ表示時の前面モーダルウィンドウ）
-                val appOrSystemWins = sortedWins.filter {
-                    it.type == AccessibilityWindowInfo.TYPE_APPLICATION || it.type == AccessibilityWindowInfo.TYPE_SYSTEM
-                }
-                if (appOrSystemWins.size > 1) {
-                    val topWin = appOrSystemWins.firstOrNull()
-                    val topRoot = topWin?.root
-                    if (topWin != null && topRoot != null) {
-                        if (isGeneralDialog(topRoot) || hasDialogIndicators(topRoot)) {
-                            return Pair(topWin, topRoot)
+                // 4. アプリ内ダイアログ（すべての前面ウィンドウを走査！ステータスバー等のシステム枠はスキップ）
+                for (w in sortedWins) {
+                    if (w.type == AccessibilityWindowInfo.TYPE_APPLICATION || w.type == AccessibilityWindowInfo.TYPE_SYSTEM) {
+                        val root = try { w.root } catch (_: Exception) { null } ?: continue
+                        val pkg = root.packageName?.toString()?.lowercase() ?: ""
+                        if (pkg.contains("systemui") && !isSystemUiDialog(root)) continue
+                        if (isGeneralDialog(root) || hasDialogIndicators(root)) {
+                            return Pair(w, root)
                         }
                     }
                 }
             }
         } catch (e: Exception) {
             Log.w(TAG, "findTopDialogWindow error: ${e.message}")
+        }
+
+        // 5. fallbackSource または rootInActiveWindow による直接フォールバック捕捉
+        val candidates = listOfNotNull(fallbackSource, service.rootInActiveWindow)
+        for (cand in candidates) {
+            val pkg = cand.packageName?.toString() ?: ""
+            if (isPurePermissionPackage(pkg) ||
+                isSpecialSystemDialogPackage(pkg) ||
+                isSystemUiDialog(cand) ||
+                isSettingsConfirmationDialog(cand) ||
+                isGeneralDialog(cand) ||
+                hasDialogIndicators(cand)
+            ) {
+                return Pair(null, cand)
+            }
         }
 
         return null
@@ -241,12 +291,17 @@ object SystemDialogHelper {
     private fun isPositiveActionText(text: String): Boolean {
         val t = text.lowercase().trim()
         if (t.isEmpty()) return false
-        return t == "許可" || t == "アプリの使用時のみ" || t == "アプリの使用中のみ許可" || t == "常に許可" ||
-                t == "今回のみ" || t == "今回のみ許可" || t == "ok" || t == "はい" || t == "開始" ||
-                t == "決定" || t == "今すぐ開始" || t == "続行" ||
+        return t == "許可" || t == "許可する" || t == "すべて許可" || t == "アプリの使用時のみ" ||
+                t == "アプリの使用中のみ許可" || t == "アプリの使用中のみ" || t == "常に許可" ||
+                t == "今回のみ" || t == "今回のみ許可" || t == "有効にする" || t == "設定" ||
+                t == "開く" || t == "同意する" || t == "同意して続行" || t == "ペア設定" ||
+                t == "インストール" || t == "更新" || t == "接続" || t == "ok" || t == "はい" ||
+                t == "開始" || t == "決定" || t == "今すぐ開始" || t == "続行" ||
+                t.contains("正確な位置情報") || t.contains("おおよその位置情報") ||
                 t == "allow" || t == "while using the app" || t == "only this time" ||
                 t == "always allow" || t == "always" || t == "yes" || t == "start now" ||
-                t == "confirm" || t == "continue" || t == "grant" ||
+                t == "confirm" || t == "continue" || t == "grant" || t == "enable" ||
+                t == "install" || t == "update" || t == "agree" || t == "pair" || t == "connect" ||
                 t == "permitir" || t == "mientras la app esté en uso" || t == "solo esta vez" ||
                 t == "aceptar" || t == "sí" || t == "iniciar ahora" ||
                 t == "payagan" || t == "habang ginagamit ang app" || t == "sa pagkakataong ito lang" ||
@@ -396,27 +451,34 @@ object SystemDialogHelper {
 
     /**
      * バックオフリトライ付きのダイアログ検知・読み上げ・フォーカス実行
-     * (Attempt 1: 100ms, Attempt 2: 250ms, Attempt 3: 450ms, Attempt 4: 700ms)
+     * (Attempt 1: 80ms, Attempt 2: 220ms, Attempt 3: 400ms, Attempt 4: 650ms)
      */
-    fun announceDialogWithRetry(service: SerenaScreenReaderService, attempt: Int = 1) {
-        // 重複発火・連続イベントのデバウンス
-        pendingDialogRunnable?.let { mainHandler.removeCallbacks(it) }
+    fun announceDialogWithRetry(
+        service: SerenaScreenReaderService,
+        attempt: Int = 1,
+        fallbackNode: AccessibilityNodeInfo? = null
+    ) {
+        if (pendingDialogRunnable != null && attempt == 1) {
+            // すでに直近で実行待機中の場合は重複スケジュールを抑制し既存の実行に委ねる
+            return
+        }
 
-        val delays = longArrayOf(100L, 250L, 450L, 700L)
-        val delayMs = if (attempt - 1 in delays.indices) delays[attempt - 1] else 300L
+        val delays = longArrayOf(80L, 220L, 400L, 650L)
+        val delayMs = if (attempt - 1 in delays.indices) delays[attempt - 1] else 250L
 
         val runnable = Runnable {
+            pendingDialogRunnable = null
             try {
-                // 最前面ダイアログウィンドウを探索
-                val topDialog = findTopDialogWindow(service)
-                val dialogRoot = topDialog?.second ?: service.rootInActiveWindow
+                // 最前面ダイアログウィンドウを探索（fallbackNodeを優先精査）
+                val topDialog = findTopDialogWindow(service, fallbackNode)
+                val dialogRoot = topDialog?.second ?: fallbackNode ?: service.rootInActiveWindow
 
                 if (dialogRoot != null) {
                     val pkg = dialogRoot.packageName?.toString() ?: ""
                     val isPerm = isPurePermissionPackage(pkg) ||
                             (isOemSecurityPackage(pkg) && (isGeneralDialog(dialogRoot) || hasDialogIndicators(dialogRoot)))
-                    val isSpecial = isSpecialSystemDialogPackage(pkg) || isSystemUiDialog(dialogRoot)
-                    val isGen = isGeneralDialog(dialogRoot)
+                    val isSpecial = isSpecialSystemDialogPackage(pkg) || isSystemUiDialog(dialogRoot) || isSettingsConfirmationDialog(dialogRoot)
+                    val isGen = isGeneralDialog(dialogRoot) || hasDialogIndicators(dialogRoot)
 
                     if (isPerm || isSpecial || isGen) {
                         val info = inspectDialog(dialogRoot, service)
@@ -425,7 +487,7 @@ object SystemDialogHelper {
                         if (hasContent) {
                             val now = System.currentTimeMillis()
                             val dialogKey = "${info.packageName}:${info.title}:${info.message}"
-                            if (dialogKey == lastHandledDialogKey && (now - lastHandledTimeMs) < 1200L) {
+                            if (dialogKey == lastHandledDialogKey && (now - lastHandledTimeMs) < 1500L) {
                                 // フォーカスのみ確実に適用
                                 info.primaryButton?.let { btn ->
                                     service.focusNavigator?.setFocusAndShowOnScreen(btn)
@@ -469,12 +531,12 @@ object SystemDialogHelper {
                             if (targetBtn != null) {
                                 service.focusNavigator?.setFocusAndShowOnScreen(targetBtn)
 
-                                // 安全策: 400ms経過してもアクセシビリティフォーカスイベントが届いていない場合は直接追加アナウンス
+                                // 安全策: 500ms経過してもアクセシビリティフォーカスイベントが届いていない場合は直接追加アナウンス
                                 mainHandler.postDelayed({
                                     if (service.lastFocusTimeMs < now && service.isTtsReady) {
                                         service.announceNode(targetBtn, TextToSpeech.QUEUE_ADD)
                                     }
-                                }, 400L)
+                                }, 500L)
                             }
                             return@Runnable
                         }
@@ -483,11 +545,11 @@ object SystemDialogHelper {
 
                 // まだノードが描画完了していない場合、リトライ
                 if (attempt < 4) {
-                    announceDialogWithRetry(service, attempt + 1)
+                    announceDialogWithRetry(service, attempt + 1, fallbackNode)
                 } else {
                     // 全リトライ完了後も要素が取れなかった場合のフォールバックヒント
                     if (service.isTtsReady) {
-                        val activePkg = service.rootInActiveWindow?.packageName?.toString() ?: ""
+                        val activePkg = dialogRoot?.packageName?.toString() ?: service.rootInActiveWindow?.packageName?.toString() ?: ""
                         if (isPermissionPackage(activePkg)) {
                             service.speak(service.getString(R.string.permission_dialog_hint), TextToSpeech.QUEUE_FLUSH)
                         } else {
