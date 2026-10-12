@@ -76,4 +76,17 @@
     <string name="mail_search_hint">Matalinong paghahanap gamit ang EmbeddingGemma 2</string>
     <string name="mail_btn_clear_search">I-clear</string>
     <string name="mail_search_result_fmt">%1$d mga email ang nahanap</string>
+
+    <!-- Attachments & Media Strings -->
+    <string name="mail_btn_attach_file">📎 Maglakip ng File o Audio</string>
+    <string name="mail_btn_attach_audio">🎵 Maglakip ng Audio (FLAC/WAV/MP3)</string>
+    <string name="mail_attachment_count_fmt">Mga Naka-attach (%1$d)</string>
+    <string name="mail_attachment_item_a11y_fmt">Attachment: %1$s, laki: %2$s. I-double tap upang alisin.</string>
+    <string name="mail_attachment_removed_fmt">Inalis ang %1$s</string>
+    <string name="mail_attachment_added_fmt">Nailakip ang %1$s</string>
+    <string name="mail_attachment_size_too_large">Masyadong malaki ang file (maximum 25MB): %1$s</string>
+    <string name="mail_attachment_read_error">Nabigong basahin ang attachment: %1$s</string>
+    <string name="mail_attachment_btn_remove">Alisin</string>
+    <string name="mail_attachment_unit_kb">%1$.1f KB</string>
+    <string name="mail_attachment_unit_mb">%1$.1f MB</string>
 </resources>

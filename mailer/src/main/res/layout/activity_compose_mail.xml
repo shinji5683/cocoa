@@ -87,6 +87,50 @@
             android:inputType="textMultiLine"
             android:layout_marginBottom="16dp" />
 
+        <!-- 添付ファイル操作セクション -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnAttachAudio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:text="@string/mail_btn_attach_audio"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/btnAttachFile"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="48dp"
+                android:text="@string/mail_btn_attach_file"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <!-- 添付ファイル一覧 -->
+        <TextView
+            android:id="@+id/tvAttachmentHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#00E5FF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:id="@+id/layoutAttachments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp" />
+
         <!-- 送信ボタン -->
         <Button
             android:id="@+id/btnSend"

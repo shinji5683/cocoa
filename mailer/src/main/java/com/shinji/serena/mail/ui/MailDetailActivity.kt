@@ -61,6 +61,21 @@ class MailDetailActivity : AppCompatActivity() {
             // アクセシビリティヘッダー設定
             tvSubject.contentDescription = getString(R.string.mail_label_subject, mail.subject)
             tvSender.contentDescription = getString(R.string.mail_label_from, mail.sender)
+
+            // 未読メールの場合、バックグラウンドでGmailサーバーに即座に既読フラグ（SEEN）を同期
+            if (mail.isUnread) {
+                mail.isUnread = false
+                val prefs = com.shinji.serena.mail.data.AccountPreferences(this)
+                val email = prefs.getEmail()
+                val credential = prefs.getAuthCredential()
+                val isOAuth = prefs.isOAuth()
+                val uid = mail.uid
+                if (email.isNotEmpty() && credential.isNotEmpty() && uid > 0) {
+                    lifecycleScope.launch {
+                        com.shinji.serena.mail.service.GmailService().markAsRead(email, credential, uid, isOAuth)
+                    }
+                }
+            }
         }
 
         // Gemma 4 で要約ボタン

@@ -76,4 +76,17 @@
     <string name="mail_search_hint">Slim zoeken met EmbeddingGemma 2</string>
     <string name="mail_btn_clear_search">Wissen</string>
     <string name="mail_search_result_fmt">%1$d e-mails gevonden</string>
+
+    <!-- Attachments & Media Strings -->
+    <string name="mail_btn_attach_file">📎 Bestand of audio bijvoegen</string>
+    <string name="mail_btn_attach_audio">🎵 Audio bijvoegen (FLAC/WAV/MP3)</string>
+    <string name="mail_attachment_count_fmt">Bijlagen (%1$d)</string>
+    <string name="mail_attachment_item_a11y_fmt">Bijlage: %1$s, grootte: %2$s. Dubbeltik om te verwijderen.</string>
+    <string name="mail_attachment_removed_fmt">%1$s verwijderd</string>
+    <string name="mail_attachment_added_fmt">%1$s bijgevoegd</string>
+    <string name="mail_attachment_size_too_large">Bestand is te groot (maximaal 25 MB): %1$s</string>
+    <string name="mail_attachment_read_error">Kan bijlage niet lezen: %1$s</string>
+    <string name="mail_attachment_btn_remove">Verwijderen</string>
+    <string name="mail_attachment_unit_kb">%1$.1f KB</string>
+    <string name="mail_attachment_unit_mb">%1$.1f MB</string>
 </resources>

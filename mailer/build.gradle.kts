@@ -18,7 +18,8 @@ android {
         buildConfigField("String", "DEVELOPER_NAME", "\"Shinji\"")
         buildConfigField("String", "DEVELOPER_EMAIL", "\"shinjisakiyama@gmail.com\"")
         buildConfigField("String", "COPYRIGHT_NOTICE", "\"Copyright © 2026 Shinji. All Rights Reserved.\"")
-        buildConfigField("String", "REPO_RELEASE_TAG", "\"v2.5.5\"")
+        buildConfigField("String", "REPO_RELEASE_TAG", "\"v2.5.6\"")
+
     }
 
     signingConfigs {

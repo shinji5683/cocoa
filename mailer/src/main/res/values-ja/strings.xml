@@ -76,4 +76,17 @@
     <string name="mail_search_hint">EmbeddingGemma 2 でスマート検索（例：支払い、セレナ）</string>
     <string name="mail_btn_clear_search">クリア</string>
     <string name="mail_search_result_fmt">%1$d件のメールが見つかりました</string>
+
+    <!-- Attachments & Media Strings -->
+    <string name="mail_btn_attach_file">📎 ファイル・音声を添付</string>
+    <string name="mail_btn_attach_audio">🎵 音声ファイル（FLAC/WAV/MP3等）を添付</string>
+    <string name="mail_attachment_count_fmt">添付ファイル（%1$d件）</string>
+    <string name="mail_attachment_item_a11y_fmt">添付ファイル: %1$s, サイズ: %2$s。削除するにはダブルタップしてください。</string>
+    <string name="mail_attachment_removed_fmt">%1$s を削除しました</string>
+    <string name="mail_attachment_added_fmt">%1$s を添付しました</string>
+    <string name="mail_attachment_size_too_large">ファイルサイズが大きすぎます（最大25MB）: %1$s</string>
+    <string name="mail_attachment_read_error">添付ファイルの読み込みに失敗しました: %1$s</string>
+    <string name="mail_attachment_btn_remove">削除</string>
+    <string name="mail_attachment_unit_kb">%1$.1f KB</string>
+    <string name="mail_attachment_unit_mb">%1$.1f MB</string>
 </resources>

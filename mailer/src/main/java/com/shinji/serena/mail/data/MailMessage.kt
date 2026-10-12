@@ -14,6 +14,8 @@ data class MailMessage(
     val subject: String,
     val body: String,
     val receivedDate: Date?,
-    val isUnread: Boolean,
+    var isUnread: Boolean,
+    val uid: Long = -1L,
     val snippet: String = body.take(120).replace("\n", " ").trim()
 ) : Serializable
+

@@ -76,4 +76,17 @@
     <string name="mail_search_hint">Búsqueda inteligente con EmbeddingGemma 2</string>
     <string name="mail_btn_clear_search">Borrar</string>
     <string name="mail_search_result_fmt">%1$d correos encontrados</string>
+
+    <!-- Attachments & Media Strings -->
+    <string name="mail_btn_attach_file">📎 Adjuntar archivo o audio</string>
+    <string name="mail_btn_attach_audio">🎵 Adjuntar audio (FLAC/WAV/MP3)</string>
+    <string name="mail_attachment_count_fmt">Archivos adjuntos (%1$d)</string>
+    <string name="mail_attachment_item_a11y_fmt">Adjunto: %1$s, tamaño: %2$s. Toque dos veces para eliminar.</string>
+    <string name="mail_attachment_removed_fmt">Se eliminó %1$s</string>
+    <string name="mail_attachment_added_fmt">Se adjuntó %1$s</string>
+    <string name="mail_attachment_size_too_large">El archivo es demasiado grande (máximo 25 MB): %1$s</string>
+    <string name="mail_attachment_read_error">Error al leer el archivo adjunto: %1$s</string>
+    <string name="mail_attachment_btn_remove">Eliminar</string>
+    <string name="mail_attachment_unit_kb">%1$.1f KB</string>
+    <string name="mail_attachment_unit_mb">%1$.1f MB</string>
 </resources>

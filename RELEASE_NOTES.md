@@ -3,6 +3,42 @@
 すべての更新履歴は、全盲の開発者Shinjiのこだわりと世界中の視覚障害者ユーザーのために、日本語と英語の両方で詳細に記録されています。
 All updates and changelogs are meticulously maintained in both Japanese and English for global visually impaired users.
 
+## [v2.5.6] - 2026-10-13
+### 🇯🇵 日本語
+#### 📬 Serena Mail リアルタイム双方向同期 ＆ 送信済みトレイ完全同期
+- **Gmailサーバーとのリアルタイム既読・未読ステータス同期**:
+  - 詳細画面を開いた瞬間に、Gmailサーバー（IMAP）上の該当メッセージに `\Seen`（既読フラグ）をバックグラウンドで即座に反映。公式Gmailアプリ側でも同時に未読バッジが消去される双方向リアルタイム同期を実現。
+  - IMAP UIDベースの精密なメッセージ管理を導入し、複数端末での操作や既読・未読の齟齬をゼロに。
+- **送信トレイ（Sent Mail）の自動同期**:
+  - Serena Mailから送信したメールを、Gmailの公式送信済みフォルダ（`[Gmail]/Sent Mail`）に自動コピー保存（`appendMessages`）。PCのブラウザや公式Gmailアプリの送信済みトレイにも完全に履歴が残るよう改善。
+
+#### 🎵 高音質オーディオ（FLAC / WAV / MP3等）＆ マルチパート全ファイル添付
+- **スタジオ品質オーディオファイルの添付に対応**:
+  - `.flac`, `.wav`, `.mp3`, `.m4a`, `.aac`, `.ogg`, `.opus` など主要なオーディオ形式をワンタップで添付可能に。音声メモや音楽制作データのメール送受信が快適に。
+- **写真・カメラ・端末ファイル・Googleドライブ添付の完全サポート**:
+  - Androidストレージアクセスフレームワーク（SAF）連携により、端末内ストレージ、カメラ写真、PDF、ZIP、Googleドライブ上のクラウドファイルまで、あらゆるファイルを最大25MBまで自由自在にマルチパート添付（`multipart/mixed`）可能。
+- **アクセシビリティ（スクリーンリーダー）に完全特化した添付リストUI**:
+  - 添付したファイル名とサイズ（KB/MB）をTalkBackやSerenaが明瞭に音声読み上げ。不要な添付ファイルはワンタップで簡単に削除可能。
+- **全6言語の完全ローカライズ**:
+  - 日本語、英語、スペイン語、タガログ語、オランダ語、デフォルト言語でリソースを完備。
+
+### 🇺🇸 English
+#### 📬 Serena Mail: Real-Time Two-Way Read Status & Sent Mail Synchronization
+- **Instant Bi-Directional Read Status Sync**:
+  - Opening an email immediately pushes the `\Seen` flag to Gmail IMAP via UID in the background, ensuring read status is updated in official Gmail apps in real time.
+- **Official Sent Mail Synchronization**:
+  - Automatically copies and saves outgoing emails into `[Gmail]/Sent Mail` via IMAP `appendMessages`, ensuring sent history is seamlessly preserved across all official Gmail clients and web browsers.
+
+#### 🎵 Studio Audio (FLAC / WAV / MP3) & Universal File Attachments
+- **Full Support for Major Audio Formats**:
+  - Seamlessly attach high-fidelity audio files including `.flac`, `.wav`, `.mp3`, `.m4a`, `.aac`, `.ogg`, and `.opus`.
+- **Universal File, Photo & Google Drive Attachment**:
+  - Attach files from local storage, camera, Google Drive, and cloud providers up to 25MB via standard Storage Access Framework (`multipart/mixed`).
+- **Screen Reader-Optimized Attachment UI**:
+  - Accessible attachment list with spoken filenames and formatted sizes (KB/MB), plus one-touch deletion.
+- **Full Localization**:
+  - Complete translations across Japanese, English, Spanish, Tagalog, and Dutch.
+
 ## [v2.5.5] - 2026-10-13
 ### 🇯🇵 日本語
 #### 🛡️ 権限ダイアログ・特殊システムダイアログの読み上げ ＆ フォーカストラップ完全修正
