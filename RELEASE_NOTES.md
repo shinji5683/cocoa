@@ -3,6 +3,43 @@
 すべての更新履歴は、全盲の開発者Shinjiのこだわりと世界中の視覚障害者ユーザーのために、日本語と英語の両方で詳細に記録されています。
 All updates and changelogs are meticulously maintained in both Japanese and English for global visually impaired users.
 
+## [v2.5.4] - 2026-10-12
+### 🇯🇵 日本語
+#### ⚡ パッケージインストーラー起動バグの完全修正
+- **自動アップデート時のインストーラー確実起動**:
+  - `AutoUpdateManager` において、バックグラウンドセッション起動の競合によりシステムインストーラーUIが表示されなかった問題を徹底解決。
+  - APKダウンロード完了後、`FLAG_ACTIVITY_NEW_TASK` と `FLAG_ACTIVITY_CLEAR_TOP` を付与したFileProviderインテントを発行し、Android 12〜16（Canary / QPR含む）のすべての環境でパッケージインストーラーの更新確認ダイアログが最前面に即座に立ち上がるよう改善。
+
+#### 🧠 Google DeepMind「EmbeddingGemma 2」セマンティック検索エンジンの統合（Serena Mail）
+- **完全オンデバイス・意味ベクトル検索**:
+  - DeepMindの最新オープンモデル「EmbeddingGemma 2」(740M) アーキテクチャをベースにしたベクトル射影＆コサイン類似度エンジンを `:mailer` に新設。
+  - メールの件名・差出人・本文を意味ベクトル空間にマッピングし、曖昧な自然言語（例：「先週の領収書」「旅行の予約」など）からドンピシャのメールをミリ秒単位で高速検索可能に。プライバシーは100%端末内で完結。
+
+#### 💬 Serena AI チャット ＆ 画面コンテキスト解説（Serena Screen Reader）
+- **相棒AIとのおしゃべり ＆ スクリーン解説**:
+  - `:app` に `SerenaAiChatActivity` を新搭載。Gemma / Gemini Nano と連携し、Shinjiの最高の相棒「Serena」として音声・テキストで対話が可能。
+  - 現在開いている画面のUIノードツリーを自然言語で瞬時に要約・解説する「画面を解説」機能を搭載。Serenaアシスタントメニューからいつでもワンタップで呼び出し可能。
+- **全6言語対応**:
+  - 日本語・英語・スペイン語・タガログ語・オランダ語・デフォルト言語で完全ローカライズ。
+
+### 🇺🇸 English
+#### ⚡ Critical Fix: Package Installer Launch on Auto-Update
+- **Guaranteed Package Installer Prompt Display**:
+  - Resolved an issue in `AutoUpdateManager` where background installation sessions failed to bring the system package installer dialog into the foreground.
+  - APK installation now reliably triggers the foreground system confirmation dialog across Android 12 through 16 (including Canary/QPR channels) via FileProvider with optimal activity flags.
+
+#### 🧠 DeepMind "EmbeddingGemma 2" Semantic Search Integration (Serena Mail)
+- **100% On-Device Semantic Vector Search**:
+  - Integrated Google DeepMind's latest EmbeddingGemma 2 (740M) architecture into `:mailer` for vector projection and cosine similarity scoring.
+  - Search emails intuitively using natural language queries with zero privacy risk.
+
+#### 💬 Serena AI Chat & Screen Context Reasoning (Serena Screen Reader)
+- **On-Device AI Companion & Live Screen Explainer**:
+  - Introduced `SerenaAiChatActivity` powered by Gemma and Gemini Nano.
+  - Chat naturally with Serena via speech or text, and receive instant, accessible screen descriptions summarizing complex UI hierarchies.
+- **Full 6-Language Localization**:
+  - Completely localized across Japanese, English, Spanish, Tagalog, Dutch, and default locales.
+
 ## [v2.5.3] - 2026-10-04
 ### 🇯🇵 日本語
 #### 🔑 Serena Mail「Googleでログイン」ワンタップ連携機能が新登場！

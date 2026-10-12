@@ -73,4 +73,7 @@
     <string name="mail_btn_open_app_password_page">Googleアプリパスワード発行ページを開く</string>
     <string name="mail_oauth_connecting">Googleアカウントで認証中…</string>
     <string name="mail_oauth_fallback_hint">Googleアカウントの認証に失敗しました。詳細設定からアプリパスワードを入力してください。</string>
+    <string name="mail_search_hint">EmbeddingGemma 2 でスマート検索（例：支払い、セレナ）</string>
+    <string name="mail_btn_clear_search">クリア</string>
+    <string name="mail_search_result_fmt">%1$d件のメールが見つかりました</string>
 </resources>

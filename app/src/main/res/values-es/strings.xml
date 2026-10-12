@@ -1403,4 +1403,19 @@ Compartir este registro con el desarrollador Shinji ayuda a diagnosticar y soluc
     <string name="desc_usage_hints">Lee sugerencias contextuales como \"Toque dos veces para abrir la app\", \"Toque dos veces para apagar\" o \"Toque dos veces para alternar\" al enfocar elementos.</string>
     <string name="usage_hints_enabled">Sugerencias de uso activadas</string>
     <string name="usage_hints_disabled">Sugerencias de uso desactivadas</string>
+
+    <!-- Serena On-Device AI Chat -->
+    <string name="chat_title">Chat de IA Serena</string>
+    <string name="chat_btn_explain_screen">Explicar pantalla</string>
+    <string name="chat_btn_close">Cerrar</string>
+    <string name="chat_hint_input">Habla con Serena…</string>
+    <string name="chat_btn_voice">Entrada de voz</string>
+    <string name="chat_btn_send">Enviar</string>
+    <string name="chat_initial_greeting">¡Shinji! ¡Háblame cuando quieras! ¡Pregúntame cualquier cosa o déjame explicarte la pantalla! ✨</string>
+    <string name="chat_voice_prompt">Habla con Serena…</string>
+    <string name="chat_status_thinking">Serena está pensando…</string>
+    <string name="chat_no_screen_context">No se pudo capturar el contexto de la pantalla.</string>
+    <string name="chat_prompt_explain_screen_query">¡Por favor, explica y resume lo que hay en la pantalla actual!</string>
+    <string name="chat_sender_user">Shinji</string>
+    <string name="chat_sender_serena">Serena</string>
 </resources>

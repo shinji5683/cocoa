@@ -263,14 +263,7 @@ class AutoUpdateManager private constructor(private val context: Context) {
             val launchMsg = appContext.getString(R.string.update_launching_installer)
             Toast.makeText(appContext, launchMsg, Toast.LENGTH_SHORT).show()
 
-            // 1. Android 標準 PackageInstaller Session API
-            val sessionSuccess = tryInstallViaPackageInstallerSession(appContext, file)
-            if (sessionSuccess) {
-                Log.i(TAG, "Successfully launched PackageInstaller session")
-                return
-            }
-
-            // 2. フォールバック: FileProvider
+            // Android標準インストーラー画面を直接・最前面に確実に起動
             installViaFileProvider(appContext, file)
         } catch (e: Exception) {
             Log.e(TAG, "Error launching package installer: ${e.message}", e)
@@ -327,7 +320,9 @@ class AutoUpdateManager private constructor(private val context: Context) {
         val installIntent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(apkUri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         }
 
         val resInfoList = appContext.packageManager.queryIntentActivities(installIntent, PackageManager.MATCH_DEFAULT_ONLY)

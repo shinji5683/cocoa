@@ -1372,4 +1372,19 @@ Het delen van dit logboek met ontwikkelaar Shinji helpt het probleem snel op te 
     <string name="desc_usage_hints">Leest contextuele tips voor zoals \"Dubbeltik om app te openen\", \"Dubbeltik om uit te schakelen\" of \"Dubbeltik om te schakelen\" wanneer items gefocust zijn.</string>
     <string name="usage_hints_enabled">Bedieningstips ingeschakeld</string>
     <string name="usage_hints_disabled">Bedieningstips uitgeschakeld</string>
+
+    <!-- Serena On-Device AI Chat -->
+    <string name="chat_title">Serena AI Chat</string>
+    <string name="chat_btn_explain_screen">Scherm uitleggen</string>
+    <string name="chat_btn_close">Sluiten</string>
+    <string name="chat_hint_input">Praat met Serena…</string>
+    <string name="chat_btn_voice">Spraakinvoer</string>
+    <string name="chat_btn_send">Verzenden</string>
+    <string name="chat_initial_greeting">Shinji! Praat gerust met me! Vraag me alles of laat me je scherm uitleggen! ✨</string>
+    <string name="chat_voice_prompt">Spreek met Serena…</string>
+    <string name="chat_status_thinking">Serena denkt na…</string>
+    <string name="chat_no_screen_context">Kon schermcontext niet vastleggen.</string>
+    <string name="chat_prompt_explain_screen_query">Leg alsjeblieft uit en vat samen wat er op het huidige scherm staat!</string>
+    <string name="chat_sender_user">Shinji</string>
+    <string name="chat_sender_serena">Serena</string>
 </resources>

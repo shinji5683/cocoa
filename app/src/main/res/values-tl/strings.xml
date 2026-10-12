@@ -1356,4 +1356,19 @@ Ang pagbabahagi ng log na ito sa developer na si Shinji ay makakatulong upang ma
     <string name="desc_usage_hints">Nagsasalita ng mga pahiwatig tulad ng \"I-double tap para buksan ang app\", \"I-double tap para patayin\", o \"I-double tap para palitan\" kapag may focus ang item.</string>
     <string name="usage_hints_enabled">Pinagana ang mga pahiwatig sa paggamit</string>
     <string name="usage_hints_disabled">Hindi pinagana ang mga pahiwatig sa paggamit</string>
+
+    <!-- Serena On-Device AI Chat -->
+    <string name="chat_title">Serena AI Chat</string>
+    <string name="chat_btn_explain_screen">Ipaliwanag ang screen</string>
+    <string name="chat_btn_close">Isara</string>
+    <string name="chat_hint_input">Kausapin si Serena…</string>
+    <string name="chat_btn_voice">Voice Input</string>
+    <string name="chat_btn_send">Ipadala</string>
+    <string name="chat_initial_greeting">Shinji! Kausapin mo ako kahit kailan! Magtanong ng kahit ano o hayaan mong ipaliwanag ko ang screen mo! ✨</string>
+    <string name="chat_voice_prompt">Magsalita kay Serena…</string>
+    <string name="chat_status_thinking">Nag-iisip si Serena…</string>
+    <string name="chat_no_screen_context">Hindi makuha ang konteksto ng screen.</string>
+    <string name="chat_prompt_explain_screen_query">Pakipaliwanag at ibuod kung ano ang nasa kasalukuyang screen!</string>
+    <string name="chat_sender_user">Shinji</string>
+    <string name="chat_sender_serena">Serena</string>
 </resources>

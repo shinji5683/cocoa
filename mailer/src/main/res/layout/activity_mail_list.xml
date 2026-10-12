@@ -52,6 +52,41 @@
             android:contentDescription="@string/mail_btn_settings" />
     </LinearLayout>
 
+    <!-- AI セマンティック検索バー (EmbeddingGemma 2) -->
+    <LinearLayout
+        android:id="@+id/layoutSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#181818"
+        android:padding="8dp"
+        android:gravity="center_vertical">
+
+        <EditText
+            android:id="@+id/etSearchQuery"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:hint="@string/mail_search_hint"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#757575"
+            android:background="#242424"
+            android:padding="12dp"
+            android:inputType="text"
+            android:imeOptions="actionSearch" />
+
+        <Button
+            android:id="@+id/btnClearSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/mail_btn_clear_search"
+            android:contentDescription="@string/mail_btn_clear_search"
+            android:layout_marginStart="6dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
     <!-- ステータスバー（読み上げ用） -->
     <TextView
         android:id="@+id/tvStatus"

@@ -277,14 +277,7 @@ class AutoUpdateManager(private val context: Context) {
                 SerenaScreenReaderService.instance?.speak(launchMsg, TextToSpeech.QUEUE_FLUSH)
             }
 
-            // 1. Android 標準 PackageInstaller Session API の試行 (Android 10+ / 14 / 17 で最も堅牢)
-            val sessionSuccess = tryInstallViaPackageInstallerSession(appContext, file)
-            if (sessionSuccess) {
-                Log.i(TAG, "Successfully launched PackageInstaller session")
-                return
-            }
-
-            // 2. フォールバック: FileProvider 経由の ACTION_VIEW
+            // Android標準インストーラー画面を直接・最前面に確実に起動
             installViaFileProvider(appContext, file)
         } catch (e: Exception) {
             Log.e(TAG, "Error launching package installer: ${e.message}", e)
@@ -341,7 +334,9 @@ class AutoUpdateManager(private val context: Context) {
         val installIntent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(apkUri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
         }
 
         val resInfoList = appContext.packageManager.queryIntentActivities(installIntent, PackageManager.MATCH_DEFAULT_ONLY)

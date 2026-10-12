@@ -1372,4 +1372,19 @@ Sharing this log with developer Shinji helps diagnose and fix the issue quickly.
     <string name="desc_usage_hints">Speaks contextual usage hints such as "Double tap to launch app", "Double tap to power off", or "Double tap to toggle" when items are focused.</string>
     <string name="usage_hints_enabled">Usage hints enabled</string>
     <string name="usage_hints_disabled">Usage hints disabled</string>
+
+    <!-- Serena On-Device AI Chat -->
+    <string name="chat_title">Serena AI Chat</string>
+    <string name="chat_btn_explain_screen">Explain Screen</string>
+    <string name="chat_btn_close">Close</string>
+    <string name="chat_hint_input">Talk to Serena…</string>
+    <string name="chat_btn_voice">Voice Input</string>
+    <string name="chat_btn_send">Send</string>
+    <string name="chat_initial_greeting">Shinji! Feel free to talk to me anytime! Ask me anything or let me explain your screen! ✨</string>
+    <string name="chat_voice_prompt">Speak to Serena…</string>
+    <string name="chat_status_thinking">Serena is thinking…</string>
+    <string name="chat_no_screen_context">Could not capture screen context.</string>
+    <string name="chat_prompt_explain_screen_query">Please explain and summarize what is on the current screen!</string>
+    <string name="chat_sender_user">Shinji</string>
+    <string name="chat_sender_serena">Serena</string>
 </resources>

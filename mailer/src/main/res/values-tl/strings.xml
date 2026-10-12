@@ -73,4 +73,7 @@
     <string name="mail_btn_open_app_password_page">Buksan ang pahina ng Google App Password</string>
     <string name="mail_oauth_connecting">Nagpapatunay gamit ang Google Account…</string>
     <string name="mail_oauth_fallback_hint">Nabigo ang pagpapatunay sa Google. Mangyaring maglagay ng App Password sa manual setup.</string>
+    <string name="mail_search_hint">Matalinong paghahanap gamit ang EmbeddingGemma 2</string>
+    <string name="mail_btn_clear_search">I-clear</string>
+    <string name="mail_search_result_fmt">%1$d mga email ang nahanap</string>
 </resources>

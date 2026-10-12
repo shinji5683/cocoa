@@ -4869,6 +4869,9 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
         soundHelper?.playMenuOpen()
         speak(getString(R.string.assistant_menu_opened), TextToSpeech.QUEUE_FLUSH)
         val items = listOf(
+            serenaMenuItem("💬", getString(R.string.chat_title)) {
+                openSerenaAiChat()
+            },
             serenaMenuItem("🧠", getString(R.string.service_menu_assistant_summary)) {
                 summarizeCurrentScreen()
             },
@@ -4893,6 +4896,25 @@ class SerenaScreenReaderService : AccessibilityService(), TextToSpeech.OnInitLis
             dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "showSerenaAssistantDialog error: ${e.message}")
+        }
+    }
+
+    /**
+     * Serena オンデバイスAI対話チャット画面を起動
+     */
+    fun openSerenaAiChat(screenContext: String? = null) {
+        try {
+            soundHelper?.playMenuOpen()
+            val ctxText = screenContext ?: smartScreenSummaryEngine?.generateDetailedSummary()
+            val intent = Intent(this, com.shinji.serena.ai.SerenaAiChatActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                if (!ctxText.isNullOrBlank()) {
+                    putExtra(com.shinji.serena.ai.SerenaAiChatActivity.EXTRA_SCREEN_CONTEXT, ctxText)
+                }
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch SerenaAiChatActivity: ${e.message}")
         }
     }
 }

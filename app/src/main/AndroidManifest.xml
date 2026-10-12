@@ -126,6 +126,13 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Serena" />
 
+        <!-- Serena オンデバイスAI対話チャット -->
+        <activity
+            android:name=".ai.SerenaAiChatActivity"
+            android:exported="true"
+            android:label="@string/chat_title"
+            android:theme="@style/Theme.Serena" />
+
         <service
             android:name=".SerenaScreenReaderService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

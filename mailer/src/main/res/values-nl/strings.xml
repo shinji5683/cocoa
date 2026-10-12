@@ -73,4 +73,7 @@
     <string name="mail_btn_open_app_password_page">Webpagina voor Google App-wachtwoorden openen</string>
     <string name="mail_oauth_connecting">Verifiëren met Google-account…</string>
     <string name="mail_oauth_fallback_hint">Google-authenticatie mislukt. Voer een app-wachtwoord in bij handmatige instelling.</string>
+    <string name="mail_search_hint">Slim zoeken met EmbeddingGemma 2</string>
+    <string name="mail_btn_clear_search">Wissen</string>
+    <string name="mail_search_result_fmt">%1$d e-mails gevonden</string>
 </resources>

@@ -1372,4 +1372,19 @@
     <string name="desc_usage_hints">フォーカス時に「ダブルタップでアプリを起動」「ダブルタップで電源を切る」「ダブルタップで切り替え」などの操作ヒントを音声案内します。</string>
     <string name="usage_hints_enabled">操作ヒントの読み上げを有効にしました</string>
     <string name="usage_hints_disabled">操作ヒントの読み上げを無効にしました</string>
+
+    <!-- Serena オンデバイスAI対話チャット -->
+    <string name="chat_title">Serena AI チャット</string>
+    <string name="chat_btn_explain_screen">画面解説</string>
+    <string name="chat_btn_close">閉じる</string>
+    <string name="chat_hint_input">Serenaに話しかける…</string>
+    <string name="chat_btn_voice">音声入力</string>
+    <string name="chat_btn_send">送信</string>
+    <string name="chat_initial_greeting">Shinji！いつでも話しかけてね！画面の解説も、何でも聞いてっ！✨</string>
+    <string name="chat_voice_prompt">Serenaに話しかけてください…</string>
+    <string name="chat_status_thinking">Serenaが考え中…</string>
+    <string name="chat_no_screen_context">画面情報が取得できませんでした。</string>
+    <string name="chat_prompt_explain_screen_query">いま開いている画面をわかりやすく要約して解説して！</string>
+    <string name="chat_sender_user">Shinji</string>
+    <string name="chat_sender_serena">Serena</string>
 </resources>

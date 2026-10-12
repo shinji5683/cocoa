@@ -73,4 +73,7 @@
     <string name="mail_btn_open_app_password_page">Abrir página de contraseñas de aplicaciones de Google</string>
     <string name="mail_oauth_connecting">Autenticando con Cuenta de Google…</string>
     <string name="mail_oauth_fallback_hint">Falló la autenticación con Google. Ingresa una contraseña de aplicación en la configuración manual.</string>
+    <string name="mail_search_hint">Búsqueda inteligente con EmbeddingGemma 2</string>
+    <string name="mail_btn_clear_search">Borrar</string>
+    <string name="mail_search_result_fmt">%1$d correos encontrados</string>
 </resources>

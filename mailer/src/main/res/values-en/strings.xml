@@ -73,4 +73,7 @@
     <string name="mail_btn_open_app_password_page">Open Google App Passwords web page</string>
     <string name="mail_oauth_connecting">Authenticating with Google Account…</string>
     <string name="mail_oauth_fallback_hint">Google authentication failed. Please enter an App Password in Manual Setup.</string>
+    <string name="mail_search_hint">Smart search with EmbeddingGemma 2 (e.g. payment, Serena)</string>
+    <string name="mail_btn_clear_search">Clear</string>
+    <string name="mail_search_result_fmt">%1$d emails found</string>
 </resources>
